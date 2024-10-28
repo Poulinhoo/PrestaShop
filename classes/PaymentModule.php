@@ -309,6 +309,7 @@ abstract class PaymentModuleCore extends Module
                 }
             }
         }
+
         // Make sure CartRule caches are empty
         CartRule::cleanCache();
         $cart_rules = $this->context->cart->getCartRules();
@@ -346,32 +347,37 @@ abstract class PaymentModuleCore extends Module
             $id_order_state = Configuration::get('PS_OS_ERROR');
         }
 
+        // here we format a new array with carrierID as key and product list as value
+        $products = [];
+
         foreach ($package_list as $id_address => $packageByAddress) {
             foreach ($packageByAddress as $id_package => $package) {
-                $orderData = $this->createOrderFromCart(
-                    $this->context->cart,
-                    $this->context->currency,
-                    $package['product_list'],
-                    $id_address,
-                    $this->context,
-                    $reference,
-                    $secure_key,
-                    $payment_method,
-                    $this->name,
-                    $dont_touch_amount,
-                    $amount_paid,
-                    0,
-                    $cart_total_paid,
-                    self::DEBUG_MODE,
-                    $order_status,
-                    $id_order_state,
-                    isset($package['id_carrier']) ? $package['id_carrier'] : null
-                );
-                $order = $orderData['order'];
-                $order_list[] = $order;
-                $order_detail_list[] = $orderData['orderDetail'];
+                $products[$package['id_carrier']] = $package['product_list'];
             }
         }
+
+        $orderData = $this->createOrderFromCart(
+            $this->context->cart,
+            $this->context->currency,
+            $products,
+            $id_address,
+            $this->context,
+            $reference,
+            $secure_key,
+            $payment_method,
+            $this->name,
+            $dont_touch_amount,
+            $amount_paid,
+            0,
+            $cart_total_paid,
+            self::DEBUG_MODE,
+            $order_status,
+            $id_order_state,
+        );
+        $order = $orderData['order'];
+        $order_list[] = $order;
+        $order_detail_list[] = $orderData['orderDetail'];
+
 
         // The country can only change if the address used for the calculation is the delivery address, and if multi-shipping is activated
         if (Configuration::get('PS_TAX_ADDRESS_TYPE') == 'id_address_delivery' && isset($context_country)) {
@@ -607,6 +613,11 @@ abstract class PaymentModuleCore extends Module
 
             // Order is reloaded because the status just changed
             $order = new Order((int) $order->id);
+
+            // $orderCarrier = new OrderCarrier();
+            // $orderCarrier->id_carrier = $order->id_carrier;
+            // $orderCarrier->id_order = $order->id;
+            // $orderCarrier->save();
 
             // Send an e-mail to customer (one order = one email)
             if ($id_order_state != Configuration::get('PS_OS_ERROR') && $id_order_state != Configuration::get('PS_OS_CANCELED') && $this->context->customer->id) {
@@ -965,11 +976,18 @@ abstract class PaymentModuleCore extends Module
         $debug,
         $order_status,
         $id_order_state,
-        $carrierId = null
     ) {
-        $order = new Order();
-        $order->product_list = $productList;
 
+        // need to modify, here we just loop to get the right format. On the order class the field product_list need to be an array and not a assocative array.
+        $list = [];
+        foreach($productList as $products) {
+            foreach ($products as $product) {
+                $list[] = $product;
+            }
+        }
+
+        $order = new Order();
+        $order->product_list = $list;
         $computingPrecision = Context::getContext()->getComputingPrecision();
 
         if (Configuration::get('PS_TAX_ADDRESS_TYPE') == 'id_address_delivery') {
@@ -980,15 +998,10 @@ abstract class PaymentModuleCore extends Module
             }
         }
 
+        // In the future, we want to remove the idCarrier from the SQL Table and use another entity to make the relation with carriers.
         $carrier = null;
-        if (!$cart->isVirtualCart() && isset($carrierId)) {
-            $carrier = new Carrier((int) $carrierId, (int) $cart->id_lang);
-            $order->id_carrier = (int) $carrier->id;
-            $carrierId = (int) $carrier->id;
-        } else {
-            $order->id_carrier = 0;
-            $carrierId = 0;
-        }
+        $order->id_carrier = 0;
+        $carrierId = 0;
 
         $order->id_customer = (int) $cart->id_customer;
         $order->id_address_invoice = (int) $cart->id_address_invoice;
@@ -1101,23 +1114,29 @@ abstract class PaymentModuleCore extends Module
             PrestaShopLogger::addLog('PaymentModule::validateOrder - OrderDetail is about to be added', 1, null, 'Cart', (int) $cart->id, true);
         }
 
-        // Insert new Order detail list using cart for the current order
-        $order_detail = new OrderDetail(null, null, $context);
-        $order_detail->createList($order, $cart, $id_order_state, $order->product_list, 0, true);
-
         if ($debug) {
             PrestaShopLogger::addLog('PaymentModule::validateOrder - OrderCarrier is about to be added', 1, null, 'Cart', (int) $cart->id, true);
         }
 
         // Adding an entry in order_carrier table
-        if (null !== $carrier) {
+        foreach($productList as $key => $product) {
             $order_carrier = new OrderCarrier();
             $order_carrier->id_order = (int) $order->id;
-            $order_carrier->id_carrier = $carrierId;
-            $order_carrier->weight = (float) $order->getTotalWeight();
-            $order_carrier->shipping_cost_tax_excl = (float) $order->total_shipping_tax_excl;
-            $order_carrier->shipping_cost_tax_incl = (float) $order->total_shipping_tax_incl;
+            $order_carrier->id_carrier = $key;
+            $order_carrier->weight = (float) array_sum(array_column($product, 'weight'));
+            $order_carrier->shipping_cost_tax_excl = Tools::ps_round(
+                (float) $cart->getPackageShippingCost($key, false, null, $product),
+                $computingPrecision
+            );
+            $order_carrier->shipping_cost_tax_incl = Tools::ps_round(
+                (float) $cart->getPackageShippingCost($key, true, null, $product),
+                $computingPrecision
+            );
             $order_carrier->add();
+
+            // Insert new Order detail list using cart for the current order
+            $order_detail = new OrderDetail(null, null, $context);
+            $order_detail->createList($order, $cart, $id_order_state, $product, 0, true, $warehouseId, $order_carrier->id);
         }
 
         return ['order' => $order, 'orderDetail' => $order_detail];

@@ -187,6 +187,8 @@ class OrderDetailCore extends ObjectModel
     /** @var float */
     public $total_refunded_tax_incl;
 
+    public $id_order_carrier;
+
     /**
      * @see ObjectModel::$definition
      */
@@ -197,6 +199,7 @@ class OrderDetailCore extends ObjectModel
             'id_order' => ['type' => self::TYPE_INT, 'validate' => 'isUnsignedId', 'required' => true],
             'id_order_invoice' => ['type' => self::TYPE_INT, 'validate' => 'isUnsignedId'],
             'id_warehouse' => ['type' => self::TYPE_INT, 'validate' => 'isUnsignedId', 'required' => true],
+            'id_order_carrier' => ['type' => self::TYPE_INT, 'validate' => 'isUnsignedId', 'required' => true],
             'id_shop' => ['type' => self::TYPE_INT, 'validate' => 'isUnsignedId', 'required' => true],
             'product_id' => ['type' => self::TYPE_INT, 'validate' => 'isUnsignedId'],
             'product_attribute_id' => ['type' => self::TYPE_INT, 'validate' => 'isUnsignedId'],
@@ -249,6 +252,7 @@ class OrderDetailCore extends ObjectModel
         'fields' => [
             'id_order' => ['xlink_resource' => 'orders'],
             'product_id' => ['xlink_resource' => 'products'],
+            'id_order_carrier' => ['xlink_resource' => 'orders_carriers'],
             'product_attribute_id' => ['xlink_resource' => 'combinations'],
             'product_quantity_reinjected' => [],
             'group_reduction' => [],
@@ -750,14 +754,14 @@ class OrderDetailCore extends ObjectModel
      * @param bool $use_taxes set to false if you don't want to use taxes
      * @param int $id_warehouse - not used anymore
      */
-    protected function create(Order $order, Cart $cart, $product, $id_order_state, $id_order_invoice, $use_taxes = true, $id_warehouse = 0)
+    protected function create(Order $order, Cart $cart, $product, $id_order_state, $id_order_invoice, $use_taxes = true, $id_warehouse = 0, $orderCarrierId = 0)
     {
         if ($use_taxes) {
             $this->tax_calculator = new TaxCalculator();
         }
 
         $this->id = null;
-
+        $this->id_order_carrier = (int) $orderCarrierId;
         $this->product_id = (int) $product['id_product'];
         $this->product_attribute_id = $product['id_product_attribute'] ? (int) $product['id_product_attribute'] : 0;
         $this->id_customization = $product['id_customization'] ? (int) $product['id_customization'] : 0;
@@ -818,7 +822,7 @@ class OrderDetailCore extends ObjectModel
      * @param bool $use_taxes set to false if you don't want to use taxes
      * @param int $id_warehouse - not used anymore
      */
-    public function createList(Order $order, Cart $cart, $id_order_state, $product_list, $id_order_invoice = 0, $use_taxes = true, $id_warehouse = 0)
+    public function createList(Order $order, Cart $cart, $id_order_state, $product_list, $id_order_invoice = 0, $use_taxes = true, $id_warehouse = 0, $orderCarrierId = 0)
     {
         $this->vat_address = new Address((int) $order->{Configuration::get('PS_TAX_ADDRESS_TYPE')});
         $this->customer = new Customer((int) $order->id_customer);
@@ -827,7 +831,7 @@ class OrderDetailCore extends ObjectModel
         $this->outOfStock = false;
 
         foreach ($product_list as $product) {
-            $this->create($order, $cart, $product, $id_order_state, $id_order_invoice, $use_taxes);
+            $this->create($order, $cart, $product, $id_order_state, $id_order_invoice, $use_taxes, $id_warehouse, $orderCarrierId);
         }
 
         unset(
