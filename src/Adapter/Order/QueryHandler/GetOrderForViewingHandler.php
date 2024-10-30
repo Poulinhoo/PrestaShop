@@ -40,6 +40,7 @@ use Gender;
 use Group;
 use Module;
 use Order;
+use OrderCarrier;
 use OrderInvoice;
 use OrderPayment;
 use OrderSlip;
@@ -176,9 +177,8 @@ final class GetOrderForViewingHandler extends AbstractOrderHandler implements Ge
     public function handle(GetOrderForViewing $query): OrderForViewing
     {
         $order = $this->getOrder($query->getOrderId());
-        $orderCarrier = new Carrier($order->id_carrier);
+        $orderCarrier = OrderCarrier::getOrderCarrierByOrderId($order->id);
         $taxCalculationMethod = $this->getOrderTaxCalculationMethod($order);
-
         $isTaxIncluded = ($taxCalculationMethod == PS_TAX_INC);
 
         $taxMethod = $isTaxIncluded ?
@@ -196,8 +196,7 @@ final class GetOrderForViewingHandler extends AbstractOrderHandler implements Ge
         return new OrderForViewing(
             (int) $order->id,
             (int) $order->id_currency,
-            (int) $order->id_carrier,
-            (string) $orderCarrier->name,
+            $orderCarrier,
             (int) $order->id_shop,
             $order->reference,
             (bool) $order->isVirtual(),
@@ -526,24 +525,25 @@ final class GetOrderForViewingHandler extends AbstractOrderHandler implements Ge
     {
         $taxCalculationMethod = $this->getOrderTaxCalculationMethod($order);
 
-        $shipping = $order->getShipping();
+        $shipping = OrderCarrier::getOrderCarrierByOrderId($order->id);
         $carriers = [];
         $carrierModuleInfo = null;
 
         $currency = new Currency($order->id_currency);
-        $carrier = new Carrier($order->id_carrier);
         $carrierModuleInfo = null;
-
-        if ($carrier->is_module) {
-            $module = Module::getInstanceByName($carrier->external_module_name);
-            // We need to check if this module is still installed and if it implements the method
-            if (Validate::isLoadedObject($module) && method_exists($module, 'displayInfoByCart')) {
-                $carrierModuleInfo = $module->displayInfoByCart($order->id_cart);
-            }
-        }
 
         if (!$order->isVirtual()) {
             foreach ($shipping as $item) {
+                $carrier = new Carrier($item['id_carrier']);
+
+                if ($carrier->is_module) {
+                    $module = Module::getInstanceByName($carrier->external_module_name);
+                    // We need to check if this module is still installed and if it implements the method
+                    if (Validate::isLoadedObject($module) && method_exists($module, 'displayInfoByCart')) {
+                        $carrierModuleInfo = $module->displayInfoByCart($order->id_cart);
+                    }
+                }
+
                 if ($taxCalculationMethod == PS_TAX_INC) {
                     $price = $item['shipping_cost_tax_incl']
                         ? $this->locale->formatPrice($item['shipping_cost_tax_incl'], $currency->iso_code)
@@ -566,13 +566,13 @@ final class GetOrderForViewingHandler extends AbstractOrderHandler implements Ge
                 $carriers[] = new OrderCarrierForViewing(
                     (int) $item['id_order_carrier'],
                     new DateTimeImmutable($item['date_add'] ?? 'now'),
-                    $item['carrier_name'],
+                    $item['name'],
                     $weight,
                     (int) $item['id_carrier'],
                     $price,
                     $trackingUrl,
                     $trackingNumber,
-                    $item['can_edit']
+                    true,
                 );
             }
         }

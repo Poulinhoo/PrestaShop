@@ -29,27 +29,31 @@ use PrestaShop\PrestaShop\Core\Util\Sorter;
 /**
  * @since 1.5
  */
-class HTMLTemplateDeliverySlipCore extends HTMLTemplate
+class HTMLTemplateMultiShippingDeliverySlipCore extends HTMLTemplate
 {
     /**
      * @var Order
      */
     public $order;
 
-    /** @var OrderInvoice Order invoice */
+    /** @var OrderCarrier */
+    public $orderCarrier;
+
+    /** @var OrderInvoice */
     public $order_invoice;
 
     /**
-     * @param OrderInvoice $order_invoice
+     * @param OrderCarrier $orderCarrier
      * @param Smarty $smarty
      * @param bool $bulk_mode
      *
      * @throws PrestaShopException
      */
-    public function __construct(OrderInvoice $order_invoice, Smarty $smarty, $bulk_mode = false)
+    public function __construct(OrderCarrier $orderCarrier, Smarty $smarty, $bulk_mode = true)
     {
-        $this->order_invoice = $order_invoice;
-        $this->order = new Order($this->order_invoice->id_order);
+        $this->orderCarrier = $orderCarrier;
+        $this->order = new Order($this->orderCarrier->id_order);
+        $this->order_invoice = new OrderInvoice($this->orderCarrier->id_order_invoice);
         $this->smarty = $smarty;
 
         // If shop_address is null, then update it with current one.
@@ -65,8 +69,8 @@ class HTMLTemplateDeliverySlipCore extends HTMLTemplate
         // header informations
         // The date MUST be the delivery slip date and not the invoice date …
         // In case of empty date, use the old one …
-        $this->date = Tools::displayDate($order_invoice->delivery_date) ?: Tools::displayDate($order_invoice->date_add);
-        $prefix = Configuration::get('PS_DELIVERY_PREFIX', Context::getContext()->language->id);
+        $this->date = Tools::displayDate($this->order_invoice->delivery_date) ?: Tools::displayDate($this->order_invoice->date_add);
+        $prefix = $this->orderCarrier->id_carrier . Configuration::get('PS_DELIVERY_PREFIX', Context::getContext()->language->id);
         $this->title = sprintf(HTMLTemplateDeliverySlip::l('%1$s%2$06d'), $prefix, $this->order_invoice->delivery_number);
 
         // footer informations
@@ -102,10 +106,10 @@ class HTMLTemplateDeliverySlipCore extends HTMLTemplate
             $formatted_invoice_address = AddressFormat::generateAddress($invoice_address, [], '<br />', ' ');
         }
 
-        $carriers = OrderCarrier::getOrderCarrierByOrderId($this->order->id);
-        $deliverySplitByCarriers = [];
+        $order_details = array_filter($this->order->getProducts(), function ($order_detail) {
+            return $order_detail['id_order_carrier'] == $this->orderCarrier->id;
+        });
 
-        $order_details = $this->order_invoice->getProducts();
         if (Configuration::get('PS_PDF_IMG_DELIVERY')) {
             foreach ($order_details as &$order_detail) {
                 if ($order_detail['image'] != null) {
@@ -128,13 +132,6 @@ class HTMLTemplateDeliverySlipCore extends HTMLTemplate
 
             }
         }
-        foreach ($order_details as $order_detail) {
-            foreach($carriers as $carrier) {
-                if ($carrier['id_order_carrier'] === $order_detail['id_order_carrier']) {
-                    $deliverySplitByCarriers[$carrier['id_carrier']][] = $order_detail;
-                }
-            }
-        }
 
         // Sort products by Reference ID (and if equals (like combination) by Supplier Reference)
         $sorter = new Sorter();
@@ -142,12 +139,11 @@ class HTMLTemplateDeliverySlipCore extends HTMLTemplate
 
         $this->smarty->assign([
             'order' => $this->order,
-            'productByCarrier' => $deliverySplitByCarriers,
             'order_details' => $order_details,
             'delivery_address' => $formatted_delivery_address,
             'invoice_address' => $formatted_invoice_address,
             'order_invoice' => $this->order_invoice,
-            'carriers' => array_column($carriers, 'name'),
+            'carrier' => (new Carrier($this->orderCarrier->id_carrier)),
             'display_product_images' => Configuration::get('PS_PDF_IMG_DELIVERY'),
         ]);
 
@@ -156,7 +152,6 @@ class HTMLTemplateDeliverySlipCore extends HTMLTemplate
             'addresses_tab' => $this->smarty->fetch($this->getTemplate('delivery-slip.addresses-tab')),
             'summary_tab' => $this->smarty->fetch($this->getTemplate('delivery-slip.summary-tab')),
             'product_tab' => $this->smarty->fetch($this->getTemplate('delivery-slip.product-tab')),
-            'payment_tab' => $this->smarty->fetch($this->getTemplate('delivery-slip.payment-tab')),
         ];
         $this->smarty->assign($tpls);
 
@@ -170,7 +165,7 @@ class HTMLTemplateDeliverySlipCore extends HTMLTemplate
      */
     public function getBulkFilename()
     {
-        return 'deliveries.pdf';
+        return 'multishipping-deliveries.pdf';
     }
 
     /**
@@ -180,6 +175,6 @@ class HTMLTemplateDeliverySlipCore extends HTMLTemplate
      */
     public function getFilename()
     {
-        return Configuration::get('PS_DELIVERY_PREFIX', Context::getContext()->language->id, null, $this->order->id_shop) . sprintf('%06d', $this->order_invoice->delivery_number) . '.pdf';
+        return 'multishipping ' . Configuration::get('PS_DELIVERY_PREFIX', Context::getContext()->language->id, null, $this->order->id_shop) . sprintf('%06d', $this->order_invoice->delivery_number) . '.pdf';
     }
 }

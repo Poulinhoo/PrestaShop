@@ -31,8 +31,7 @@
 			<th class="product header small" width="10%">{l s='Qty' d='Shop.Pdf' pdf='true'}</th>
 		</tr>
 	</thead>
-
-	<tbody>
+  <tbody>
 		<!-- PRODUCTS -->
 		{foreach $order_details as $order_detail}
 			{cycle values=["color_line_even", "color_line_odd"] assign=bgcolor_class}
@@ -67,7 +66,6 @@
 				<td class="product center">
 					{$order_detail.product_quantity}
 				</td>
-
 			</tr>
 
 			{foreach $order_detail.customizedDatas as $customizationPerAddress}
@@ -106,8 +104,6 @@
 					</tr>
 				{/foreach}
 			{/foreach}
-
-
 
 		{/foreach}
 		<!-- END PRODUCTS -->

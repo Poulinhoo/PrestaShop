@@ -1025,32 +1025,35 @@ abstract class PaymentModuleCore extends Module
         $amount_paid = !$dont_touch_amount ? Tools::ps_round((float) $amount_paid, $computingPrecision) : $amount_paid;
         $order->total_paid_real = 0;
 
-        $order->total_products = Tools::ps_round(
-            (float) $cart->getOrderTotal(false, Cart::ONLY_PRODUCTS, $order->product_list, $carrierId),
-            $computingPrecision
-        );
-        $order->total_products_wt = Tools::ps_round(
-            (float) $cart->getOrderTotal(true, Cart::ONLY_PRODUCTS, $order->product_list, $carrierId),
-            $computingPrecision
-        );
-        $order->total_discounts_tax_excl = Tools::ps_round(
-            (float) abs($cart->getOrderTotal(false, Cart::ONLY_DISCOUNTS, $order->product_list, $carrierId)),
-            $computingPrecision
-        );
-        $order->total_discounts_tax_incl = Tools::ps_round(
-            (float) abs($cart->getOrderTotal(true, Cart::ONLY_DISCOUNTS, $order->product_list, $carrierId)),
-            $computingPrecision
-        );
-        $order->total_discounts = $order->total_discounts_tax_incl;
+        foreach($productList as $key => $product) {
+            $order->total_products += Tools::ps_round(
+                (float) $cart->getOrderTotal(false, Cart::ONLY_PRODUCTS, $order->product_list, $key),
+                $computingPrecision
+            );
+            $order->total_products_wt += Tools::ps_round(
+                (float) $cart->getOrderTotal(true, Cart::ONLY_PRODUCTS, $order->product_list, $key),
+                $computingPrecision
+            );
+            $order->total_discounts_tax_excl += Tools::ps_round(
+                (float) abs($cart->getOrderTotal(false, Cart::ONLY_DISCOUNTS, $order->product_list, $key)),
+                $computingPrecision
+            );
+            $order->total_discounts_tax_incl += Tools::ps_round(
+                (float) abs($cart->getOrderTotal(true, Cart::ONLY_DISCOUNTS, $order->product_list, $key)),
+                $computingPrecision
+            );
 
-        $order->total_shipping_tax_excl = Tools::ps_round(
-            (float) $cart->getPackageShippingCost($carrierId, false, null, $order->product_list),
-            $computingPrecision
-        );
-        $order->total_shipping_tax_incl = Tools::ps_round(
-            (float) $cart->getPackageShippingCost($carrierId, true, null, $order->product_list),
-            $computingPrecision
-        );
+            $order->total_shipping_tax_excl += Tools::ps_round(
+                (float) $cart->getPackageShippingCost($key, false, null, $order->product_list),
+                $computingPrecision
+            );
+            $order->total_shipping_tax_incl += Tools::ps_round(
+                (float) $cart->getPackageShippingCost($key, true, null, $order->product_list),
+                $computingPrecision
+            );
+        }
+
+        $order->total_discounts = $order->total_discounts_tax_incl;
         $order->total_shipping = $order->total_shipping_tax_incl;
 
         if (null !== $carrier && Validate::isLoadedObject($carrier)) {

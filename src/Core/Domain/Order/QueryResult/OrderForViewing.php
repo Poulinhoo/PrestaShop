@@ -158,14 +158,9 @@ class OrderForViewing
     private $isVirtual;
 
     /**
-     * @var int
+     * @var array
      */
-    private $carrierId;
-
-    /**
-     * @var string
-     */
-    private $carrierName;
+    private $carriers;
 
     /**
      * @var int
@@ -200,8 +195,7 @@ class OrderForViewing
     /**
      * @param int $orderId
      * @param int $currencyId
-     * @param int $carrierId
-     * @param string $carrierName
+     * @param array $carriers
      * @param int $shopId
      * @param string $reference
      * @param bool $isVirtual
@@ -235,8 +229,7 @@ class OrderForViewing
     public function __construct(
         int $orderId,
         int $currencyId,
-        int $carrierId,
-        string $carrierName,
+        array $carriers,
         int $shopId,
         string $reference,
         bool $isVirtual,
@@ -291,8 +284,7 @@ class OrderForViewing
         $this->discounts = $discounts;
         $this->createdAt = $createdAt;
         $this->isVirtual = $isVirtual;
-        $this->carrierId = $carrierId;
-        $this->carrierName = $carrierName;
+        $this->carriers = $carriers;
         $this->shopId = $shopId;
         $this->invoiceManagementIsEnabled = $invoiceManagementIsEnabled;
         $this->sources = $sources;
@@ -319,16 +311,11 @@ class OrderForViewing
     }
 
     /**
-     * @return int
+     * @return array
      */
-    public function getCarrierId(): int
+    public function getCarriers(): array
     {
-        return $this->carrierId;
-    }
-
-    public function getCarrierName(): string
-    {
-        return $this->carrierName;
+        return $this->carriers;
     }
 
     /**

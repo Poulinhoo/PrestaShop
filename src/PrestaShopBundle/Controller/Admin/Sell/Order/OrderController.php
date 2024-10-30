@@ -484,12 +484,13 @@ class OrderController extends PrestaShopAdminController
             ]);
         }
 
-        $updateOrderShippingForm = $this->createForm(UpdateOrderShippingType::class, [
-            'new_carrier_id' => $orderForViewing->getCarrierId(),
-        ], [
-            'order_id' => $orderId,
-        ]);
-
+        foreach($orderForViewing->getCarriers() as $carrier) {
+            $updateOrderShippingForm[] = $this->createForm(UpdateOrderShippingType::class, [
+                'new_carrier_id' => $carrier['id_carrier'],
+            ], [
+                'order_id' => $orderId,
+            ])->createView();
+        }
         // @todo: Fix me. Should not rely on legacy object model - Currency
         $orderCurrency = $currencyDataProvider->getCurrencyById($orderForViewing->getCurrencyId());
 
@@ -565,7 +566,7 @@ class OrderController extends PrestaShopAdminController
             'addOrderPaymentForm' => $addOrderPaymentForm->createView(),
             'changeOrderCurrencyForm' => $changeOrderCurrencyForm->createView(),
             'privateNoteForm' => $privateNoteForm?->createView(),
-            'updateOrderShippingForm' => $updateOrderShippingForm->createView(),
+            'updateOrderShippingForm' => $updateOrderShippingForm,
             'cancelProductForm' => $cancelProductForm->createView(),
             'invoiceManagementIsEnabled' => $orderForViewing->isInvoiceManagementIsEnabled(),
             'changeOrderAddressForm' => $changeOrderAddressForm?->createView(),

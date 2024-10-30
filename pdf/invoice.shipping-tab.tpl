@@ -23,8 +23,8 @@
  * @license   https://opensource.org/licenses/OSL-3.0 Open Software License (OSL 3.0)
  *}
 <table id="shipping-tab" width="100%">
-	<tr>
-		<td class="shipping center small grey bold" width="44%">{l s='Carrier' d='Shop.Pdf' pdf='true'}</td>
-		<td class="shipping center small white" width="56%">{$carrier->name}</td>
-	</tr>
+  <tr>
+    <td class="shipping center small grey bold" width="44%">{l s='Carriers' d='Shop.Pdf' pdf='true'}</td>
+    <td class="shipping center small white" width="56%">{', '|implode:$carriers}</td>
+  </tr>
 </table>

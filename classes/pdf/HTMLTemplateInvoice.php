@@ -174,7 +174,7 @@ class HTMLTemplateInvoiceCore extends HTMLTemplate
         }
 
         $customer = new Customer((int) $this->order->id_customer);
-        $carrier = new Carrier((int) $this->order->id_carrier);
+        $carriers = OrderCarrier::getOrderCarrierByOrderId((int) $this->order->id);
 
         $order_details = $this->order_invoice->getProducts();
 
@@ -246,6 +246,7 @@ class HTMLTemplateInvoiceCore extends HTMLTemplate
 
         $cart_rules = $this->order->getCartRules();
         $free_shipping = false;
+
         foreach ($cart_rules as $key => $cart_rule) {
             if ($cart_rule['free_shipping']) {
                 $free_shipping = true;
@@ -284,7 +285,6 @@ class HTMLTemplateInvoiceCore extends HTMLTemplate
         $shipping_tax_excl = $free_shipping ? 0 : $this->order_invoice->total_shipping_tax_excl;
         $shipping_tax_incl = $free_shipping ? 0 : $this->order_invoice->total_shipping_tax_incl;
         $shipping_taxes = $shipping_tax_incl - $shipping_tax_excl;
-
         $wrapping_taxes = $this->order_invoice->total_wrapping_tax_incl - $this->order_invoice->total_wrapping_tax_excl;
 
         $total_taxes = $this->order_invoice->total_paid_tax_incl - $this->order_invoice->total_paid_tax_excl;
@@ -349,7 +349,7 @@ class HTMLTemplateInvoiceCore extends HTMLTemplate
             'order' => $this->order,
             'order_invoice' => $this->order_invoice,
             'order_details' => $order_details,
-            'carrier' => $carrier,
+            'carriers' => array_column($carriers, 'name'),
             'cart_rules' => $cart_rules,
             'delivery_address' => $formatted_delivery_address,
             'invoice_address' => $formatted_invoice_address,

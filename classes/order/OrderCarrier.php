@@ -75,6 +75,7 @@ class OrderCarrierCore extends ObjectModel
         'fields' => [
             'id_order' => ['xlink_resource' => 'orders'],
             'id_carrier' => ['xlink_resource' => 'carriers'],
+            'id_order_invoice' => ['xlink_resource' => 'invoices'],
         ],
     ];
 
@@ -172,6 +173,14 @@ class OrderCarrierCore extends ObjectModel
         } else {
             return false;
         }
+    }
+
+    public static function getOrderCarrierByOrderId($orderId)
+    {
+        $sql = 'SELECT *  FROM `' . _DB_PREFIX_ . 'order_carrier` AS psoc INNER JOIN `' . _DB_PREFIX_ . 'carrier` AS psc ON psoc.id_carrier = psc.id_carrier WHERE `id_order` = ' . (int) $orderId ;
+        $result = Db::getInstance()->executeS($sql);
+
+        return $result;
     }
 
     public function updateWs()

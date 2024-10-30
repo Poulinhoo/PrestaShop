@@ -1958,6 +1958,14 @@ class OrderCore extends ObjectModel
         return $order_slips;
     }
 
+    public function getShippingDetail()
+    {
+        $order_carrier = new PrestaShopCollection('OrderCarrier');
+        $order_carrier->where('id_order', '=', $this->id);
+
+        return $order_carrier->getResults();
+    }
+
     /**
      * Get all invoices for the current order.
      *
