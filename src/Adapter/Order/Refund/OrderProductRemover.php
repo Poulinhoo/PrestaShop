@@ -32,6 +32,7 @@ use Cart;
 use CartRule;
 use Db;
 use Order;
+use OrderCarrier;
 use OrderCartRule;
 use OrderDetail;
 use PrestaShop\PrestaShop\Adapter\Cart\Comparator\CartProductsComparator;
@@ -82,12 +83,32 @@ class OrderProductRemover
             $this->deleteCustomization($order, $orderDetail);
         }
 
+        // Update carrier weight for shipping cost
+        $this->checkCarrierHasProducts($order->id, $orderDetail);
+
         $this->deleteOrderDetail(
             $order,
             $orderDetail
         );
 
         return $this->cartProductComparator;
+    }
+
+    private function checkCarrierHasProducts(int $orderId, OrderDetail $orderDetail)
+    {
+        $carrier = new OrderCarrier($orderDetail->id_order_carrier);
+
+        if (count($orderDetail->getList($orderId)) <= 1) {
+            $carrier->delete();
+        } else {
+            $carrier->weight -= (float) $orderDetail->product_weight;
+
+            if ($carrier->weight <= 0) {
+                $carrier->delete();
+            } else {
+                $carrier->save();
+            }
+        }
     }
 
     /**

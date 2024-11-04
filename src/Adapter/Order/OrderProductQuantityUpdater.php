@@ -36,6 +36,7 @@ use Customization;
 use Db;
 use LogicException;
 use Order;
+use OrderCarrier;
 use OrderDetail;
 use OrderInvoice;
 use PrestaShop\PrestaShop\Adapter\Cart\Comparator\CartProductsComparator;
@@ -156,6 +157,7 @@ class OrderProductQuantityUpdater
             if ((int) $orderDetail->id_customization) {
                 $this->deleteProductCustomization((int) $orderDetail->id_customization);
             }
+
             $this->applyOtherProductUpdates($order, $cart, $orderInvoice, $cartComparator->getUpdatedProducts());
             $this->applyOtherProductCreation($order, $cart, $orderInvoice, $cartComparator->getAdditionalProducts());
         } else {
@@ -421,7 +423,7 @@ class OrderProductQuantityUpdater
     private function deleteProductCustomization(int $id_customization): void
     {
         if (!Db::getInstance()->execute(
-            'DELETE FROM `' . _DB_PREFIX_ . 'customization` 
+            'DELETE FROM `' . _DB_PREFIX_ . 'customization`
             WHERE `id_customization` = ' . (int) $id_customization)) {
             throw new OrderException('Could not delete customization from database.');
         }

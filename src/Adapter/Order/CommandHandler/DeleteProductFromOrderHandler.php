@@ -31,6 +31,7 @@ use Currency;
 use Customer;
 use Hook;
 use Order;
+use OrderCarrier;
 use OrderDetail;
 use OrderInvoice;
 use PrestaShop\PrestaShop\Adapter\ContextStateManager;

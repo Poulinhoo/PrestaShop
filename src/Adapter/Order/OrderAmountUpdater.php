@@ -150,9 +150,6 @@ class OrderAmountUpdater
             // Update order totals
             $this->updateOrderTotals($order, $cart, $computingPrecision);
 
-            // Update carrier weight for shipping cost
-            $this->updateOrderCarrier($order, $cart);
-
             // Order::update is called after previous functions so that we only call it once
             if (!$order->update()) {
                 throw new OrderException('Could not update order invoice in database.');
@@ -324,36 +321,6 @@ class OrderAmountUpdater
             $order->total_shipping = $totalShippingTaxIncluded;
             $order->total_shipping_tax_incl = $totalShippingTaxIncluded;
             $order->total_shipping_tax_excl = $totalShippingTaxExcluded;
-        }
-    }
-
-    /**
-     * @param Order $order
-     * @param Cart $cart
-     *
-     * @throws PrestaShopDatabaseException
-     * @throws PrestaShopException
-     */
-    private function updateOrderCarrier(Order $order, Cart $cart): void
-    {
-        $orderCarrier = new OrderCarrier((int) $order->getIdOrderCarrier());
-
-        if (Validate::isLoadedObject($orderCarrier)) {
-            $orderCarrier->weight = (float) $order->getTotalWeight();
-            $orderCarrier->shipping_cost_tax_incl = (float) $order->total_shipping_tax_incl;
-            $orderCarrier->shipping_cost_tax_excl = (float) $order->total_shipping_tax_excl;
-
-            if ($orderCarrier->update()) {
-                $order->weight = sprintf('%.3f ' . $this->getOrderConfiguration('PS_WEIGHT_UNIT', $order), $orderCarrier->weight);
-            }
-        }
-
-        if (!$cart->isVirtualCart() && !empty($order->id_carrier)) {
-            $carrier = new Carrier((int) $order->id_carrier, (int) $cart->id_lang);
-            if (Validate::isLoadedObject($carrier)) {
-                $taxAddressId = (int) $order->{$this->getOrderConfiguration('PS_TAX_ADDRESS_TYPE', $order)};
-                $order->carrier_tax_rate = $carrier->getTaxesRate(new Address($taxAddressId));
-            }
         }
     }
 

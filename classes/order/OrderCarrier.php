@@ -183,6 +183,12 @@ class OrderCarrierCore extends ObjectModel
         return $result;
     }
 
+    public static function deleteCarrier($orderId) {
+        $sql = 'DELETE FROM `' . _DB_PREFIX_ . 'order_carrier` WHERE `id_order_carrier` = ' . (int) $orderId ;
+
+        return Db::getInstance()->executeS($sql);
+    }
+
     public function updateWs()
     {
         if (!parent::update()) {

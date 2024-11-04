@@ -850,6 +850,21 @@ class OrderDetailCore extends ObjectModel
         return $this->outOfStock;
     }
 
+    public static function getProductHandledByCarrier($id)
+    {
+        $sql = 'SELECT * FROM `' . _DB_PREFIX_ . 'order_detail` WHERE `id_order_detail` = ' . (int) $id;
+
+        return Db::getInstance()->executeS($sql);
+    }
+
+    public static function deleteProductHandledByCarrier($id)
+    {
+        $sql = 'DELETE FROM `' . _DB_PREFIX_ . 'order_detail` WHERE `id_order_detail` = ' . (int) $id;
+        $result = Db::getInstance()->getRow($sql);
+
+        return $result;
+    }
+
     /**
      * Set the additional shipping information.
      *
