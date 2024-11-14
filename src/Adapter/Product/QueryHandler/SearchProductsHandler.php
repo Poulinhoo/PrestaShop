@@ -207,7 +207,8 @@ final class SearchProductsHandler extends AbstractOrderHandler implements Search
             $product->location,
             (bool) Product::isAvailableWhenOutOfStock($product->out_of_stock),
             $this->getProductCombinations($product, $isoCodeCurrency, $computingPrecision, $order),
-            $this->getProductCustomizationFields($product)
+            $this->getProductCustomizationFields($product),
+            $product->getCarriers()
         );
     }
 

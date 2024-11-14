@@ -87,6 +87,11 @@ class FoundProduct
     private $customizationFields;
 
     /**
+     * @var array
+     */
+    private $carriers;
+
+    /**
      * @param int $productId
      * @param string $name
      * @param string $formattedPrice
@@ -98,6 +103,7 @@ class FoundProduct
      * @param bool $availableOutOfStock
      * @param ProductCombination[] $combinations
      * @param ProductCustomizationField[] $customizationFields
+     * @param array $carriers
      */
     public function __construct(
         int $productId,
@@ -110,7 +116,8 @@ class FoundProduct
         string $location,
         bool $availableOutOfStock,
         array $combinations = [],
-        array $customizationFields = []
+        array $customizationFields = [],
+        array $carriers = []
     ) {
         $this->productId = $productId;
         $this->name = $name;
@@ -123,6 +130,7 @@ class FoundProduct
         $this->availableOutOfStock = $availableOutOfStock;
         $this->combinations = $combinations;
         $this->customizationFields = $customizationFields;
+        $this->carriers = $carriers;
     }
 
     /**
@@ -195,6 +203,14 @@ class FoundProduct
     public function getCombinations(): array
     {
         return $this->combinations;
+    }
+
+    /**
+     * @return array
+     */
+    public function getCarriers(): array
+    {
+        return $this->carriers;
     }
 
     /**

@@ -245,7 +245,7 @@ class OrderForViewing
         ?OrderCustomerForViewing $customer,
         OrderShippingAddressForViewing $shippingAddress,
         OrderInvoiceAddressForViewing $invoiceAddress,
-        OrderProductsForViewing $products,
+        $products,
         OrderHistoryForViewing $history,
         OrderDocumentsForViewing $documents,
         OrderShippingForViewing $shipping,

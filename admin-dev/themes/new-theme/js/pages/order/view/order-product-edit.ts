@@ -94,6 +94,8 @@ export default class OrderProductEdit {
 
   productEditName: JQuery | null;
 
+  productEditCarrierName: JQuery | null;
+
   locationText: JQuery | null;
 
   isOrderTaxIncluded: number | null;
@@ -123,6 +125,7 @@ export default class OrderProductEdit {
     this.productRowEdit = null;
     this.productEditImage = null;
     this.productEditName = null;
+    this.productEditCarrierName = null;
     this.locationText = null;
   }
 
@@ -230,6 +233,7 @@ export default class OrderProductEdit {
     this.productEditInvoiceSelect = this.productRowEdit.find(OrderViewPageMap.productEditInvoiceSelect);
     this.productEditImage = this.productRowEdit.find(OrderViewPageMap.productEditImage);
     this.productEditName = this.productRowEdit.find(OrderViewPageMap.productEditName);
+    this.productEditCarrierName = this.productRowEdit.find(OrderViewPageMap.productEditCarrierName);
     this.priceTaxIncludedInput = this.productRowEdit.find(OrderViewPageMap.productEditPriceTaxInclInput);
     this.priceTaxExcludedInput = this.productRowEdit.find(OrderViewPageMap.productEditPriceTaxExclInput);
     this.quantityInput = this.productRowEdit.find(OrderViewPageMap.productEditQuantityInput);
@@ -272,6 +276,9 @@ export default class OrderProductEdit {
     );
     this.productEditName.html(
       this.productRow.find(OrderViewPageMap.productEditName).html(),
+    );
+    this.productEditCarrierName.html(
+      this.productRow.find(OrderViewPageMap.productEditCarrierName).html(),
     );
     this.locationText.html(product.location);
     this.availableText.html(<string><unknown>product.availableQuantity);

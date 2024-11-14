@@ -197,12 +197,19 @@ final class AddProductToOrderHandler extends AbstractOrderHandler implements Add
                 $createdProducts
             );
 
+            $orderCarrierId = $this->createOrderCarrier(
+                $order,
+                $command->getCarrierId(),
+                $product->weight
+            );
+
             // Create Order detail information
             $this->createOrderDetails(
                 $order,
                 $invoice,
                 $cart,
-                $createdProducts
+                $createdProducts,
+                $orderCarrierId,
             );
 
             // Once OrderDetail has been created we update it (and identical ones) with the correct price
@@ -240,6 +247,26 @@ final class AddProductToOrderHandler extends AbstractOrderHandler implements Add
         }
     }
 
+    private function createOrderCarrier(Order $order, int $carrierId, $productWeight): int
+    {
+        $hasAlreadyAnOrderCarrier = OrderCarrier::getOrderCarrierByOrderId($order->id);
+
+        if (array_search($carrierId, array_column($hasAlreadyAnOrderCarrier, 'id_carrier'))) {
+            $orderCarrier = new OrderCarrier($hasAlreadyAnOrderCarrier[0]['id_order_carrier']);
+            $orderCarrier->weight = (float) $orderCarrier->weight + $productWeight;
+            $orderCarrier->update();
+        } else {
+            $orderCarrier = new OrderCarrier();
+            $orderCarrier->id_order = $order->id;
+            $orderCarrier->id_order_invoice = $order->invoice_number;
+            $orderCarrier->weight = (float) $productWeight;
+            $orderCarrier->id_carrier = $carrierId;
+            $orderCarrier->add();
+        }
+
+        return (int) $orderCarrier->id;
+    }
+
     /**
      * @param Order $order
      * @param OrderInvoice|null $invoice
@@ -249,7 +276,7 @@ final class AddProductToOrderHandler extends AbstractOrderHandler implements Add
      * @throws PrestaShopDatabaseException
      * @throws PrestaShopException
      */
-    private function createOrderDetails(Order $order, ?OrderInvoice $invoice, Cart $cart, array $cartProducts): void
+    private function createOrderDetails(Order $order, ?OrderInvoice $invoice, Cart $cart, array $cartProducts, int $carrierId): void
     {
         $orderDetail = new OrderDetail();
         $orderDetail->createList(
@@ -257,7 +284,10 @@ final class AddProductToOrderHandler extends AbstractOrderHandler implements Add
             $cart,
             $order->getCurrentState(),
             $cartProducts,
-            !empty($invoice->id) ? $invoice->id : 0
+            !empty($invoice->id) ? $invoice->id : 0,
+            true,
+            0,
+            $carrierId
         );
     }
 

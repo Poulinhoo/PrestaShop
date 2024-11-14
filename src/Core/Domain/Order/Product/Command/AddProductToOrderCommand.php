@@ -81,6 +81,11 @@ class AddProductToOrderCommand
     private $hasFreeShipping;
 
     /**
+     * @var int
+     */
+    private $carrierId;
+
+    /**
      * Add product to an order with new invoice. It applies to orders that were already paid and waiting for payment.
      *
      * @param int $orderId
@@ -104,7 +109,8 @@ class AddProductToOrderCommand
         string $productPriceTaxIncluded,
         string $productPriceTaxExcluded,
         int $productQuantity,
-        ?bool $hasFreeShipping = null
+        ?bool $hasFreeShipping = null,
+        int $carrierId
     ) {
         $command = new self(
             $orderId,
@@ -112,7 +118,9 @@ class AddProductToOrderCommand
             $combinationId,
             $productPriceTaxIncluded,
             $productPriceTaxExcluded,
-            $productQuantity
+            $productQuantity,
+            $hasFreeShipping,
+            $carrierId
         );
 
         $command->hasFreeShipping = $hasFreeShipping;
@@ -144,7 +152,8 @@ class AddProductToOrderCommand
         int $combinationId,
         string $productPriceTaxIncluded,
         string $productPriceTaxExcluded,
-        int $productQuantity
+        int $productQuantity,
+        int $carrierId,
     ) {
         $command = new self(
             $orderId,
@@ -152,7 +161,8 @@ class AddProductToOrderCommand
             $combinationId,
             $productPriceTaxIncluded,
             $productPriceTaxExcluded,
-            $productQuantity
+            $productQuantity,
+            $carrierId
         );
 
         $command->orderInvoiceId = $orderInvoiceId;
@@ -178,11 +188,13 @@ class AddProductToOrderCommand
         int $combinationId,
         string $productPriceTaxIncluded,
         string $productPriceTaxExcluded,
-        int $productQuantity
+        int $productQuantity,
+        int $carrierId
     ) {
         $this->orderId = new OrderId($orderId);
         $this->productId = new ProductId($productId);
         $this->combinationId = !empty($combinationId) ? new CombinationId($combinationId) : null;
+        $this->carrierId = $carrierId;
         try {
             $this->productPriceTaxIncluded = new DecimalNumber($productPriceTaxIncluded);
             $this->productPriceTaxExcluded = new DecimalNumber($productPriceTaxExcluded);
@@ -231,6 +243,15 @@ class AddProductToOrderCommand
     {
         return $this->productPriceTaxExcluded;
     }
+
+    /**
+     * @return int
+     */
+
+     public function getCarrierId(): int
+     {
+         return $this->carrierId;
+     }
 
     /**
      * @return int

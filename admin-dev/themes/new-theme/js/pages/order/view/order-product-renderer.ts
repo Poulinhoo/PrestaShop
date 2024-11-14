@@ -155,6 +155,8 @@ export default class OrderProductRenderer {
     $(OrderViewPageMap.productAddCombinationsBlock).addClass('d-none');
     $(OrderViewPageMap.productAddCombinationsSelect).val('');
     $(OrderViewPageMap.productAddCombinationsSelect).prop('disabled', false);
+    $(OrderViewPageMap.productAddCarrierSelect).val('');
+    $(OrderViewPageMap.productAddCarrierSelect).prop('disabled', false);
     $(OrderViewPageMap.productAddPriceTaxExclInput).val('');
     $(OrderViewPageMap.productAddPriceTaxInclInput).val('');
     $(OrderViewPageMap.productAddQuantityInput).val('');

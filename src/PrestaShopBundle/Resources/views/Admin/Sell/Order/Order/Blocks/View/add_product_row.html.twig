@@ -73,6 +73,12 @@
       }}
     </td>
   {% endif %}
+
+  <td id="addProductCarriers">
+      <div class="mt-2 d-none" id="addProductCarrier">
+      <select id="addProductCarrierId" class="custom-select"></select>
+    </div>
+  </td>
   <td class="text-right add-product-buttons">
     <div class="btn-group">
       {{ form_row(addProductRowForm.cancel) }}

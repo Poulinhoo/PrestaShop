@@ -171,6 +171,8 @@ class OrderProductQuantityUpdater
             $orderDetail->reduction_percent = 0;
             $orderDetail->update();
 
+            $this->updateOrderCarrierWeight($orderDetail, $newQuantity);
+
             // Update quantity on the cart and stock
             if ($updateCart) {
                 $cartComparator = $this->updateProductQuantity($cart, $orderDetail, $oldQuantity, $newQuantity);
@@ -181,6 +183,13 @@ class OrderProductQuantityUpdater
 
         // Update product stocks
         $this->updateStocks($cart, $orderDetail, $oldQuantity, $newQuantity);
+    }
+
+    private function updateOrderCarrierWeight(OrderDetail $orderDetail): void
+    {
+        $orderCarrier = new OrderCarrier($orderDetail->id_order_carrier);
+        $orderCarrier->weight = (float) $orderDetail->product_weight * $orderDetail->product_quantity;
+        $orderCarrier->update();
     }
 
     /**

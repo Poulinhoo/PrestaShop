@@ -90,6 +90,9 @@
               <p>{{ 'Invoice'|trans({}, 'Admin.Global') }}</p>
             </th>
           {% endif %}
+          <th>
+            <p>{{ 'Carrier'|trans({}, 'Admin.Global') }}</p>
+          </th>
           {% if not orderForViewing.delivered %}
             <th class="text-right product_actions d-print-none">
               <p>{{ 'Actions'|trans({}, 'Admin.Global') }}</p>

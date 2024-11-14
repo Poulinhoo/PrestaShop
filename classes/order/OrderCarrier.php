@@ -175,7 +175,7 @@ class OrderCarrierCore extends ObjectModel
         }
     }
 
-    public static function getOrderCarrierByOrderId($orderId)
+    public static function getOrderCarrierByOrderId($orderId): array
     {
         $sql = 'SELECT *  FROM `' . _DB_PREFIX_ . 'order_carrier` AS psoc INNER JOIN `' . _DB_PREFIX_ . 'carrier` AS psc ON psoc.id_carrier = psc.id_carrier WHERE `id_order` = ' . (int) $orderId ;
         $result = Db::getInstance()->executeS($sql);

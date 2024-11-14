@@ -738,7 +738,8 @@ class OrderController extends PrestaShopAdminController
                     (int) $request->get('combination_id'),
                     $request->get('price_tax_incl'),
                     $request->get('price_tax_excl'),
-                    (int) $request->get('quantity')
+                    (int) $request->get('quantity'),
+                    (int) $request->get('carrier_id')
                 );
             } else {
                 $hasFreeShipping = null;
@@ -752,7 +753,8 @@ class OrderController extends PrestaShopAdminController
                     $request->get('price_tax_incl'),
                     $request->get('price_tax_excl'),
                     (int) $request->get('quantity'),
-                    $hasFreeShipping
+                    $hasFreeShipping,
+                    (int) $request->get('carrier_id')
                 );
             }
             $this->dispatchCommand($addProductCommand);

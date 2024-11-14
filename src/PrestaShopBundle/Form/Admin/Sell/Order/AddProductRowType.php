@@ -117,6 +117,11 @@ class AddProductRowType extends TranslatorAwareType
                     'min' => 1,
                 ],
             ])
+            ->add('carrier', ChoiceType::class, [
+                'attr' => [
+                    'class' => 'custom-select',
+                ],
+            ])
             ->add('invoice', ChoiceType::class, [
                 'label' => false,
                 'disabled' => true,

@@ -75,6 +75,7 @@
   {% if orderForViewing.hasInvoice() %}
     <td>{{ product.orderInvoiceNumber }}</td>
   {% endif %}
+  <td class="cellProductCarrierName">{{ product.carrierName }}</td>
   {% if not orderForViewing.delivered %}
     <td class="text-right cellProductActions">
       <button

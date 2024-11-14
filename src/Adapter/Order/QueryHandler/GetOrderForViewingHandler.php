@@ -41,6 +41,7 @@ use Group;
 use Module;
 use Order;
 use OrderCarrier;
+use OrderDetail;
 use OrderInvoice;
 use OrderPayment;
 use OrderSlip;
@@ -177,7 +178,7 @@ final class GetOrderForViewingHandler extends AbstractOrderHandler implements Ge
     public function handle(GetOrderForViewing $query): OrderForViewing
     {
         $order = $this->getOrder($query->getOrderId());
-        $orderCarrier = OrderCarrier::getOrderCarrierByOrderId($order->id);
+        $orderCarriers = OrderCarrier::getOrderCarrierByOrderId($order->id);
         $taxCalculationMethod = $this->getOrderTaxCalculationMethod($order);
         $isTaxIncluded = ($taxCalculationMethod == PS_TAX_INC);
 
@@ -192,11 +193,19 @@ final class GetOrderForViewingHandler extends AbstractOrderHandler implements Ge
         );
 
         $orderInvoiceAddress = $this->getOrderInvoiceAddress($order);
+        $products = $this->getOrderProducts($query->getOrderId(), $query->getProductsSorting()->getValue());
+
+        foreach ($products->getProducts() as &$product) {
+            $orderDetail = new OrderDetail($product->getOrderDetailId());
+            $orderCarrier = new OrderCarrier($orderDetail->id_order_carrier);
+            // maybe here add property inside the object instead of creating one here
+            $product->carrierName = (new Carrier($orderCarrier->id_carrier))->name;
+        }
 
         return new OrderForViewing(
             (int) $order->id,
             (int) $order->id_currency,
-            $orderCarrier,
+            $orderCarriers,
             (int) $order->id_shop,
             $order->reference,
             (bool) $order->isVirtual(),
@@ -212,7 +221,7 @@ final class GetOrderForViewingHandler extends AbstractOrderHandler implements Ge
             $this->getOrderCustomer($order, $orderInvoiceAddress),
             $this->getOrderShippingAddress($order),
             $orderInvoiceAddress,
-            $this->getOrderProducts($query->getOrderId(), $query->getProductsSorting()->getValue()),
+            $products,
             $this->getOrderHistory($order),
             $this->getOrderDocuments($order),
             $this->getOrderShipping($order),

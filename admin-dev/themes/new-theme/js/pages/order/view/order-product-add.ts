@@ -45,6 +45,10 @@ export default class OrderProductAdd {
 
   combinationsSelect: JQuery;
 
+  carrierBlock: JQuery;
+
+  carrierSelect: JQuery;
+
   priceTaxIncludedInput: JQuery;
 
   priceTaxExcludedInput: JQuery;
@@ -88,7 +92,9 @@ export default class OrderProductAdd {
     this.productAddActionBtn = $(OrderViewPageMap.productAddActionBtn);
     this.productIdInput = $(OrderViewPageMap.productAddIdInput);
     this.combinationsBlock = $(OrderViewPageMap.productAddCombinationsBlock);
+    this.carrierBlock = $(OrderViewPageMap.productAddCarrierBlock);
     this.combinationsSelect = $(OrderViewPageMap.productAddCombinationsSelect);
+    this.carrierSelect = $(OrderViewPageMap.productAddCarrierSelect);
     this.priceTaxIncludedInput = $(
       OrderViewPageMap.productAddPriceTaxInclInput,
     );
@@ -269,10 +275,36 @@ export default class OrderProductAdd {
       );
       this.quantityInput.val(1);
       this.quantityInput.trigger('change');
+      this.setCarriers(product.carriers);
       this.setCombinations(product.combinations);
       this.orderProductRenderer.toggleColumn(
         OrderViewPageMap.productsCellLocation,
       );
+    }
+  }
+
+  setCarriers(carriers: Record<string, any>): void {
+    this.carrierSelect.empty();
+
+    carriers.forEach((val) => {
+      this.carrierSelect.append(
+        /* eslint-disable-next-line max-len */
+        `<option value="${val.id_carrier}">${val.name}</option>`,
+      );
+    });
+
+    this.carrierBlock.toggleClass(
+      'd-block',
+      carriers.length > 0,
+    );
+
+    this.carrierBlock.toggleClass(
+      'd-none',
+      carriers.length === 0,
+    );
+
+    if (carriers.length > 0) {
+      this.carrierSelect.trigger('change');
     }
   }
 
@@ -300,6 +332,7 @@ export default class OrderProductAdd {
     this.productAddActionBtn.prop('disabled', true);
     this.invoiceSelect.prop('disabled', true);
     this.combinationsSelect.prop('disabled', true);
+    this.carrierSelect.prop('disabled', true);
 
     const params = {
       product_id: this.productIdInput.val(),
@@ -309,6 +342,7 @@ export default class OrderProductAdd {
       quantity: this.quantityInput.val(),
       invoice_id: this.invoiceSelect.val(),
       free_shipping: this.freeShippingSelect.prop('checked'),
+      carrier_id: $(':selected', this.carrierSelect).val(),
     };
 
     $.ajax({
@@ -327,6 +361,7 @@ export default class OrderProductAdd {
         this.productAddActionBtn.prop('disabled', false);
         this.invoiceSelect.prop('disabled', false);
         this.combinationsSelect.prop('disabled', false);
+        this.carrierSelect.prop('disabled', false);
 
         if (response.responseJSON && response.responseJSON.message) {
           $.growl.error({message: response.responseJSON.message});
