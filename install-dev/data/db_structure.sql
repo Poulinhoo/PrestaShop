@@ -1302,6 +1302,7 @@ CREATE TABLE IF NOT EXISTS `PREFIX_order_invoice_tax` (
 /* order detail (every product inside an order) */
 CREATE TABLE `PREFIX_order_detail` (
   `id_order_detail` int(10) unsigned NOT NULL auto_increment,
+  `id_order_carrier` int(10) unsigned DEFAULT 0,
   `id_order` int(10) unsigned NOT NULL,
   `id_order_invoice` int(11) DEFAULT NULL,
   `id_warehouse` int(10) unsigned DEFAULT '0',
@@ -3031,7 +3032,3 @@ CREATE TABLE `PREFIX_access` (
   KEY `IDX_564352A15FCA037F` (`id_profile`),
   KEY `IDX_564352A18C6DE0E5` (`id_authorization_role`)
 ) ENGINE=ENGINE_TYPE DEFAULT CHARSET=utf8mb4 COLLATION;
-
-ALTER TABLE `PREFIX_order_carrier` ADD `id_order_invoice` INT(10) UNSIGNED DEFAULT NULL AFTER `id_order`;
-
-ALTER TABLE `PREFIX_order_detail` ADD `id_order_carrier` INT(10) UNSIGNED DEFAULT NULL AFTER `id_order`;

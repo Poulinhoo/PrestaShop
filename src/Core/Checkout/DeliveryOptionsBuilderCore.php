@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright since 2007 PrestaShop SA and Contributors
  * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
@@ -23,6 +24,7 @@
  * @copyright Since 2007 PrestaShop SA and Contributors
  * @license   https://opensource.org/licenses/OSL-3.0 Open Software License (OSL 3.0)
  */
+
 use PrestaShop\PrestaShop\Adapter\Presenter\Object\ObjectPresenter;
 use PrestaShop\PrestaShop\Adapter\Product\PriceFormatter;
 use PrestaShop\PrestaShop\Core\Checkout\DeliveryOptionsBuilder;
@@ -73,10 +75,11 @@ class DeliveryOptionsFinderCore
 
     public function getDeliveryOptions()
     {
-        return (new DeliveryOptionsBuilder($this->context, $this->priceFormatter, $this->translator))->getDeliveryOptions();
+        $test = new DeliveryOptionsBuilder($this->context);
+
+        return $test->getDeliveryOptions();
 
         $delivery_option_list = $this->context->cart->getDeliveryOptionList();
-
         $include_taxes = !Product::getTaxCalculationMethod((int) $this->context->cart->id_customer) && (int) Configuration::get('PS_TAX');
         $display_taxes_label = (Configuration::get('PS_TAX') && $this->context->country->display_tax_label && !Configuration::get('AEUC_LABEL_TAX_INC_EXC'));
 
