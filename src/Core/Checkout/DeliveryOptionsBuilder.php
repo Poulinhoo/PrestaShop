@@ -52,14 +52,57 @@ class DeliveryOptionsBuilder
      */
     private $deliveryOptions = [];
 
-    public function __construct(Context $context, PriceFormatter $priceFormatter, TranslatorInterface $translator)
+    public function __construct(Context $context, TranslatorInterface $translator)
     {
         $this->context = $context;
-        $this->priceFormatter = $priceFormatter;
+        $this->priceFormatter = new PriceFormatter();
         $this->translator = $translator;
     }
 
-    public function getSelectedCarriers() {}
+    public function getSelectedCarriers()
+    {
+
+    }
+
+    public function setDeliveryOption($deliveryOption = null)
+    {
+        $result = json_encode($deliveryOption);
+
+        $this->context->cart->delivery_option = $result;
+
+        \CartRule::autoRemoveFromCart();
+        \CartRule::autoAddToCart();
+    }
+
+    public function getDeliveryOption()
+    {
+        $delivery_option = $this->context->cart->delivery_option;
+        $delivery_option_list = $this->getDeliveryOptions();
+
+        if (isset($delivery_option) && $delivery_option != '') {
+            $delivery_option = json_decode($delivery_option, true);
+            $validated = true;
+
+            if (is_array($delivery_option)) {
+                foreach ($delivery_option as $carrierIds) {
+                    foreach($delivery_option_list as $details)
+                    {
+                        if (!isset($details['details'])) {
+                            $validated = false;
+
+                            break;
+                        }
+                    }
+                }
+
+                if ($validated) {
+                    return $delivery_option;
+                }
+            }
+        }
+
+        return $delivery_option;
+    }
 
     public function getDeliveryOptions()
     {
@@ -71,6 +114,10 @@ class DeliveryOptionsBuilder
 
     public function findAllCombinations(array $products, int $currentPosition, $deliveryOption)
     {
+        if (count($products) === 0) {
+            return [];
+        }
+
         $carriersFromCurrentPosition = (new Product($products[$currentPosition]['id_product']))->getCarriers();
         $nextPosition = isset($products[$currentPosition + 1]) ? $currentPosition + 1 : -1;
 
@@ -183,5 +230,34 @@ class DeliveryOptionsBuilder
         $details['idsCarriers'] = implode(',', $details['idsCarriers']);
 
         return $details;
+    }
+
+    public function getTotalShippingCost($delivery_option = null, $use_tax = true)
+    {
+        if (null === $delivery_option) {
+            $delivery_option = $this->getDeliveryOption();
+        }
+
+        $_total_shipping = [
+            'with_tax' => 0,
+            'without_tax' => 0,
+        ];
+
+        $delivery_option_list = $this->getDeliveryOptions();
+
+        if ($delivery_option === "") {
+            return ($use_tax) ? $_total_shipping['with_tax'] : $_total_shipping['without_tax'];
+        }
+
+        foreach($delivery_option_list as $details)
+        {
+            if ($details['details']['ids_carriers'] === current($delivery_option)) {
+                $_total_shipping['with_tax'] += $details['details']['price_with_tax'];
+                $_total_shipping['without_tax'] += $details['details']['price_without_tax'];
+                break;
+            }
+        }
+
+        return ($use_tax) ? $_total_shipping['with_tax'] : $_total_shipping['without_tax'];
     }
 }

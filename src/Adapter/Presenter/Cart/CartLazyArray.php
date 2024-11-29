@@ -41,6 +41,7 @@ use PrestaShop\PrestaShop\Adapter\Presenter\Product\ProductListingLazyArray;
 use PrestaShop\PrestaShop\Adapter\Presenter\Product\ProductListingPresenter;
 use PrestaShop\PrestaShop\Adapter\Product\PriceFormatter;
 use PrestaShop\PrestaShop\Adapter\Product\ProductColorsRetriever;
+use PrestaShop\PrestaShop\Core\Checkout\DeliveryOptionsBuilder;
 use Symfony\Contracts\Translation\TranslatorInterface;
 use Tools;
 
@@ -184,7 +185,7 @@ class CartLazyArray extends AbstractLazyArray
             ];
         }
         if (!$this->cart->isVirtualCart()) {
-            $shippingCost = $this->cart->getTotalShippingCost(null, $this->cartPresenter->includeTaxes());
+            $shippingCost = (new DeliveryOptionsBuilder(Context::getContext(), $this->translator))->getTotalShippingCost(null, $this->cartPresenter->includeTaxes());
         } else {
             $shippingCost = 0;
         }
@@ -376,24 +377,7 @@ class CartLazyArray extends AbstractLazyArray
         if ($shippingCost != 0) {
             $shippingDisplayValue = $this->priceFormatter->format($shippingCost);
         } else {
-            $defaultCountry = null;
-
-            if (isset(Context::getContext()->cookie->id_country)) {
-                $defaultCountry = new Country((int) Context::getContext()->cookie->id_country);
-            }
-
-            $deliveryOptionList = $this->cart->getDeliveryOptionList($defaultCountry);
-
-            if (count($deliveryOptionList) > 0) {
-                foreach ($deliveryOptionList as $option) {
-                    foreach ($option as $currentCarrier) {
-                        if (isset($currentCarrier['is_free']) && $currentCarrier['is_free'] > 0) {
-                            $shippingDisplayValue = $this->translator->trans('Free', [], 'Shop.Theme.Checkout');
-                            break 2;
-                        }
-                    }
-                }
-            }
+            $shippingDisplayValue = $this->translator->trans('Free', [], 'Shop.Theme.Checkout');
         }
 
         return $shippingDisplayValue;

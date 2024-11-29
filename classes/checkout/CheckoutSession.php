@@ -23,6 +23,9 @@
  * @copyright Since 2007 PrestaShop SA and Contributors
  * @license   https://opensource.org/licenses/OSL-3.0 Open Software License (OSL 3.0)
  */
+
+ use PrestaShop\PrestaShop\Core\Checkout\DeliveryOptionsBuilder;
+
 class CheckoutSessionCore
 {
     /** @var Context */
@@ -143,13 +146,16 @@ class CheckoutSessionCore
 
     public function setDeliveryOption($option)
     {
-        $this->context->cart->setDeliveryOption($option);
-
+        (new DeliveryOptionsBuilder($this->context, $this->deliveryOptionsFinder->getTranslator()))->setDeliveryOption($option);
+        // $this->context->cart->setDeliveryOption($option);
         return $this->context->cart->update();
     }
 
     public function getSelectedDeliveryOption()
     {
+        if (!empty($this->deliveryOptionsFinder->getSelectedDeliveryOption())) {
+            return current($this->deliveryOptionsFinder->getSelectedDeliveryOption());
+        }
         return $this->deliveryOptionsFinder->getSelectedDeliveryOption();
     }
 

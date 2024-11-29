@@ -25,6 +25,7 @@
  */
 use PrestaShop\PrestaShop\Adapter\MailTemplate\MailPartialTemplateRenderer;
 use PrestaShop\PrestaShop\Adapter\StockManager;
+use PrestaShop\PrestaShop\Core\Checkout\DeliveryOptionsBuilder;
 
 abstract class PaymentModuleCore extends Module
 {
@@ -267,22 +268,10 @@ abstract class PaymentModuleCore extends Module
             PrestaShopLogger::addLog('PaymentModule::validateOrder - Secure key does not match', 3, null, 'Cart', (int) $id_cart, true);
             die(Tools::displayError('Error processing order. Secure key does not match.'));
         }
-
+        $deliveryOptionBuilder = new DeliveryOptionsBuilder($this->context, $this->getTranslator());
         // For each package, generate an order
-        $delivery_option_list = $this->context->cart->getDeliveryOptionList();
-        $package_list = $this->context->cart->getPackageList();
-        $cart_delivery_option = $this->context->cart->getDeliveryOption();
-
-        // If some delivery options are not defined, or not valid, use the first valid option
-        foreach ($delivery_option_list as $id_address => $package) {
-            if (!isset($cart_delivery_option[$id_address]) || !array_key_exists($cart_delivery_option[$id_address], $package)) {
-                foreach ($package as $key => $val) {
-                    $cart_delivery_option[$id_address] = $key;
-
-                    break;
-                }
-            }
-        }
+        $deliveryOptionList = $deliveryOptionBuilder->getDeliveryOptions();
+        $cartDeliveryOption = $deliveryOptionBuilder->getDeliveryOption();
 
         $order_list = [];
         $order_detail_list = [];
@@ -302,10 +291,14 @@ abstract class PaymentModuleCore extends Module
             Context::getContext()->getComputingPrecision()
         );
 
-        foreach ($cart_delivery_option as $id_address => $key_carriers) {
-            foreach ($delivery_option_list[$id_address][$key_carriers]['carrier_list'] as $id_carrier => $data) {
-                foreach ($data['package_list'] as $id_package) {
-                    $package_list[$id_address][$id_package]['id_carrier'] = $id_carrier;
+        // dd($cartDeliveryOption, $deliveryOptionList);
+        foreach ($cartDeliveryOption as $id_address => $key_carriers) {
+            foreach ($deliveryOptionList as $data) {
+                if ($data['details']['ids_carriers'] === $key_carriers) {
+                    $ids = explode(',', $data['details']['ids_carriers']);
+                    foreach($ids as $id) {
+                        $package_list[$id_address][$id] = $data['productsGroupedByCarrier'][$id]['products'];
+                    }
                 }
             }
         }
@@ -349,10 +342,9 @@ abstract class PaymentModuleCore extends Module
 
         // here we format a new array with carrierID as key and product list as value
         $products = [];
-
         foreach ($package_list as $id_address => $packageByAddress) {
-            foreach ($packageByAddress as $id_package => $package) {
-                $products[$package['id_carrier']] = $package['product_list'];
+            foreach ($packageByAddress as $carrierId => $product) {
+                $products[$carrierId] = $product;
             }
         }
 

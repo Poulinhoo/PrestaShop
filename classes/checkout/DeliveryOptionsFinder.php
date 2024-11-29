@@ -68,12 +68,13 @@ class DeliveryOptionsFinderCore
 
     public function getSelectedDeliveryOption()
     {
+        return (new DeliveryOptionsBuilder($this->context, $this->translator))->getDeliveryOption();
         return current($this->context->cart->getDeliveryOption(null, false, false));
     }
 
     public function getDeliveryOptions()
     {
-        return (new DeliveryOptionsBuilder($this->context, $this->priceFormatter, $this->translator))->getDeliveryOptions();
+        return (new DeliveryOptionsBuilder($this->context, $this->translator))->getDeliveryOptions();
 
         $delivery_option_list = $this->context->cart->getDeliveryOptionList();
 
@@ -142,5 +143,10 @@ class DeliveryOptionsFinderCore
         }
 
         return $carriers_available;
+    }
+
+    public function getTranslator()
+    {
+        return $this->translator;
     }
 }
