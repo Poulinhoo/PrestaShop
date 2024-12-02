@@ -109,6 +109,10 @@ class DeliveryOptionsBuilder
         $this->findAllCombinations($this->context->cart->getProducts(), 0, null);
         $this->calculateShippingCost();
 
+        usort($this->deliveryOptions, function ($a, $b) {
+            return $a['details']['price_with_tax'] <=> $b['details']['price_with_tax'];
+        });
+
         return $this->deliveryOptions;
     }
 
@@ -232,32 +236,32 @@ class DeliveryOptionsBuilder
         return $details;
     }
 
-    public function getTotalShippingCost($delivery_option = null, $use_tax = true)
+    public function getTotalShippingCost($deliveryOption = null, $useTax = true)
     {
-        if (null === $delivery_option) {
-            $delivery_option = $this->getDeliveryOption();
+        if (null === $deliveryOption) {
+            $deliveryOption = $this->getDeliveryOption();
         }
 
-        $_total_shipping = [
+        $totalShipping = [
             'with_tax' => 0,
             'without_tax' => 0,
         ];
 
-        $delivery_option_list = $this->getDeliveryOptions();
+        $deliveryOption_list = $this->getDeliveryOptions();
 
-        if ($delivery_option === "") {
-            return ($use_tax) ? $_total_shipping['with_tax'] : $_total_shipping['without_tax'];
+        if ($deliveryOption === "") {
+            return ($useTax) ? $totalShipping['with_tax'] : $totalShipping['without_tax'];
         }
 
-        foreach($delivery_option_list as $details)
+        foreach($deliveryOption_list as $details)
         {
-            if ($details['details']['ids_carriers'] === current($delivery_option)) {
-                $_total_shipping['with_tax'] += $details['details']['price_with_tax'];
-                $_total_shipping['without_tax'] += $details['details']['price_without_tax'];
+            if ($details['details']['ids_carriers'] === current($deliveryOption)) {
+                $totalShipping['with_tax'] += $details['details']['price_with_tax'];
+                $totalShipping['without_tax'] += $details['details']['price_without_tax'];
                 break;
             }
         }
 
-        return ($use_tax) ? $_total_shipping['with_tax'] : $_total_shipping['without_tax'];
+        return ($useTax) ? $totalShipping['with_tax'] : $totalShipping['without_tax'];
     }
 }
