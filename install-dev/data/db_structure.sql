@@ -3032,3 +3032,6 @@ CREATE TABLE `PREFIX_access` (
   KEY `IDX_564352A15FCA037F` (`id_profile`),
   KEY `IDX_564352A18C6DE0E5` (`id_authorization_role`)
 ) ENGINE=ENGINE_TYPE DEFAULT CHARSET=utf8mb4 COLLATION;
+
+/* Here we doing some stuff for multicarrier */
+ALTER TABLE `PREFIX_order_detail` ADD `id_order_carrier` INT(10) UNSIGNED DEFAULT NULL AFTER `id_order`;
