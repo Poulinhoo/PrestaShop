@@ -28,6 +28,7 @@ declare(strict_types=1);
 
 namespace PrestaShop\PrestaShop\Adapter\Product\Combination\Create;
 
+use Hook;
 use PrestaShop\PrestaShop\Adapter\Attribute\Repository\AttributeRepository;
 use PrestaShop\PrestaShop\Adapter\AttributeGroup\Repository\AttributeGroupRepository;
 use PrestaShop\PrestaShop\Adapter\Product\Combination\Repository\CombinationRepository;
@@ -278,6 +279,7 @@ class CombinationCreator
 
         try {
             $this->combinationRepository->saveProductAttributeAssociation($combinationId, $generatedCombination);
+            Hook::exec('actionAttributeCombinationSave', ['id_product_attribute' => (int) $combination->id, 'id_attributes' => $generatedCombination]);
         } catch (CoreException $e) {
             foreach ($shopIds as $shopId) {
                 $this->combinationRepository->delete($combinationId, ShopConstraint::shop($shopId->getValue()));
