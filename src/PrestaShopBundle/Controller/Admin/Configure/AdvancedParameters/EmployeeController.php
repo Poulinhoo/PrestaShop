@@ -395,6 +395,15 @@ class EmployeeController extends PrestaShopAdminController
         );
     }
 
+    #[AdminSecurity("is_granted('read', request.get('_legacy_controller'))")]
+    public function generatePasswordAction(): JsonResponse {
+        $password = \Tools::passwdGen(15);
+
+        return $this->json([
+            'password' => $password,
+        ]);
+    }
+
     /**
      * Get human readable error messages.
      *
