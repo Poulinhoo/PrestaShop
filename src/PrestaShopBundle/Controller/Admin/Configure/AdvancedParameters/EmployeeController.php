@@ -59,7 +59,8 @@ use PrestaShop\PrestaShop\Core\Security\Permission;
 use PrestaShop\PrestaShop\Core\Team\Employee\Configuration\OptionsCheckerInterface;
 use PrestaShop\PrestaShop\Core\Util\HelperCard\DocumentationLinkProviderInterface;
 use PrestaShopBundle\Controller\Admin\PrestaShopAdminController;
-use PrestaShopBundle\Entity\Employee\Employee;
+use PrestaShop\PrestaShop\Core\Security\PasswordGenerator;
+use PrestaShop\PrestaShop\Core\Security\OpenSsl\OpenSSL;
 use PrestaShopBundle\Security\Attribute\AdminSecurity;
 use PrestaShopBundle\Security\Attribute\DemoRestricted;
 use Symfony\Component\DependencyInjection\Attribute\Autowire;
@@ -397,10 +398,8 @@ class EmployeeController extends PrestaShopAdminController
 
     #[AdminSecurity("is_granted('read', request.get('_legacy_controller'))")]
     public function generatePasswordAction(): JsonResponse {
-        $password = \Tools::passwdGen(15);
-
         return $this->json([
-            'password' => $password,
+            'password' => (new PasswordGenerator(new OpenSSL()))->generatePassword(16, PasswordGenerator::PASSWORDGEN_FLAG_ALPHANUMERIC),
         ]);
     }
 
