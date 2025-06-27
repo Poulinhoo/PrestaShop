@@ -55,12 +55,12 @@ use PrestaShop\PrestaShop\Core\Form\IdentifiableObject\Handler\FormHandlerInterf
 use PrestaShop\PrestaShop\Core\Grid\GridFactoryInterface;
 use PrestaShop\PrestaShop\Core\Image\Uploader\Exception\UploadedImageConstraintException;
 use PrestaShop\PrestaShop\Core\Search\Filters\EmployeeFilters;
+use PrestaShop\PrestaShop\Core\Security\OpenSsl\OpenSSL;
+use PrestaShop\PrestaShop\Core\Security\PasswordGenerator;
 use PrestaShop\PrestaShop\Core\Security\Permission;
 use PrestaShop\PrestaShop\Core\Team\Employee\Configuration\OptionsCheckerInterface;
 use PrestaShop\PrestaShop\Core\Util\HelperCard\DocumentationLinkProviderInterface;
 use PrestaShopBundle\Controller\Admin\PrestaShopAdminController;
-use PrestaShop\PrestaShop\Core\Security\PasswordGenerator;
-use PrestaShop\PrestaShop\Core\Security\OpenSsl\OpenSSL;
 use PrestaShopBundle\Security\Attribute\AdminSecurity;
 use PrestaShopBundle\Security\Attribute\DemoRestricted;
 use Symfony\Component\DependencyInjection\Attribute\Autowire;
@@ -397,7 +397,8 @@ class EmployeeController extends PrestaShopAdminController
     }
 
     #[AdminSecurity("is_granted('read', request.get('_legacy_controller'))")]
-    public function generatePasswordAction(): JsonResponse {
+    public function generatePasswordAction(): JsonResponse
+    {
         return $this->json([
             'password' => (new PasswordGenerator(new OpenSSL()))->generatePassword(16, PasswordGenerator::PASSWORDGEN_FLAG_ALPHANUMERIC),
         ]);
