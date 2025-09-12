@@ -69,7 +69,7 @@ describe('FO - Newsletter : Subscribe to Newsletter', async () => {
     });
 
     it('should subscribe to newsletter', async function () {
-      await testContext.addContextItem(this, 'testIdentifier', 'subscribeToNewsletter', baseContext);
+      await testContext.addContextItem(this, 'testIdentifier', 'subscribeToNewsletterForJohnDoe', baseContext);
 
       const newsletterSubscribeAlertMessage = await foHummingbirdHomePage.subscribeToNewsletter(
         page,
