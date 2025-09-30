@@ -26,10 +26,11 @@
 
 namespace PrestaShopBundle\Command;
 
-use Tools;
+use Exception;
+use PrestaShop\PrestaShop\Adapter\File\HtaccessFileGenerator;
 use Symfony\Component\Console\Command\Command;
-use Symfony\Component\Console\Input\InputOption;
 use Symfony\Component\Console\Input\InputInterface;
+use Symfony\Component\Console\Input\InputOption;
 use Symfony\Component\Console\Output\OutputInterface;
 
 /**
@@ -38,9 +39,16 @@ use Symfony\Component\Console\Output\OutputInterface;
  * Usage:
  *   bin/console prestashop:htaccess:generate [--force]
  */
-
 class GenerateHtaccessCommand extends Command
 {
+    private $htaccessFileGenerator;
+
+    public function __construct(HtaccessFileGenerator $htaccessFileGenerator)
+    {
+        parent::__construct();
+        $this->htaccessFileGenerator = $htaccessFileGenerator;
+    }
+
     protected function configure()
     {
         $this
@@ -62,17 +70,19 @@ class GenerateHtaccessCommand extends Command
 
         if (file_exists($path) && !$force) {
             $output->writeln('<comment>.htaccess already exists. Use --force to overwrite.</comment>');
+
             return Command::FAILURE;
         }
 
         try {
-            Tools::generateHtaccess(null, null, null, $force);
+            $this->htaccessFileGenerator->generateFile();
             $output->writeln('<info>.htaccess successfully generated at ' . $path . '</info>');
+
             return Command::SUCCESS;
-        } catch (\Exception $e) {
+        } catch (Exception $e) {
             $output->writeln('<error>Failed to generate .htaccess: ' . $e->getMessage() . '</error>');
+
             return Command::FAILURE;
         }
     }
 }
-
