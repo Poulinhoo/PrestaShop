@@ -29,7 +29,7 @@ use Symfony\Component\HttpFoundation\Session\FlashBagAwareSessionInterface;
 use Symfony\Component\HttpKernel\Event\RequestEvent;
 use Symfony\Component\HttpKernel\KernelEvents;
 use Symfony\Component\Routing\Exception\NoConfigurationException;
-use Symfony\Component\Routing\RouterInterface;
+use Symfony\Component\Routing\Router;
 use Symfony\Component\Security\Core\Event\AuthenticationSuccessEvent;
 use Symfony\Contracts\Translation\TranslatorInterface;
 
@@ -53,7 +53,7 @@ class ShopContextSubscriber implements EventSubscriberInterface
         private readonly EmployeeContext $employeeContext,
         private readonly ShopConfigurationInterface $configuration,
         private readonly MultistoreFeature $multistoreFeature,
-        private readonly RouterInterface $router,
+        private readonly Router $router,
         private readonly Security $security,
         private readonly LegacyContext $legacyContext,
         private readonly TranslatorInterface $translator,
