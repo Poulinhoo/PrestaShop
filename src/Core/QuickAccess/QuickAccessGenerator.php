@@ -125,7 +125,14 @@ class QuickAccessGenerator
             }
 
             // Preparation of the link to display in component view.
-            $quick['link'] = '/' . basename(_PS_ADMIN_DIR_) . '/' . $cleanLink;
+            $quick['link'] = basename(_PS_ADMIN_DIR_) . '/' . $cleanLink;
+
+            // Add subfolder if set
+            if ($this->shopContext->getPhysicalUri()) {
+                $quick['link'] = $this->shopContext->getPhysicalUri() . $quick['link'];
+            } else {
+                $quick['link'] = '/' . $quick['link'];
+            }
 
             // Add token if needed
             $quick['link'] = $this->getTokenizedUrl($quick['link']);
