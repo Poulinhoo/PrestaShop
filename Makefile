@@ -38,7 +38,7 @@ docker-logs: ## Show live logs
 	$(DOCKER_COMP) logs --follow
 
 docker-sh: ## Open an interactive bash session inside the PHP container
-	@$(DOCKER_COMP) exec -it prestashop-git bash
+	@$(DOCKER_COMP) exec -it prestashop-git runuser -u www-data -g www-data -- bash -l
 
 ## —— PrestaShop 🛒 ———————————————————————————————————————————————————————————
 install: composer cc assets  ## Install PHP dependencies and build the static assets
