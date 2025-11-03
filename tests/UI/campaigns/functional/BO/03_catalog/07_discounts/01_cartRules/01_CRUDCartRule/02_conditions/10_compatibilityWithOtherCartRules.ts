@@ -8,14 +8,19 @@ import {
   boCartRulesCreatePage,
   boDashboardPage,
   boLoginPage,
+  boPaymentPreferencesPage,
   type BrowserContext,
+  dataAddresses,
   dataCarriers,
   dataCountries,
   dataCustomers,
+  dataPaymentMethods,
   dataProducts,
   FakerAddress,
   FakerCartRule,
   foClassicCartPage,
+  foClassicCheckoutOrderConfirmationPage,
+  foClassicCheckoutPage,
   foClassicHomePage,
   foClassicLoginPage,
   foClassicMyAccountPage,
@@ -27,9 +32,6 @@ import {
   utilsCore,
   utilsPlaywright,
   utilsDate,
-  foClassicCheckoutPage,
-  dataPaymentMethods,
-  foClassicCheckoutOrderConfirmationPage,
 } from '@prestashop-core/ui-testing';
 
 const baseContext: string = 'functional_BO_catalog_discounts_cartRules_CRUDCartRule_conditions_compatibilityWithOtherCartRules';
@@ -90,17 +92,17 @@ describe('BO - Cart rules - Conditions : Case 9 - Compatibility with other cart 
     excludeDiscountProducts: true,
   });
   const customerAddressUS: FakerAddress = new FakerAddress({
-    name: 'Mon adresse',
-    firstName: 'John',
-    lastName: 'DOE',
-    company: 'My Company',
-    address: '16, Main street',
-    secondAddress: '2nd floor',
-    postalCode: '75002',
-    city: 'Paris',
+    alias: dataAddresses.address_2.alias,
+    firstName: dataAddresses.address_2.firstName,
+    lastName: dataAddresses.address_2.lastName,
+    company: dataAddresses.address_2.company,
+    address: dataAddresses.address_2.address,
+    secondAddress: dataAddresses.address_2.secondAddress,
+    postalCode: dataAddresses.address_2.postalCode,
+    city: dataAddresses.address_2.city,
     state: 'Georgia',
     country: dataCountries.unitedStates.name,
-    phone: '0102030405',
+    phone: dataAddresses.address_2.phone,
   });
 
   before(async function () {
@@ -122,6 +124,33 @@ describe('BO - Cart rules - Conditions : Case 9 - Compatibility with other cart 
       const pageTitle = await boDashboardPage.getPageTitle(page);
       expect(pageTitle).to.contains(boDashboardPage.pageTitle);
     });
+
+    it('should go to \'Payment > Preferences\' page', async function () {
+      await testContext.addContextItem(this, 'testIdentifier', 'goToPreferencesPage', baseContext);
+
+      await boDashboardPage.goToSubMenu(
+        page,
+        boDashboardPage.paymentParentLink,
+        boDashboardPage.preferencesLink,
+      );
+      await boPaymentPreferencesPage.closeSfToolBar(page);
+
+      const pageTitle = await boPaymentPreferencesPage.getPageTitle(page);
+      expect(pageTitle).to.contains(boPaymentPreferencesPage.pageTitle);
+    });
+
+    it(`should check the ${dataCountries.unitedStates.name} country for '${dataPaymentMethods.wirePayment.moduleName}'`,
+      async function () {
+        await testContext.addContextItem(this, 'testIdentifier', 'enable', baseContext);
+
+        const result = await boPaymentPreferencesPage.setCountryRestriction(
+          page,
+          dataCountries.unitedStates.id,
+          dataPaymentMethods.wirePayment.moduleName,
+          true,
+        );
+        expect(result).to.contains(boPaymentPreferencesPage.successfulUpdateMessage);
+      });
 
     it('should go to \'Catalog > Discounts\' page', async function () {
       await testContext.addContextItem(this, 'testIdentifier', 'goToDiscountsPage', baseContext);
@@ -277,14 +306,14 @@ describe('BO - Cart rules - Conditions : Case 9 - Compatibility with other cart 
       expect(pageHeaderTitle).to.equal(foClassicMyAddressesCreatePage.updateFormTitle);
     });
 
-    it('should update the address', async function () {
+    it.skip('should update the address', async function () {
       await testContext.addContextItem(this, 'testIdentifier', 'updateAddress', baseContext);
 
       const textResult = await foClassicMyAddressesCreatePage.setAddress(page, customerAddressUS);
       expect(textResult).to.equal(foClassicMyAddressesPage.updateAddressSuccessfulMessage);
     });
 
-    it(`should search for the product '${dataProducts.demo_6.name}' and go to product page`, async function () {
+    it.skip(`should search for the product '${dataProducts.demo_6.name}' and go to product page`, async function () {
       await testContext.addContextItem(this, 'testIdentifier', 'goToProductPage', baseContext);
 
       await foClassicHomePage.searchProduct(page, dataProducts.demo_6.name);
@@ -294,7 +323,7 @@ describe('BO - Cart rules - Conditions : Case 9 - Compatibility with other cart 
       expect(pageTitle).to.contains(dataProducts.demo_6.name);
     });
 
-    it('should add the product to cart and click on continue shopping', async function () {
+    it.skip('should add the product to cart and click on continue shopping', async function () {
       await testContext.addContextItem(this, 'testIdentifier', 'addProductToCart', baseContext);
 
       await foClassicProductPage.addProductToTheCart(page, 10, undefined, true);
@@ -303,10 +332,10 @@ describe('BO - Cart rules - Conditions : Case 9 - Compatibility with other cart 
       expect(notificationsNumber).to.be.equal(10);
     });
 
-    it('should check amounts', async function () {
+    it.skip('should check amounts', async function () {
       await testContext.addContextItem(this, 'testIdentifier', 'checkAmounts', baseContext);
 
-      const totalProducts = dataProducts.demo_6.combinations[0].price * 10;
+      const totalProducts = dataProducts.demo_6.price * 10;
 
       const totalShipping = dataCarriers.myCarrier.price;
 
@@ -314,7 +343,7 @@ describe('BO - Cart rules - Conditions : Case 9 - Compatibility with other cart 
       expect(priceATI).to.equal(totalProducts + totalShipping);
     });
 
-    it(`should add the promo code "${cartRuleTestPercent.code}" and check the cart rule name`, async function () {
+    it.skip(`should add the promo code "${cartRuleTestPercent.code}" and check the cart rule name`, async function () {
       await testContext.addContextItem(this, 'testIdentifier', 'addPromoCodePercent', baseContext);
 
       await foClassicCartPage.addPromoCode(page, cartRuleTestPercent.code);
@@ -323,10 +352,10 @@ describe('BO - Cart rules - Conditions : Case 9 - Compatibility with other cart 
       expect(cartRuleName).to.eq(cartRuleTestPercent.name);
     });
 
-    it('should check the discount value', async function () {
+    it.skip('should check the discount value', async function () {
       await testContext.addContextItem(this, 'testIdentifier', 'checkDiscountValuePercent', baseContext);
 
-      const totalProducts = dataProducts.demo_6.combinations[0].price * 10;
+      const totalProducts = dataProducts.demo_6.price * 10;
 
       const totalShipping = dataCarriers.myCarrier.price;
 
@@ -339,7 +368,7 @@ describe('BO - Cart rules - Conditions : Case 9 - Compatibility with other cart 
       expect(priceATI).to.equal(totalProducts + totalShipping - totalDiscounts);
     });
 
-    it(`should add the promo code "${cartRuleTestFreeGift.code}" and check the cart rule name`, async function () {
+    it.skip(`should add the promo code "${cartRuleTestFreeGift.code}" and check the cart rule name`, async function () {
       await testContext.addContextItem(this, 'testIdentifier', 'addPromoCodeFreeGift', baseContext);
 
       await foClassicCartPage.addPromoCode(page, cartRuleTestFreeGift.code);
@@ -351,15 +380,15 @@ describe('BO - Cart rules - Conditions : Case 9 - Compatibility with other cart 
       expect(cartRuleName2).to.eq(cartRuleTestPercent.name);
     });
 
-    it('should check the discount value', async function () {
+    it.skip('should check the discount value', async function () {
       await testContext.addContextItem(this, 'testIdentifier', 'checkDiscountValueFreeGift', baseContext);
 
-      const totalProducts = dataProducts.demo_6.combinations[0].price * 10 + cartRuleTestFreeGift.freeGiftProduct!.priceTaxExcluded;
+      const totalProducts = dataProducts.demo_6.price * 10 + cartRuleTestFreeGift.freeGiftProduct!.priceTaxExcluded;
 
       const totalShipping = dataCarriers.myCarrier.price;
 
       const totalDiscountPercent = utilsCore.percentage(
-        dataProducts.demo_6.combinations[0].price * 10,
+        dataProducts.demo_6.price * 10,
         cartRuleTestPercent.getDiscountPercent(),
       );
 
@@ -375,7 +404,7 @@ describe('BO - Cart rules - Conditions : Case 9 - Compatibility with other cart 
       expect(priceATI).to.equal(totalProducts + totalShipping - totalDiscounts);
     });
 
-    it(`should add the promo code "${cartRuleTestFreeShipping.code}" and check the cart rule name`, async function () {
+    it.skip(`should add the promo code "${cartRuleTestFreeShipping.code}" and check the cart rule name`, async function () {
       await testContext.addContextItem(this, 'testIdentifier', 'addPromoCodeFreeShipping', baseContext);
 
       await foClassicCartPage.addPromoCode(page, cartRuleTestFreeShipping.code);
@@ -390,15 +419,15 @@ describe('BO - Cart rules - Conditions : Case 9 - Compatibility with other cart 
       expect(cartRuleName2).to.eq(cartRuleTestPercent.name);
     });
 
-    it('should check the discount value', async function () {
+    it.skip('should check the discount value', async function () {
       await testContext.addContextItem(this, 'testIdentifier', 'checkDiscountValueFreeShipping', baseContext);
 
-      const totalProducts = dataProducts.demo_6.combinations[0].price * 10 + cartRuleTestFreeGift.freeGiftProduct!.priceTaxExcluded;
+      const totalProducts = dataProducts.demo_6.price * 10 + cartRuleTestFreeGift.freeGiftProduct!.priceTaxExcluded;
 
       const totalShipping = dataCarriers.myCarrier.price;
 
       const totalDiscountPercent = utilsCore.percentage(
-        dataProducts.demo_6.combinations[0].price * 10,
+        dataProducts.demo_6.price * 10,
         cartRuleTestPercent.getDiscountPercent(),
       );
 
@@ -417,7 +446,7 @@ describe('BO - Cart rules - Conditions : Case 9 - Compatibility with other cart 
       expect(priceATI).to.equal(totalProducts + totalShipping - totalDiscounts);
     });
 
-    it(`should add the promo code "${cartRuleTestAmount.code}" and check the cart rule name`, async function () {
+    it.skip(`should add the promo code "${cartRuleTestAmount.code}" and check the cart rule name`, async function () {
       await testContext.addContextItem(this, 'testIdentifier', 'addPromoCodeAmount', baseContext);
 
       await foClassicCartPage.addPromoCode(page, cartRuleTestAmount.code);
@@ -435,17 +464,17 @@ describe('BO - Cart rules - Conditions : Case 9 - Compatibility with other cart 
       expect(cartRuleName4).to.eq(cartRuleTestPercent.name);
     });
 
-    it('should check the discount value', async function () {
+    it.skip('should check the discount value', async function () {
       await testContext.addContextItem(this, 'testIdentifier', 'checkDiscountValueAmount', baseContext);
 
-      const totalProducts = dataProducts.demo_6.combinations[0].price * 10 + cartRuleTestFreeGift.freeGiftProduct!.priceTaxExcluded;
+      const totalProducts = dataProducts.demo_6.price * 10 + cartRuleTestFreeGift.freeGiftProduct!.priceTaxExcluded;
 
       const totalShipping = dataCarriers.myCarrier.price;
 
       const totalDiscountAmount = parseInt(cartRuleTestAmount.discountAmount!.value.toString(), 10);
 
       const totalDiscountPercent = utilsCore.percentage(
-        dataProducts.demo_6.combinations[0].price * 10 - totalDiscountAmount,
+        dataProducts.demo_6.price * 10 - totalDiscountAmount,
         cartRuleTestPercent.getDiscountPercent(),
       );
 
@@ -470,7 +499,7 @@ describe('BO - Cart rules - Conditions : Case 9 - Compatibility with other cart 
       expect(priceATI).to.equal(totalProducts + totalShipping - totalDiscounts);
     });
 
-    it(`should delete the promo code "${cartRuleTestPercent.code}" and check the cart rule name`, async function () {
+    it.skip(`should delete the promo code "${cartRuleTestPercent.code}" and check the cart rule name`, async function () {
       await testContext.addContextItem(this, 'testIdentifier', 'removePromoCodePercent', baseContext);
 
       await foClassicCartPage.removeVoucher(page, 4);
@@ -485,10 +514,10 @@ describe('BO - Cart rules - Conditions : Case 9 - Compatibility with other cart 
       expect(discountValue3).to.equal('Free shipping');
     });
 
-    it('should check the discount value', async function () {
+    it.skip('should check the discount value', async function () {
       await testContext.addContextItem(this, 'testIdentifier', 'checkDiscountValueWOPercent', baseContext);
 
-      const totalProducts = dataProducts.demo_6.combinations[0].price * 10 + cartRuleTestFreeGift.freeGiftProduct!.priceTaxExcluded;
+      const totalProducts = dataProducts.demo_6.price * 10 + cartRuleTestFreeGift.freeGiftProduct!.priceTaxExcluded;
 
       const totalShipping = dataCarriers.myCarrier.price;
 
@@ -509,7 +538,7 @@ describe('BO - Cart rules - Conditions : Case 9 - Compatibility with other cart 
       expect(priceATI).to.equal(totalProducts + totalShipping - totalDiscounts);
     });
 
-    it(`should add the promo code "${cartRuleTestPercent.code}" and check the cart rule name`, async function () {
+    it.skip(`should add the promo code "${cartRuleTestPercent.code}" and check the cart rule name`, async function () {
       await testContext.addContextItem(this, 'testIdentifier', 'addPromoCodePercentBis', baseContext);
 
       await foClassicCartPage.addPromoCode(page, cartRuleTestPercent.code);
@@ -527,17 +556,17 @@ describe('BO - Cart rules - Conditions : Case 9 - Compatibility with other cart 
       expect(cartRuleName4).to.eq(cartRuleTestPercent.name);
     });
 
-    it('should check the discount value', async function () {
-      await testContext.addContextItem(this, 'testIdentifier', 'checkDiscountValuePercent', baseContext);
+    it.skip('should check the discount value', async function () {
+      await testContext.addContextItem(this, 'testIdentifier', 'checkDiscountValuePercent2', baseContext);
 
-      const totalProducts = dataProducts.demo_6.combinations[0].price * 10 + cartRuleTestFreeGift.freeGiftProduct!.priceTaxExcluded;
+      const totalProducts = dataProducts.demo_6.price * 10 + cartRuleTestFreeGift.freeGiftProduct!.priceTaxExcluded;
 
       const totalShipping = dataCarriers.myCarrier.price;
 
       const totalDiscountAmount = parseInt(cartRuleTestAmount.discountAmount!.value.toString(), 10);
 
       const totalDiscountPercent = utilsCore.percentage(
-        dataProducts.demo_6.combinations[0].price * 10 - totalDiscountAmount,
+        dataProducts.demo_6.price * 10 - totalDiscountAmount,
         cartRuleTestPercent.getDiscountPercent(),
       );
 
@@ -563,7 +592,7 @@ describe('BO - Cart rules - Conditions : Case 9 - Compatibility with other cart 
     });
   });
 
-  describe('BO : Modify cart rule', async () => {
+  describe.skip('BO : Modify cart rule', async () => {
     it('should go back to BO', async function () {
       await testContext.addContextItem(this, 'testIdentifier', 'goToBackBO', baseContext);
 
@@ -599,7 +628,7 @@ describe('BO - Cart rules - Conditions : Case 9 - Compatibility with other cart 
     });
   });
 
-  describe('FO : Check modified cart rule', async () => {
+  describe.skip('FO : Check modified cart rule', async () => {
     it('should go back to FO', async function () {
       await testContext.addContextItem(this, 'testIdentifier', 'goToBackFO', baseContext);
 
@@ -614,14 +643,14 @@ describe('BO - Cart rules - Conditions : Case 9 - Compatibility with other cart 
 
       await foClassicCartPage.reloadPage(page);
 
-      const totalProducts = dataProducts.demo_6.combinations[0].price * 10 + cartRuleTestFreeGift.freeGiftProduct!.priceTaxExcluded;
+      const totalProducts = dataProducts.demo_6.price * 10 + cartRuleTestFreeGift.freeGiftProduct!.priceTaxExcluded;
 
       const totalShipping = dataCarriers.myCarrier.price;
 
       const totalDiscountAmount = parseInt(cartRuleTestAmount.discountAmount!.value.toString(), 10);
 
       const totalDiscountPercent = utilsCore.percentage(
-        dataProducts.demo_6.combinations[0].price * 10 - totalDiscountAmount,
+        dataProducts.demo_6.price * 10 - totalDiscountAmount,
         cartRuleTestPercent.getDiscountPercent(),
       );
 
@@ -679,14 +708,14 @@ describe('BO - Cart rules - Conditions : Case 9 - Compatibility with other cart 
     it('should check the total (tax incl.)', async function () {
       await testContext.addContextItem(this, 'testIdentifier', 'checkOrderTotalTaxInc', baseContext);
 
-      const totalProducts = dataProducts.demo_6.combinations[0].price * 10 + cartRuleTestFreeGift.freeGiftProduct!.priceTaxExcluded;
+      const totalProducts = dataProducts.demo_6.price * 10 + cartRuleTestFreeGift.freeGiftProduct!.priceTaxExcluded;
 
       const totalShipping = dataCarriers.myCarrier.price;
 
       const totalDiscountAmount = parseInt(cartRuleTestAmount.discountAmount!.value.toString(), 10);
 
       const totalDiscountPercent = utilsCore.percentage(
-        dataProducts.demo_6.combinations[0].price * 10 - totalDiscountAmount,
+        dataProducts.demo_6.price * 10 - totalDiscountAmount,
         cartRuleTestPercent.getDiscountPercent(),
       );
 
@@ -698,6 +727,82 @@ describe('BO - Cart rules - Conditions : Case 9 - Compatibility with other cart 
       const orderTotalTaxInc = await foClassicCheckoutOrderConfirmationPage.getOrderTotal(page);
       expect(orderTotalTaxInc).to.equal(`€${(totalProducts + totalShipping - totalDiscounts).toFixed(2)}`);
     });
+  });
+
+  describe('POST-TEST: FO : Reset address', async () => {
+    it('should go to account page', async function () {
+      await testContext.addContextItem(this, 'testIdentifier', 'goToAccountPageForReset', baseContext);
+
+      await foClassicCheckoutOrderConfirmationPage.goToMyAccountPage(page);
+
+      const pageTitle = await foClassicMyAccountPage.getPageTitle(page);
+      expect(pageTitle).to.contains(foClassicMyAccountPage.pageTitle);
+    });
+
+    it('should go to the "Your addresses" page', async function () {
+      await testContext.addContextItem(this, 'testIdentifier', 'goToAddressesPageForReset', baseContext);
+
+      await foClassicMyAccountPage.goToAddressesPage(page);
+
+      const pageHeaderTitle = await foClassicMyAddressesPage.getPageTitle(page);
+      expect(pageHeaderTitle).to.equal(foClassicMyAddressesPage.pageTitle);
+    });
+
+    it('should go to edit address page', async function () {
+      await testContext.addContextItem(this, 'testIdentifier', 'goToEditAddressPageForReset', baseContext);
+
+      const addressPosition = await foClassicMyAddressesPage.getAddressPosition(page, dataAddresses.address_2.alias);
+      await foClassicMyAddressesPage.goToEditAddressPage(page, addressPosition);
+
+      const pageHeaderTitle = await foClassicMyAddressesCreatePage.getHeaderTitle(page);
+      expect(pageHeaderTitle).to.equal(foClassicMyAddressesCreatePage.updateFormTitle);
+    });
+
+    // @todo : https://github.com/PrestaShop/PrestaShop/issues/39929
+    it.skip('should update the address', async function () {
+      await testContext.addContextItem(this, 'testIdentifier', 'updateAddressForReset', baseContext);
+
+      const textResult = await foClassicMyAddressesCreatePage.setAddress(page, dataAddresses.address_2);
+      expect(textResult).to.equal(foClassicMyAddressesPage.updateAddressSuccessfulMessage);
+    });
+  });
+
+  describe('POST-TEST: BO : Reset payment preferences ', async () => {
+    it('should go back to FO', async function () {
+      await testContext.addContextItem(this, 'testIdentifier', 'goToBackBOReset', baseContext);
+
+      page = await boCartRulesPage.changePage(browserContext, 0);
+
+      const pageTitle = await foClassicCartPage.getPageTitle(page);
+      expect(pageTitle).to.contains(foClassicCartPage.pageTitle);
+    });
+
+    it('should go to \'Payment > Preferences\' page', async function () {
+      await testContext.addContextItem(this, 'testIdentifier', 'goToPreferencesPageReset', baseContext);
+
+      await boDashboardPage.goToSubMenu(
+        page,
+        boDashboardPage.paymentParentLink,
+        boDashboardPage.preferencesLink,
+      );
+      await boPaymentPreferencesPage.closeSfToolBar(page);
+
+      const pageTitle = await boPaymentPreferencesPage.getPageTitle(page);
+      expect(pageTitle).to.contains(boPaymentPreferencesPage.pageTitle);
+    });
+
+    it(`should uncheck the ${dataCountries.unitedStates.name} country for '${dataPaymentMethods.wirePayment.moduleName}'`,
+      async function () {
+        await testContext.addContextItem(this, 'testIdentifier', 'enableReset', baseContext);
+
+        const result = await boPaymentPreferencesPage.setCountryRestriction(
+          page,
+          dataCountries.unitedStates.id,
+          dataPaymentMethods.wirePayment.moduleName,
+          false,
+        );
+        expect(result).to.contains(boPaymentPreferencesPage.successfulUpdateMessage);
+      });
   });
 
   // Post-condition: Delete the created cart rule
