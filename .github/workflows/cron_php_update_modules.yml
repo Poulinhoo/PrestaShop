@@ -79,8 +79,8 @@ jobs:
           token: ${{ secrets.JARVIS_TOKEN }}
           branch: cron-php-update-modules-${{ env.GH_BRANCH }}
           commit-message: Updated PrestaShop Packages
-          committer: PrestonBot <noreply@github.com>
-          author: prestonBot <prestonBot@users.noreply.github.com>
+          committer: Jarvis <noreply@github.com>
+          author: ps-jarvis <ps-jarvis@users.noreply.github.com>
           title: 'Updated PrestaShop Packages'
           body: ${{ steps.updated-packages.outputs.PR_BODY }}
           base: ${{ env.GH_BRANCH }}
