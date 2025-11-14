@@ -205,7 +205,7 @@ describe('API : Check endpoints', async () => {
         '/products/search/{phrase}/{resultsLimit}/{isoCode}: GET',
         // tests/UI/campaigns/functional/API/02_endpoints/08_product/11_getProducts.ts
         '/products: GET',
-        // @todo: add tests
+        // tests/UI/campaigns/functional/API/02_endpoints/09_searchAlias/01_deleteSearch.ts
         '/search-alias/{search}: DELETE',
         // @todo: add tests
         '/search-alias/{search}: GET',
