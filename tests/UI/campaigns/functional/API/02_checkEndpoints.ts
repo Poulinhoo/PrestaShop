@@ -297,7 +297,7 @@ describe('API : Check endpoints', async () => {
         '/zones/delete: PUT',
         // @todo: add tests
         '/zones/toggle-status: PUT',
-        // @todo: add tests
+        // tests/UI/campaigns/functional/API/02_endpoints/16_zone/08_getZones.ts
         '/zones: GET',
       ]);
     });
