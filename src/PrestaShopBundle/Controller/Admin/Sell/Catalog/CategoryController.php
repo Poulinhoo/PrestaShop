@@ -307,11 +307,6 @@ class CategoryController extends PrestaShopAdminController
 
         $defaultGroups = $defaultGroupsProvider->getGroups();
 
-        // If we don't create the dispatcher instance with the current request,
-        // a new instance will be created later using `SymfonyRequest::createFromGlobals()`
-        // but as we may have already uploaded files, this can throw an exception
-        Dispatcher::getInstance($request);
-
         return $this->render(
             '@PrestaShop/Admin/Sell/Catalog/Categories/edit.html.twig',
             [
