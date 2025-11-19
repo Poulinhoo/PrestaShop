@@ -27,7 +27,6 @@
 namespace PrestaShopBundle\Controller\Admin\Sell\Catalog;
 
 use Category;
-use Dispatcher;
 use Exception;
 use ImageManager;
 use PrestaShop\PrestaShop\Adapter\Category\CategoryDataProvider;
