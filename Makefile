@@ -4,7 +4,7 @@ DOCKER_COMP = docker compose
 # Determine if we are using docker
 DOCKER_RUNNING := $(shell docker compose ps -q)
 ifneq ($(strip $(DOCKER_RUNNING)),)
-	PHP_CONT = $(DOCKER_COMP) exec prestashop-git runuser -u www-data -g www-data --
+	PHP_CONT = $(DOCKER_COMP) exec -T prestashop-git runuser -u www-data -g www-data -- bash -l
 endif
 
 # Executables (local or docker)
@@ -38,7 +38,7 @@ docker-logs: ## Show live logs
 	$(DOCKER_COMP) logs --follow
 
 docker-sh: ## Connect to the PHP container via bash so up and down arrows go to previous commands
-	@$(PHP_CONT) bash
+	@$(DOCKER_COMP) exec -it prestashop-git runuser -u www-data -g www-data -- bash -l
 
 ## —— PrestaShop 🛒 ———————————————————————————————————————————————————————————
 install: composer cc assets  ## Install PHP dependencies and build the static assets
@@ -111,12 +111,12 @@ phpstan: ## Run phpstan analysis
 	$(COMPOSER) run phpstan
 
 scss-fixer: ## Run scss-fix
-	$(PHP_CONT) bash -l -c "cd admin-dev/themes/new-theme && npm run scss-fix"
-	$(PHP_CONT) bash -l -c "cd admin-dev/themes/default && npm run scss-fix"
-	$(PHP_CONT) bash -l -c "cd themes/classic/_dev && npm run scss-fix"
+	$(PHP_CONT) cd admin-dev/themes/new-theme && npm run scss-fix
+	$(PHP_CONT) cd admin-dev/themes/default && npm run scss-fix
+	$(PHP_CONT) cd themes/classic/_dev && npm run scss-fix
 
 es-linter: ## Run lint-fix
-	$(PHP_CONT) bash -l -c "cd admin-dev/themes/new-theme && npm run lint-fix"
-	$(PHP_CONT) bash -l -c "cd admin-dev/themes/default && npm run lint-fix"
-	$(PHP_CONT) bash -l -c "cd themes/classic/_dev && npm run lint-fix"
-	$(PHP_CONT) bash -l -c "cd themes && npm run lint-fix"
+	$(PHP_CONT) cd admin-dev/themes/new-theme && npm run lint-fix
+	$(PHP_CONT) cd admin-dev/themes/default && npm run lint-fix
+	$(PHP_CONT) cd themes/classic/_dev && npm run lint-fix
+	$(PHP_CONT) cd themes && npm run lint-fix
