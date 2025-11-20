@@ -93,16 +93,25 @@ jobs:
 
           body="${body//GH_BRANCH/$GH_BRANCH}"
 
+          details_header=$(cat <<'EOF'
+
+          ## Updated packages
+
+          | Package | From | To |
+          | ------- | ---- | -- |
+          EOF
+          )
+
           details=$(printf '%s\n' "$json" | jq -r --arg ignore "$ignore" '
             .installed
             | map(select(.name | startswith("prestashop/")))
             | (if $ignore == "" then . else map(select(.name as $n |
                 ($ignore | split(" ") | index($n)) | not)) end)
             | .[]
-            | "Package `\(.name)`: `\(.version)` → `\(.latest)`"
+            | "| `\(.name)` | `\(.version)` | `\(.latest)` |"
           ')
 
-          body="$body\n\n$details"
+          body="$body$details_header"$'\n'"$details"
 
           {
             echo "body<<EOF"
