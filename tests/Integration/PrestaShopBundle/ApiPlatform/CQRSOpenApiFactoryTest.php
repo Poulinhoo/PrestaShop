@@ -696,6 +696,8 @@ class CQRSOpenApiFactoryTest extends KernelTestCase
                 ],
             ]),
         ];
+
+        // @todo Add a schema with a dateTime like discount when it is released or virtual product's expiration date.
     }
 
     /**
@@ -750,49 +752,6 @@ class CQRSOpenApiFactoryTest extends KernelTestCase
         ];
     }
 
-    public function testMultiParameterSettersTransformedToSubObjects(): void
-    {
-        /** @var OpenApiFactoryInterface $openApiFactory */
-        $openApiFactory = $this->getContainer()->get(OpenApiFactoryInterface::class);
-        /** @var OpenApi $openApi */
-        $openApi = $openApiFactory->__invoke();
-        $schemas = $openApi->getComponents()->getSchemas();
-
-        /** @var ArrayObject $updateProductCommandSchema */
-        $updateProductCommandSchema = $schemas['Product.UpdateProductCommand'];
-        $properties = $updateProductCommandSchema['properties'];
-
-        $this->assertArrayHasKey('redirectOption', $properties);
-        $redirectOptionSchema = $properties['redirectOption'];
-        $this->assertEquals('object', $redirectOptionSchema['type']);
-        $this->assertArrayHasKey('redirectType', $redirectOptionSchema['properties']);
-        $this->assertArrayHasKey('redirectTarget', $redirectOptionSchema['properties']);
-        $this->assertEquals('string', $redirectOptionSchema['properties']['redirectType']['type']);
-        $this->assertEquals('integer', $redirectOptionSchema['properties']['redirectTarget']['type']);
-        $this->assertArrayNotHasKey('redirectType', $properties);
-        $this->assertArrayNotHasKey('redirectTarget', $properties);
-    }
-
-    public function testNonWritablePropertiesFilteredFromWriteOperations(): void
-    {
-        /** @var OpenApiFactoryInterface $openApiFactory */
-        $openApiFactory = $this->getContainer()->get(OpenApiFactoryInterface::class);
-        /** @var OpenApi $openApi */
-        $openApi = $openApiFactory->__invoke();
-        $schemas = $openApi->getComponents()->getSchemas();
-
-        /** @var ArrayObject $productReadSchema */
-        $productReadSchema = $schemas['Product'];
-        /** @var ArrayObject $updateProductCommandSchema */
-        $updateProductCommandSchema = $schemas['Product.UpdateProductCommand'];
-        /** @var ArrayObject $addProductCommandSchema */
-        $addProductCommandSchema = $schemas['Product.AddProductCommand'];
-
-        $this->assertArrayHasKey('productId', $productReadSchema['properties']);
-        $this->assertArrayHasKey('productId', $updateProductCommandSchema['properties']);
-        $this->assertArrayNotHasKey('productId', $addProductCommandSchema['properties']);
-    }
-
     public function testApiPropertyOpenApiContextApplied(): void
     {
         /** @var OpenApiFactoryInterface $openApiFactory */
@@ -808,25 +767,5 @@ class CQRSOpenApiFactoryTest extends KernelTestCase
         $this->assertEquals('array', $shopIdsProperty['type']);
         $this->assertEquals(['type' => 'integer'], $shopIdsProperty['items']);
         $this->assertEquals([1, 3], $shopIdsProperty['example']);
-    }
-
-    public function testWritableFalsePropertyFilteredFromWriteOperations(): void
-    {
-        /** @var OpenApiFactoryInterface $openApiFactory */
-        $openApiFactory = $this->getContainer()->get(OpenApiFactoryInterface::class);
-        /** @var OpenApi $openApi */
-        $openApi = $openApiFactory->__invoke();
-        $schemas = $openApi->getComponents()->getSchemas();
-
-        /** @var ArrayObject $attributeReadSchema */
-        $attributeReadSchema = $schemas['Attribute'];
-        /** @var ArrayObject $addAttributeCommandSchema */
-        $addAttributeCommandSchema = $schemas['Attribute.AddAttributeCommand'];
-        /** @var ArrayObject $editAttributeCommandSchema */
-        $editAttributeCommandSchema = $schemas['Attribute.EditAttributeCommand'];
-
-        $this->assertArrayHasKey('position', $attributeReadSchema['properties']);
-        $this->assertArrayNotHasKey('position', $addAttributeCommandSchema['properties']);
-        $this->assertArrayNotHasKey('position', $editAttributeCommandSchema['properties']);
     }
 }

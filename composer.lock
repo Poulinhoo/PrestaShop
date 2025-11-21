@@ -5265,12 +5265,12 @@
             "source": {
                 "type": "git",
                 "url": "https://github.com/tleon/ps_apiresources.git",
-                "reference": "983543857d2ab3a38d1101f1cfd0a87bcef32595"
+                "reference": "5b56615b0492b8c2a77e85162dd1b4be4c6a9cf3"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/tleon/ps_apiresources/zipball/983543857d2ab3a38d1101f1cfd0a87bcef32595",
-                "reference": "983543857d2ab3a38d1101f1cfd0a87bcef32595",
+                "url": "https://api.github.com/repos/tleon/ps_apiresources/zipball/5b56615b0492b8c2a77e85162dd1b4be4c6a9cf3",
+                "reference": "5b56615b0492b8c2a77e85162dd1b4be4c6a9cf3",
                 "shasum": ""
             },
             "require": {
@@ -5336,7 +5336,7 @@
             "support": {
                 "source": "https://github.com/tleon/ps_apiresources/tree/Issue-39827-fix-documentation-for-attribute-endpoint"
             },
-            "time": "2025-11-18T14:45:25+00:00"
+            "time": "2025-11-26T10:27:29+00:00"
         },
         {
             "name": "prestashop/ps_banner",
@@ -18380,9 +18380,9 @@
         "ext-simplexml": "*",
         "ext-zip": "*"
     },
-    "platform-dev": [],
+    "platform-dev": {},
     "platform-overrides": {
         "php": "8.1.0"
     },
-    "plugin-api-version": "2.2.0"
+    "plugin-api-version": "2.6.0"
 }
