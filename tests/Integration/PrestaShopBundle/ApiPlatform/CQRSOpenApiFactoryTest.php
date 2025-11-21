@@ -427,11 +427,12 @@ class CQRSOpenApiFactoryTest extends KernelTestCase
                     ]),
                     // Nullable DateTime
                     'availableDate' => new ArrayObject([
-                        'format' => 'date-time',
+                        'format' => 'date',
                         'type' => [
                             'string',
                             'null',
                         ],
+                        'example' => '2025-11-05',
                     ]),
                     'coverThumbnailUrl' => new ArrayObject([
                         'type' => 'string',
@@ -649,8 +650,9 @@ class CQRSOpenApiFactoryTest extends KernelTestCase
                     ]),
                     // Nullable DateTime
                     'availableDate' => new ArrayObject([
-                        'format' => 'date-time',
+                        'format' => 'date',
                         'type' => 'string',
+                        'example' => '2025-11-05',
                     ]),
                 ],
             ]),

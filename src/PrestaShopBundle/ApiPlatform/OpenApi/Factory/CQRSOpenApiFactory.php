@@ -45,6 +45,7 @@ use DateTimeInterface;
 use Exception;
 use PrestaShop\Decimal\DecimalNumber;
 use PrestaShop\PrestaShop\Adapter\Feature\MultistoreFeature;
+use PrestaShop\PrestaShop\Core\Util\DateTime\DateImmutable;
 use PrestaShopBundle\ApiPlatform\DomainObjectDetector;
 use PrestaShopBundle\ApiPlatform\Metadata\LocalizedValue;
 use ReflectionClass;
@@ -109,6 +110,7 @@ class CQRSOpenApiFactory implements OpenApiFactoryInterface
                     $resourceSchema = $parentOpenApi->getComponents()->getSchemas()->offsetGet($resourceDefinitionName);
                     $this->adaptLocalizedValues($resourceMetadata->getClass(), $resourceSchema);
                     $this->adaptDecimalNumbers($resourceMetadata->getClass(), $resourceSchema);
+                    $this->adaptDateProperties($resourceMetadata->getClass(), $resourceSchema);
                     // NEW: Synchronize schema with actual resource properties
                     $this->synchronizeSchemaWithResource($resourceMetadata->getClass(), $resourceSchema);
                 }
@@ -137,6 +139,8 @@ class CQRSOpenApiFactory implements OpenApiFactoryInterface
                     $this->adaptLocalizedValues($operation->getClass(), $definition);
                     $this->adaptDecimalNumbers($operation->getClass(), $definition);
                     $this->synchronizeSchemaWithResource($operation->getClass(), $definition);
+                    // Adapt DateImmutable properties last to ensure examples are correctly set
+                    $this->adaptDateProperties($operation->getClass(), $definition);
                 }
             }
         }
@@ -443,6 +447,75 @@ class CQRSOpenApiFactory implements OpenApiFactoryInterface
     }
 
     /**
+     * Adapts DateImmutable properties to use 'date' format instead of 'date-time' in OpenAPI schema.
+     * Checks both property types and getter/setter method signatures to detect DateImmutable usage.
+     */
+    protected function adaptDateProperties(string $class, ArrayObject $definition): void
+    {
+        if (empty($definition['properties'])) {
+            return;
+        }
+
+        $resourceClassMetadata = $this->classMetadataFactory->getMetadataFor($class);
+        $resourceReflectionClass = $resourceClassMetadata->getReflectionClass();
+
+        foreach ($definition['properties'] as $propertyName => $propertySchema) {
+            // Check if property exists and get its type
+            $propertyType = null;
+            if ($resourceReflectionClass->hasProperty($propertyName)) {
+                $property = $resourceReflectionClass->getProperty($propertyName);
+                if ($property->hasType() && $property->getType() instanceof ReflectionNamedType) {
+                    $propertyType = $property->getType()->getName();
+                }
+            }
+
+            // If property not found or has no type, check getter/setter methods
+            if (!$propertyType) {
+                $camelCasePropertyName = ucfirst($propertyName);
+                $getterMethodName = 'get' . $camelCasePropertyName;
+                $setterMethodName = 'set' . $camelCasePropertyName;
+
+                if ($resourceReflectionClass->hasMethod($getterMethodName)) {
+                    $getterMethod = $resourceReflectionClass->getMethod($getterMethodName);
+                    if ($getterMethod->hasReturnType() && $getterMethod->getReturnType() instanceof ReflectionNamedType) {
+                        $propertyType = $getterMethod->getReturnType()->getName();
+                    }
+                } elseif ($resourceReflectionClass->hasMethod($setterMethodName)) {
+                    $setterMethod = $resourceReflectionClass->getMethod($setterMethodName);
+                    $parameters = $setterMethod->getParameters();
+                    if (!empty($parameters) && $parameters[0]->hasType() && $parameters[0]->getType() instanceof ReflectionNamedType) {
+                        $propertyType = $parameters[0]->getType()->getName();
+                    }
+                }
+            }
+
+            // If property type is DateImmutable, change format from date-time to date and update example
+            if ($propertyType === DateImmutable::class || is_subclass_of($propertyType, DateImmutable::class)) {
+                // Always set format to 'date' for DateImmutable properties
+                $definition['properties'][$propertyName]['format'] = 'date';
+
+                // Always update example to use date format (Y-m-d) - overwrite any existing example
+                $example = $definition['properties'][$propertyName]['example'] ?? null;
+                if (is_string($example)) {
+                    // If example is a datetime string (ISO 8601 or similar), extract just the date part
+                    if (preg_match('/^(\d{4}-\d{2}-\d{2})(T|\s|$)/', $example, $matches)) {
+                        $definition['properties'][$propertyName]['example'] = $matches[1];
+                    } elseif (preg_match('/^(\d{4}-\d{2}-\d{2})/', $example, $matches)) {
+                        // Already a date format, keep it
+                        $definition['properties'][$propertyName]['example'] = $matches[1];
+                    } else {
+                        // Set a default date example if format is unrecognized
+                        $definition['properties'][$propertyName]['example'] = '2025-11-05';
+                    }
+                } else {
+                    // Add a date example if none exists
+                    $definition['properties'][$propertyName]['example'] = '2025-11-05';
+                }
+            }
+        }
+    }
+
+    /**
      * Some CQRS commands rely on multi-parameters setters, this is usually done to force specifying related parameters
      * all together because only one is not enough. For such setters we expect the method parameters to be provided in
      * a sub object, so this method transforms the schema to match this expected sib object.
@@ -485,10 +558,17 @@ class CQRSOpenApiFactory implements OpenApiFactoryInterface
 
                 // If one of the parameters is not a built-in value we skip it (too complex to handle, but could be improved someday)
                 if ($this->isDateTime($methodParameter->getType())) {
+                    $parameterTypeName = $methodParameter->getType()->getName();
+                    $isDateImmutable = ($parameterTypeName === DateImmutable::class || is_subclass_of($parameterTypeName, DateImmutable::class));
+                    $format = $isDateImmutable ? 'date' : 'date-time';
                     $methodParameterSchema = new ArrayObject([
-                        'format' => 'date-time',
+                        'format' => $format,
                         'type' => 'string',
                     ]);
+                    // Add date example for DateImmutable parameters
+                    if ($isDateImmutable) {
+                        $methodParameterSchema['example'] = '2025-11-05';
+                    }
                 } elseif ($methodParameter->getType()->isBuiltin()) {
                     $methodParameterSchema = new ArrayObject([
                         'type' => $this->getSchemaType($methodParameter->getType()->getName()),

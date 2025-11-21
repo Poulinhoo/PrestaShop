@@ -4666,16 +4666,16 @@
         },
         {
             "name": "prestashop/classic",
-            "version": "3.0.3",
+            "version": "3.0.4",
             "source": {
                 "type": "git",
                 "url": "https://github.com/PrestaShop/classic-theme.git",
-                "reference": "6d0c1fa3073e6b21e9bb54641e8655b13d331eb7"
+                "reference": "b84c8548e15fea8052364aa88c0b5944c0333e01"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/PrestaShop/classic-theme/zipball/6d0c1fa3073e6b21e9bb54641e8655b13d331eb7",
-                "reference": "6d0c1fa3073e6b21e9bb54641e8655b13d331eb7",
+                "url": "https://api.github.com/repos/PrestaShop/classic-theme/zipball/b84c8548e15fea8052364aa88c0b5944c0333e01",
+                "reference": "b84c8548e15fea8052364aa88c0b5944c0333e01",
                 "shasum": ""
             },
             "require-dev": {
@@ -4699,9 +4699,9 @@
             ],
             "description": "Classic theme for develop PrestaShop version",
             "support": {
-                "source": "https://github.com/PrestaShop/classic-theme/tree/3.0.3"
+                "source": "https://github.com/PrestaShop/classic-theme/tree/3.0.4"
             },
-            "time": "2025-06-17T05:24:07+00:00"
+            "time": "2025-10-31T11:00:29+00:00"
         },
         {
             "name": "prestashop/contactform",
@@ -5214,12 +5214,12 @@
             "source": {
                 "type": "git",
                 "url": "https://github.com/PrestaShop/ps_apiresources.git",
-                "reference": "2bfd399966bb9346d0aca8908f1006cf22449c0b"
+                "reference": "8261daf0e9b974c44ddd2e32090e934afbba9762"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/PrestaShop/ps_apiresources/zipball/2bfd399966bb9346d0aca8908f1006cf22449c0b",
-                "reference": "2bfd399966bb9346d0aca8908f1006cf22449c0b",
+                "url": "https://api.github.com/repos/PrestaShop/ps_apiresources/zipball/8261daf0e9b974c44ddd2e32090e934afbba9762",
+                "reference": "8261daf0e9b974c44ddd2e32090e934afbba9762",
                 "shasum": ""
             },
             "require": {
@@ -5275,7 +5275,7 @@
             "support": {
                 "source": "https://github.com/PrestaShop/ps_apiresources/tree/dev"
             },
-            "time": "2025-10-30T11:06:47+00:00"
+            "time": "2025-11-18T10:41:41+00:00"
         },
         {
             "name": "prestashop/ps_banner",
@@ -18345,9 +18345,9 @@
         "ext-simplexml": "*",
         "ext-zip": "*"
     },
-    "platform-dev": [],
+    "platform-dev": {},
     "platform-overrides": {
         "php": "8.1.0"
     },
-    "plugin-api-version": "2.2.0"
+    "plugin-api-version": "2.9.0"
 }
