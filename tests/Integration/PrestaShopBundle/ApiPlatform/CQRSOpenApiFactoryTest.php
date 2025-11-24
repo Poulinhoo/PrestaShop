@@ -443,6 +443,34 @@ class CQRSOpenApiFactoryTest extends KernelTestCase
                         'items' => ['type' => 'integer'],
                         'example' => [1, 3],
                     ]),
+                    // Categories use @index replacement, but their definition uses an ApiProperty
+                    'categories' => new ArrayObject([
+                        'type' => 'array',
+                        'items' => [
+                            'type' => 'object',
+                            'properties' => [
+                                'categoryId' => [
+                                    'type' => 'integer',
+                                ],
+                                'name' => [
+                                    'type' => 'string',
+                                ],
+                                'displayName' => [
+                                    'type' => 'string',
+                                ],
+                            ],
+                        ],
+                        'example' => [
+                            [
+                                'categoryId' => 2,
+                                'name' => 'Home',
+                                'displayName' => 'Home',
+                            ],
+                        ],
+                    ]),
+                    'defaultCategoryId' => new ArrayObject([
+                        'type' => 'integer',
+                    ]),
                 ],
             ]),
         ];
