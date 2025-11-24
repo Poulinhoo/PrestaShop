@@ -21,7 +21,7 @@ import {expect} from 'chai';
 
 const baseContext: string = 'functional_API_endpoints_category_deleteCategoryIdCover';
 
-describe('API : DELETE /admin-api/category/{categoryId}/cover', async () => {
+describe('API : DELETE /admin-api/categories/{categoryId}/cover', async () => {
   let apiContext: APIRequestContext;
   let browserContext: BrowserContext;
   let page: Page;
@@ -150,10 +150,10 @@ describe('API : DELETE /admin-api/category/{categoryId}/cover', async () => {
   });
 
   describe('API : Delete the Category Cover', async () => {
-    it('should request the endpoint /category/{categoryId}/cover', async function () {
+    it('should request the endpoint /categories/{categoryId}/cover', async function () {
       await testContext.addContextItem(this, 'testIdentifier', 'requestEndpoint', baseContext);
 
-      const apiResponse = await apiContext.delete(`category/${idCategory}/cover`, {
+      const apiResponse = await apiContext.delete(`categories/${idCategory}/cover`, {
         headers: {
           Authorization: `Bearer ${accessToken}`,
         },

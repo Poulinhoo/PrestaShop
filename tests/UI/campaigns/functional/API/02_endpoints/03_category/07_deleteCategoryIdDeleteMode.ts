@@ -23,9 +23,9 @@ import {
 
 import {expect} from 'chai';
 
-const baseContext: string = 'functional_API_endpoints_category_deleteCategoryIdMode';
+const baseContext: string = 'functional_API_endpoints_category_deleteCategoryIdDeleteMode';
 
-describe('API : DELETE /admin-api/category/{categoryId}/{mode}', async () => {
+describe('API : DELETE /admin-api/categories/{categoryId}/{deleteMode}', async () => {
   let apiContext: APIRequestContext;
   let browserContext: BrowserContext;
   let page: Page;
@@ -74,7 +74,7 @@ describe('API : DELETE /admin-api/category/{categoryId}/{mode}', async () => {
   createProductTest(createProduct2, `${baseContext}_preTest_1`);
   createProductTest(createProduct3, `${baseContext}_preTest_2`);
 
-  describe('API : DELETE /admin-api/category/{categoryId}/{mode}', async () => {
+  describe('API : DELETE /admin-api/categories/{categoryId}/{deleteMode}', async () => {
     before(async function () {
       browserContext = await utilsPlaywright.createBrowserContext(this.browser);
       page = await utilsPlaywright.newTab(browserContext);
@@ -226,10 +226,10 @@ describe('API : DELETE /admin-api/category/{categoryId}/{mode}', async () => {
     });
 
     describe('API : Delete the Category (mode="associate_and_disable")', async () => {
-      it('should request the endpoint /category/{categoryId}/{mode}', async function () {
+      it('should request the endpoint /categories/{categoryId}/{deleteMode}', async function () {
         await testContext.addContextItem(this, 'testIdentifier', 'requestEndpointMode_associate_and_disable', baseContext);
 
-        const apiResponse = await apiContext.delete(`category/${idCategories[0]}/associate_and_disable`, {
+        const apiResponse = await apiContext.delete(`categories/${idCategories[0]}/associate_and_disable`, {
           headers: {
             Authorization: `Bearer ${accessToken}`,
           },
@@ -313,10 +313,10 @@ describe('API : DELETE /admin-api/category/{categoryId}/{mode}', async () => {
     });
 
     describe('API : Delete the Category (mode="associate_only")', async () => {
-      it('should request the endpoint /category/{categoryId}/{mode}', async function () {
+      it('should request the endpoint /categories/{categoryId}/{deleteMode}', async function () {
         await testContext.addContextItem(this, 'testIdentifier', 'requestEndpointMode_associate_only', baseContext);
 
-        const apiResponse = await apiContext.delete(`category/${idCategories[1]}/associate_only`, {
+        const apiResponse = await apiContext.delete(`categories/${idCategories[1]}/associate_only`, {
           headers: {
             Authorization: `Bearer ${accessToken}`,
           },
@@ -400,10 +400,10 @@ describe('API : DELETE /admin-api/category/{categoryId}/{mode}', async () => {
     });
 
     describe('API : Delete the Category (mode="remove_associated")', async () => {
-      it('should request the endpoint /category/{categoryId}/{mode}', async function () {
+      it('should request the endpoint /categories/{categoryId}/{deleteMode}', async function () {
         await testContext.addContextItem(this, 'testIdentifier', 'requestEndpointMode_remove_associated', baseContext);
 
-        const apiResponse = await apiContext.delete(`category/${idCategories[2]}/remove_associated`, {
+        const apiResponse = await apiContext.delete(`categories/${idCategories[2]}/remove_associated`, {
           headers: {
             Authorization: `Bearer ${accessToken}`,
           },
