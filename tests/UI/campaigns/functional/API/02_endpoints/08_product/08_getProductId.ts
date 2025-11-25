@@ -158,8 +158,10 @@ describe('API : GET /products/{productId}', async () => {
         'availableLaterLabels',
         'availableNowLabels',
         'carrierReferenceIds',
+        'categories',
         'condition',
         'coverThumbnailUrl',
+        'defaultCategoryId',
         'deliveryTimeInStockNotes',
         'deliveryTimeNoteType',
         'deliveryTimeOutOfStockNotes',
@@ -259,6 +261,29 @@ describe('API : GET /products/{productId}', async () => {
       expect(jsonResponse.shopIds).to.be.deep.equal([1]);
       expect(jsonResponse.shopIds[0]).to.be.a('number');
       expect(jsonResponse.shopIds[0]).to.be.equal(1);
+    });
+
+    it('should check the JSON Response : `categories`', async function () {
+      await testContext.addContextItem(this, 'testIdentifier', 'checkResponseCategories', baseContext);
+
+      expect(jsonResponse).to.have.property('categories');
+      expect(jsonResponse.categories).to.be.a('array');
+      expect(jsonResponse.categories.length).to.be.greaterThan(0);
+      expect(jsonResponse.categories[0]).to.be.a('object');
+
+      // We don't need to check then context, mostly the structure itself
+      const productCategory = jsonResponse.categories[0];
+      expect(productCategory.categoryId).to.be.a('number');
+      expect(productCategory.name).to.be.a('string');
+      expect(productCategory.displayName).to.be.a('string');
+    });
+
+    it('should check the JSON Response : `defaultCategoryId`', async function () {
+      await testContext.addContextItem(this, 'testIdentifier', 'checkResponseDefaultCategoryId', baseContext);
+
+      expect(jsonResponse).to.have.property('defaultCategoryId');
+      expect(jsonResponse.defaultCategoryId).to.be.a('number');
+      expect(jsonResponse.defaultCategoryId).to.be.greaterThan(0);
     });
   });
 });
