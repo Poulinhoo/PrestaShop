@@ -32,15 +32,15 @@ use Context;
 use Currency;
 use HistoryController;
 use Order;
+use PrestaShop\PrestaShop\Adapter\ContainerFinder;
 use PrestaShop\PrestaShop\Adapter\Presenter\AbstractLazyArray;
 use PrestaShop\PrestaShop\Adapter\Presenter\LazyArrayAttribute;
-use PrestaShop\PrestaShop\Core\Localization\LocaleInterface;
-use PrestaShopBundle\Translation\TranslatorComponent;
-use PrestaShopBundle\Entity\Repository\ShipmentRepository;
-use PrestaShopException;
-use PrestaShop\PrestaShop\Adapter\ContainerFinder;
 use PrestaShop\PrestaShop\Core\FeatureFlag\FeatureFlagSettings;
 use PrestaShop\PrestaShop\Core\FeatureFlag\FeatureFlagStateCheckerInterface;
+use PrestaShop\PrestaShop\Core\Localization\LocaleInterface;
+use PrestaShopBundle\Entity\Repository\ShipmentRepository;
+use PrestaShopBundle\Translation\TranslatorComponent;
+use PrestaShopException;
 use Tools;
 
 class OrderDetailLazyArray extends AbstractLazyArray
@@ -245,7 +245,6 @@ class OrderDetailLazyArray extends AbstractLazyArray
 
         return $shipments;
     }
-
 
     /**
      * Used when the feature flag FEATURE_FLAG_IMPROVED_SHIPMENT is disabled.

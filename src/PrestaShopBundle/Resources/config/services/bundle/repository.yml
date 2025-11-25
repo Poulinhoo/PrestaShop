@@ -158,6 +158,7 @@ services:
     factory: [ '@doctrine.orm.default_entity_manager', getRepository ]
     arguments:
       - PrestaShopBundle\Entity\Shipment
+      - "%database_prefix%"
 
   PrestaShopBundle\Entity\Repository\MutationRepository:
     factory: [ '@doctrine.orm.default_entity_manager', getRepository ]

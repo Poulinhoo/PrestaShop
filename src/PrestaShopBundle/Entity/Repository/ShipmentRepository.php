@@ -36,6 +36,19 @@ use PrestaShopBundle\Entity\ShipmentProduct;
 class ShipmentRepository extends EntityRepository
 {
     /**
+     * @var string
+     */
+    private $tablePrefix;
+
+    /**
+     * @param string $tablePrefix
+     */
+    public function __construct(string $tablePrefix)
+    {
+        $this->tablePrefix = $tablePrefix;
+    }
+
+    /**
      * @param int $orderId
      *
      * @return Shipment[]
@@ -127,7 +140,7 @@ class ShipmentRepository extends EntityRepository
      *     date_upd: string,
      *     package_weight: string|null,
      *     carrier_name: string|null
-     * } | []>
+     * }>
      */
     public function getShipmentWithWeightByOrderId(int $orderId): array
     {
@@ -135,11 +148,10 @@ class ShipmentRepository extends EntityRepository
 
         $qb = $conn->createQueryBuilder();
         $qb->select('s.*', 'SUM(od.product_weight * sp.quantity) as package_weight, c.name as carrier_name, c.url as carrier_tracking_url')
-            ->from(_DB_PREFIX_ . 'shipment', 's')
-            ->leftJoin('s', _DB_PREFIX_ . 'shipment_product', 'sp', 's.id_shipment = sp.id_shipment')
-            ->leftJoin('sp', _DB_PREFIX_ . 'order_detail', 'od', 'sp.id_order_detail = od.id_order_detail')
-            ->leftJoin('s', _DB_PREFIX_ . 'carrier', 'c', 's.id_carrier = c.id_carrier')
-            ->where('s.id_order = :orderId')
+            ->from($this->tablePrefix . 'shipment', 's')
+            ->leftJoin('s', $this->tablePrefix . 'shipment_product', 'sp', 's.id_shipment = sp.id_shipment')
+            ->leftJoin('sp', $this->tablePrefix . 'order_detail', 'od', 'sp.id_order_detail = od.id_order_detail')
+            ->leftJoin('s', $this->tablePrefix . 'carrier', 'c', 's.id_carrier = c.id_carrier')->where('s.id_order = :orderId')
             ->setParameter('orderId', $orderId)
             ->groupBy('s.id_shipment');
 
