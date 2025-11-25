@@ -68,6 +68,15 @@ admin_discount_bulk_disable_status:
     _legacy_feature_flag: discount
     _legacy_link: AdminCartRules:statuscart_rule
 
+admin_discount_bulk_delete:
+  path: /bulk-delete
+  methods: [ POST ]
+  defaults:
+    _controller: PrestaShopBundle\Controller\Admin\Sell\Catalog\DiscountController::bulkDeleteAction
+    _legacy_controller: AdminCartRules
+    _legacy_feature_flag: discount
+    _legacy_link: AdminCartRules:submitBulkdeletecart_rule
+
 admin_discounts_delete:
   path: /{discountId}/delete
   methods: [ POST, DELETE ]

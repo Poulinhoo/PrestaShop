@@ -286,6 +286,8 @@ final class DiscountGridDefinitionFactory extends AbstractGridDefinitionFactory 
                         'submit_route' => 'admin_discount_bulk_disable_status',
                     ])
             )
-        ;
+            ->add(
+                $this->buildBulkDeleteAction('admin_discount_bulk_delete')
+            );
     }
 }

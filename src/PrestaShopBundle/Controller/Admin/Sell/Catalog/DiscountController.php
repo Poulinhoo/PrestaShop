@@ -29,6 +29,7 @@ namespace PrestaShopBundle\Controller\Admin\Sell\Catalog;
 use Exception;
 use PrestaShop\PrestaShop\Core\Domain\CartRule\Command\ToggleCartRuleStatusCommand;
 use PrestaShop\PrestaShop\Core\Domain\CartRule\Exception\CartRuleException;
+use PrestaShop\PrestaShop\Core\Domain\Discount\Command\BulkDeleteDiscountsCommand;
 use PrestaShop\PrestaShop\Core\Domain\Discount\Command\BulkUpdateDiscountsStatusCommand;
 use PrestaShop\PrestaShop\Core\Domain\Discount\Command\DeleteDiscountCommand;
 use PrestaShop\PrestaShop\Core\Domain\Discount\Exception\CannotUpdateDiscountException;
@@ -307,6 +308,35 @@ class DiscountController extends PrestaShopAdminController
             $this->addFlash(
                 'success',
                 $this->trans('The status has been successfully updated.', [], 'Admin.Notifications.Success')
+            );
+        } catch (DiscountException $e) {
+            $this->addFlash('error', $this->getErrorMessageForException($e, $this->getErrorMessages($e)));
+        }
+
+        return $this->redirectToRoute('admin_discounts_index');
+    }
+
+    /**
+     * Processes bulk discounts deleting.
+     *
+     * @param Request $request
+     *
+     * @return RedirectResponse
+     */
+    #[DemoRestricted(redirectRoute: 'admin_discounts_index')]
+    #[AdminSecurity("is_granted('delete', request.get('_legacy_controller'))", redirectRoute: 'admin_discounts_index', message: 'You do not have permission to delete this.')]
+    public function bulkDeleteAction(Request $request): RedirectResponse
+    {
+        try {
+            $discountIds = $this->getBulkDiscountsFromRequest($request);
+
+            $command = new BulkDeleteDiscountsCommand($discountIds);
+
+            $this->dispatchCommand($command);
+
+            $this->addFlash(
+                'success',
+                $this->trans('The selection has been successfully deleted.', [], 'Admin.Notifications.Success')
             );
         } catch (DiscountException $e) {
             $this->addFlash('error', $this->getErrorMessageForException($e, $this->getErrorMessages($e)));
