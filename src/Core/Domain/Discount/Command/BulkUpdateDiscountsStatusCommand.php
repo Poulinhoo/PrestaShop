@@ -39,9 +39,6 @@ class BulkUpdateDiscountsStatusCommand
      */
     private array $discountIds;
 
-    /**
-     * @var bool
-     */
     private bool $newStatus;
 
     /**
@@ -50,7 +47,7 @@ class BulkUpdateDiscountsStatusCommand
      *
      * @throws DiscountConstraintException
      */
-    public function __construct(array $discountIds, $newStatus)
+    public function __construct(array $discountIds, bool $newStatus)
     {
         $this
             ->setDiscountIds($discountIds)
@@ -66,9 +63,6 @@ class BulkUpdateDiscountsStatusCommand
         return $this->discountIds;
     }
 
-    /**
-     * @return bool
-     */
     public function getNewStatus(): bool
     {
         return $this->newStatus;
@@ -76,8 +70,6 @@ class BulkUpdateDiscountsStatusCommand
 
     /**
      * @param int[] $discountIds
-     *
-     * @return self
      *
      * @throws DiscountConstraintException
      */
@@ -95,13 +87,9 @@ class BulkUpdateDiscountsStatusCommand
     }
 
     /**
-     * @param bool $newStatus
-     *
-     * @return self
-     *
      * @throws DiscountConstraintException
      */
-    private function setNewStatus($newStatus): self
+    private function setNewStatus(bool $newStatus): self
     {
         if (!is_bool($newStatus)) {
             throw new DiscountConstraintException(sprintf('Discount status %s is invalid. Status must be of type "bool".', var_export($newStatus, true)), DiscountConstraintException::INVALID_STATUS);

@@ -38,7 +38,7 @@ class BulkDiscountException extends DiscountException implements BulkCommandExce
     /**
      * @var Throwable[]
      */
-    private $exceptions;
+    private array $exceptions;
 
     /**
      * @param Throwable[] $exceptions
