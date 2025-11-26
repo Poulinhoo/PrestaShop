@@ -23,7 +23,7 @@ import {
 
 const baseContext: string = 'functional_API_endpoints_product_postProduct';
 
-describe('API : POST /product', async () => {
+describe('API : POST /products', async () => {
   let apiContext: APIRequestContext;
   let browserContext: BrowserContext;
   let page: Page;
@@ -52,10 +52,10 @@ describe('API : POST /product', async () => {
   });
 
   describe('API : Create the Product', async () => {
-    it('should request the endpoint /product', async function () {
+    it('should request the endpoint /products', async function () {
       await testContext.addContextItem(this, 'testIdentifier', 'requestEndpoint', baseContext);
 
-      const apiResponse = await apiContext.post('product', {
+      const apiResponse = await apiContext.post('products', {
         headers: {
           Authorization: `Bearer ${accessToken}`,
         },
@@ -83,9 +83,11 @@ describe('API : POST /product', async () => {
         'availableForOrder',
         'availableLaterLabels',
         'availableNowLabels',
+        'categories',
         'carrierReferenceIds',
         'condition',
         'coverThumbnailUrl',
+        'defaultCategoryId',
         'deliveryTimeInStockNotes',
         'deliveryTimeNoteType',
         'deliveryTimeOutOfStockNotes',

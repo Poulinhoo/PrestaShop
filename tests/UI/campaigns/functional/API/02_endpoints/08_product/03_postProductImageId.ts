@@ -26,7 +26,7 @@ import {
 
 const baseContext: string = 'functional_API_endpoints_product_postProductImageId';
 
-describe('API : POST /product/image/{imageId}', async () => {
+describe('API : POST /products/images/{imageId}', async () => {
   let apiContext: APIRequestContext;
   let browserContext: BrowserContext;
   let page: Page;
@@ -49,7 +49,7 @@ describe('API : POST /product/image/{imageId}', async () => {
 
   createProductTest(createProduct, `${baseContext}_preTest_0`);
 
-  describe('POST /product/{productId}/image', async () => {
+  describe('POST /products/{productId}/images', async () => {
     before(async function () {
       browserContext = await utilsPlaywright.createBrowserContext(this.browser);
       page = await utilsPlaywright.newTab(browserContext);
@@ -152,14 +152,14 @@ describe('API : POST /product/image/{imageId}', async () => {
     });
 
     describe('API : Update the Product Image', async () => {
-      it('should request the endpoint /product/image/{imageId}', async function () {
+      it('should request the endpoint /products/images/{imageId}', async function () {
         await testContext.addContextItem(this, 'testIdentifier', 'requestEndpoint', baseContext);
 
         const dataMultipart: any = {};
         dataMultipart[`legends[${dataLanguages.english.locale}]`] = productCaptionUpdatedEN;
         dataMultipart[`legends[${dataLanguages.french.locale}]`] = productCaptionUpdatedFR;
 
-        const apiResponse = await apiContext.post(`product/image/${productImageInformation.id}`, {
+        const apiResponse = await apiContext.post(`products/images/${productImageInformation.id}`, {
           headers: {
             Authorization: `Bearer ${accessToken}`,
             ContentType: 'multipart/form-data',

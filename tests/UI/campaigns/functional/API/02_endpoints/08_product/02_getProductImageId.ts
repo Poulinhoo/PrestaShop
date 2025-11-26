@@ -22,7 +22,7 @@ import {
 
 const baseContext: string = 'functional_API_endpoints_product_getProductImageId';
 
-describe('API : GET /product/image/{imageId}', async () => {
+describe('API : GET /products/images/{imageId}', async () => {
   let apiContext: APIRequestContext;
   let browserContext: BrowserContext;
   let page: Page;
@@ -51,10 +51,10 @@ describe('API : GET /product/image/{imageId}', async () => {
   });
 
   describe('API : Fetch the Product Image', async () => {
-    it('should request the endpoint /product/image/{imageId}', async function () {
+    it('should request the endpoint /products/images/{imageId}', async function () {
       await testContext.addContextItem(this, 'testIdentifier', 'requestEndpoint', baseContext);
 
-      const apiResponse = await apiContext.get(`product/image/${imageId}`, {
+      const apiResponse = await apiContext.get(`products/images/${imageId}`, {
         headers: {
           Authorization: `Bearer ${accessToken}`,
         },

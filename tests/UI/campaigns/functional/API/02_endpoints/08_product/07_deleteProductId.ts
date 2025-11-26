@@ -19,7 +19,7 @@ import {
 
 const baseContext: string = 'functional_API_endpoints_product_deleteProductId';
 
-describe('API : DELETE /product/{productId}', async () => {
+describe('API : DELETE /products/{productId}', async () => {
   let apiContext: APIRequestContext;
   let browserContext: BrowserContext;
   let page: Page;
@@ -89,10 +89,10 @@ describe('API : DELETE /product/{productId}', async () => {
   });
 
   describe('API : Delete the Product', async () => {
-    it('should request the endpoint /product/{productId}', async function () {
+    it('should request the endpoint /products/{productId}', async function () {
       await testContext.addContextItem(this, 'testIdentifier', 'requestEndpoint', baseContext);
 
-      const apiResponse = await apiContext.delete(`product/${idProduct}`, {
+      const apiResponse = await apiContext.delete(`products/${idProduct}`, {
         headers: {
           Authorization: `Bearer ${accessToken}`,
         },

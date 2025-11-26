@@ -21,7 +21,7 @@ import {
 
 const baseContext: string = 'functional_API_endpoints_product_deleteProductImageId';
 
-describe('API : DELETE /admin-api/product/image/{imageId}', async () => {
+describe('API : DELETE /admin-api/products/images/{imageId}', async () => {
   let apiContext: APIRequestContext;
   let browserContext: BrowserContext;
   let page: Page;
@@ -120,10 +120,10 @@ describe('API : DELETE /admin-api/product/image/{imageId}', async () => {
   });
 
   describe('API : Delete the Product Image', async () => {
-    it('should request the endpoint /product/image/{imageId}', async function () {
+    it('should request the endpoint /products/images/{imageId}', async function () {
       await testContext.addContextItem(this, 'testIdentifier', 'requestEndpoint', baseContext);
 
-      const apiResponse = await apiContext.delete(`product/image/${imageId}`, {
+      const apiResponse = await apiContext.delete(`products/images/${imageId}`, {
         headers: {
           Authorization: `Bearer ${accessToken}`,
         },

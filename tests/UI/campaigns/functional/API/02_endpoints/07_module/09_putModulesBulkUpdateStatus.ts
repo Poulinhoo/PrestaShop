@@ -19,9 +19,9 @@ import {
 
 import {expect} from 'chai';
 
-const baseContext: string = 'functional_API_endpoints_module_putModulesToggleStatus';
+const baseContext: string = 'functional_API_endpoints_module_putModulesBulkUpdateStatus';
 
-describe('API : PUT /modules/toggle-status', async () => {
+describe('API : PUT /modules/bulk-update-status', async () => {
   let apiContext: APIRequestContext;
   let browserContext: BrowserContext;
   let page: Page;
@@ -95,10 +95,10 @@ describe('API : PUT /modules/toggle-status', async () => {
     },
   ].forEach((arg: {status: boolean, verb: string}, index: number) => {
     describe(`API : Update modules (${utilsCore.capitalize(arg.verb)})`, async () => {
-      it('should request the endpoint /modules/toggle-status', async function () {
+      it('should request the endpoint /modules/bulk-update-status', async function () {
         await testContext.addContextItem(this, 'testIdentifier', `requestEndpoint${index}`, baseContext);
 
-        const apiResponse = await apiContext.put('modules/toggle-status', {
+        const apiResponse = await apiContext.put('modules/bulk-update-status', {
           headers: {
             Authorization: `Bearer ${accessToken}`,
           },

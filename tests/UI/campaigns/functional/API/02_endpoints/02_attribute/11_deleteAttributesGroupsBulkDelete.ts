@@ -17,9 +17,9 @@ import {
   utilsPlaywright,
 } from '@prestashop-core/ui-testing';
 
-const baseContext: string = 'functional_API_endpoints_attribute_putAttributesGroupsDelete';
+const baseContext: string = 'functional_API_endpoints_attribute_deleteAttributesGroupsBulkDelete';
 
-describe('API : PUT /attributes/groups/delete', async () => {
+describe('API : DELETE /attributes/groups/bulk-delete', async () => {
   let apiContext: APIRequestContext;
   let browserContext: BrowserContext;
   let page: Page;
@@ -113,10 +113,10 @@ describe('API : PUT /attributes/groups/delete', async () => {
         const textColumn = await boAttributesPage.getTextColumn(page, 1, 'name');
         expect(textColumn).to.contains(data.name);
 
-        const idAttributeGroup = parseInt(await boAttributesPage.getTextColumn(page, 1, 'id_attribute_group'), 10);
-        expect(idAttributeGroup).to.be.gt(0);
+        const attributeGroupId = parseInt(await boAttributesPage.getTextColumn(page, 1, 'id_attribute_group'), 10);
+        expect(attributeGroupId).to.be.gt(0);
 
-        attributeGroupIds.push(idAttributeGroup);
+        attributeGroupIds.push(attributeGroupId);
       });
 
       it('should reset all filters', async function () {
@@ -129,10 +129,10 @@ describe('API : PUT /attributes/groups/delete', async () => {
   });
 
   describe('API : Fetch Data', async () => {
-    it('should request the endpoint /attributes/groups/delete', async function () {
+    it('should request the endpoint /attributes/groups/bulk-delete', async function () {
       await testContext.addContextItem(this, 'testIdentifier', 'requestEndpoint', baseContext);
 
-      const apiResponse = await apiContext.put('attributes/groups/delete', {
+      const apiResponse = await apiContext.delete('attributes/groups/bulk-delete', {
         headers: {
           Authorization: `Bearer ${accessToken}`,
         },

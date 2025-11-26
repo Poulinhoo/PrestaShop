@@ -20,7 +20,7 @@ import {
 
 const baseContext: string = 'functional_API_endpoints_attribute_postAttributesAttribute';
 
-describe('API : POST /admin-api/attributes/attribute', async () => {
+describe('API : POST /admin-api/attributes/attributes', async () => {
   let apiContext: APIRequestContext;
   let browserContext: BrowserContext;
   let page: Page;
@@ -51,10 +51,10 @@ describe('API : POST /admin-api/attributes/attribute', async () => {
   });
 
   describe('API : Create the API Access', async () => {
-    it('should request the endpoint /admin-api/attributes/attribute', async function () {
+    it('should request the endpoint /admin-api/attributes/attributes', async function () {
       await testContext.addContextItem(this, 'testIdentifier', 'requestEndpoint', baseContext);
 
-      const apiResponse = await apiContext.post('attributes/attribute', {
+      const apiResponse = await apiContext.post('attributes/attributes', {
         headers: {
           Authorization: `Bearer ${accessToken}`,
         },

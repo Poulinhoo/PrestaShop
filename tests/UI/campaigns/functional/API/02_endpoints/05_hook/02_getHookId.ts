@@ -18,7 +18,7 @@ import {
 
 const baseContext: string = 'functional_API_endpoints_hook_getHookId';
 
-describe('API : GET /hook/{hookId}', async () => {
+describe('API : GET /hooks/{hookId}', async () => {
   let apiContext: APIRequestContext;
   let browserContext: BrowserContext;
   let page: Page;
@@ -96,10 +96,10 @@ describe('API : GET /hook/{hookId}', async () => {
   });
 
   describe('API : Check Data', async () => {
-    it('should request the endpoint /hook/{hookId}', async function () {
+    it('should request the endpoint /hooks/{hookId}', async function () {
       await testContext.addContextItem(this, 'testIdentifier', 'requestEndpoint', baseContext);
 
-      const apiResponse = await apiContext.get(`hook/${hookId}`, {
+      const apiResponse = await apiContext.get(`hooks/${hookId}`, {
         headers: {
           Authorization: `Bearer ${accessToken}`,
         },

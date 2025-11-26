@@ -95,7 +95,7 @@ class CQRSOpenApiFactoryTest extends KernelTestCase
     public function provideEndpointScopes(): iterable
     {
         yield 'API client entity' => [
-            '/api-client/{apiClientId}',
+            '/api-clients/{apiClientId}',
             [
                 'get' => ['api_client_read'],
                 'patch' => ['api_client_write'],
@@ -104,7 +104,7 @@ class CQRSOpenApiFactoryTest extends KernelTestCase
         ];
 
         yield 'API client creation' => [
-            '/api-client',
+            '/api-clients',
             [
                 'post' => ['api_client_write'],
             ],
@@ -118,7 +118,7 @@ class CQRSOpenApiFactoryTest extends KernelTestCase
         ];
 
         yield 'Product entity' => [
-            '/product/{productId}',
+            '/products/{productId}',
             [
                 'get' => ['product_read'],
                 'patch' => ['product_write'],
@@ -127,7 +127,7 @@ class CQRSOpenApiFactoryTest extends KernelTestCase
         ];
 
         yield 'Product creation' => [
-            '/product',
+            '/products',
             [
                 'post' => ['product_write'],
             ],
@@ -443,6 +443,34 @@ class CQRSOpenApiFactoryTest extends KernelTestCase
                         'items' => ['type' => 'integer'],
                         'example' => [1, 3],
                     ]),
+                    // Categories use @index replacement, but their definition uses an ApiProperty
+                    'categories' => new ArrayObject([
+                        'type' => 'array',
+                        'items' => [
+                            'type' => 'object',
+                            'properties' => [
+                                'categoryId' => [
+                                    'type' => 'integer',
+                                ],
+                                'name' => [
+                                    'type' => 'string',
+                                ],
+                                'displayName' => [
+                                    'type' => 'string',
+                                ],
+                            ],
+                        ],
+                        'example' => [
+                            [
+                                'categoryId' => 2,
+                                'name' => 'Home',
+                                'displayName' => 'Home',
+                            ],
+                        ],
+                    ]),
+                    'defaultCategoryId' => new ArrayObject([
+                        'type' => 'integer',
+                    ]),
                 ],
             ]),
         ];
@@ -681,25 +709,25 @@ class CQRSOpenApiFactoryTest extends KernelTestCase
     public function getExpectedTags(): iterable
     {
         yield 'product get endpoint keeps Product tag' => [
-            '/product/{productId}',
+            '/products/{productId}',
             'get',
             ['Product'],
         ];
 
         yield 'product patch endpoint keeps Product tag' => [
-            '/product/{productId}',
+            '/products/{productId}',
             'patch',
             ['Product'],
         ];
 
         yield 'product image get endpoint has Product tag instead of ProductImage' => [
-            '/product/image/{imageId}',
+            '/products/images/{imageId}',
             'get',
             ['Product'],
         ];
 
         yield 'api client get endpoint keeps ApiClient tag' => [
-            '/api-client/{apiClientId}',
+            '/api-clients/{apiClientId}',
             'get',
             ['ApiClient'],
         ];

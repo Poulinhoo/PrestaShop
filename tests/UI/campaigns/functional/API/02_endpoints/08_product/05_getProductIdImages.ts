@@ -22,7 +22,7 @@ import {
 
 const baseContext: string = 'functional_API_endpoints_product_getProductIdImages';
 
-describe('API : GET /product/{productId}/images', async () => {
+describe('API : GET /products/{productId}/images', async () => {
   let apiContext: APIRequestContext;
   let browserContext: BrowserContext;
   let page: Page;
@@ -31,7 +31,7 @@ describe('API : GET /product/{productId}/images', async () => {
 
   const clientScope: string = 'product_read';
 
-  describe('GET /product/{productId}/images', async () => {
+  describe('GET /products/{productId}/images', async () => {
     before(async function () {
       browserContext = await utilsPlaywright.createBrowserContext(this.browser);
       page = await utilsPlaywright.newTab(browserContext);
@@ -51,10 +51,10 @@ describe('API : GET /product/{productId}/images', async () => {
     });
 
     describe('API : Create the Product Image', async () => {
-      it('should request the endpoint /product/{productId}/image', async function () {
+      it('should request the endpoint /products/{productId}/images', async function () {
         await testContext.addContextItem(this, 'testIdentifier', 'requestEndpoint', baseContext);
 
-        const apiResponse = await apiContext.get(`product/${dataProducts.demo_1.id}/images`, {
+        const apiResponse = await apiContext.get(`products/${dataProducts.demo_1.id}/images`, {
           headers: {
             Authorization: `Bearer ${accessToken}`,
           },

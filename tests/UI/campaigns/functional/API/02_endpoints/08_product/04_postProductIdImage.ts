@@ -23,7 +23,7 @@ import {
 
 const baseContext: string = 'functional_API_endpoints_product_postProductIdImage';
 
-describe('API : POST /product/{productId}/image', async () => {
+describe('API : POST /products/{productId}/images', async () => {
   let apiContext: APIRequestContext;
   let browserContext: BrowserContext;
   let page: Page;
@@ -37,7 +37,7 @@ describe('API : POST /product/{productId}/image', async () => {
 
   createProductTest(createProduct, `${baseContext}_preTest`);
 
-  describe('POST /product/{productId}/image', async () => {
+  describe('POST /products/{productId}/images', async () => {
     before(async function () {
       browserContext = await utilsPlaywright.createBrowserContext(this.browser);
       page = await utilsPlaywright.newTab(browserContext);
@@ -99,10 +99,10 @@ describe('API : POST /product/{productId}/image', async () => {
     });
 
     describe('API : Create the Product Image', async () => {
-      it('should request the endpoint /product/{productId}/image', async function () {
+      it('should request the endpoint /products/{productId}/images', async function () {
         await testContext.addContextItem(this, 'testIdentifier', 'requestEndpoint', baseContext);
 
-        const apiResponse = await apiContext.post(`product/${idProduct}/image`, {
+        const apiResponse = await apiContext.post(`products/${idProduct}/images`, {
           headers: {
             Authorization: `Bearer ${accessToken}`,
             ContentType: 'multipart/form-data',

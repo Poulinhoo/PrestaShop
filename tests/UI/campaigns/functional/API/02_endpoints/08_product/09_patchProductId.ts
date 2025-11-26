@@ -32,7 +32,7 @@ import {
 
 const baseContext: string = 'functional_API_endpoints_product_patchProductId';
 
-describe('API : PATCH /product/{productId}', async () => {
+describe('API : PATCH /products/{productId}', async () => {
   let apiContext: APIRequestContext;
   let browserContext: BrowserContext;
   let page: Page;
@@ -53,7 +53,7 @@ describe('API : PATCH /product/{productId}', async () => {
   // Pre Condition : Create a product
   createProductTest(createProduct, `${baseContext}_preTest_1`);
 
-  describe('API : PATCH /product/{productId}', async () => {
+  describe('API : PATCH /products/{productId}', async () => {
     before(async function () {
       browserContext = await utilsPlaywright.createBrowserContext(this.browser);
       page = await utilsPlaywright.newTab(browserContext);
@@ -319,13 +319,13 @@ describe('API : PATCH /product/{productId}', async () => {
       },
     ].forEach((data: { propertyName: string, propertyValue: boolean|string|number|object|any}) => {
       describe(`Update the property \`${data.propertyName}\` with API and check in BO`, async () => {
-        it('should request the endpoint /product/{productId}', async function () {
+        it('should request the endpoint /products/{productId}', async function () {
           await testContext.addContextItem(this, 'testIdentifier', `requestEndpoint${data.propertyName}`, baseContext);
 
           const dataPatch: any = {};
           dataPatch[data.propertyName] = data.propertyValue;
 
-          const apiResponse = await apiContext.patch(`product/${idProduct}`, {
+          const apiResponse = await apiContext.patch(`products/${idProduct}`, {
             headers: {
               Authorization: `Bearer ${accessToken}`,
             },
@@ -357,8 +357,10 @@ describe('API : PATCH /product/{productId}', async () => {
             'availableLaterLabels',
             'availableNowLabels',
             'carrierReferenceIds',
+            'categories',
             'condition',
             'coverThumbnailUrl',
+            'defaultCategoryId',
             'deliveryTimeInStockNotes',
             'deliveryTimeNoteType',
             'deliveryTimeOutOfStockNotes',

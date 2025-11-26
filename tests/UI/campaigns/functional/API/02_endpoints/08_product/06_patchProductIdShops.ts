@@ -25,7 +25,7 @@ import {
 
 const baseContext: string = 'functional_API_endpoints_product_patchProductIdShops';
 
-describe('API : PATCH /product/{productId}/shops', async () => {
+describe('API : PATCH /products/{productId}/shops', async () => {
   let apiContext: APIRequestContext;
   let browserContext: BrowserContext;
   let page: Page;
@@ -54,7 +54,7 @@ describe('API : PATCH /product/{productId}/shops', async () => {
   // Pre-condition: Enable "Admin API - Multistore"
   setFeatureFlag(boFeatureFlagPage.featureFlagAdminAPIMultistore, true, `${baseContext}_preTest_2`);
 
-  describe('API : PATCH /product/{productId}/shops', async () => {
+  describe('API : PATCH /products/{productId}/shops', async () => {
     before(async function () {
       browserContext = await utilsPlaywright.createBrowserContext(this.browser);
       page = await utilsPlaywright.newTab(browserContext);
@@ -178,10 +178,10 @@ describe('API : PATCH /product/{productId}/shops', async () => {
     });
 
     describe('Update the property `associatedShopIds` with API and check in BO', async () => {
-      it('should request the endpoint /product/{productId}/shops', async function () {
+      it('should request the endpoint /products/{productId}/shops', async function () {
         await testContext.addContextItem(this, 'testIdentifier', 'requestEndpointAssociatedShopIds', baseContext);
 
-        const apiResponse = await apiContext.patch(`product/${idProduct}/shops`, {
+        const apiResponse = await apiContext.patch(`products/${idProduct}/shops`, {
           headers: {
             Authorization: `Bearer ${accessToken}`,
           },
@@ -214,8 +214,10 @@ describe('API : PATCH /product/{productId}/shops', async () => {
           'availableLaterLabels',
           'availableNowLabels',
           'carrierReferenceIds',
+          'categories',
           'condition',
           'coverThumbnailUrl',
+          'defaultCategoryId',
           'deliveryTimeInStockNotes',
           'deliveryTimeNoteType',
           'deliveryTimeOutOfStockNotes',

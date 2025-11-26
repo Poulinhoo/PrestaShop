@@ -22,7 +22,7 @@ import {
 
 const baseContext: string = 'functional_API_endpoints_product_getProductId';
 
-describe('API : GET /product/{productId}', async () => {
+describe('API : GET /products/{productId}', async () => {
   let apiContext: APIRequestContext;
   let browserContext: BrowserContext;
   let page: Page;
@@ -134,10 +134,10 @@ describe('API : GET /product/{productId}', async () => {
   });
 
   describe('API : Check Data', async () => {
-    it('should request the endpoint /product/{productId}', async function () {
+    it('should request the endpoint /products/{productId}', async function () {
       await testContext.addContextItem(this, 'testIdentifier', 'requestEndpoint', baseContext);
 
-      const apiResponse = await apiContext.get(`product/${idProduct}`, {
+      const apiResponse = await apiContext.get(`products/${idProduct}`, {
         headers: {
           Authorization: `Bearer ${accessToken}`,
         },
@@ -158,8 +158,10 @@ describe('API : GET /product/{productId}', async () => {
         'availableLaterLabels',
         'availableNowLabels',
         'carrierReferenceIds',
+        'categories',
         'condition',
         'coverThumbnailUrl',
+        'defaultCategoryId',
         'deliveryTimeInStockNotes',
         'deliveryTimeNoteType',
         'deliveryTimeOutOfStockNotes',
@@ -259,6 +261,29 @@ describe('API : GET /product/{productId}', async () => {
       expect(jsonResponse.shopIds).to.be.deep.equal([1]);
       expect(jsonResponse.shopIds[0]).to.be.a('number');
       expect(jsonResponse.shopIds[0]).to.be.equal(1);
+    });
+
+    it('should check the JSON Response : `categories`', async function () {
+      await testContext.addContextItem(this, 'testIdentifier', 'checkResponseCategories', baseContext);
+
+      expect(jsonResponse).to.have.property('categories');
+      expect(jsonResponse.categories).to.be.a('array');
+      expect(jsonResponse.categories.length).to.be.greaterThan(0);
+      expect(jsonResponse.categories[0]).to.be.a('object');
+
+      // We don't need to check then context, mostly the structure itself
+      const productCategory = jsonResponse.categories[0];
+      expect(productCategory.categoryId).to.be.a('number');
+      expect(productCategory.name).to.be.a('string');
+      expect(productCategory.displayName).to.be.a('string');
+    });
+
+    it('should check the JSON Response : `defaultCategoryId`', async function () {
+      await testContext.addContextItem(this, 'testIdentifier', 'checkResponseDefaultCategoryId', baseContext);
+
+      expect(jsonResponse).to.have.property('defaultCategoryId');
+      expect(jsonResponse.defaultCategoryId).to.be.a('number');
+      expect(jsonResponse.defaultCategoryId).to.be.greaterThan(0);
     });
   });
 });

@@ -18,7 +18,7 @@ import {
 
 const baseContext: string = 'functional_API_endpoints_hook_putHookIdStatus';
 
-describe('API : PUT /hook/{hookId}/status', async () => {
+describe('API : PUT /hooks/{hookId}/status', async () => {
   let apiContext: APIRequestContext;
   let browserContext: BrowserContext;
   let page: Page;
@@ -88,10 +88,10 @@ describe('API : PUT /hook/{hookId}/status', async () => {
     true,
   ].forEach((argStatus: boolean, index: number) => {
     describe(`API : Check Data with status = ${argStatus}`, async () => {
-      it('should request the endpoint /hook/{technicalName}/status', async function () {
+      it('should request the endpoint /hooks/{technicalName}/status', async function () {
         await testContext.addContextItem(this, 'testIdentifier', `requestEndpoint${index}`, baseContext);
 
-        const apiResponse = await apiContext.put(`hook/${hookId}/status`, {
+        const apiResponse = await apiContext.put(`hooks/${hookId}/status`, {
           headers: {
             Authorization: `Bearer ${accessToken}`,
           },

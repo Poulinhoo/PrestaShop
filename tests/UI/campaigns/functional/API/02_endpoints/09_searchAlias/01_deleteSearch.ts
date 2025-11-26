@@ -18,7 +18,7 @@ import {expect} from 'chai';
 
 const baseContext: string = 'functional_API_endpoints_searchAlias_deleteSearch';
 
-describe('API : DELETE /admin-api/search-alias/{search}', async () => {
+describe('API : DELETE /admin-api/search-aliases/{search}', async () => {
   let apiContext: APIRequestContext;
   let browserContext: BrowserContext;
   let page: Page;
@@ -107,10 +107,10 @@ describe('API : DELETE /admin-api/search-alias/{search}', async () => {
   });
 
   describe('API : Delete the Search Alias', async () => {
-    it('should request the endpoint /admin-api/search-alias/{search}', async function () {
+    it('should request the endpoint /admin-api/search-aliases/{search}', async function () {
       await testContext.addContextItem(this, 'testIdentifier', 'requestEndpoint', baseContext);
 
-      const apiResponse = await apiContext.delete(`search-alias/${createSearchAlias.search}`, {
+      const apiResponse = await apiContext.delete(`search-aliases/${createSearchAlias.search}`, {
         headers: {
           Authorization: `Bearer ${accessToken}`,
         },

@@ -16,9 +16,9 @@ import {
   FakerModule,
 } from '@prestashop-core/ui-testing';
 
-const baseContext: string = 'functional_API_endpoints_module_putModulesUninstall';
+const baseContext: string = 'functional_API_endpoints_module_putModulesBulkUninstall';
 
-describe('API : PUT /modules/uninstall', async () => {
+describe('API : PUT /modules/bulk-uninstall', async () => {
   let apiContext: APIRequestContext;
   let browserContext: BrowserContext;
   let page: Page;
@@ -92,11 +92,11 @@ describe('API : PUT /modules/uninstall', async () => {
     });
   });
 
-  describe('API : PUT /modules/uninstall with deleteFiles = false', async () => {
-    it('should request the endpoint /module/{technicalName}/uninstall', async function () {
+  describe('API : PUT /modules/bulk-uninstall with deleteFiles = false', async () => {
+    it('should request the endpoint /modules/bulk-uninstall', async function () {
       await testContext.addContextItem(this, 'testIdentifier', 'requestEndpointDeleteFilesFalse', baseContext);
 
-      const apiResponse = await apiContext.put('modules/uninstall', {
+      const apiResponse = await apiContext.put('modules/bulk-uninstall', {
         headers: {
           Authorization: `Bearer ${accessToken}`,
         },
@@ -135,11 +135,11 @@ describe('API : PUT /modules/uninstall', async () => {
     });
   });
 
-  describe('API : PUT /modules/uninstall with deleteFiles = true', async () => {
-    it('should request the endpoint /modules/uninstall', async function () {
+  describe('API : PUT /modules/bulk-uninstall with deleteFiles = true', async () => {
+    it('should request the endpoint /modules/bulk-uninstall', async function () {
       await testContext.addContextItem(this, 'testIdentifier', 'requestEndpointDeleteFilesTrue', baseContext);
 
-      const apiResponse = await apiContext.put('modules/uninstall', {
+      const apiResponse = await apiContext.put('modules/bulk-uninstall', {
         headers: {
           Authorization: `Bearer ${accessToken}`,
         },
