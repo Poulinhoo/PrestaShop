@@ -441,7 +441,8 @@ class OrderAmountUpdater
         CartRule::autoAddToCart(null, true);
         CartRule::autoRemoveFromCart(null, true);
 
-        $newCartRules = $cart->getCartRules(CartRule::FILTER_ACTION_ALL, false);
+        $newCartRules = $cart->getCartRules(CartRule::FILTER_ACTION_ALL, false, true);
+
         // We need the calculator to compute the discount on the whole products because they can interact with each
         // other so they can't be computed independently, it needs to keep order prices
         $calculator = $cart->newCalculator($cart->getProducts(), $newCartRules, $order->id_carrier, $computingPrecision, $this->keepOrderPrices);
