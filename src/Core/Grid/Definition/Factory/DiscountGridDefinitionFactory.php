@@ -31,8 +31,10 @@ namespace PrestaShop\PrestaShop\Core\Grid\Definition\Factory;
 use PrestaShop\PrestaShop\Core\Domain\Discount\DiscountSettings;
 use PrestaShop\PrestaShop\Core\Grid\Action\Bulk\BulkActionCollection;
 use PrestaShop\PrestaShop\Core\Grid\Action\Bulk\Type\SubmitBulkAction;
+use PrestaShop\PrestaShop\Core\Grid\Action\ModalOptions;
 use PrestaShop\PrestaShop\Core\Grid\Action\Row\RowActionCollection;
 use PrestaShop\PrestaShop\Core\Grid\Action\Row\Type\LinkRowAction;
+use PrestaShop\PrestaShop\Core\Grid\Action\Row\Type\SubmitRowAction;
 use PrestaShop\PrestaShop\Core\Grid\Column\ColumnCollection;
 use PrestaShop\PrestaShop\Core\Grid\Column\ColumnCollectionInterface;
 use PrestaShop\PrestaShop\Core\Grid\Column\Type\Common\ActionColumn;
@@ -162,6 +164,22 @@ final class DiscountGridDefinitionFactory extends AbstractGridDefinitionFactory 
                                     'route_param_name' => 'discountId',
                                     'route_param_field' => 'id_discount',
                                     'clickable_row' => true,
+                                ])
+                            )
+                            ->add((new SubmitRowAction('duplicate'))
+                                ->setName($this->trans('Duplicate', [], 'Admin.Actions'))
+                                ->setIcon('content_copy')
+                                ->setOptions([
+                                    'method' => 'POST',
+                                    'route' => 'admin_discounts_duplicate',
+                                    'route_param_name' => 'discountId',
+                                    'route_param_field' => 'id_discount',
+                                    'confirm_message' => $this->trans('Remember to properly edit all information after duplicating.', [], 'Admin.Catalog.Notification'),
+                                    'modal_options' => new ModalOptions([
+                                        'title' => $this->trans('Duplicate discount', [], 'Admin.Actions'),
+                                        'confirm_button_label' => $this->trans('Duplicate', [], 'Admin.Actions'),
+                                        'close_button_label' => $this->trans('Cancel', [], 'Admin.Actions'),
+                                    ]),
                                 ])
                             )
                             ->add(
