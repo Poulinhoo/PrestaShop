@@ -78,7 +78,7 @@ describe('API : GET /categories', async () => {
       for (let i:number = 0; i < jsonResponse.totalItems; i++) {
         expect(jsonResponse.items[i]).to.have.all.keys(
           'categoryId',
-          'active',
+          'enabled',
           'name',
         );
       }
@@ -145,8 +145,8 @@ describe('API : GET /categories', async () => {
           const name = await boCategoriesPage.getTextColumnFromTableCategories(page, 1, 'name');
           expect(name).to.equal(jsonResponse.items[idxItem].name);
 
-          const active = await boCategoriesPage.getStatus(page, 1);
-          expect(active).to.equal(jsonResponse.items[idxItem].active);
+          const enabled = await boCategoriesPage.getStatus(page, 1);
+          expect(enabled).to.equal(jsonResponse.items[idxItem].enabled);
         }
       }
     });

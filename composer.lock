@@ -5210,16 +5210,16 @@
         },
         {
             "name": "prestashop/ps_apiresources",
-            "version": "dev-Issue-39827-fix-documentation-for-attribute-endpoint",
+            "version": "dev-dev",
             "source": {
                 "type": "git",
-                "url": "https://github.com/tleon/ps_apiresources.git",
-                "reference": "5b56615b0492b8c2a77e85162dd1b4be4c6a9cf3"
+                "url": "https://github.com/PrestaShop/ps_apiresources.git",
+                "reference": "36411ab4193601d00f9fef5385ef59d2f28edaf3"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/tleon/ps_apiresources/zipball/5b56615b0492b8c2a77e85162dd1b4be4c6a9cf3",
-                "reference": "5b56615b0492b8c2a77e85162dd1b4be4c6a9cf3",
+                "url": "https://api.github.com/repos/PrestaShop/ps_apiresources/zipball/36411ab4193601d00f9fef5385ef59d2f28edaf3",
+                "reference": "36411ab4193601d00f9fef5385ef59d2f28edaf3",
                 "shasum": ""
             },
             "require": {
@@ -5233,6 +5233,7 @@
                 "prestashop/php-dev-tools": "^4.3",
                 "rector/rector": "^2.0"
             },
+            "default-branch": true,
             "type": "prestashop-module",
             "autoload": {
                 "psr-4": {
@@ -5283,9 +5284,9 @@
             "description": "PrestaShop - API Resources",
             "homepage": "https://github.com/PrestaShop/ps_apiresources",
             "support": {
-                "source": "https://github.com/tleon/ps_apiresources/tree/Issue-39827-fix-documentation-for-attribute-endpoint"
+                "source": "https://github.com/PrestaShop/ps_apiresources/tree/dev"
             },
-            "time": "2025-11-26T10:27:29+00:00"
+            "time": "2025-11-28T11:42:43+00:00"
         },
         {
             "name": "prestashop/ps_banner",

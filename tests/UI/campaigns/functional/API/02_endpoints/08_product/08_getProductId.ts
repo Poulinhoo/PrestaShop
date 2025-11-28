@@ -30,7 +30,7 @@ describe('API : GET /products/{productId}', async () => {
   let jsonResponse: any;
   let idProduct: number;
   let productType: string;
-  let productActive: boolean;
+  let productEnabled: boolean;
   let productCategories: string;
   let productIdCategory: number;
   let productNameEn: string;
@@ -110,8 +110,8 @@ describe('API : GET /products/{productId}', async () => {
       productType = await boProductsCreatePage.getProductType(page);
       expect(productType).to.be.a('string');
 
-      productActive = await boProductsCreatePage.getProductStatus(page);
-      expect(productActive).to.be.a('boolean');
+      productEnabled = await boProductsCreatePage.getProductStatus(page);
+      expect(productEnabled).to.be.a('boolean');
 
       productNameEn = await boProductsCreatePage.getProductName(page, dataLanguages.english.isoCode);
       expect(productNameEn).to.be.a('string');
@@ -160,7 +160,7 @@ describe('API : GET /products/{productId}', async () => {
     it('should check the JSON Response keys', async function () {
       await testContext.addContextItem(this, 'testIdentifier', 'checkResponseKeys', baseContext);
       expect(jsonResponse).to.have.all.keys(
-        'active',
+        'enabled',
         'additionalShippingCost',
         'availableForOrder',
         'availableLaterLabels',
@@ -219,12 +219,28 @@ describe('API : GET /products/{productId}', async () => {
       );
     });
 
-    it('should check the JSON Response : `active`', async function () {
-      await testContext.addContextItem(this, 'testIdentifier', 'checkResponseActive', baseContext);
+    it('should check the JSON Response : `productId`', async function () {
+      await testContext.addContextItem(this, 'testIdentifier', 'checkResponseProductId', baseContext);
 
-      expect(jsonResponse).to.have.property('active');
-      expect(jsonResponse.active).to.be.a('boolean');
-      expect(jsonResponse.active).to.be.equal(productActive);
+      expect(jsonResponse).to.have.property('productId');
+      expect(jsonResponse.productId).to.be.a('number');
+      expect(jsonResponse.productId).to.be.equal(idProduct);
+    });
+
+    it('should check the JSON Response : `type`', async function () {
+      await testContext.addContextItem(this, 'testIdentifier', 'checkResponseType', baseContext);
+
+      expect(jsonResponse).to.have.property('type');
+      expect(jsonResponse.type).to.be.a('string');
+      expect(jsonResponse.type).to.be.equal(productType);
+    });
+
+    it('should check the JSON Response : `enabled`', async function () {
+      await testContext.addContextItem(this, 'testIdentifier', 'checkResponseEnabled', baseContext);
+
+      expect(jsonResponse).to.have.property('enabled');
+      expect(jsonResponse.enabled).to.be.a('boolean');
+      expect(jsonResponse.enabled).to.be.equal(productEnabled);
     });
 
     it('should check the JSON Response : `categories`', async function () {
@@ -271,14 +287,6 @@ describe('API : GET /products/{productId}', async () => {
       expect(jsonResponse.names[dataLanguages.french.locale]).to.be.equal(productNameFr);
     });
 
-    it('should check the JSON Response : `productId`', async function () {
-      await testContext.addContextItem(this, 'testIdentifier', 'checkResponseProductId', baseContext);
-
-      expect(jsonResponse).to.have.property('productId');
-      expect(jsonResponse.productId).to.be.a('number');
-      expect(jsonResponse.productId).to.be.equal(idProduct);
-    });
-
     it('should check the JSON Response : `shopIds`', async function () {
       await testContext.addContextItem(this, 'testIdentifier', 'checkResponseShopIds', baseContext);
 
@@ -287,14 +295,6 @@ describe('API : GET /products/{productId}', async () => {
       expect(jsonResponse.shopIds).to.be.deep.equal([1]);
       expect(jsonResponse.shopIds[0]).to.be.a('number');
       expect(jsonResponse.shopIds[0]).to.be.equal(1);
-    });
-
-    it('should check the JSON Response : `type`', async function () {
-      await testContext.addContextItem(this, 'testIdentifier', 'checkResponseType', baseContext);
-
-      expect(jsonResponse).to.have.property('type');
-      expect(jsonResponse.type).to.be.a('string');
-      expect(jsonResponse.type).to.be.equal(productType);
     });
   });
 });

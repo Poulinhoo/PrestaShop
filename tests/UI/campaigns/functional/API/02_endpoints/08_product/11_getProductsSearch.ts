@@ -143,8 +143,8 @@ describe('API : GET /products/search', async () => {
         const productId = parseInt((await boProductsPage.getTextColumn(page, 'id_product', 1)).toString(), 10);
         expect(productId).to.equal(jsonResponse.items[idxItem].productId);
 
-        const productActive = await boProductsPage.getTextColumn(page, 'active', 1);
-        expect(productActive).to.equal(jsonResponse.items[idxItem].active);
+        const productEnabled = await boProductsPage.getTextColumn(page, 'active', 1);
+        expect(productEnabled).to.equal(jsonResponse.items[idxItem].enabled);
 
         const productName = await boProductsPage.getTextColumn(page, 'product_name', 1);
         expect(productName).to.equal(jsonResponse.items[idxItem].name);

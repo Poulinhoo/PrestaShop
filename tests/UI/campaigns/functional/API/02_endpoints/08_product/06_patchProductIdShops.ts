@@ -208,7 +208,7 @@ describe('API : PATCH /products/{productId}/shops', async () => {
         await testContext.addContextItem(this, 'testIdentifier', 'checkResponseKeysAssociatedShopIds', baseContext);
 
         expect(jsonResponse).to.have.all.keys([
-          'active',
+          'enabled',
           'additionalShippingCost',
           'availableForOrder',
           'availableLaterLabels',

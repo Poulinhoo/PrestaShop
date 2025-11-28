@@ -176,8 +176,8 @@ describe('API : Internal Auth Server - Resource Endpoint', async () => {
       const jsonResponse = await apiResponse.json();
       expect(jsonResponse).to.have.property('hookId');
       expect(jsonResponse.hookId).to.be.a('number');
-      expect(jsonResponse).to.have.property('active');
-      expect(jsonResponse.active).to.be.a('boolean');
+      expect(jsonResponse).to.have.property('enabled');
+      expect(jsonResponse.enabled).to.be.a('boolean');
     });
   });
 

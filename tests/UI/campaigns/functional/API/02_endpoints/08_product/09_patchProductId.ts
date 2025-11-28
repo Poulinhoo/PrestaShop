@@ -121,7 +121,7 @@ describe('API : PATCH /products/{productId}', async () => {
 
     [
       {
-        propertyName: 'active',
+        propertyName: 'enabled',
         propertyValue: false,
       },
       {
@@ -351,7 +351,7 @@ describe('API : PATCH /products/{productId}', async () => {
           await testContext.addContextItem(this, 'testIdentifier', `checkResponseKeys${data.propertyName}`, baseContext);
 
           const jsonResponseKeys: string[] = [
-            'active',
+            'enabled',
             'additionalShippingCost',
             'availableForOrder',
             'availableLaterLabels',
@@ -426,7 +426,7 @@ describe('API : PATCH /products/{productId}', async () => {
 
           await boProductsCreatePage.reloadPage(page);
 
-          if (data.propertyName === 'active') {
+          if (data.propertyName === 'enabled') {
             const valueProperty = await boProductsCreatePage.getProductStatus(page);
             expect(valueProperty).to.equal(data.propertyValue);
           } else if (data.propertyName === 'additionalShippingCost') {

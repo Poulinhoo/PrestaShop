@@ -266,17 +266,17 @@ describe('API : Check endpoints', async () => {
         // tests/UI/campaigns/functional/API/02_endpoints/08_product/10_postProduct.ts
         '/products: POST',
         // @todo: add tests
-        '/search-aliases/bulk-delete: DELETE',
+        // '/search-aliases/bulk-delete: DELETE',
+        // @todo: add tests
+        // '/search-aliases/{searchTerm}: GET',
+        // @todo: add tests
+        // '/search-aliases/{searchTerm}: PUT',
         // tests/UI/campaigns/functional/API/02_endpoints/09_searchAlias/01_deleteSearch.ts
-        '/search-aliases/{search}: DELETE',
+        // '/search-aliases: DELETE',
         // @todo: add tests
-        '/search-aliases/{search}: GET',
+        // '/search-aliases: GET',
         // @todo: add tests
-        '/search-aliases/{search}: PUT',
-        // @todo: add tests
-        '/search-aliases: GET',
-        // @todo: add tests
-        '/search-aliases: POST',
+        // '/search-aliases: POST',
         // @todo: add tests
         '/stores/bulk-delete: DELETE',
         // @todo: add tests

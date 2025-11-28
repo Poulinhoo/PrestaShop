@@ -207,7 +207,7 @@ class CQRSOpenApiFactoryTest extends KernelTestCase
                     'type' => new ArrayObject([
                         'type' => 'string',
                     ]),
-                    'active' => new ArrayObject([
+                    'enabled' => new ArrayObject([
                         'type' => 'boolean',
                     ]),
                     // Localized fields are documented vie the LocalizedValue attribute
@@ -509,7 +509,7 @@ class CQRSOpenApiFactoryTest extends KernelTestCase
                     'productId' => new ArrayObject([
                         'type' => 'integer',
                     ]),
-                    'active' => new ArrayObject([
+                    'enabled' => new ArrayObject([
                         'type' => 'boolean',
                     ]),
                     // Localized fields are documented vie the LocalizedValue attribute
@@ -692,6 +692,43 @@ class CQRSOpenApiFactoryTest extends KernelTestCase
                         'format' => 'date',
                         'type' => 'string',
                         'example' => '2025-11-05',
+                    ]),
+                ],
+            ]),
+        ];
+
+        yield 'Product list output, we need to check ApiResourceMapping is correctly applied' => [
+            'ProductList',
+            new ArrayObject([
+                'type' => 'object',
+                'description' => '',
+                'deprecated' => false,
+                'properties' => [
+                    'productId' => new ArrayObject([
+                        'type' => 'integer',
+                    ]),
+                    'type' => new ArrayObject([
+                        'type' => 'string',
+                    ]),
+                    'enabled' => new ArrayObject([
+                        'type' => 'boolean',
+                    ]),
+                    'name' => new ArrayObject([
+                        'type' => 'string',
+                    ]),
+                    'quantity' => new ArrayObject([
+                        'type' => 'integer',
+                    ]),
+                    'priceTaxExcluded' => new ArrayObject([
+                        'type' => 'number',
+                        'example' => 42.99,
+                    ]),
+                    'priceTaxIncluded' => new ArrayObject([
+                        'type' => 'number',
+                        'example' => 42.99,
+                    ]),
+                    'category' => new ArrayObject([
+                        'type' => 'string',
                     ]),
                 ],
             ]),

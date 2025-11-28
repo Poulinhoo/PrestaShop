@@ -78,7 +78,7 @@ describe('API : POST /products', async () => {
       await testContext.addContextItem(this, 'testIdentifier', 'checkResponseKeys', baseContext);
 
       expect(jsonResponse).to.have.all.keys(
-        'active',
+        'enabled',
         'additionalShippingCost',
         'availableForOrder',
         'availableLaterLabels',
@@ -142,7 +142,7 @@ describe('API : POST /products', async () => {
 
       expect(jsonResponse.productId).to.be.gt(0);
       expect(jsonResponse.type).to.equal(createProduct.type);
-      expect(jsonResponse.active).to.equal(false);
+      expect(jsonResponse.enabled).to.equal(false);
       expect(jsonResponse.names[dataLanguages.english.locale]).to.equal(createProduct.name);
       expect(jsonResponse.names[dataLanguages.french.locale]).to.equal(createProduct.nameFR);
       expect(jsonResponse.descriptions[dataLanguages.english.locale]).to.equal('');
@@ -205,11 +205,11 @@ describe('API : POST /products', async () => {
       expect(value).to.equal(jsonResponse.type);
     });
 
-    it('should check the JSON Response : `active`', async function () {
-      await testContext.addContextItem(this, 'testIdentifier', 'checkResponseActive', baseContext);
+    it('should check the JSON Response : `enabled`', async function () {
+      await testContext.addContextItem(this, 'testIdentifier', 'checkResponseEnabled', baseContext);
 
       const value = await boProductsCreatePage.getProductStatus(page);
-      expect(value).to.equal(jsonResponse.active);
+      expect(value).to.equal(jsonResponse.enabled);
     });
 
     it('should check the JSON Response : `categories`', async function () {

@@ -96,7 +96,7 @@ describe('API : PUT /hooks/{hookId}/status', async () => {
             Authorization: `Bearer ${accessToken}`,
           },
           data: {
-            active: argStatus,
+            enabled: argStatus,
           },
         });
         expect(apiResponse.status()).to.eq(200);
@@ -111,7 +111,7 @@ describe('API : PUT /hooks/{hookId}/status', async () => {
 
         expect(jsonResponse).to.have.all.keys(
           'hookId',
-          'active',
+          'enabled',
           'name',
           'title',
           'description',
@@ -126,12 +126,12 @@ describe('API : PUT /hooks/{hookId}/status', async () => {
         expect(jsonResponse.hookId).to.be.equal(hookId);
       });
 
-      it('should check the JSON Response : `active`', async function () {
-        await testContext.addContextItem(this, 'testIdentifier', `checkResponseActive${index}`, baseContext);
+      it('should check the JSON Response : `enabled`', async function () {
+        await testContext.addContextItem(this, 'testIdentifier', `checkResponseEnabled${index}`, baseContext);
 
-        expect(jsonResponse).to.have.property('active');
-        expect(jsonResponse.active).to.be.a('boolean');
-        expect(jsonResponse.active).to.be.equal(argStatus);
+        expect(jsonResponse).to.have.property('enabled');
+        expect(jsonResponse.enabled).to.be.a('boolean');
+        expect(jsonResponse.enabled).to.be.equal(argStatus);
       });
 
       it('should go to \'Design > Positions\' page', async function () {
