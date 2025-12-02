@@ -227,6 +227,11 @@ class GroupCore extends ObjectModel
 
             $this->truncateModulesRestrictions($this->id);
 
+            // Delete specific prices associated to this group
+            $this->deleteAssociatedSpecificPrices();
+            // Delete specific price rules associated to this group
+            $this->deleteAssociatedSpecificPriceRules();
+
             // Add default group (id 3) to customers without groups
             Db::getInstance()->execute('INSERT INTO `' . _DB_PREFIX_ . 'customer_group` (
 				SELECT c.id_customer, ' . (int) Configuration::get('PS_CUSTOMER_GROUP') . ' FROM `' . _DB_PREFIX_ . 'customer` c
@@ -434,5 +439,43 @@ class GroupCore extends ObjectModel
 				ON (g.`id_group` = gl.`id_group`)
 			WHERE `name` = \'' . pSQL($query) . '\'
 		');
+    }
+
+    /**
+     * Delete all specific prices associated to this group.
+     *
+     * @return void
+     *
+     * @throws PrestaShopDatabaseException
+     *
+     * @throws PrestaShopException
+     */
+    public function deleteAssociatedSpecificPrices(): void
+    {
+        $specific_price_ids = Db::getInstance()->executeS('SELECT sp.id_specific_price FROM `' . _DB_PREFIX_ . 'specific_price` sp WHERE sp.id_group = ' . (int) $this->id);
+
+        foreach ($specific_price_ids as $specific_price_id) {
+            $specific_price = new SpecificPrice((int) $specific_price_id['id_specific_price']);
+            $specific_price->delete();
+        }
+    }
+
+    /**
+     * Delete all specific price rules associated to this group.
+     *
+     * @return void
+     *
+     * @throws PrestaShopDatabaseException
+     *
+     * @throws PrestaShopException
+     */
+    public function deleteAssociatedSpecificPriceRules(): void
+    {
+        $specific_price_rule_ids = Db::getInstance()->executeS('SELECT spr.id_specific_price_rule FROM `' . _DB_PREFIX_ . 'specific_price_rule` spr WHERE spr.id_group = ' . (int) $this->id);
+
+        foreach ($specific_price_rule_ids as $specific_price_rule_id) {
+            $specific_price_rule = new SpecificPriceRule((int) $specific_price_rule_id['id_specific_price_rule']);
+            $specific_price_rule->delete();
+        }
     }
 }
