@@ -63,6 +63,7 @@ use Symfony\Bundle\FrameworkBundle\Test\KernelTestCase;
 use Symfony\Component\HttpFoundation\File\File;
 use Tests\Integration\Utility\LanguageTrait;
 use Tests\Resources\ApiPlatform\Resources\LocalizedResource;
+use Tests\Resources\ApiPlatform\Resources\UpdatePositionResource;
 use Tests\Resources\Resetter\LanguageResetter;
 use Tests\Resources\ResourceResetter;
 
@@ -531,6 +532,25 @@ class CQRSApiSerializerTest extends KernelTestCase
 
     public static function getNormalizationData(): iterable
     {
+        $positionResource = new UpdatePositionResource();
+        $positionResource->positions = [
+            [
+                'attributeId' => 3,
+                'newPosition' => 1,
+            ],
+        ];
+        yield 'resource with position collection' => [
+            $positionResource,
+            [
+                'positions' => [
+                    [
+                        'rowId' => 3,
+                        'newPosition' => 1,
+                    ],
+                ],
+            ],
+        ];
+
         $virtualProduct = new VirtualProductFileForEditing(
             42,
             'virtual file',
@@ -548,15 +568,6 @@ class CQRSApiSerializerTest extends KernelTestCase
                 'accessDays' => 23,
                 'downloadTimesLimit' => 1,
                 'expirationDate' => '1969-07-11 00:00:00',
-            ],
-        ];
-
-        $createdApiClient = new CreatedApiClient(42, 'my_secret');
-        yield 'test' => [
-            $createdApiClient,
-            [
-                'apiClientId' => 42,
-                'secret' => 'my_secret',
             ],
         ];
 
@@ -596,6 +607,15 @@ class CQRSApiSerializerTest extends KernelTestCase
                     'fr-FR' => 'http://mylink.fr',
                     'en-US' => 'http://mylink.com',
                 ],
+            ],
+        ];
+
+        $createdApiClient = new CreatedApiClient(42, 'my_secret');
+        yield 'test' => [
+            $createdApiClient,
+            [
+                'apiClientId' => 42,
+                'secret' => 'my_secret',
             ],
         ];
 

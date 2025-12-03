@@ -61,15 +61,66 @@ class UpdatePositionTest extends TestCase
         // With named parameters
         $operation = new UpdatePosition(
             formats: ['json', 'html'],
-            extraProperties: ['scopes' => ['test']]
+            extraProperties: ['scopes' => ['test']],
+            parentIdField: 'attributeGroupId',
         );
         $this->assertEquals(UpdatePositionProcessor::class, $operation->getProcessor());
         $this->assertNull($operation->getProvider());
         $this->assertEquals(UpdatePosition::METHOD_PATCH, $operation->getMethod());
         $this->assertFalse($operation->canRead());
         $this->assertFalse($operation->getOutput());
-        $this->assertEquals(['scopes' => ['test']], $operation->getExtraProperties());
+        $this->assertEquals(['scopes' => ['test'], 'parentIdField' => 'attributeGroupId'], $operation->getExtraProperties());
         $this->assertEquals(['json', 'html'], $operation->getFormats());
+        $this->assertEquals('attributeGroupId', $operation->getParentIdField());
+    }
+
+    public function testParentIdField(): void
+    {
+        // ParentIdField parameters in constructor
+        $operation = new UpdatePosition(
+            parentIdField: 'attributeGroupId',
+        );
+        $this->assertEquals(['parentIdField' => 'attributeGroupId'], $operation->getExtraProperties());
+        $this->assertEquals('attributeGroupId', $operation->getParentIdField());
+
+        // Extra properties parameters in constructor
+        $operation = new UpdatePosition(
+            extraProperties: ['parentIdField' => 'attributeGroupId']
+        );
+        $this->assertEquals(['parentIdField' => 'attributeGroupId'], $operation->getExtraProperties());
+        $this->assertEquals('attributeGroupId', $operation->getParentIdField());
+
+        // Extra properties AND parentIdField parameters in constructor, both values are equal no problem
+        $operation = new UpdatePosition(
+            extraProperties: ['parentIdField' => 'attributeGroupId'],
+            parentIdField: 'attributeGroupId',
+        );
+        $this->assertEquals(['parentIdField' => 'attributeGroupId'], $operation->getExtraProperties());
+        $this->assertEquals('attributeGroupId', $operation->getParentIdField());
+
+        // Use with method, returned object is a clone All values are replaced
+        $operation2 = $operation->withParentIdField('attributeId');
+        $this->assertNotEquals($operation2, $operation);
+        $this->assertEquals(['parentIdField' => 'attributeId'], $operation2->getExtraProperties());
+        $this->assertEquals('attributeId', $operation2->getParentIdField());
+        // Initial operation not modified of course
+        $this->assertEquals(['parentIdField' => 'attributeGroupId'], $operation->getExtraProperties());
+        $this->assertEquals('attributeGroupId', $operation->getParentIdField());
+
+        // When both values are specified, but they are different trigger an exception
+        $caughtException = null;
+        try {
+            new UpdatePosition(
+                extraProperties: ['parentIdField' => 'attributeGroupId'],
+                parentIdField: 'attributeId',
+            );
+        } catch (InvalidArgumentException $e) {
+            $caughtException = $e;
+        }
+
+        $this->assertNotNull($caughtException);
+        $this->assertInstanceOf(InvalidArgumentException::class, $caughtException);
+        $this->assertEquals('Specifying an extra property parentIdField and a parentIdField argument that are different is invalid', $caughtException->getMessage());
     }
 
     public function testScopes(): void

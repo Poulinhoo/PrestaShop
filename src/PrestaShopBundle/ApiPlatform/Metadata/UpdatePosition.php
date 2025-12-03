@@ -136,6 +136,7 @@ class UpdatePosition extends AbstractScopedOperation
         ?array $ApiResourceMapping = null,
         ?bool $experimentalOperation = null,
         ?string $positionDefinition = null,
+        ?string $parentIdField = null,
     ) {
         $passedArguments = \get_defined_vars();
         $passedArguments['method'] = self::METHOD_PATCH;
@@ -151,6 +152,12 @@ class UpdatePosition extends AbstractScopedOperation
         }
         unset($passedArguments['positionDefinition']);
 
+        if (!empty($parentIdField)) {
+            $this->checkArgumentAndExtraParameterValidity('parentIdField', $parentIdField, $passedArguments['extraProperties']);
+            $passedArguments['extraProperties']['parentIdField'] = $parentIdField;
+        }
+        unset($passedArguments['parentIdField']);
+
         parent::__construct(...$passedArguments);
     }
 
@@ -163,6 +170,19 @@ class UpdatePosition extends AbstractScopedOperation
     {
         $self = clone $this;
         $self->extraProperties['positionDefinition'] = $positionDefinition;
+
+        return $self;
+    }
+
+    public function getParentIdField(): ?string
+    {
+        return $this->extraProperties['parentIdField'] ?? null;
+    }
+
+    public function withParentIdField(string $parentIdField): static
+    {
+        $self = clone $this;
+        $self->extraProperties['parentIdField'] = $parentIdField;
 
         return $self;
     }

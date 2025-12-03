@@ -31,6 +31,7 @@ use PrestaShopBundle\ApiPlatform\ContextParametersProvider;
 use PrestaShopBundle\ApiPlatform\LocalizedValueUpdater;
 use PrestaShopBundle\ApiPlatform\Metadata\LocalizedValue;
 use PrestaShopBundle\ApiPlatform\NormalizationMapper;
+use PrestaShopBundle\ApiPlatform\PositionCollectionUpdater;
 use ReflectionNamedType;
 use Symfony\Component\Serializer\Encoder\ContextAwareDecoderInterface;
 use Symfony\Component\Serializer\Encoder\ContextAwareEncoderInterface;
@@ -56,6 +57,7 @@ class CQRSApiSerializer implements SerializerInterface, ContextAwareNormalizerIn
         protected readonly ClassMetadataFactoryInterface $classMetadataFactory,
         protected readonly LocalizedValueUpdater $localizedValueUpdater,
         protected readonly NormalizationMapper $normalizationMapper,
+        protected readonly PositionCollectionUpdater $positionCollectionUpdater,
     ) {
     }
 
@@ -125,6 +127,7 @@ class CQRSApiSerializer implements SerializerInterface, ContextAwareNormalizerIn
         // Then update the localized values to use the appropriate indexes
         if (is_object($object) && class_exists(get_class($object))) {
             $normalizedData = $this->normalizeLocalizedValues($normalizedData, get_class($object), $context);
+            $normalizedData = $this->positionCollectionUpdater->normalizePositionCollection($normalizedData, get_class($object));
         }
 
         // Finally perform normalization mapping

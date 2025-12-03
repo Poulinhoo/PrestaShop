@@ -67,7 +67,8 @@ class UpdatePositionProcessor implements ProcessorInterface
 
         /** @var PositionDefinition $positionDefinition */
         $positionDefinition = $this->container->get($positionDefinitionName);
-        $positionsData = $this->getPositionsData($normalizedData, $positionDefinition);
+        $parentIdField = $operation->getExtraProperties()['parentIdField'] ?? 'parentId';
+        $positionsData = $this->getPositionsData($normalizedData, $positionDefinition, $parentIdField);
 
         try {
             $positionUpdate = $this->positionUpdateFactory->buildPositionUpdate($positionsData, $positionDefinition);
@@ -78,7 +79,7 @@ class UpdatePositionProcessor implements ProcessorInterface
         }
     }
 
-    protected function getPositionsData(array $data, PositionDefinition $positionDefinition): ?array
+    protected function getPositionsData(array $data, PositionDefinition $positionDefinition, string $parentIdField): ?array
     {
         $positionsData = [
             'positions' => $data['positions'],
@@ -86,10 +87,13 @@ class UpdatePositionProcessor implements ProcessorInterface
 
         // Check that parentId is present in the data
         if ($positionDefinition->getParentIdField() !== null) {
-            if (!isset($data['parentId'])) {
-                throw new PositionDefinitionParentIdNotFoundException('Position definition expects parentId field in data, maybe check your ApiResourceMapping.');
+            if (!isset($data[$parentIdField])) {
+                throw new PositionDefinitionParentIdNotFoundException(sprintf(
+                    'Position definition expects %s field in data, maybe check your ApiResourceMapping.',
+                    $parentIdField,
+                ));
             } else {
-                $positionsData['parentId'] = $data['parentId'];
+                $positionsData['parentId'] = $data[$parentIdField];
             }
         }
 

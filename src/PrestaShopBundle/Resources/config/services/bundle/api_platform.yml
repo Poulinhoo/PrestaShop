@@ -62,6 +62,8 @@ services:
     autowire: true
   PrestaShopBundle\ApiPlatform\LocalizedValueUpdater:
     autowire: true
+  PrestaShopBundle\ApiPlatform\PositionCollectionUpdater:
+    autowire: true
 
   # This is a custom validator for CQRS commands
   PrestaShopBundle\ApiPlatform\Validator\CQRSApiValidator:
