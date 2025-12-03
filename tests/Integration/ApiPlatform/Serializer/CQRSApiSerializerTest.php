@@ -524,7 +524,8 @@ class CQRSApiSerializerTest extends KernelTestCase
         $serializer = self::getContainer()->get(CQRSApiSerializer::class);
         foreach ($this->getNormalizationData() as $useCase => $normalizationData) {
             list($dataToNormalize, $expectedNormalizedData, $normalizationMapping, $extraContext) = array_pad($normalizationData, 4, null);
-            $context = [NormalizationMapper::NORMALIZATION_MAPPING => ($normalizationMapping ?? [])] + ($extraContext ?? []);
+            // Force iri in context to avoid calling the IriConverter from ApiPlatform to run and cause error not relevant for this test
+            $context = ['iri' => 'kiri'] + [NormalizationMapper::NORMALIZATION_MAPPING => ($normalizationMapping ?? [])] + ($extraContext ?? []);
 
             self::assertEquals($expectedNormalizedData, $serializer->normalize($dataToNormalize, null, $context), $useCase);
         }
@@ -532,10 +533,31 @@ class CQRSApiSerializerTest extends KernelTestCase
 
     public static function getNormalizationData(): iterable
     {
+        $productResource = new Product();
+        $productResource->type = ProductType::TYPE_STANDARD;
+        $productResource->enabled = true;
+        $productResource->names = [
+            'en-US' => 'Product name',
+            'fr-FR' => 'Nom du produit',
+        ];
+        yield 'product resource with localized values' => [
+            $productResource,
+            [
+                'type' => ProductType::TYPE_STANDARD,
+                'enabled' => true,
+                'names' => [
+                    'en-US' => 'Product name',
+                    'fr-FR' => 'Nom du produit',
+                ],
+                'redirectTarget' => null,
+                'availableDate' => null,
+            ],
+        ];
+
         $positionResource = new UpdatePositionResource();
         $positionResource->positions = [
             [
-                'attributeId' => 3,
+                'testId' => 3,
                 'newPosition' => 1,
             ],
         ];
