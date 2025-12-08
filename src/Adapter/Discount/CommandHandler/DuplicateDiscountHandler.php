@@ -24,34 +24,24 @@
  * @license   https://opensource.org/licenses/OSL-3.0 Open Software License (OSL 3.0)
  */
 
-declare(strict_types=1);
+namespace PrestaShop\PrestaShop\Adapter\Discount\CommandHandler;
 
-namespace PrestaShop\PrestaShop\Core\Util\String;
+use PrestaShop\PrestaShop\Adapter\Discount\Update\DiscountDuplicator;
+use PrestaShop\PrestaShop\Core\CommandBus\Attributes\AsCommandHandler;
+use PrestaShop\PrestaShop\Core\Domain\Discount\Command\DuplicateDiscountCommand;
+use PrestaShop\PrestaShop\Core\Domain\Discount\CommandHandler\DuplicateDiscountHandlerInterface;
+use PrestaShop\PrestaShop\Core\Domain\Discount\ValueObject\DiscountId;
 
-class RandomString
+#[AsCommandHandler]
+class DuplicateDiscountHandler implements DuplicateDiscountHandlerInterface
 {
-    public static function generate(int $length = 32): string
-    {
-        return substr(bin2hex(random_bytes($length)), 0, $length);
+    public function __construct(
+        private readonly DiscountDuplicator $discountDuplicator,
+    ) {
     }
 
-    /**
-     * Generates a random string from the given set of characters.
-     * ex: generateFromCharacters('ABCDEF0123456789', 10) to generate a random hexadecimal string of length 10
-     *
-     * @param string $characters Characters to use for generating the string
-     * @param int $length Length of the generated string
-     *
-     * @return string Generated random string
-     */
-    public static function generateFromCharacters(string $characters, int $length): string
+    public function handle(DuplicateDiscountCommand $command): DiscountId
     {
-        $charactersLength = strlen($characters);
-        $randomString = '';
-        for ($i = 0; $i < $length; ++$i) {
-            $randomString .= $characters[random_int(0, $charactersLength - 1)];
-        }
-
-        return $randomString;
+        return $this->discountDuplicator->duplicate($command->getDiscountId());
     }
 }

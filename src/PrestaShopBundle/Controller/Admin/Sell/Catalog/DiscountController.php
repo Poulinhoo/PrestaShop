@@ -32,6 +32,7 @@ use PrestaShop\PrestaShop\Core\Domain\CartRule\Exception\CartRuleException;
 use PrestaShop\PrestaShop\Core\Domain\Discount\Command\BulkDeleteDiscountsCommand;
 use PrestaShop\PrestaShop\Core\Domain\Discount\Command\BulkUpdateDiscountsStatusCommand;
 use PrestaShop\PrestaShop\Core\Domain\Discount\Command\DeleteDiscountCommand;
+use PrestaShop\PrestaShop\Core\Domain\Discount\Command\DuplicateDiscountCommand;
 use PrestaShop\PrestaShop\Core\Domain\Discount\Exception\CannotUpdateDiscountException;
 use PrestaShop\PrestaShop\Core\Domain\Discount\Exception\DiscountConstraintException;
 use PrestaShop\PrestaShop\Core\Domain\Discount\Exception\DiscountException;
@@ -238,6 +239,32 @@ class DiscountController extends PrestaShopAdminController
         }
 
         return $this->redirectToRoute('admin_discounts_index');
+    }
+
+    /**
+     * Duplicates discount
+     *
+     * @param int $discountId
+     *
+     * @return RedirectResponse
+     */
+    #[DemoRestricted(redirectRoute: 'admin_discounts_index')]
+    #[AdminSecurity("is_granted('create', request.get('_legacy_controller'))", redirectRoute: 'admin_discounts_index')]
+    public function duplicateAction(int $discountId): RedirectResponse
+    {
+        try {
+            $newDiscountId = $this->dispatchCommand(new DuplicateDiscountCommand($discountId));
+            $this->addFlash(
+                'success',
+                $this->trans('Successful duplication', [], 'Admin.Notifications.Success')
+            );
+
+            return $this->redirectToRoute('admin_discount_edit', ['discountId' => $newDiscountId->getValue()]);
+        } catch (Exception $e) {
+            $this->addFlash('error', $this->getErrorMessageForException($e, $this->getErrorMessages($e)));
+
+            return $this->redirectToRoute('admin_discounts_index');
+        }
     }
 
     private function getErrorMessages(Exception $e): array
