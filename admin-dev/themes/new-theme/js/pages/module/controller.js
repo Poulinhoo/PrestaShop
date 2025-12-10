@@ -814,12 +814,16 @@ class AdminModuleController {
         return;
       }
 
-      self.moduleCardController.requestToController(
-        bulkModuleAction,
-        actionMenuLink,
-        forceDeletion,
-        unstackModulesActions,
-      );
+      if (bulkModuleAction !== 'upgrade') {
+        self.moduleCardController.requestToController(
+          bulkModuleAction,
+          actionMenuLink,
+          forceDeletion,
+          unstackModulesActions,
+        );
+      } else {
+        self.moduleCardController.upgradeWithUploadFallback(actionMenuLink, unstackModulesActions);
+      }
     }
 
     function unstackModulesActions() {
