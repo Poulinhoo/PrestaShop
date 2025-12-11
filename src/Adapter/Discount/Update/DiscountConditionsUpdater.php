@@ -260,8 +260,8 @@ class DiscountConditionsUpdater
 
         // First delete all associated product rule groups
         $this->connection->createQueryBuilder()
-            ->delete($this->dbPrefix . 'cart_rule_product_rule_group', 'prg')
-            ->where('prg.id_cart_rule = :discountId')
+            ->delete($this->dbPrefix . 'cart_rule_product_rule_group')
+            ->where('id_cart_rule = :discountId')
             ->setParameter('discountId', (int) $discount->id)
             ->executeStatement()
         ;
@@ -288,8 +288,8 @@ class DiscountConditionsUpdater
         $discount->carrier_restriction = false;
 
         $this->connection->createQueryBuilder()
-            ->delete($this->dbPrefix . 'cart_rule_carrier', 'crc')
-            ->where('crc.id_cart_rule = :discountId')
+            ->delete($this->dbPrefix . 'cart_rule_carrier')
+            ->where('id_cart_rule = :discountId')
             ->setParameter('discountId', (int) $discount->id)
             ->executeStatement()
         ;
@@ -303,8 +303,8 @@ class DiscountConditionsUpdater
         $discount->country_restriction = false;
 
         $this->connection->createQueryBuilder()
-            ->delete($this->dbPrefix . 'cart_rule_country', 'crc')
-            ->where('crc.id_cart_rule = :discountId')
+            ->delete($this->dbPrefix . 'cart_rule_country')
+            ->where('id_cart_rule = :discountId')
             ->setParameter('discountId', (int) $discount->id)
             ->executeStatement()
         ;
@@ -351,8 +351,8 @@ class DiscountConditionsUpdater
         $discount->group_restriction = false;
 
         $this->connection->createQueryBuilder()
-            ->delete($this->dbPrefix . 'cart_rule_group', 'crg')
-            ->where('crg.id_cart_rule = :discountId')
+            ->delete($this->dbPrefix . 'cart_rule_group')
+            ->where('id_cart_rule = :discountId')
             ->setParameter('discountId', (int) $discount->id)
             ->executeStatement()
         ;
