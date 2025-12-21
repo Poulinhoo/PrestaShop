@@ -546,7 +546,7 @@ class AddressCore extends ObjectModel
         $context = Context::getContext();
 
         /*
-         * To save performance, we cache the result, here we resolve a unique hash 
+         * To save performance, we cache the result, here we resolve a unique hash
          * depending on the parameters used to initialize the address.
          */
         if ($id_address) {
