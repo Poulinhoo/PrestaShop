@@ -33,8 +33,6 @@ Scenario:
 - Change the first order status to Shipped
 - Go to FO> Order details page and check the invoice for the first order
 - Check that no invoice is visible for the second order
-Post-condition:
-- Uninstall the theme hummingbird
  */
 describe('FO - User account - Order history - Order details : Download invoice from order details', async () => {
   let browserContext: BrowserContext;

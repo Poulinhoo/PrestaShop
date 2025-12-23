@@ -15,7 +15,6 @@ describe('FO - Home Page : Check slider', async () => {
   let browserContext: BrowserContext;
   let page: Page;
 
-  // before and after functions
   before(async function () {
     browserContext = await utilsPlaywright.createBrowserContext(this.browser);
     page = await utilsPlaywright.newTab(browserContext);

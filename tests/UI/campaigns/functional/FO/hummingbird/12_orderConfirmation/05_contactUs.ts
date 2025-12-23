@@ -50,7 +50,6 @@ describe('FO - Order confirmation : Contact us', async () => {
     reference: '',
   });
 
-  // before and after functions
   before(async function () {
     browserContext = await utilsPlaywright.createBrowserContext(this.browser);
     page = await utilsPlaywright.newTab(browserContext);

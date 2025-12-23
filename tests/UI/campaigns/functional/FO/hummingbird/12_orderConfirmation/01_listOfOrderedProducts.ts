@@ -34,7 +34,6 @@ describe('FO - Order confirmation : List of ordered products', async () => {
   let page: Page;
   let orderReference: string;
 
-  // before and after functions
   before(async function () {
     browserContext = await utilsPlaywright.createBrowserContext(this.browser);
     page = await utilsPlaywright.newTab(browserContext);

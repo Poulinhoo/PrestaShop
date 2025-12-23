@@ -50,7 +50,6 @@ describe('FO - Product page - Quick view : Add to cart', async () => {
     },
   ];
 
-  // before and after functions
   before(async function () {
     browserContext = await utilsPlaywright.createBrowserContext(this.browser);
     page = await utilsPlaywright.newTab(browserContext);

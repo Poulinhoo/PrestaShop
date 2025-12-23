@@ -42,7 +42,6 @@ Scenario:
 - Click on reorder link and reorder
 Post-condition
 - Delete customer
-- Delete the theme hummingbird
  */
 
 describe('FO - User account - Order history : Consult details and Reorder', async () => {

@@ -85,7 +85,6 @@ describe('FO - Menu and Navigation - Navigate and display : Display of tag produ
     behaviourOutOfStock: 'Default behavior',
   });
 
-  // before and after functions
   before(async function () {
     browserContext = await utilsPlaywright.createBrowserContext(this.browser);
     page = await utilsPlaywright.newTab(browserContext);
