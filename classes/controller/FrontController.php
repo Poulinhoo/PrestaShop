@@ -284,6 +284,16 @@ class FrontControllerCore extends Controller
             throw new PrestaShopException($this->trans('Current theme is unavailable. Please check your theme\'s directory name ("%s") and permissions.', [htmlspecialchars(basename(rtrim(_PS_THEME_DIR_, '/\\')))], 'Admin.Design.Notification'));
         }
 
+        /*
+         * Here, we resolve the context->country, the default country that will be used to display
+         * prices, taxes, delivery options and other country specific data.
+         *
+         * The country may further change further down in this method, if we have a cart with an address assigned to it.
+         * If there is a cart already, the context country is set to the country of that cart.
+         *
+         * If you are looking to override the country selection logic, you can use actionFrontControllerInitBefore above
+         * and pre-set the things in beforehand.
+         */
         if (Configuration::get('PS_GEOLOCATION_ENABLED')) {
             if (($new_default = $this->geolocationManagement($this->context->country)) && Validate::isLoadedObject($new_default)) {
                 $this->context->country = $new_default;
@@ -459,10 +469,13 @@ class FrontControllerCore extends Controller
 
         Product::initPricesComputation();
 
+        /*
+         * If there is an address assigned to the cart in context, the context->country MUST be set to the country of that address.
+         * We use delivery or invoice address, depending on PS_TAX_ADDRESS_TYPE configuration.
+         */
         if (isset($cart->{Configuration::get('PS_TAX_ADDRESS_TYPE')}) && $cart->{Configuration::get('PS_TAX_ADDRESS_TYPE')}) {
             $infos = Address::getCountryAndState((int) $cart->{Configuration::get('PS_TAX_ADDRESS_TYPE')});
-            $country = new Country((int) $infos['id_country']);
-            $this->context->country = $country;
+            $this->context->country = new Country((int) $infos['id_country']);
         }
 
         if (!Tools::isPHPCLI()) {
