@@ -2,6 +2,7 @@ import testContext from '@utils/testContext';
 import {expect} from 'chai';
 
 import {createProductTest, deleteProductTest} from '@commonTests/BO/catalog/product';
+import {enableTheme, disableTheme} from '@commonTests/BO/design/hummingbird';
 
 import {
   type BrowserContext,
@@ -20,6 +21,7 @@ const baseContext: string = 'functional_FO_classic_homePage_productQuickView';
 
 /*
 Pre-condition:
+- Enable the theme classic
 - Create product out of stock not allowed
 Scenario:
 - Quick view product with combinations
@@ -28,6 +30,7 @@ Scenario:
 - Quick view product out of stock not allowed
 Post-condition:
 - Delete created product
+- Disable the theme classic
  */
 describe('FO - Home Page : Product quick view', async () => {
   let browserContext: BrowserContext;
@@ -54,8 +57,11 @@ describe('FO - Home Page : Product quick view', async () => {
     behaviourOutOfStock: 'Deny orders',
   });
 
+  // Pre-condition : Enable the theme classic
+  enableTheme('classic', `${baseContext}_preTest_0`);
+
   // Pre-condition : Create product out of stock not allowed
-  createProductTest(productOutOfStockNotAllowed, `${baseContext}_preTest`);
+  createProductTest(productOutOfStockNotAllowed, `${baseContext}_preTest_1`);
 
   // before and after functions
   before(async function () {
@@ -266,5 +272,8 @@ describe('FO - Home Page : Product quick view', async () => {
   });
 
   // Post-condition : Delete the created product
-  deleteProductTest(productOutOfStockNotAllowed, `${baseContext}_postTest`);
+  deleteProductTest(productOutOfStockNotAllowed, `${baseContext}_postTest_1`);
+
+  // Post-condition : Disable the theme classic
+  disableTheme('classic', `${baseContext}_postTest_2`);
 });

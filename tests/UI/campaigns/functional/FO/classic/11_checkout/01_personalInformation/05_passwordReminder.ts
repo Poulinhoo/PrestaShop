@@ -23,11 +23,13 @@ import {
 } from '@prestashop-core/ui-testing';
 
 import {expect} from 'chai';
+import {enableTheme, disableTheme} from '@commonTests/BO/design/hummingbird';
 
 const baseContext: string = 'functional_FO_classic_checkout_personalInformation_passwordReminder';
 
 /*
 Pre-condition:
+- Enable the theme classic
 - Setup SMTP config
 - Create account on FO
 Scenario:
@@ -39,6 +41,7 @@ Scenario:
 - Try to sign in with old password and check error message
 - Try to sign in with new password
 Post-condition:
+- Disable the theme classic
 - Delete created customer account
 - Go back to default smtp config
  */
@@ -54,6 +57,9 @@ describe('FO - Checkout - Personal information : Password reminder', async () =>
   const customerNewPassword: FakerCustomer = new FakerCustomer();
   customerNewPassword.email = customerData.email;
   customerNewPassword.password = newPassword;
+
+  // Pre-condition : Enable the theme classic
+  enableTheme('classic', `${baseContext}_preTest_0`);
 
   // Pre-Condition : Setup config SMTP
   setupSmtpConfigTest(`${baseContext}_preTest_1`);
@@ -221,4 +227,7 @@ describe('FO - Checkout - Personal information : Password reminder', async () =>
 
   // Post-condition : Reset SMTP config
   resetSmtpConfigTest(`${baseContext}_postTest_2`);
+
+  // Post-condition : Disable the theme classic
+  disableTheme('classic', `${baseContext}_postTest_3`);
 });

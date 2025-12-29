@@ -21,11 +21,13 @@ import {
   utilsDate,
   utilsPlaywright,
 } from '@prestashop-core/ui-testing';
+import {enableTheme, disableTheme} from '@commonTests/BO/design/hummingbird';
 
 const baseContext: string = 'functional_FO_classic_checkout_displayOfTotals';
 
 /*
 Pre-condition:
+- Enable the theme classic
 - Create new cart rule
 Scenario:
 - Add product to cart
@@ -34,6 +36,7 @@ Scenario:
 - Proceed to checkout
 - Choose carrier and check details
 Post-condition:
+- Disable the theme classic
 - Delete created cart rule
  */
 
@@ -59,8 +62,11 @@ describe('FO - Checkout : Display of totals', async () => {
   });
   const cartRuleWithCodeDiscount: number = parseFloat(cartRuleWithCodeData.discountAmount!.value.toString());
 
+  // Pre-condition : Enable the theme classic
+  enableTheme('classic', `${baseContext}_preTest_0`);
+
   // Pre-condition: Create cart rule with code
-  createCartRuleTest(cartRuleWithCodeData, `${baseContext}_preTest`);
+  createCartRuleTest(cartRuleWithCodeData, `${baseContext}_preTest_1`);
 
   describe('Display total', async () => {
     before(async function () {
@@ -201,5 +207,8 @@ describe('FO - Checkout : Display of totals', async () => {
   });
 
   // Post-condition: Delete created cart rule
-  deleteCartRuleTest(cartRuleWithCodeData.name, `${baseContext}_postTest`);
+  deleteCartRuleTest(cartRuleWithCodeData.name, `${baseContext}_postTest_1`);
+
+  // Post-condition : Disable the theme classic
+  disableTheme('classic', `${baseContext}_postTest_2`);
 });

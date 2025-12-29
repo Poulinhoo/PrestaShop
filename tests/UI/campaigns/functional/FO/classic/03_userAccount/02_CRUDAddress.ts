@@ -4,6 +4,7 @@ import {expect} from 'chai';
 import deleteCacheTest from '@commonTests/BO/advancedParameters/cache';
 import {deleteCustomerTest} from '@commonTests/BO/customers/customer';
 import {createAccountTest} from '@commonTests/FO/classic/account';
+import {enableTheme, disableTheme} from '@commonTests/BO/design/hummingbird';
 
 import {
   type BrowserContext,
@@ -26,6 +27,7 @@ const baseContext: string = 'functional_FO_classic_userAccount_CRUDAddress';
 
 /*
 Pre-condition:
+- Enable the theme classic
 - Clear cache
 - Create account test
 Scenario:
@@ -38,6 +40,7 @@ Scenario:
 - Delete the first address and check success message
 Post-condition:
 - Delete customer account
+- Disable the theme classic
  */
 describe('FO - Account : CRUD address', async () => {
   let browserContext: BrowserContext;
@@ -50,11 +53,14 @@ describe('FO - Account : CRUD address', async () => {
   const editAddressData: FakerAddress = new FakerAddress({country: 'France'});
   const secondAddressData: FakerAddress = new FakerAddress({country: 'France'});
 
+  // Pre-condition : Enable the theme classic
+  enableTheme('classic', `${baseContext}_preTest_0`);
+
   // Pre-condition: Delete cache
-  deleteCacheTest(baseContext);
+  deleteCacheTest(`${baseContext}_preTest_1`);
 
   // Pre-condition
-  createAccountTest(newCustomerData, baseContext);
+  createAccountTest(newCustomerData, `${baseContext}_preTest_2`);
 
   // before and after functions
   before(async function () {
@@ -319,5 +325,8 @@ describe('FO - Account : CRUD address', async () => {
   });
 
   // Post-condition: Delete created customer
-  deleteCustomerTest(newCustomerData, baseContext);
+  deleteCustomerTest(newCustomerData, `${baseContext}_postTest_1`);
+
+  // Post-condition : Disable the theme classic
+  disableTheme('classic', `${baseContext}_postTest_2`);
 });

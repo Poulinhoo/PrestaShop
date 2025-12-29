@@ -1,5 +1,6 @@
 import testContext from '@utils/testContext';
 import {expect} from 'chai';
+import {enableTheme, disableTheme} from '@commonTests/BO/design/hummingbird';
 
 import {
   type BrowserContext,
@@ -18,6 +19,9 @@ const baseContext: string = 'functional_FO_classic_checkout_addresses_billingAdd
 describe('FO - Guest checkout: Billing address when logged in', async () => {
   let browserContext: BrowserContext;
   let page: Page;
+
+  // Pre-condition : Enable the theme classic
+  enableTheme('classic', `${baseContext}_preTest_0`);
 
   // before and after functions
   before(async function () {
@@ -114,4 +118,7 @@ describe('FO - Guest checkout: Billing address when logged in', async () => {
       expect(isInvoiceAddress2Selected).to.equal(true);
     });
   });
+
+  // Post-condition : Disable the theme classic
+  disableTheme('classic', `${baseContext}_postTest`);
 });

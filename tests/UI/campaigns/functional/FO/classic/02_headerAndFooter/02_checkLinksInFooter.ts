@@ -5,6 +5,7 @@ import {expect} from 'chai';
 import deleteCacheTest from '@commonTests/BO/advancedParameters/cache';
 import {deleteCustomerTest} from '@commonTests/BO/customers/customer';
 import {createAccountTest} from '@commonTests/FO/classic/account';
+import {enableTheme, disableTheme} from '@commonTests/BO/design/hummingbird';
 
 import {
   type BrowserContext,
@@ -39,6 +40,7 @@ const baseContext: string = 'functional_FO_classic_headerAndFooter_checkLinksInF
 
 /*
 Pre-condition:
+- Enable the theme classic
 - Create new customer account
 - Delete cache
 Scenario:
@@ -51,6 +53,7 @@ Sitemap, Stores)
 - Check copyright
 Post-condition:
 - Delete created customer
+- Disable the theme classic
  */
 describe('FO - Header and Footer : Check links in footer page', async () => {
   let browserContext: BrowserContext;
@@ -60,6 +63,9 @@ describe('FO - Header and Footer : Check links in footer page', async () => {
   const today: Date = new Date();
   const currentYear: string = today.getFullYear().toString();
   const createCustomerData: FakerCustomer = new FakerCustomer();
+
+  // Pre-condition : Enable the theme classic
+  enableTheme('classic', `${baseContext}_preTest0`);
 
   // Pre-condition: Create new account on FO
   createAccountTest(createCustomerData, `${baseContext}_preTest1`);
@@ -243,5 +249,8 @@ describe('FO - Header and Footer : Check links in footer page', async () => {
   });
 
   // Post-condition: Delete the created customer account
-  deleteCustomerTest(createCustomerData, `${baseContext}_postTest`);
+  deleteCustomerTest(createCustomerData, `${baseContext}_postTest1`);
+
+  // Post-condition : Disable the theme classic
+  disableTheme('classic', `${baseContext}_postTest2`);
 });

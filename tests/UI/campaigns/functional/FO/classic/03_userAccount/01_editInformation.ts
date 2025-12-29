@@ -5,6 +5,7 @@ import {expect} from 'chai';
 // Import commonTests
 import {deleteCustomerTest} from '@commonTests/BO/customers/customer';
 import {createAccountTest} from '@commonTests/FO/classic/account';
+import {disableTheme, enableTheme} from '@commonTests/BO/design/hummingbird';
 
 import {
   type BrowserContext,
@@ -21,6 +22,7 @@ const baseContext: string = 'functional_FO_classic_userAccount_editInformation';
 
 /*
 Pre-condition:
+- Enable the theme classic
 - Create new customer account in FO
 Scenario:
 - Re-enter the same password and leave new password empty
@@ -35,6 +37,7 @@ Scenario:
 - Update password with a good new password
 Post condition:
 - Delete the created account in BO
+- Disable the theme classic
  */
 describe('FO - Account : Edit information', async () => {
   let browserContext: BrowserContext;
@@ -60,8 +63,11 @@ describe('FO - Account : Edit information', async () => {
   // New customer data with good password
   const editCustomerData9: FakerCustomer = new FakerCustomer({password: 'test edit information'});
 
+  // Pre-condition : Enable the theme classic
+  enableTheme('classic', `${baseContext}_preTest_0`);
+
   // Pre-condition: Create new account on FO
-  createAccountTest(createCustomerData, `${baseContext}_preTest`);
+  createAccountTest(createCustomerData, `${baseContext}_preTest_1`);
 
   // before and after functions
   before(async function () {
@@ -279,5 +285,8 @@ describe('FO - Account : Edit information', async () => {
   });
 
   // Post-condition: Delete the created customer account
-  deleteCustomerTest(editCustomerData9, `${baseContext}_postTest`);
+  deleteCustomerTest(editCustomerData9, `${baseContext}_postTest_1`);
+
+  // Post-condition : Disable the theme classic
+  disableTheme('classic', `${baseContext}_postTest_2`);
 });

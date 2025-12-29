@@ -5,6 +5,7 @@ import {
   enableMerchandiseReturns,
   disableMerchandiseReturns,
 } from '@commonTests/BO/customerService/merchandiseReturns';
+import {enableTheme, disableTheme} from '@commonTests/BO/design/hummingbird';
 
 import {
   boDashboardPage,
@@ -33,6 +34,7 @@ const baseContext: string = 'functional_FO_classic_userAccount_orderHistory_orde
 
 /*
 Pre-condition:
+- Enable the theme classic
 - Create order by default customer
 - Enable merchandise return
 Scenario:
@@ -41,6 +43,7 @@ Scenario:
 - Create merchandise return
 - Check the created return
 Post-condition:
+- Disable the theme classic
 - Disable merchandise return
  */
 describe('FO - Account - Order details : Request merchandise return', async () => {
@@ -59,6 +62,9 @@ describe('FO - Account - Order details : Request merchandise return', async () =
     paymentMethod: dataPaymentMethods.wirePayment,
   });
   const today: string = utilsDate.getDateFormat('mm/dd/yyyy');
+
+  // Pre-condition : Enable the theme classic
+  enableTheme('classic', `${baseContext}_preTest_0`);
 
   // Pre-condition: Create order
   createOrderByCustomerTest(orderData, `${baseContext}_preTest_1`);
@@ -211,4 +217,7 @@ describe('FO - Account - Order details : Request merchandise return', async () =
 
   // Post-condition: Disable merchandise returns
   disableMerchandiseReturns(`${baseContext}_postTest_1`);
+
+  // Post-condition : Disable the theme classic
+  disableTheme('classic', `${baseContext}_postTest_2`);
 });

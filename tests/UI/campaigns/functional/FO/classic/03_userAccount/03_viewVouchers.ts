@@ -5,6 +5,7 @@ import {expect} from 'chai';
 import {createCartRuleTest} from '@commonTests/BO/catalog/cartRule';
 import {deleteCustomerTest} from '@commonTests/BO/customers/customer';
 import {createAccountTest} from '@commonTests/FO/classic/account';
+import {enableTheme, disableTheme} from '@commonTests/BO/design/hummingbird';
 
 import {
   type BrowserContext,
@@ -23,6 +24,7 @@ const baseContext: string = 'functional_FO_classic_userAccount_viewVouchers';
 
 /*
 Pre-condition:
+- Enable the theme classic
 - Create customer
 - Create 2 cart rules for the customer
 Scenario:
@@ -30,6 +32,7 @@ Scenario:
 - Check vouchers in account page
 Post-condition:
 - Delete customer
+- Disable the theme classic
  */
 describe('FO - Account : View vouchers', async () => {
   let browserContext: BrowserContext;
@@ -55,6 +58,9 @@ describe('FO - Account : View vouchers', async () => {
     dateFrom: pastDate,
     dateTo: futureDate,
   });
+
+  // Pre-condition : Enable the theme classic
+  enableTheme('classic', `${baseContext}_preTest_0`);
 
   // Pre-condition: Create new account on FO
   createAccountTest(customerData, `${baseContext}_preTest_1`);
@@ -142,5 +148,8 @@ describe('FO - Account : View vouchers', async () => {
   });
 
   // Post-condition: Delete created customer
-  deleteCustomerTest(customerData, `${baseContext}_postTest`);
+  deleteCustomerTest(customerData, `${baseContext}_postTest_1`);
+
+  // Post-condition : Disable the theme classic
+  disableTheme('classic', `${baseContext}_postTest_2`);
 });

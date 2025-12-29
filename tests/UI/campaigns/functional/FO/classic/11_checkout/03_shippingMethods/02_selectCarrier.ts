@@ -20,17 +20,20 @@ import {
 } from '@prestashop-core/ui-testing';
 
 import {expect} from 'chai';
+import {enableTheme, disableTheme} from '@commonTests/BO/design/hummingbird';
 
 const baseContext: string = 'functional_FO_classic_checkout_shippingMethods_selectCarrier';
 
 /*
 Pre-condition:
+- Enable the theme classic
 - Create new customer account in FO
 Scenario:
 - Add a product to cart and checkout
 - Create an address in Europe and check the carriers
 - Edit the address to US and check the carriers
 Post-condition:
+- Disable the theme classic
 - Delete customer account
  */
 
@@ -47,6 +50,9 @@ describe('FO - Checkout - Shipping methods : Select carrier', async () => {
     country: 'United States',
     state: 'Alabama',
   });
+
+  // Pre-condition : Enable the theme classic
+  enableTheme('classic', `${baseContext}_preTest_0`);
 
   // Pre-condition: Create new account on FO
   createAccountTest(customerData, `${baseContext}_preTest_1`);
@@ -211,5 +217,8 @@ describe('FO - Checkout - Shipping methods : Select carrier', async () => {
   });
 
   // Post-condition: Delete the created customer account
-  deleteCustomerTest(customerData, `${baseContext}_postTest`);
+  deleteCustomerTest(customerData, `${baseContext}_postTest_1`);
+
+  // Post-condition : Disable the theme classic
+  disableTheme('classic', `${baseContext}_postTest_2`);
 });

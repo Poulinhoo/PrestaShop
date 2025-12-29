@@ -19,11 +19,13 @@ import {
 } from '@prestashop-core/ui-testing';
 
 import {expect} from 'chai';
+import {enableTheme, disableTheme} from '@commonTests/BO/design/hummingbird';
 
 const baseContext: string = 'functional_FO_classic_checkout_addresses_CRUDAddress';
 
 /*
 Pre-condition:
+- Enable the theme classic
 - Create account in FO
 Scenario:
 - Create new address in checkout page
@@ -33,6 +35,7 @@ Scenario:
 - Choose same addresses for invoice address and shipping address
 - Delete all addresses
 Post_condition:
+- Disable the theme classic
 - Delete customer account
  */
 describe('FO - Checkout - Addresses : CRUD address', async () => {
@@ -59,6 +62,9 @@ describe('FO - Checkout - Addresses : CRUD address', async () => {
     email: customerData.email,
     country: 'France',
   });
+
+  // Pre-condition : Enable the theme classic
+  enableTheme('classic', `${baseContext}_preTest_0`);
 
   // Pre-condition: Create new account on FO
   createAccountTest(customerData, `${baseContext}_preTest_1`);
@@ -307,5 +313,8 @@ describe('FO - Checkout - Addresses : CRUD address', async () => {
   });
 
   // Post-condition: Delete the created customer account
-  deleteCustomerTest(customerData, `${baseContext}_postTest`);
+  deleteCustomerTest(customerData, `${baseContext}_postTest_1`);
+
+  // Post-condition : Disable the theme classic
+  disableTheme('classic', `${baseContext}_postTest_3`);
 });

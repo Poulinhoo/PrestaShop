@@ -7,6 +7,7 @@ import {createAddressTest} from '@commonTests/BO/customers/address';
 import {deleteCustomerTest} from '@commonTests/BO/customers/customer';
 import {createAccountTest} from '@commonTests/FO/classic/account';
 import {createOrderByCustomerTest} from '@commonTests/FO/classic/order';
+import {disableTheme, enableTheme} from '@commonTests/BO/design/hummingbird';
 
 import {
   boDashboardPage,
@@ -39,15 +40,17 @@ const baseContext: string = 'functional_FO_classic_userAccount_creditSlips_consu
 
 /*
 Pre-condition:
- - Create new account on FO
- - Create new address
- - Create order
+- Enable the theme classic
+- Create new account on FO
+- Create new address
+- Create order
 Scenario:
- - Check there are no credit slips in FO'
- - Create a partial refund from the BO
- - Check there are credit slips in FO
+- Check there are no credit slips in FO'
+- Create a partial refund from the BO
+- Check there are credit slips in FO
 Post condition:
- - Delete created customer
+- Disable the theme classic
+- Delete created customer
  */
 describe('FO - Consult credit slip list & View PDF Credit slip & View order', async () => {
   let browserContext: BrowserContext;
@@ -75,6 +78,8 @@ describe('FO - Consult credit slip list & View PDF Credit slip & View order', as
     paymentMethod: dataPaymentMethods.wirePayment,
   });
 
+  // Pre-condition : Enable the theme classic
+  enableTheme('classic', `${baseContext}_preTest_0`);
   // Pre-condition: Create new account on FO
   createAccountTest(customerData, `${baseContext}_preTest_1`);
   // Pre-condition: Create new address
@@ -401,4 +406,6 @@ describe('FO - Consult credit slip list & View PDF Credit slip & View order', as
   deleteCustomerTest(customerData, `${baseContext}_postTest_1`);
   // Post-Condition: Reset SMTP config
   resetSmtpConfigTest(`${baseContext}_postTest_2`);
+  // Post-condition : Disable the theme classic
+  disableTheme('classic', `${baseContext}_postTest_3`);
 });

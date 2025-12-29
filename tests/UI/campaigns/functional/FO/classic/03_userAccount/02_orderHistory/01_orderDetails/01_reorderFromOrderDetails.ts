@@ -4,6 +4,7 @@ import {expect} from 'chai';
 
 // Import common tests
 import {createOrderByCustomerTest} from '@commonTests/FO/classic/order';
+import {enableTheme, disableTheme} from '@commonTests/BO/design/hummingbird';
 
 import {
   type BrowserContext,
@@ -27,6 +28,7 @@ const baseContext: string = 'functional_FO_classic_userAccount_orderHistory_orde
 
 /*
 Pre-condition:
+- Enable the theme classic
 - Create order by default customer
 Scenario:
 - Go to userAccount > order history > order detail
@@ -36,6 +38,8 @@ Scenario:
 - Check if the reorder is displayed
 - Go to the order detail
 - Check if the reorder contain the same product as the "original" order
+Post-condition
+- Disable the theme classic
  */
 describe('FO - User Account - Order History - Order details : Reorder from order detail', async () => {
   let browserContext: BrowserContext;
@@ -51,6 +55,9 @@ describe('FO - User Account - Order History - Order details : Reorder from order
     ],
     paymentMethod: dataPaymentMethods.wirePayment,
   });
+
+  // Pre-condition : Enable the theme classic
+  enableTheme('classic', `${baseContext}_preTest_0`);
 
   // Pre-condition: Create order
   createOrderByCustomerTest(orderData, `${baseContext}_preTest_1`);
@@ -200,4 +207,7 @@ describe('FO - User Account - Order History - Order details : Reorder from order
       expect(isCustomerConnected, 'Customer is connected').to.eq(false);
     });
   });
+
+  // Post-condition : Disable the theme classic
+  disableTheme('classic', `${baseContext}_postTest`);
 });
