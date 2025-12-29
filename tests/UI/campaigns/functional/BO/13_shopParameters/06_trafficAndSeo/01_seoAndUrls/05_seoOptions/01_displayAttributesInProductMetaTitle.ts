@@ -8,8 +8,8 @@ import {
   type BrowserContext,
   dataAttributes,
   dataProducts,
-  foClassicHomePage,
-  foClassicProductPage,
+  foHummingbirdHomePage,
+  foHummingbirdProductPage,
   type Page,
   utilsPlaywright,
 } from '@prestashop-core/ui-testing';
@@ -86,9 +86,9 @@ describe('BO - Shop Parameters - Traffic & SEO : Enable/Disable display attribut
       // Go to FO
       page = await boSeoUrlsPage.viewMyShop(page);
       // Change FO language
-      await foClassicHomePage.changeLanguage(page, 'en');
+      await foHummingbirdHomePage.changeLanguage(page, 'en');
 
-      const isHomePage = await foClassicHomePage.isHomePage(page);
+      const isHomePage = await foHummingbirdHomePage.isHomePage(page);
       expect(isHomePage, 'Fail to open FO home page').to.eq(true);
     });
 
@@ -96,9 +96,9 @@ describe('BO - Shop Parameters - Traffic & SEO : Enable/Disable display attribut
       await testContext.addContextItem(this, 'testIdentifier', `checkTitle_${index}`, baseContext);
 
       // Go to the first product page
-      await foClassicHomePage.goToProductPage(page, 1);
+      await foHummingbirdHomePage.goToProductPage(page, 1);
 
-      const pageTitle = await foClassicProductPage.getPageTitle(page);
+      const pageTitle = await foHummingbirdProductPage.getPageTitle(page);
       expect(pageTitle).to.equal(test.args.metaTitle);
     });
 
@@ -106,7 +106,7 @@ describe('BO - Shop Parameters - Traffic & SEO : Enable/Disable display attribut
       await testContext.addContextItem(this, 'testIdentifier', `goBackToBo_${index}`, baseContext);
 
       // Close page and init page objects
-      page = await foClassicHomePage.closePage(browserContext, page, 0);
+      page = await foHummingbirdHomePage.closePage(browserContext, page, 0);
 
       const pageTitle = await boSeoUrlsPage.getPageTitle(page);
       expect(pageTitle).to.contains(boSeoUrlsPage.pageTitle);

@@ -10,9 +10,9 @@ import {
   type BrowserContext,
   dataProducts,
   FakerProduct,
-  foClassicCategoryPage,
-  foClassicProductPage,
-  foClassicSearchResultsPage,
+  foHummingbirdCategoryPage,
+  foHummingbirdProductPage,
+  foHummingbirdSearchResultsPage,
   type Page,
   utilsPlaywright,
 } from '@prestashop-core/ui-testing';
@@ -159,9 +159,9 @@ describe('BO - Catalog - Products : Seo tab', async () => {
 
       // Click on preview button
       page = await boProductsCreatePage.previewProduct(page);
-      await foClassicProductPage.changeLanguage(page, 'en');
+      await foHummingbirdProductPage.changeLanguage(page, 'en');
 
-      const pageTitle = await foClassicProductPage.getPageTitle(page);
+      const pageTitle = await foHummingbirdProductPage.getPageTitle(page);
       expect(pageTitle).to.contains(dataProducts.demo_1.name);
     });
 
@@ -169,7 +169,7 @@ describe('BO - Catalog - Products : Seo tab', async () => {
       await testContext.addContextItem(this, 'testIdentifier', 'goBackToBO2', baseContext);
 
       // Go back to BO
-      page = await foClassicProductPage.closePage(browserContext, page, 0);
+      page = await foHummingbirdProductPage.closePage(browserContext, page, 0);
 
       const pageTitle = await boProductsCreatePage.getPageTitle(page);
       expect(pageTitle).to.contains(boProductsCreatePage.pageTitle);
@@ -190,12 +190,12 @@ describe('BO - Catalog - Products : Seo tab', async () => {
 
       // Click on preview button
       page = await boProductsCreatePage.previewProduct(page);
-      const currentUrl = await foClassicProductPage.getCurrentURL(page);
+      const currentUrl = await foHummingbirdProductPage.getCurrentURL(page);
       const newUrl = currentUrl.split('token');
-      await foClassicProductPage.goTo(page, newUrl[0]);
-      await foClassicProductPage.changeLanguage(page, 'en');
+      await foHummingbirdProductPage.goTo(page, newUrl[0]);
+      await foHummingbirdProductPage.changeLanguage(page, 'en');
 
-      const pageTitle = await foClassicProductPage.getPageTitle(page);
+      const pageTitle = await foHummingbirdProductPage.getPageTitle(page);
       expect(pageTitle).to.contains('Home Accessories');
     });
 
@@ -203,7 +203,7 @@ describe('BO - Catalog - Products : Seo tab', async () => {
       await testContext.addContextItem(this, 'testIdentifier', 'goBackToBO', baseContext);
 
       // Go back to BO
-      page = await foClassicProductPage.closePage(browserContext, page, 0);
+      page = await foHummingbirdProductPage.closePage(browserContext, page, 0);
 
       const pageTitle = await boProductsCreatePage.getPageTitle(page);
       expect(pageTitle).to.contains(boProductsCreatePage.pageTitle);
@@ -232,21 +232,21 @@ describe('BO - Catalog - Products : Seo tab', async () => {
 
       // Click on preview button
       page = await boProductsCreatePage.previewProduct(page);
-      await foClassicProductPage.changeLanguage(page, 'en');
+      await foHummingbirdProductPage.changeLanguage(page, 'en');
 
-      const pageTitle = await foClassicProductPage.getPageTitle(page);
+      const pageTitle = await foHummingbirdProductPage.getPageTitle(page);
       expect(pageTitle).to.contains(dataProducts.demo_1.name);
     });
 
     it('should search the new tag \'welcome\' from the search bar', async function () {
       await testContext.addContextItem(this, 'testIdentifier', 'searchTag', baseContext);
 
-      await foClassicProductPage.searchProduct(page, 'welcome');
+      await foHummingbirdProductPage.searchProduct(page, 'welcome');
 
-      const pageTitle = await foClassicSearchResultsPage.getPageTitle(page);
-      await expect(pageTitle).to.equal(foClassicSearchResultsPage.pageTitle);
+      const pageTitle = await foHummingbirdSearchResultsPage.getPageTitle(page);
+      await expect(pageTitle).to.equal(foHummingbirdSearchResultsPage.pageTitle);
 
-      const numberOfProducts = await foClassicCategoryPage.getNumberOfProducts(page);
+      const numberOfProducts = await foHummingbirdCategoryPage.getNumberOfProducts(page);
       expect(numberOfProducts).to.eql(1);
     });
 
@@ -254,7 +254,7 @@ describe('BO - Catalog - Products : Seo tab', async () => {
       await testContext.addContextItem(this, 'testIdentifier', 'goBackToBO3', baseContext);
 
       // Go back to BO
-      page = await foClassicProductPage.closePage(browserContext, page, 0);
+      page = await foHummingbirdProductPage.closePage(browserContext, page, 0);
 
       const pageTitle = await boProductsCreatePage.getPageTitle(page);
       expect(pageTitle).to.contains(boProductsCreatePage.pageTitle);

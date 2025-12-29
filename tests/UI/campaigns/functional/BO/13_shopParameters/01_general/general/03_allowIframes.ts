@@ -10,7 +10,7 @@ import {
   boShopParametersPage,
   type BrowserContext,
   dataProducts,
-  foClassicProductPage,
+  foHummingbirdProductPage,
   type Page,
   utilsPlaywright,
 } from '@prestashop-core/ui-testing';
@@ -120,20 +120,20 @@ describe('BO - Shop Parameters - General : Enable/Disable Allow iframes on HTML 
         await testContext.addContextItem(this, 'testIdentifier', `previewProduct${index}`, baseContext);
 
         page = await boProductsCreatePage.previewProduct(page);
-        await foClassicProductPage.changeLanguage(page, 'en');
+        await foHummingbirdProductPage.changeLanguage(page, 'en');
 
-        const pageTitle = await foClassicProductPage.getPageTitle(page);
+        const pageTitle = await foHummingbirdProductPage.getPageTitle(page);
         expect(pageTitle).to.contains(dataProducts.demo_14.name);
       });
 
       it('should check the existence of the iframe in the product description', async function () {
         await testContext.addContextItem(this, 'testIdentifier', `checkIframe${index}`, baseContext);
 
-        const isIframeVisible = await foClassicProductPage.isIframeVisibleInProductDescription(page);
+        const isIframeVisible = await foHummingbirdProductPage.isIframeVisibleInProductDescription(page);
         expect(isIframeVisible).to.equal(test.args.exist);
 
         if (test.args.exist) {
-          const youtubeURL = await foClassicProductPage.getURLInProductDescription(page);
+          const youtubeURL = await foHummingbirdProductPage.getURLInProductDescription(page);
           expect(youtubeURL).to.equal('https://www.youtube.com/embed/3qcApq8NMhw?si=0O8BBWjbJ7gJRkoi');
         }
       });
@@ -141,7 +141,7 @@ describe('BO - Shop Parameters - General : Enable/Disable Allow iframes on HTML 
       it('should go back to BO', async function () {
         await testContext.addContextItem(this, 'testIdentifier', `goBackToBo${index}`, baseContext);
 
-        page = await foClassicProductPage.closePage(browserContext, page, 0);
+        page = await foHummingbirdProductPage.closePage(browserContext, page, 0);
 
         const pageTitle = await boProductsCreatePage.getPageTitle(page);
         expect(pageTitle).to.contains(boProductsCreatePage.pageTitle);
