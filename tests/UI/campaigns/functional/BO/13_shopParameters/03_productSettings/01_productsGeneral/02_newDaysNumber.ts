@@ -7,7 +7,7 @@ import {
   boLoginPage,
   boProductSettingsPage,
   type BrowserContext,
-  foClassicHomePage,
+  foHummingbirdHomePage,
   type Page,
   utilsPlaywright,
 } from '@prestashop-core/ui-testing';
@@ -76,23 +76,23 @@ describe('BO - Shop Parameters - Product Settings : Update Number of days for wh
       await testContext.addContextItem(this, 'testIdentifier', `viewMyShop${test.args.state}`, baseContext);
 
       page = await boProductSettingsPage.viewMyShop(page);
-      await foClassicHomePage.changeLanguage(page, 'en');
+      await foHummingbirdHomePage.changeLanguage(page, 'en');
 
-      const isHomePage = await foClassicHomePage.isHomePage(page);
+      const isHomePage = await foHummingbirdHomePage.isHomePage(page);
       expect(isHomePage, 'Fail to open FO home page').to.eq(true);
     });
 
     it('should check the new flag in the product miniature in FO', async function () {
       await testContext.addContextItem(this, 'testIdentifier', `checkIfNewFlagIs${test.args.state}`, baseContext);
 
-      const isNewFlagVisible = await foClassicHomePage.isNewFlagVisible(page, 1);
+      const isNewFlagVisible = await foHummingbirdHomePage.isNewFlagVisible(page, 1);
       expect(isNewFlagVisible).to.be.equal(test.args.exist);
     });
 
     it('should close the page and go back to BO', async function () {
       await testContext.addContextItem(this, 'testIdentifier', `closePageAndBackToBO${test.args.state}`, baseContext);
 
-      page = await foClassicHomePage.closePage(browserContext, page, 0);
+      page = await foHummingbirdHomePage.closePage(browserContext, page, 0);
 
       const pageTitle = await boProductSettingsPage.getPageTitle(page);
       expect(pageTitle).to.contains(boProductSettingsPage.pageTitle);

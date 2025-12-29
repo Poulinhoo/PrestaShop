@@ -10,7 +10,7 @@ import {
   boThemeAdvancedConfigurationPage,
   type BrowserContext,
   dataModules,
-  foClassicHomePage,
+  foHummingbirdHomePage,
   type Page,
   utilsFile,
   utilsPlaywright,
@@ -195,16 +195,16 @@ describe('BO - Design - Theme & Logo - Advanced Customization', async () => {
       await testContext.addContextItem(this, 'testIdentifier', 'clickOnViewMyShop', baseContext);
 
       page = await boThemeAndLogoPage.viewMyShop(page);
-      await foClassicHomePage.changeLanguage(page, 'en');
+      await foHummingbirdHomePage.changeLanguage(page, 'en');
 
-      const isHomePage = await foClassicHomePage.isHomePage(page);
+      const isHomePage = await foHummingbirdHomePage.isHomePage(page);
       expect(isHomePage, 'Fail to open FO home page').to.eq(true);
     });
 
     it('should close the current page', async function () {
       await testContext.addContextItem(this, 'testIdentifier', 'closeCurrentPage', baseContext);
 
-      page = await foClassicHomePage.closePage(browserContext, page, 0);
+      page = await foHummingbirdHomePage.closePage(browserContext, page, 0);
 
       const pageTitle = await boThemeAndLogoPage.getPageTitle(page);
       expect(pageTitle).to.contains(boThemeAndLogoPage.pageTitle);
