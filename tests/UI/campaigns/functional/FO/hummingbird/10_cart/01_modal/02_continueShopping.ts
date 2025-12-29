@@ -1,8 +1,6 @@
 import testContext from '@utils/testContext';
 import {expect} from 'chai';
 
-import {enableTheme, disableTheme} from '@commonTests/BO/design/hummingbird';
-
 import {
   type BrowserContext,
   foHummingbirdCartPage,
@@ -19,9 +17,6 @@ const baseContext: string = 'functional_FO_hummingbird_cart_modal_continueShoppi
 describe('FO - Cart - Modal : Continue shopping / Proceed to checkout / Close', async () => {
   let browserContext: BrowserContext;
   let page: Page;
-
-  // Pre-condition : Install Hummingbird
-  enableTheme('hummingbird', `${baseContext}_preTest`);
 
   before(async function () {
     browserContext = await utilsPlaywright.createBrowserContext(this.browser);
@@ -124,7 +119,4 @@ describe('FO - Cart - Modal : Continue shopping / Proceed to checkout / Close', 
       expect(notificationNumber).to.be.equal(0);
     });
   });
-
-  // Post-condition : Uninstall Hummingbird
-  disableTheme('hummingbird', `${baseContext}_postTest`);
 });

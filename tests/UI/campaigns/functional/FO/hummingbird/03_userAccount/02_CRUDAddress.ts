@@ -3,7 +3,6 @@ import {expect} from 'chai';
 
 import {deleteCustomerTest} from '@commonTests/BO/customers/customer';
 import {createAccountTest} from '@commonTests/FO/classic/account';
-import {enableTheme, disableTheme} from '@commonTests/BO/design/hummingbird';
 
 import {
   type BrowserContext,
@@ -27,7 +26,6 @@ const baseContext: string = 'functional_FO_hummingbird_userAccount_CRUDAddress';
 /*
 Pre-condition:
 - Create account test
-- Install hummingbird theme
 Scenario:
 - Create first address
 - Edit address
@@ -38,7 +36,6 @@ Scenario:
 - Delete the first address and check success message
 Post-condition:
 - Delete customer account
-- Uninstall hummingbird theme
  */
 describe('FO - Account : CRUD address', async () => {
   let browserContext: BrowserContext;
@@ -53,9 +50,6 @@ describe('FO - Account : CRUD address', async () => {
 
   // Pre-condition
   createAccountTest(newCustomerData, `${baseContext}_preTest_1`);
-
-  // Pre-condition : Install Hummingbird
-  enableTheme('hummingbird', `${baseContext}_preTest_2`);
 
   // before and after functions
   before(async function () {
@@ -319,9 +313,6 @@ describe('FO - Account : CRUD address', async () => {
     });
   });
 
-  // Post-condition : Uninstall Hummingbird
-  disableTheme('hummingbird', `${baseContext}_postTest_1`);
-
   // Post-condition: Delete created customer
-  deleteCustomerTest(newCustomerData, `${baseContext}_postTest_2`);
+  deleteCustomerTest(newCustomerData, `${baseContext}_postTest_1`);
 });

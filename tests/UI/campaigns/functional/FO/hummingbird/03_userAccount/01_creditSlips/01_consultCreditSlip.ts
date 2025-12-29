@@ -7,7 +7,6 @@ import {createAddressTest} from '@commonTests/BO/customers/address';
 import {deleteCustomerTest} from '@commonTests/BO/customers/customer';
 import {createAccountTest} from '@commonTests/FO/classic/account';
 import {createOrderByCustomerTest} from '@commonTests/FO/classic/order';
-import {enableTheme, disableTheme} from '@commonTests/BO/design/hummingbird';
 
 import {
   boDashboardPage,
@@ -86,8 +85,6 @@ describe('FO - Consult credit slip list & View PDF Credit slip & View order', as
   createOrderByCustomerTest(orderData, `${baseContext}_preTest_3`);
   // Pre-Condition: Setup config SMTP
   setupSmtpConfigTest(`${baseContext}_preTest_4`);
-  // Pre-Condition: Install Hummingbird
-  enableTheme('hummingbird', `${baseContext}_preTest_5`);
 
   // before and after functions
   before(async function () {
@@ -383,6 +380,4 @@ describe('FO - Consult credit slip list & View PDF Credit slip & View order', as
   deleteCustomerTest(customerData, `${baseContext}_postTest_1`);
   // Post-Condition: Reset SMTP config
   resetSmtpConfigTest(`${baseContext}_postTest_2`);
-  // Post-condition : Uninstall Hummingbird
-  disableTheme('hummingbird', `${baseContext}_postTest_3`);
 });

@@ -4,7 +4,6 @@ import testContext from '@utils/testContext';
 // Import common tests
 import {deleteCustomerTest} from '@commonTests/BO/customers/customer';
 import {resetSmtpConfigTest, setupSmtpConfigTest} from '@commonTests/BO/advancedParameters/smtp';
-import {enableTheme, disableTheme} from '@commonTests/BO/design/hummingbird';
 import createAccountTest from '@commonTests/FO/hummingbird/account';
 
 import {
@@ -55,9 +54,6 @@ describe('FO - Checkout - Personal information : Password reminder', async () =>
   const customerNewPassword: FakerCustomer = new FakerCustomer();
   customerNewPassword.email = customerData.email;
   customerNewPassword.password = newPassword;
-
-  // Pre-condition : Install Hummingbird
-  enableTheme('hummingbird', `${baseContext}_preTest_0`);
 
   // Pre-Condition : Setup config SMTP
   setupSmtpConfigTest(`${baseContext}_preTest_1`);
@@ -225,7 +221,4 @@ describe('FO - Checkout - Personal information : Password reminder', async () =>
 
   // Post-condition : Reset SMTP config
   resetSmtpConfigTest(`${baseContext}_postTest_2`);
-
-  // Post-condition : Uninstall Hummingbird
-  disableTheme('hummingbird', `${baseContext}_postTest_3`);
 });

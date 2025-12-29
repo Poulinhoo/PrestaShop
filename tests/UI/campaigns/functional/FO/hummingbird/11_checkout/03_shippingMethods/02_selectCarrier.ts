@@ -4,7 +4,6 @@ import testContext from '@utils/testContext';
 // Import common tests
 import {deleteCustomerTest} from '@commonTests/BO/customers/customer';
 import createAccountTest from '@commonTests/FO/hummingbird/account';
-import {enableTheme, disableTheme} from '@commonTests/BO/design/hummingbird';
 
 import {
   type BrowserContext,
@@ -48,9 +47,6 @@ describe('FO - Checkout - Shipping methods : Select carrier', async () => {
     country: 'United States',
     state: 'Alabama',
   });
-
-  // Pre-condition : Install Hummingbird
-  enableTheme('hummingbird', `${baseContext}_preTest_0`);
 
   // Pre-condition: Create new account on FO
   createAccountTest(customerData, `${baseContext}_preTest_1`);
@@ -215,8 +211,5 @@ describe('FO - Checkout - Shipping methods : Select carrier', async () => {
   });
 
   // Post-condition: Delete the created customer account
-  deleteCustomerTest(customerData, `${baseContext}_postTest_0`);
-
-  // Post-condition : Uninstall Hummingbird
-  disableTheme('hummingbird', `${baseContext}_postTest_1`);
+  deleteCustomerTest(customerData, `${baseContext}_postTest`);
 });

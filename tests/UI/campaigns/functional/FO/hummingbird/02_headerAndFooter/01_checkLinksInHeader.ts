@@ -1,8 +1,6 @@
 import testContext from '@utils/testContext';
 import {expect} from 'chai';
 
-import {enableTheme, disableTheme} from '@commonTests/BO/design/hummingbird';
-
 import {
   type BrowserContext,
   dataCustomers,
@@ -32,9 +30,6 @@ Check header links:
 describe('FO - Header and Footer : Check links in header page', async () => {
   let browserContext: BrowserContext;
   let page: Page;
-
-  // Pre-condition : Install Hummingbird
-  enableTheme('hummingbird', `${baseContext}_preTest_1`);
 
   describe('Check links in header page', async () => {
     before(async function () {
@@ -152,7 +147,4 @@ describe('FO - Header and Footer : Check links in header page', async () => {
       expect(pageTitle).to.equal(foHummingbirdHomePage.pageTitle);
     });
   });
-
-  // Post-condition : Uninstall Hummingbird
-  disableTheme('hummingbird', `${baseContext}_postTest_1`);
 });

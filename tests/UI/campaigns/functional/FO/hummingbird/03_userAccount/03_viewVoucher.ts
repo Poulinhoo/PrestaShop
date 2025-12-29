@@ -5,7 +5,6 @@ import {expect} from 'chai';
 import {createCartRuleTest} from '@commonTests/BO/catalog/cartRule';
 import {deleteCustomerTest} from '@commonTests/BO/customers/customer';
 import createAccountTest from '@commonTests/FO/hummingbird/account';
-import {enableTheme, disableTheme} from '@commonTests/BO/design/hummingbird';
 
 import {
   type BrowserContext,
@@ -26,13 +25,11 @@ const baseContext: string = 'functional_FO_hummingbird_userAccount_viewVouchers'
 Pre-condition:
 - Create customer
 - Create 2 cart rules for the customer
-- Install hummingbird theme
 Scenario:
 - Go To FO and sign in
 - Check vouchers in account page
 Post-condition:
 - Delete customer
-- Uninstall hummingbird theme
  */
 describe('FO - Account : View vouchers', async () => {
   let browserContext: BrowserContext;
@@ -58,9 +55,6 @@ describe('FO - Account : View vouchers', async () => {
     dateFrom: pastDate,
     dateTo: futureDate,
   });
-
-  // Pre-condition : Install Hummingbird
-  enableTheme('hummingbird', `${baseContext}_preTest_0`);
 
   // Pre-condition: Create new account on FO
   createAccountTest(customerData, `${baseContext}_preTest_1`);
@@ -149,7 +143,4 @@ describe('FO - Account : View vouchers', async () => {
 
   // Post-condition: Delete created customer
   deleteCustomerTest(customerData, `${baseContext}_postTest_0`);
-
-  // Post-condition : Uninstall Hummingbird
-  disableTheme('hummingbird', `${baseContext}_postTest_1`);
 });

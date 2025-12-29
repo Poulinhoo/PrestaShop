@@ -1,9 +1,6 @@
 // Import utils
 import testContext from '@utils/testContext';
 
-// Import common tests
-import {enableTheme, disableTheme} from '@commonTests/BO/design/hummingbird';
-
 import {expect} from 'chai';
 import {
   type BrowserContext,
@@ -17,21 +14,14 @@ import {
 const baseContext: string = 'functional_FO_hummingbird_contactUs_checkMailtoLink';
 
 /*
-Pre-condition:
-- Install hummingbird theme
 Scenario:
 - Go to FO
 - Click on contact us link
 - Check email us link
-Post-condition:
-- Uninstall hummingbird theme
  */
 describe('FO - Contact us : Check mail link on contact us page', async () => {
   let browserContext: BrowserContext;
   let page: Page;
-
-  // Pre-condition : Install Hummingbird
-  enableTheme('hummingbird', `${baseContext}_preTest`);
 
   before(async function () {
     browserContext = await utilsPlaywright.createBrowserContext(this.browser);
@@ -68,7 +58,4 @@ describe('FO - Contact us : Check mail link on contact us page', async () => {
       expect(emailUsLinkHref).to.equal(`mailto:${dataEmployees.defaultEmployee.email}`);
     });
   });
-
-  // Post-condition : Uninstall Hummingbird
-  disableTheme('hummingbird', `${baseContext}_postTest`);
 });

@@ -1,8 +1,6 @@
 import testContext from '@utils/testContext';
 import {expect} from 'chai';
 
-import {enableTheme, disableTheme} from '@commonTests/BO/design/hummingbird';
-
 import {
   type BrowserContext,
   dataProducts,
@@ -21,9 +19,6 @@ describe('FO - Cart : Display modal of product customization', async () => {
   let browserContext: BrowserContext;
   let page: Page;
   const customText: string = 'Hello world!';
-
-  // Pre-condition : Install Hummingbird
-  enableTheme('hummingbird', `${baseContext}_preTest`);
 
   before(async function () {
     browserContext = await utilsPlaywright.createBrowserContext(this.browser);
@@ -114,7 +109,4 @@ describe('FO - Cart : Display modal of product customization', async () => {
       expect(isModalNotVisible).to.equal(true);
     });
   });
-
-  // Post-condition : Uninstall Hummingbird
-  disableTheme('hummingbird', `${baseContext}_postTest`);
 });

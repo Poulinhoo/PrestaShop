@@ -1,7 +1,6 @@
 import testContext from '@utils/testContext';
 import {expect} from 'chai';
 
-import {enableTheme, disableTheme} from '@commonTests/BO/design/hummingbird';
 import {createCartRuleTest, deleteCartRuleTest} from '@commonTests/BO/catalog/cartRule';
 
 import {
@@ -26,7 +25,6 @@ const baseContext: string = 'functional_FO_hummingbird_checkout_displayOfTotals'
 
 /*
 Pre-condition:
-- Install the theme hummingbird
 - Create new cart rule
 Scenario:
 - Add product to cart
@@ -35,7 +33,6 @@ Scenario:
 - Proceed to checkout
 - Choose carrier and check details
 Post-condition:
-- Uninstall the theme hummingbird
 - Delete created cart rule
  */
 
@@ -63,9 +60,6 @@ describe('FO - Checkout : Display of total (price, vouchers, shipping)', async (
 
   // Pre-condition: Create cart rule with code
   createCartRuleTest(cartRuleWithCodeData, `${baseContext}_preTest_1`);
-
-  // Pre-condition : Install Hummingbird
-  enableTheme('hummingbird', `${baseContext}_preTest_2`);
 
   describe('Display total', async () => {
     before(async function () {
@@ -205,9 +199,6 @@ describe('FO - Checkout : Display of total (price, vouchers, shipping)', async (
     });
   });
 
-  // Post-condition : Uninstall Hummingbird
-  disableTheme('hummingbird', `${baseContext}_postTest_1`);
-
   // Post-condition: Delete created cart rule
-  deleteCartRuleTest(cartRuleWithCodeData.name, `${baseContext}_postTest_2`);
+  deleteCartRuleTest(cartRuleWithCodeData.name, `${baseContext}_postTest`);
 });

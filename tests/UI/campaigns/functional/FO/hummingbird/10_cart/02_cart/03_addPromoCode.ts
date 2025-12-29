@@ -1,7 +1,6 @@
 import testContext from '@utils/testContext';
 import {expect} from 'chai';
 
-import {enableTheme, disableTheme} from '@commonTests/BO/design/hummingbird';
 import {createCartRuleTest, deleteCartRuleTest} from '@commonTests/BO/catalog/cartRule';
 
 import {
@@ -36,9 +35,6 @@ describe('FO - Cart : Add promo code', async () => {
 
   // Pre-condition: Create cart rule and apply the discount to 'productWithCartRule'
   createCartRuleTest(newCartRuleData, `${baseContext}_PreTest_1`);
-
-  // Pre-condition : Install Hummingbird
-  enableTheme('hummingbird', `${baseContext}_preTest_2`);
 
   before(async function () {
     browserContext = await utilsPlaywright.createBrowserContext(this.browser);
@@ -130,7 +126,4 @@ describe('FO - Cart : Add promo code', async () => {
 
   // Post-Condition: Delete cart rule
   deleteCartRuleTest(newCartRuleData.name, `${baseContext}_PostTest_1`);
-
-  // Post-condition : Uninstall Hummingbird
-  disableTheme('hummingbird', `${baseContext}_postTest_2`);
 });

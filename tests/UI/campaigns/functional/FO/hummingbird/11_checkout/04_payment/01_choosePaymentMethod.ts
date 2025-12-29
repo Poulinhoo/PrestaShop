@@ -2,7 +2,6 @@ import testContext from '@utils/testContext';
 import {expect} from 'chai';
 
 import {resetSmtpConfigTest, setupSmtpConfigTest} from '@commonTests/BO/advancedParameters/smtp';
-import {enableTheme, disableTheme} from '@commonTests/BO/design/hummingbird';
 
 import {
   type BrowserContext,
@@ -33,9 +32,6 @@ describe('FO - Checkout - Payment : Choose a payment method', async () => {
 
   // Pre-Condition : Setup config SMTP
   setupSmtpConfigTest(`${baseContext}_preTest_0`);
-
-  // Pre-condition : Install Hummingbird
-  enableTheme('hummingbird', `${baseContext}_preTest_1`);
 
   before(async function () {
     browserContext = await utilsPlaywright.createBrowserContext(this.browser);
@@ -162,8 +158,5 @@ describe('FO - Checkout - Payment : Choose a payment method', async () => {
   });
 
   // Post-condition : Reset SMTP config
-  resetSmtpConfigTest(`${baseContext}_postTest_0`);
-
-  // Post-condition : Uninstall Hummingbird
-  disableTheme('hummingbird', `${baseContext}_postTest_1`);
+  resetSmtpConfigTest(`${baseContext}_postTest`);
 });
