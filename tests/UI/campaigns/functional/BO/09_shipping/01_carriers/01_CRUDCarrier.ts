@@ -156,7 +156,6 @@ describe('BO - Shipping - Carriers : CRUD carrier in BO', async () => {
     enable: true,
   });
 
-  // before and after functions
   before(async function () {
     browserContext = await utilsPlaywright.createBrowserContext(this.browser);
     page = await utilsPlaywright.newTab(browserContext);
@@ -280,7 +279,7 @@ describe('BO - Shipping - Carriers : CRUD carrier in BO', async () => {
       await foHummingbirdHomePage.goToLoginPage(page);
 
       const pageTitle = await foHummingbirdLoginPage.getPageTitle(page);
-      expect(pageTitle, 'Fail to open FO login page').to.contains(foHummingbirdLoginPage.pageTitle);
+      expect(pageTitle).to.contains(foHummingbirdLoginPage.pageTitle);
     });
 
     it('should sign in with default customer', async function () {
@@ -426,7 +425,7 @@ describe('BO - Shipping - Carriers : CRUD carrier in BO', async () => {
       await foHummingbirdHomePage.goToLoginPage(page);
 
       const pageTitle = await foHummingbirdLoginPage.getPageTitle(page);
-      expect(pageTitle, 'Fail to open FO login page').to.contains(foHummingbirdLoginPage.pageTitle);
+      expect(pageTitle).to.contains(foHummingbirdLoginPage.pageTitle);
     });
 
     it('should sign in with default customer', async function () {

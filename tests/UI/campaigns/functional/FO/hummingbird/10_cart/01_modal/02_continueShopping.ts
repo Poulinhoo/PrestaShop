@@ -35,7 +35,7 @@ describe('FO - Cart - Modal : Continue shopping / Proceed to checkout / Close', 
       await foHummingbirdHomePage.changeLanguage(page, 'en');
 
       const isHomePage = await foHummingbirdHomePage.isHomePage(page);
-      expect(isHomePage, 'Fail to open FO home page').to.eq(true);
+      expect(isHomePage).to.eq(true);
     });
 
     it('should add the first product to cart by quick view', async function () {

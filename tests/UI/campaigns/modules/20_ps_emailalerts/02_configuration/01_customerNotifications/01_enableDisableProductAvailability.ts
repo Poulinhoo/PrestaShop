@@ -153,7 +153,7 @@ describe('Mail alerts module - Customer notifications - Enable/Disable product a
       await foHummingbirdHomePage.changeLanguage(page, 'en');
 
       const isHomePage = await foHummingbirdHomePage.isHomePage(page);
-      expect(isHomePage, 'Fail to open FO home page').to.eq(true);
+      expect(isHomePage).to.eq(true);
     });
 
     it('should search the product', async function () {
@@ -260,7 +260,7 @@ describe('Mail alerts module - Customer notifications - Enable/Disable product a
       await foHummingbirdProductPage.goToLoginPage(page);
 
       const pageTitle = await foHummingbirdLoginPage.getPageTitle(page);
-      expect(pageTitle, 'Fail to open FO login page').to.contains(foHummingbirdLoginPage.pageTitle);
+      expect(pageTitle).to.contains(foHummingbirdLoginPage.pageTitle);
     });
 
     it('should login on the Front Office', async function () {

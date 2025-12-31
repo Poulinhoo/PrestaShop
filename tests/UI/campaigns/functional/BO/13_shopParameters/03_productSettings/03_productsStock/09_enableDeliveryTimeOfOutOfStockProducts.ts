@@ -122,7 +122,7 @@ describe('BO - Shop Parameters - Product Settings : Enable delivery time out-of-
           await foHummingbirdHomePage.changeLanguage(page, 'en');
 
           const isFoHomePage = await foHummingbirdHomePage.isHomePage(page);
-          expect(isFoHomePage, 'Fail to open FO home page').to.eq(true);
+          expect(isFoHomePage).to.eq(true);
         });
 
         it('should check delivery time block visibility', async function () {

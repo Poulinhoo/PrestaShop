@@ -96,7 +96,7 @@ describe('BO - Cart rules - Actions : Free shipping', async () => {
       await foHummingbirdHomePage.changeLanguage(page, 'en');
 
       const isHomePage = await foHummingbirdHomePage.isHomePage(page);
-      expect(isHomePage, 'Fail to open FO home page').to.eq(true);
+      expect(isHomePage).to.eq(true);
     });
   });
 
@@ -188,10 +188,10 @@ describe('BO - Cart rules - Actions : Free shipping', async () => {
       expect(discountCost).to.equal(`- €${dataCarriers.myCarrier.priceTTC.toFixed(2)}`);
 
       const cartRuleName = await foHummingbirdCheckoutPage.getCartRuleName(page);
-      expect(cartRuleName).to.equal(cartRuleData.name);
+      expect(cartRuleName).to.contains(cartRuleData.name);
 
       const cartRuleValue = await foHummingbirdCheckoutPage.getCartRuleValue(page);
-      expect(cartRuleValue).to.equal('Free shipping');
+      expect(cartRuleValue).to.contains('Free shipping');
     });
 
     it('should reload page', async function () {

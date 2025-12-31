@@ -56,7 +56,7 @@ describe('FO - Checkout : Show details', async () => {
       await foClassicHomePage.changeLanguage(page, 'en');
 
       const isHomePage = await foClassicHomePage.isHomePage(page);
-      expect(isHomePage, 'Fail to open FO home page').to.eq(true);
+      expect(isHomePage).to.eq(true);
     });
 
     it('should add the first product to cart then close block cart modal', async function () {

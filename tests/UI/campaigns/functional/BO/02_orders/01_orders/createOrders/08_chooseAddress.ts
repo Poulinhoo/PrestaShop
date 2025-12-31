@@ -334,7 +334,7 @@ describe('BO - Orders - Create order : Choose address', async () => {
         await foHummingbirdHomePage.goToLoginPage(page);
 
         const pageTitle = await foHummingbirdLoginPage.getPageTitle(page);
-        expect(pageTitle, 'Fail to open FO login page').to.contains(foHummingbirdLoginPage.pageTitle);
+        expect(pageTitle).to.contains(foHummingbirdLoginPage.pageTitle);
       });
 
       it('should sign in with customer credentials', async function () {

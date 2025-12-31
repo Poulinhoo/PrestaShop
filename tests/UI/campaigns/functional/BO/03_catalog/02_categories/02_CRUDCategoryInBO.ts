@@ -149,7 +149,7 @@ describe('BO - Catalog - Categories : CRUD Category in BO', async () => {
         await foHummingbirdHomePage.changeLanguage(page, 'en');
 
         const isHomePage = await foHummingbirdHomePage.isHomePage(page);
-        expect(isHomePage, 'Fail to open FO home page').to.eq(true);
+        expect(isHomePage).to.eq(true);
       });
 
       it('should check the created category', async function () {
@@ -612,7 +612,7 @@ describe('BO - Catalog - Categories : CRUD Category in BO', async () => {
       await foHummingbirdHomePage.changeLanguage(page, 'en');
 
       const isHomePage = await foHummingbirdHomePage.isHomePage(page);
-      expect(isHomePage, 'Fail to open FO home page').to.eq(true);
+      expect(isHomePage).to.eq(true);
     });
 
     it('should check that the deleted category does not exist', async function () {

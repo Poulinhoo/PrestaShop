@@ -269,7 +269,7 @@ describe('FO - Consult credit slip list & View PDF Credit slip & View order', as
         await foClassicHomePage.changeLanguage(page, 'en');
 
         const isHomePage = await foClassicHomePage.isHomePage(page);
-        expect(isHomePage, 'Fail to open FO home page').to.eq(true);
+        expect(isHomePage).to.eq(true);
       });
 
       it('should go to my account page', async function () {

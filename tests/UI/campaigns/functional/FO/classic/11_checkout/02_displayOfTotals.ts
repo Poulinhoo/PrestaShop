@@ -85,7 +85,7 @@ describe('FO - Checkout : Display of totals', async () => {
       await foClassicHomePage.changeLanguage(page, 'en');
 
       const isHomePage = await foClassicHomePage.isHomePage(page);
-      expect(isHomePage, 'Fail to open FO home page').to.equal(true);
+      expect(isHomePage).to.equal(true);
     });
 
     it('should go to login page', async function () {
@@ -94,7 +94,7 @@ describe('FO - Checkout : Display of totals', async () => {
       await foClassicHomePage.goToLoginPage(page);
 
       const pageTitle = await foClassicLoginPage.getPageTitle(page);
-      expect(pageTitle, 'Fail to open FO login page').to.contains(foClassicLoginPage.pageTitle);
+      expect(pageTitle).to.contains(foClassicLoginPage.pageTitle);
     });
 
     it('should sign in with created customer', async function () {

@@ -273,7 +273,7 @@ describe('BO - Design - Image Settings - Check product image format', async () =
         await foHummingbirdHomePage.changeLanguage(page, 'en');
 
         const isHomePage = await foHummingbirdHomePage.isHomePage(page);
-        expect(isHomePage, 'Fail to open FO home page').to.eq(true);
+        expect(isHomePage).to.eq(true);
       });
 
       it('should go to all products page', async function () {

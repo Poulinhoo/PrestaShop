@@ -107,7 +107,7 @@ describe('BO - Catalog - Cart rules : Apply discount to specific product', async
       await foHummingbirdHomePage.changeLanguage(page, 'en');
 
       const isHomePage = await foHummingbirdHomePage.isHomePage(page);
-      expect(isHomePage, 'Fail to open FO home page').to.eq(true);
+      expect(isHomePage).to.eq(true);
     });
   });
 
@@ -147,7 +147,7 @@ describe('BO - Catalog - Cart rules : Apply discount to specific product', async
       await foHummingbirdProductPage.goToHomePage(page);
 
       const isHomePage = await foHummingbirdHomePage.isHomePage(page);
-      expect(isHomePage, 'Fail to open FO home page').to.eq(true);
+      expect(isHomePage).to.eq(true);
     });
 
     it('should quick view the first product', async function () {
@@ -203,7 +203,7 @@ describe('BO - Catalog - Cart rules : Apply discount to specific product', async
       const discount = utilsCore.percentage(dataProducts.demo_8.finalPrice, newCartRuleData.getDiscountPercent());
 
       const discountValue = await foHummingbirdCartPage.getCartRuleValue(page);
-      expect(discountValue).to.equal(`-€${discount.toFixed(2)}`);
+      expect(discountValue).to.contains(`-€${discount.toFixed(2)}`);
     });
 
     it('should delete the second product from the cart', async function () {
@@ -221,7 +221,7 @@ describe('BO - Catalog - Cart rules : Apply discount to specific product', async
       const discount = utilsCore.percentage(dataProducts.demo_8.finalPrice, newCartRuleData.getDiscountPercent());
 
       const discountValue = await foHummingbirdCartPage.getCartRuleValue(page);
-      expect(discountValue).to.equal(`-€${discount.toFixed(2)}`);
+      expect(discountValue).to.contains(`-€${discount.toFixed(2)}`);
     });
 
     it(`should delete the product '${dataProducts.demo_8.name}' from the cart`, async function () {

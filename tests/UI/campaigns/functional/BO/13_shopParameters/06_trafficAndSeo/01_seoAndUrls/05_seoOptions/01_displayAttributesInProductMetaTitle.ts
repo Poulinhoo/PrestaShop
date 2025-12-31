@@ -89,7 +89,7 @@ describe('BO - Shop Parameters - Traffic & SEO : Enable/Disable display attribut
       await foHummingbirdHomePage.changeLanguage(page, 'en');
 
       const isHomePage = await foHummingbirdHomePage.isHomePage(page);
-      expect(isHomePage, 'Fail to open FO home page').to.eq(true);
+      expect(isHomePage).to.eq(true);
     });
 
     it('should go to the first product page and check the title', async function () {

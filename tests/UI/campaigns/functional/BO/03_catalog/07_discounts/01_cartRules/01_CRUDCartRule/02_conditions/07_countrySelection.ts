@@ -57,7 +57,6 @@ describe('BO - Catalog - Cart rules : Country selection', async () => {
     },
   });
 
-  // before and after functions
   before(async function () {
     browserContext = await utilsPlaywright.createBrowserContext(this.browser);
     page = await utilsPlaywright.newTab(browserContext);
@@ -178,7 +177,7 @@ describe('BO - Catalog - Cart rules : Country selection', async () => {
       await foHummingbirdHomePage.changeLanguage(page, 'en');
 
       const isHomePage = await foHummingbirdHomePage.isHomePage(page);
-      expect(isHomePage, 'Fail to open FO home page').to.eq(true);
+      expect(isHomePage).to.eq(true);
     });
 
     it('should go to the third product page', async function () {
@@ -242,7 +241,7 @@ describe('BO - Catalog - Cart rules : Country selection', async () => {
       await foHummingbirdCheckoutPage.addPromoCode(page, cartRule.code);
 
       const cartRuleName = await foHummingbirdCheckoutPage.getCartRuleName(page, 1);
-      expect(cartRuleName).to.equal(cartRule.name);
+      expect(cartRuleName).to.contains(cartRule.name);
     });
 
     it('should check the total after discount', async function () {

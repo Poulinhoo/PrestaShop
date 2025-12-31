@@ -96,7 +96,7 @@ describe('FO - Account : View vouchers', async () => {
       await foClassicHomePage.goToLoginPage(page);
 
       const pageTitle = await foClassicLoginPage.getPageTitle(page);
-      expect(pageTitle, 'Fail to open FO login page').to.contains(foClassicLoginPage.pageTitle);
+      expect(pageTitle).to.contains(foClassicLoginPage.pageTitle);
     });
 
     it('should sign in with created customer', async function () {

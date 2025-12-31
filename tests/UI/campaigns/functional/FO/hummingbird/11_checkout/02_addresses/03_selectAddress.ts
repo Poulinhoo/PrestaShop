@@ -47,7 +47,7 @@ describe('FO - Checkout - Addresses: Select address', async () => {
       await foHummingbirdHomePage.changeLanguage(page, 'en');
 
       const isHomePage = await foHummingbirdHomePage.isHomePage(page);
-      expect(isHomePage, 'Fail to open FO home page').to.equal(true);
+      expect(isHomePage).to.equal(true);
     });
 
     it('should go to the fourth product page', async function () {

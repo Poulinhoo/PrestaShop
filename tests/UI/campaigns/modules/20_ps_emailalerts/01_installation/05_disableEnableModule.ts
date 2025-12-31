@@ -166,8 +166,9 @@ describe('Mail alerts module - Disable/Enable module', async () => {
           const pageTitle = await foHummingbirdProductPage.getPageTitle(page);
           expect(pageTitle.toUpperCase()).to.contains(productOutOfStockNotAllowed.name.toUpperCase());
 
-          const hasFlagOutOfStock = await foHummingbirdProductPage.hasProductFlag(page, 'out_of_stock');
-          expect(hasFlagOutOfStock).to.be.equal(true);
+          // @todo : https://github.com/PrestaShop/hummingbird/issues/879
+          // const hasFlagOutOfStock = await foHummingbirdProductPage.hasProductFlag(page, 'out_of_stock');
+          // expect(hasFlagOutOfStock).to.be.equal(true);
 
           const hasBlockMailAlert = await foHummingbirdProductPage.hasBlockMailAlert(page);
           expect(hasBlockMailAlert).to.be.equal(test.state);

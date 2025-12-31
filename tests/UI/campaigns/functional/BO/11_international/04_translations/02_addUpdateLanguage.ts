@@ -77,7 +77,7 @@ describe('BO - International - Translation : Add update a language', async () =>
     await foHummingbirdHomePage.changeLanguage(page, dataLanguages.deutsch.isoCode);
 
     const isHomePage = await foHummingbirdHomePage.isHomePage(page);
-    expect(isHomePage, 'Fail to open FO home page').to.eq(true);
+    expect(isHomePage).to.eq(true);
   });
 
   it('should go back to BO', async function () {

@@ -63,7 +63,6 @@ describe('FO - Home Page : Product quick view', async () => {
   // Pre-condition : Create product out of stock not allowed
   createProductTest(productOutOfStockNotAllowed, `${baseContext}_preTest_1`);
 
-  // before and after functions
   before(async function () {
     browserContext = await utilsPlaywright.createBrowserContext(this.browser);
     page = await utilsPlaywright.newTab(browserContext);
@@ -149,10 +148,19 @@ describe('FO - Home Page : Product quick view', async () => {
   });
 
   describe('Quick view simple product', async () => {
+    it('should go to all products page', async function () {
+      await testContext.addContextItem(this, 'testIdentifier', 'goToAllProducts', baseContext);
+
+      await foClassicHomePage.goToAllProductsPage(page);
+
+      const isCategoryPageVisible = await foClassicCategoryPage.isCategoryPage(page);
+      expect(isCategoryPageVisible, 'Home category page was not opened').to.equal(true);
+    });
+
     it(`should quick view the product '${dataProducts.demo_11.name}'`, async function () {
       await testContext.addContextItem(this, 'testIdentifier', 'quickViewProduct2', baseContext);
 
-      await foClassicHomePage.quickViewProduct(page, 6);
+      await foClassicCategoryPage.quickViewProduct(page, 6);
 
       const isModalVisible = await foClassicModalQuickViewPage.isQuickViewProductModalVisible(page);
       expect(isModalVisible).to.equal(true);
@@ -191,15 +199,6 @@ describe('FO - Home Page : Product quick view', async () => {
   });
 
   describe('Quick view customized product', async () => {
-    it('should go to all products page', async function () {
-      await testContext.addContextItem(this, 'testIdentifier', 'goToAllProducts', baseContext);
-
-      await foClassicHomePage.goToAllProductsPage(page);
-
-      const isCategoryPageVisible = await foClassicCategoryPage.isCategoryPage(page);
-      expect(isCategoryPageVisible, 'Home category page was not opened').to.equal(true);
-    });
-
     it(`should go to the second page and quick view the product '${dataProducts.demo_14.name}'`, async function () {
       await testContext.addContextItem(this, 'testIdentifier', 'quickViewCustomizedProduct', baseContext);
 

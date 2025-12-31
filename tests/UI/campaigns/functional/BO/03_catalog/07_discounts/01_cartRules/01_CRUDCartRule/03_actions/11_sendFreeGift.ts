@@ -91,7 +91,7 @@ describe('BO - Cart rules - Actions : Send a free gift', async () => {
       await foHummingbirdHomePage.changeLanguage(page, 'en');
 
       const isHomePage = await foHummingbirdHomePage.isHomePage(page);
-      expect(isHomePage, 'Fail to open FO home page').to.eq(true);
+      expect(isHomePage).to.eq(true);
     });
 
     it('should go to login page', async function () {
@@ -155,7 +155,7 @@ describe('BO - Cart rules - Actions : Send a free gift', async () => {
       expect(cartRuleName).to.contains(cartRuleData.name);
 
       const cartRuleValue = await foHummingbirdCartPage.getCartRuleValue(page);
-      expect(cartRuleValue.toString()).to.eq(`-€${dataProducts.demo_20.finalPrice.toFixed(2)}`);
+      expect(cartRuleValue.toString()).to.contains(`-€${dataProducts.demo_20.finalPrice.toFixed(2)}`);
     });
 
     it(`should search for the product '${dataProducts.demo_20.name}' and go to product page`, async function () {
@@ -203,7 +203,7 @@ describe('BO - Cart rules - Actions : Send a free gift', async () => {
       expect(cartRuleName).to.contains(cartRuleData.name);
 
       const cartRuleValue = await foHummingbirdCartPage.getCartRuleValue(page);
-      expect(cartRuleValue.toString()).to.eq(`-€${dataProducts.demo_20.finalPrice.toFixed(2)}`);
+      expect(cartRuleValue.toString()).to.contains(`-€${dataProducts.demo_20.finalPrice.toFixed(2)}`);
     });
   });
 

@@ -80,7 +80,7 @@ describe('FO - Cart : Display discount on product', async () => {
       await foClassicHomePage.changeLanguage(page, 'en');
 
       const isHomePage = await foClassicHomePage.isHomePage(page);
-      expect(isHomePage, 'Fail to open FO home page').to.eq(true);
+      expect(isHomePage).to.eq(true);
     });
 
     it(`should search for the product '${dataProducts.demo_8.name}'`, async function () {

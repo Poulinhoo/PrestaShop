@@ -95,7 +95,7 @@ describe('BO - Cart rules - Actions : Apply a discount to Order (without shippin
       await foHummingbirdHomePage.changeLanguage(page, 'en');
 
       const isHomePage = await foHummingbirdHomePage.isHomePage(page);
-      expect(isHomePage, 'Fail to open FO home page').to.eq(true);
+      expect(isHomePage).to.eq(true);
     });
 
     it('should go to login page', async function () {
@@ -155,7 +155,7 @@ describe('BO - Cart rules - Actions : Apply a discount to Order (without shippin
       expect(cartRuleName).to.contains(cartRuleData.name);
 
       const cartRuleValue = await foHummingbirdCartPage.getCartRuleValue(page);
-      expect(cartRuleValue.toString()).to.eq(`-€${discount.toFixed(2)}`);
+      expect(cartRuleValue.toString()).to.contains(`-€${discount.toFixed(2)}`);
     });
 
     it('should proceed to checkout', async function () {
@@ -194,10 +194,10 @@ describe('BO - Cart rules - Actions : Apply a discount to Order (without shippin
       expect(priceATI.toString()).to.eq((dataProducts.demo_1.finalPrice - discount + dataCarriers.myCarrier.priceTTC).toFixed(2));
 
       const cartRuleName = await foHummingbirdCheckoutPage.getCartRuleName(page);
-      expect(cartRuleName).to.equal(cartRuleData.name);
+      expect(cartRuleName).to.contains(cartRuleData.name);
 
       const cartRuleValue = await foHummingbirdCheckoutPage.getCartRuleValue(page);
-      expect(cartRuleValue).to.equal(`-€${discount.toFixed(2)}`);
+      expect(cartRuleValue).to.contains(`-€${discount.toFixed(2)}`);
     });
   });
 

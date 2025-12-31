@@ -53,7 +53,7 @@ describe('FO - Contact us : Check mail link on contact us page', async () => {
       await foClassicHomePage.clickOnHeaderLink(page, 'Contact us');
 
       const pageTitle = await foClassicContactUsPage.getPageTitle(page);
-      expect(pageTitle, 'Fail to open FO login page').to.contains(foClassicContactUsPage.pageTitle);
+      expect(pageTitle).to.contains(foClassicContactUsPage.pageTitle);
     });
 
     it('should check email us link', async function () {

@@ -170,7 +170,7 @@ describe('FO - Contact us : Send message from contact us page with customer logg
       await foClassicHomePage.goToLoginPage(page);
 
       const pageTitle = await foClassicLoginPage.getPageTitle(page);
-      expect(pageTitle, 'Fail to open FO login page').to.contains(foClassicLoginPage.pageTitle);
+      expect(pageTitle).to.contains(foClassicLoginPage.pageTitle);
     });
 
     it('should sign in with default customer', async function () {

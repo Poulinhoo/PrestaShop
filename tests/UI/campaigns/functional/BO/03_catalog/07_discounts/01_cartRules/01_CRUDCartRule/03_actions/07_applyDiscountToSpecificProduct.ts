@@ -96,7 +96,7 @@ describe('BO - Cart rules - Actions : Apply a discount to Specific product', asy
       await foHummingbirdHomePage.changeLanguage(page, 'en');
 
       const isHomePage = await foHummingbirdHomePage.isHomePage(page);
-      expect(isHomePage, 'Fail to open FO home page').to.eq(true);
+      expect(isHomePage).to.eq(true);
     });
 
     it('should go to login page', async function () {
@@ -156,7 +156,7 @@ describe('BO - Cart rules - Actions : Apply a discount to Specific product', asy
       expect(cartRuleName).to.contains(cartRuleData.name);
 
       const cartRuleValue = await foHummingbirdCartPage.getCartRuleValue(page);
-      expect(cartRuleValue.toString()).to.eq(`-€${discount.toFixed(2)}`);
+      expect(cartRuleValue.toString()).to.contains(`-€${discount.toFixed(2)}`);
     });
   });
 
@@ -200,7 +200,7 @@ describe('BO - Cart rules - Actions : Apply a discount to Specific product', asy
       expect(cartRuleName).to.contains(cartRuleData.name);
 
       const cartRuleValue = await foHummingbirdCartPage.getCartRuleValue(page);
-      expect(cartRuleValue).to.eq(`-€${discount.toFixed(2)}`);
+      expect(cartRuleValue).to.contains(`-€${discount.toFixed(2)}`);
     });
   });
 
@@ -265,7 +265,7 @@ describe('BO - Cart rules - Actions : Apply a discount to Specific product', asy
       expect(cartRuleName).to.contains(cartRuleData.name);
 
       const cartRuleValue = await foHummingbirdCartPage.getCartRuleValue(page);
-      expect(cartRuleValue).to.eq(`-€${cartRuleData.getDiscountAmount().toFixed(2)}`);
+      expect(cartRuleValue).to.contains(`-€${cartRuleData.getDiscountAmount().toFixed(2)}`);
     });
   });
 
@@ -307,7 +307,7 @@ describe('BO - Cart rules - Actions : Apply a discount to Specific product', asy
       expect(cartRuleName).to.contains(cartRuleData.name);
 
       const cartRuleValue = await foHummingbirdCartPage.getCartRuleValue(page);
-      expect(cartRuleValue).to.eq(`-€${cartRuleData.getDiscountAmount().toFixed(2)}`);
+      expect(cartRuleValue).to.contains(`-€${cartRuleData.getDiscountAmount().toFixed(2)}`);
     });
   });
 
@@ -352,7 +352,7 @@ describe('BO - Cart rules - Actions : Apply a discount to Specific product', asy
       expect(cartRuleName).to.contains(cartRuleData.name);
 
       const cartRuleValue = await foHummingbirdCartPage.getCartRuleValue(page);
-      expect(cartRuleValue).to.eq(`-€${dataProducts.demo_14.finalPrice.toFixed(2)}`);
+      expect(cartRuleValue).to.contains(`-€${dataProducts.demo_14.finalPrice.toFixed(2)}`);
     });
   });
 

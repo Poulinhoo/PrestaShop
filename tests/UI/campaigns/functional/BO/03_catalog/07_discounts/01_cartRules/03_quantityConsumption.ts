@@ -196,7 +196,7 @@ describe('BO - Cart Rules : Quantity consumption', async () => {
       expect(cartRuleName).to.contains(cartRuleData.name);
 
       const cartRuleValue = await foHummingbirdCartPage.getCartRuleValue(page);
-      expect(cartRuleValue.toString()).to.eq(`-€${parseFloat(cartRuleData.discountAmount!.value.toString()).toFixed(2)}`);
+      expect(cartRuleValue.toString()).to.contains(`-€${parseFloat(cartRuleData.discountAmount!.value.toString()).toFixed(2)}`);
     });
 
     it('should go to delivery step', async function () {

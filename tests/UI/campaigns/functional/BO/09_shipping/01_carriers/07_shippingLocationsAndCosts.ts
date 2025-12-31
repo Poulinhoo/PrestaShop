@@ -415,7 +415,6 @@ describe('BO - Shipping - Carriers : Shipping locations and costs', async () => 
   const editProductData: FakerProduct = {...dataProducts.demo_11};
   editProductData.packageDimensionWeight = 30;
 
-  // before and after functions
   before(async function () {
     browserContext = await utilsPlaywright.createBrowserContext(this.browser);
     page = await utilsPlaywright.newTab(browserContext);
@@ -558,7 +557,7 @@ describe('BO - Shipping - Carriers : Shipping locations and costs', async () => 
     await foHummingbirdCheckoutPage.clickOnSignIn(page);
 
     const isCustomerConnected = await foHummingbirdCheckoutPage.customerLogin(page, dataCustomers.johnDoe);
-    expect(isCustomerConnected, 'Customer is not connected').to.eq(true);
+    expect(isCustomerConnected).to.eq(true);
   });
 
   it('should choose the delivery address', async function () {

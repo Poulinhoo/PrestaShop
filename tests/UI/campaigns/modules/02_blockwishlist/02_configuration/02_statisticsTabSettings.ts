@@ -114,7 +114,7 @@ describe('Wishlist module - Statistics tab settings', async () => {
       await foHummingbirdHomePage.goToLoginPage(page);
 
       const pageTitle = await foHummingbirdLoginPage.getPageTitle(page);
-      expect(pageTitle, 'Fail to open FO login page').to.contains(foHummingbirdLoginPage.pageTitle);
+      expect(pageTitle).to.contains(foHummingbirdLoginPage.pageTitle);
     });
 
     it('should sign in with default customer', async function () {

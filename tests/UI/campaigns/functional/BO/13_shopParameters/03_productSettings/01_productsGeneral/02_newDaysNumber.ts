@@ -20,7 +20,7 @@ Check that there is no new products in FO
 Go back to the default value
 Check that all products are new in FO
  */
-describe('BO - Shop Parameters - Product Settings : Update Number of days for which  '
+describe('BO - Shop Parameters - Product Settings : Update Number of days for which '
   + 'the product is considered \'new\'', async () => {
   let browserContext: BrowserContext;
   let page: Page;
@@ -59,38 +59,36 @@ describe('BO - Shop Parameters - Product Settings : Update Number of days for wh
     expect(pageTitle).to.contains(boProductSettingsPage.pageTitle);
   });
 
-  const tests = [
-    {args: {value: 0, exist: false, state: 'NotVisible'}},
-    {args: {value: 20, exist: true, state: 'Visible'}},
-  ];
+  [
+    {value: 0, exist: false, state: 'NotVisible'},
+    {value: 20, exist: true, state: 'Visible'},
+  ].forEach((arg: {value: number, exist: boolean, state: string}) => {
+    it(`should update Number of days to ${arg.value}`, async function () {
+      await testContext.addContextItem(this, 'testIdentifier', `updateNumberOfDaysTo${arg.value}`, baseContext);
 
-  tests.forEach((test) => {
-    it(`should update Number of days to ${test.args.value}`, async function () {
-      await testContext.addContextItem(this, 'testIdentifier', `updateNumberOfDaysTo${test.args.value}`, baseContext);
-
-      const result = await boProductSettingsPage.updateNumberOfDays(page, test.args.value);
+      const result = await boProductSettingsPage.updateNumberOfDays(page, arg.value);
       expect(result).to.contains(boProductSettingsPage.successfulUpdateMessage);
     });
 
     it('should view my shop', async function () {
-      await testContext.addContextItem(this, 'testIdentifier', `viewMyShop${test.args.state}`, baseContext);
+      await testContext.addContextItem(this, 'testIdentifier', `viewMyShop${arg.state}`, baseContext);
 
       page = await boProductSettingsPage.viewMyShop(page);
       await foHummingbirdHomePage.changeLanguage(page, 'en');
 
       const isHomePage = await foHummingbirdHomePage.isHomePage(page);
-      expect(isHomePage, 'Fail to open FO home page').to.eq(true);
+      expect(isHomePage).to.eq(true);
     });
 
     it('should check the new flag in the product miniature in FO', async function () {
-      await testContext.addContextItem(this, 'testIdentifier', `checkIfNewFlagIs${test.args.state}`, baseContext);
+      await testContext.addContextItem(this, 'testIdentifier', `checkIfNewFlagIs${arg.state}`, baseContext);
 
       const isNewFlagVisible = await foHummingbirdHomePage.isNewFlagVisible(page, 1);
-      expect(isNewFlagVisible).to.be.equal(test.args.exist);
+      expect(isNewFlagVisible).to.be.equal(arg.exist);
     });
 
     it('should close the page and go back to BO', async function () {
-      await testContext.addContextItem(this, 'testIdentifier', `closePageAndBackToBO${test.args.state}`, baseContext);
+      await testContext.addContextItem(this, 'testIdentifier', `closePageAndBackToBO${arg.state}`, baseContext);
 
       page = await foHummingbirdHomePage.closePage(browserContext, page, 0);
 

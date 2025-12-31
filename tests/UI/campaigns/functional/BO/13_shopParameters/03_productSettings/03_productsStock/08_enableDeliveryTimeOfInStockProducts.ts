@@ -72,7 +72,7 @@ describe('BO - Shop Parameters - Product Settings : Enable delivery time in stoc
       await foHummingbirdHomePage.changeLanguage(page, 'en');
 
       const isHomePage = await foHummingbirdHomePage.isHomePage(page);
-      expect(isHomePage, 'Fail to open FO home page').to.eq(true);
+      expect(isHomePage).to.eq(true);
     });
 
     it('should check delivery time block visibility', async function () {

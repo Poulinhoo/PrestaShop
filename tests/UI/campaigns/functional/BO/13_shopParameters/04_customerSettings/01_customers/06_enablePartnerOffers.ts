@@ -84,7 +84,7 @@ describe('BO - Shop Parameters - Customer Settings : Enable/Disable partner offe
       await foHummingbirdHomePage.changeLanguage(page, 'en');
 
       const isHomePage = await foHummingbirdHomePage.isHomePage(page);
-      expect(isHomePage, 'Fail to open FO home page').to.eq(true);
+      expect(isHomePage).to.eq(true);
     });
 
     it('should go to create customer account in FO and check partner offer checkbox', async function () {

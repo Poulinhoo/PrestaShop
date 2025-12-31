@@ -63,7 +63,7 @@ describe('FO - Header and Footer : Check links in header page', async () => {
       await foClassicHomePage.clickOnHeaderLink(page, 'Contact us');
 
       const pageTitle = await foClassicContactUsPage.getPageTitle(page);
-      expect(pageTitle, 'Fail to open FO login page').to.contains(foClassicContactUsPage.pageTitle);
+      expect(pageTitle).to.contains(foClassicContactUsPage.pageTitle);
     });
 
     it('should check \'sign in\' link', async function () {

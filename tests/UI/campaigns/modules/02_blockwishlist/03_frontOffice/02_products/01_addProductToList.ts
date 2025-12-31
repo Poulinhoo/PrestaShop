@@ -104,7 +104,7 @@ describe('Wishlist module - Add a product to a list', async () => {
       await foClassicModalWishlistPage.clickLoginOnModalLogin(page);
 
       const pageTitle = await foHummingbirdLoginPage.getPageTitle(page);
-      expect(pageTitle, 'Fail to open FO login page').to.contains(foHummingbirdLoginPage.pageTitle);
+      expect(pageTitle).to.contains(foHummingbirdLoginPage.pageTitle);
     });
 
     it('should login', async function () {

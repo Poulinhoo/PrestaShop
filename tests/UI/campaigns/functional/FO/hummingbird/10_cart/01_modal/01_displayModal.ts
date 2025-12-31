@@ -35,7 +35,7 @@ describe('FO - Cart : Display modal when adding a product to cart', async () => 
       await foHummingbirdHomePage.changeLanguage(page, 'en');
 
       const isHomePage = await foHummingbirdHomePage.isHomePage(page);
-      expect(isHomePage, 'Fail to open FO home page').to.equal(true);
+      expect(isHomePage).to.equal(true);
     });
 
     it('should add the first product to cart by quick view and click on continue button', async function () {

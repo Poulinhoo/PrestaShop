@@ -100,7 +100,7 @@ describe('FO - Account : Send a message with an ordered product', async () => {
       await foClassicHomePage.changeLanguage(page, 'en');
 
       const isHomePage = await foClassicHomePage.isHomePage(page);
-      expect(isHomePage, 'Fail to open FO home page').to.eq(true);
+      expect(isHomePage).to.eq(true);
     });
 
     it('should go to login page', async function () {
@@ -109,7 +109,7 @@ describe('FO - Account : Send a message with an ordered product', async () => {
       await foClassicHomePage.goToLoginPage(page);
 
       const pageTitle = await foClassicLoginPage.getPageTitle(page);
-      expect(pageTitle, 'Fail to open FO login page').to.contains(foClassicLoginPage.pageTitle);
+      expect(pageTitle).to.contains(foClassicLoginPage.pageTitle);
     });
 
     it('should sign in with default customer', async function () {

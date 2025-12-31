@@ -65,8 +65,8 @@ describe('BO - International - Localization - Geolocation: Update IP address whi
     const pageTitle = await boGeolocationPage.getPageTitle(page);
     expect(pageTitle).to.equal(boGeolocationPage.pageTitle);
 
-    //const hasAlertBlock  = await boGeolocationPage.hasAlertBlock(page);
-    //expect(hasAlertBlock).to.equal(true);
+    // const hasAlertBlock = await boGeolocationPage.hasAlertBlock(page);
+    // expect(hasAlertBlock).to.equal(true);
 
     const messageWarning = await boGeolocationPage.getWarningMessage(page);
     expect(messageWarning).to.equal(boGeolocationPage.messageWarningNeedDB);

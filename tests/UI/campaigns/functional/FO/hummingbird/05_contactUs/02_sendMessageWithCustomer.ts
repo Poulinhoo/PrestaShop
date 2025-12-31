@@ -165,7 +165,7 @@ describe('FO - Contact us : Send message from contact us page with customer logg
       await foHummingbirdHomePage.goToLoginPage(page);
 
       const pageTitle = await foHummingbirdLoginPage.getPageTitle(page);
-      expect(pageTitle, 'Fail to open FO login page').to.contains(foHummingbirdLoginPage.pageTitle);
+      expect(pageTitle).to.contains(foHummingbirdLoginPage.pageTitle);
     });
 
     it('should sign in with default customer', async function () {

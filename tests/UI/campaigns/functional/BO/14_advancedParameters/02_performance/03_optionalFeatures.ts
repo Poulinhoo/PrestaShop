@@ -127,7 +127,7 @@ describe('BO - Advanced Parameters - Performance : Optional features', async () 
     await foHummingbirdHomePage.changeLanguage(page, 'en');
 
     const isHomePage = await foHummingbirdHomePage.isHomePage(page);
-    expect(isHomePage, 'Fail to open FO home page').to.eq(true);
+    expect(isHomePage).to.eq(true);
   });
 
   it(`should search the product ${dataProducts.demo_6.name}`, async function () {
@@ -159,7 +159,7 @@ describe('BO - Advanced Parameters - Performance : Optional features', async () 
 
     const productFeatures = await foHummingbirdProductPage.getProductFeaturesList(page);
     expect(productFeatures).to.equal(
-      `Data sheet ${dataProducts.demo_6.features[0].featureName} ${dataProducts.demo_6.features[0].preDefinedValue}`);
+      `${dataProducts.demo_6.features[0].featureName} ${dataProducts.demo_6.features[0].preDefinedValue}`);
   });
 
   it('should go to login page', async function () {
@@ -169,7 +169,7 @@ describe('BO - Advanced Parameters - Performance : Optional features', async () 
     await foHummingbirdProductPage.goToLoginPage(page);
 
     const pageTitle = await foHummingbirdLoginPage.getPageTitle(page);
-    expect(pageTitle, 'Fail to open FO login page').to.contains(foHummingbirdLoginPage.pageTitle);
+    expect(pageTitle).to.contains(foHummingbirdLoginPage.pageTitle);
   });
 
   it('should login on the Front Office', async function () {

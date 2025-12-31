@@ -58,7 +58,7 @@ describe('BO - Shop Parameters - Order Settings : Enable/Disable guest checkout'
   const tests = [
     {
       args: {
-        action: 'disable', exist: false, tabName: 'Create an account', pwdRequired: true,
+        action: 'disable', exist: false, tabName: 'New customer', pwdRequired: true,
       },
     },
     {

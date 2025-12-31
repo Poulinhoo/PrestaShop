@@ -103,7 +103,7 @@ describe('BO - Customers - Customers : CRUD Customer in BO', async () => {
       await foHummingbirdHomePage.changeLanguage(page, 'en');
 
       const isHomePage = await foHummingbirdHomePage.isHomePage(page);
-      expect(isHomePage, 'Fail to open FO home page').to.eq(true);
+      expect(isHomePage).to.eq(true);
     });
 
     it('should sign in by new customer', async function () {
@@ -230,7 +230,7 @@ describe('BO - Customers - Customers : CRUD Customer in BO', async () => {
       await foHummingbirdHomePage.changeLanguage(page, 'en');
 
       const isHomePage = await foHummingbirdHomePage.isHomePage(page);
-      expect(isHomePage, 'Fail to open FO home page').to.eq(true);
+      expect(isHomePage).to.eq(true);
     });
 
     it('should check sign in by edited account', async function () {

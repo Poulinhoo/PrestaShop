@@ -43,7 +43,6 @@ describe('BO - Catalog - Products : Combination tab', async () => {
     quantity: 150,
   };
 
-  // before and after functions
   before(async function () {
     browserContext = await utilsPlaywright.createBrowserContext(this.browser);
     page = await utilsPlaywright.newTab(browserContext);

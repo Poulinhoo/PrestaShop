@@ -24,7 +24,7 @@ Pre-condition:
 Scenario:
 - Download a child theme and check the theme is well uploaded
 - Use the child theme
-- Use the classic theme and remove the child theme
+- Use the hummingbird theme and remove the child theme
 - Check the How to use parents/child themes link
  */
 
@@ -34,8 +34,8 @@ describe('BO - Design - Theme & Logo - Advanced Customization', async () => {
   // Variable used to create temporary theme file
   let filePath: string|null;
 
-  // Variable used to create child_classic.zip file
-  const renamedFilePath: string = 'child_classic.zip';
+  // Variable used to create child_hummingbird.zip file
+  const renamedFilePath: string = 'child_hummingbird.zip';
   // Variable used for the themes folder
   const themesPath: string = 'themes/';
 
@@ -117,7 +117,7 @@ describe('BO - Design - Theme & Logo - Advanced Customization', async () => {
       filePath = await boThemeAdvancedConfigurationPage.downloadTheme(page);
 
       const exist = await utilsFile.doesFileExist(filePath);
-      expect(exist, 'Theme was not downloaded').to.eq(true);
+      expect(exist).to.eq(true);
     });
 
     it('should click on upload child theme button', async function () {
@@ -145,7 +145,7 @@ describe('BO - Design - Theme & Logo - Advanced Customization', async () => {
       expect(isModalClosed, 'Modal not closed').to.eq(true);
     });
 
-    // remove the child_classic.zip from themes folder
+    // remove the child_hummingbird.zip from themes folder
     it('should remove the zip file of the child theme from the themes folder', async function () {
       await testContext
         .addContextItem(this, 'testIdentifier', 'removeZipFileChildThemeFromThemesFolder', baseContext);
@@ -187,7 +187,7 @@ describe('BO - Design - Theme & Logo - Advanced Customization', async () => {
     it('should use the child theme', async function () {
       await testContext.addContextItem(this, 'testIdentifier', 'useChildTheme', baseContext);
 
-      const successResult = await boThemeAndLogoPage.useTheme(page, 'child_classic');
+      const successResult = await boThemeAndLogoPage.useTheme(page, 'child_hummingbird');
       expect(successResult).to.be.equal(boThemeAndLogoPage.successfulUpdateMessage);
     });
 
@@ -198,7 +198,7 @@ describe('BO - Design - Theme & Logo - Advanced Customization', async () => {
       await foHummingbirdHomePage.changeLanguage(page, 'en');
 
       const isHomePage = await foHummingbirdHomePage.isHomePage(page);
-      expect(isHomePage, 'Fail to open FO home page').to.eq(true);
+      expect(isHomePage).to.eq(true);
     });
 
     it('should close the current page', async function () {
@@ -211,19 +211,19 @@ describe('BO - Design - Theme & Logo - Advanced Customization', async () => {
     });
   });
 
-  // 3 - Use the classic theme and remove the child theme
+  // 3 - Use the hummingbird theme and remove the child theme
   describe('Remove the child theme', async () => {
-    it('should use the classic theme', async function () {
-      await testContext.addContextItem(this, 'testIdentifier', 'useClassicTheme', baseContext);
+    it('should use the hummingbird theme', async function () {
+      await testContext.addContextItem(this, 'testIdentifier', 'useHummingbirdTheme', baseContext);
 
-      const successResult = await boThemeAndLogoPage.useTheme(page, 'classic');
+      const successResult = await boThemeAndLogoPage.useTheme(page, 'hummingbird');
       expect(successResult).to.be.equal(boThemeAndLogoPage.successfulUpdateMessage);
     });
 
     it('should delete the child theme', async function () {
       await testContext.addContextItem(this, 'testIdentifier', 'deleteChildTheme', baseContext);
 
-      const successResult = await boThemeAndLogoPage.deleteTheme(page, 'child_classic');
+      const successResult = await boThemeAndLogoPage.deleteTheme(page, 'child_hummingbird');
       expect(successResult).to.be.equal(boThemeAndLogoPage.successfulDeleteMessage);
     });
   });

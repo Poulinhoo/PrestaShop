@@ -169,7 +169,7 @@ describe('BO - Shop Parameters - Product Settings : Default pack stock managemen
           await foHummingbirdHomePage.changeLanguage(page, 'en');
 
           const isFoHomePage = await foHummingbirdHomePage.isHomePage(page);
-          expect(isFoHomePage, 'Fail to open FO home page').to.eq(true);
+          expect(isFoHomePage).to.eq(true);
         });
 
         it('should go to login page', async function () {
@@ -178,7 +178,7 @@ describe('BO - Shop Parameters - Product Settings : Default pack stock managemen
           await foHummingbirdHomePage.goToLoginPage(page);
 
           const pageTitle = await foHummingbirdLoginPage.getPageTitle(page);
-          expect(pageTitle, 'Fail to open FO login page').to.contains(foHummingbirdLoginPage.pageTitle);
+          expect(pageTitle).to.contains(foHummingbirdLoginPage.pageTitle);
         });
 
         it('should sign in with default customer', async function () {
@@ -197,7 +197,7 @@ describe('BO - Shop Parameters - Product Settings : Default pack stock managemen
           await foHummingbirdLoginPage.goToHomePage(page);
 
           const isFoHomePage = await foHummingbirdHomePage.isHomePage(page);
-          expect(isFoHomePage, 'Fail to open FO home page').to.eq(true);
+          expect(isFoHomePage).to.eq(true);
         });
 
         it('should search for the created product and go to product page', async function () {

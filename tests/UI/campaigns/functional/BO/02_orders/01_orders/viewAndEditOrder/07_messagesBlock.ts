@@ -67,7 +67,6 @@ describe('BO - Orders - View and edit order : Check messages block', async () =>
   // Pre-condition - Create order by default customer
   createOrderByCustomerTest(orderByCustomerData, `${baseContext}_preTest_1`);
 
-  // before and after functions
   before(async function () {
     browserContext = await utilsPlaywright.createBrowserContext(this.browser);
     page = await utilsPlaywright.newTab(browserContext);
@@ -178,7 +177,7 @@ describe('BO - Orders - View and edit order : Check messages block', async () =>
       await foHummingbirdHomePage.changeLanguage(page, 'en');
 
       const isHomePage = await foHummingbirdHomePage.isHomePage(page);
-      expect(isHomePage, 'Fail to open FO home page').to.eq(true);
+      expect(isHomePage).to.eq(true);
     });
 
     it('should go to login page', async function () {
@@ -187,7 +186,7 @@ describe('BO - Orders - View and edit order : Check messages block', async () =>
       await foHummingbirdHomePage.goToLoginPage(page);
 
       const pageTitle = await foHummingbirdLoginPage.getPageTitle(page);
-      expect(pageTitle, 'Fail to open FO login page').to.contains(foHummingbirdLoginPage.pageTitle);
+      expect(pageTitle).to.contains(foHummingbirdLoginPage.pageTitle);
     });
 
     it('should sign in with default customer', async function () {
@@ -215,10 +214,10 @@ describe('BO - Orders - View and edit order : Check messages block', async () =>
       await foHummingbirdMyOrderHistoryPage.goToDetailsPage(page, 1);
 
       const isBoxMessagesVisible = await foHummingbirdMyOrderHistoryPage.isBoxMessagesSectionVisible(page);
-      expect(isBoxMessagesVisible, 'Box messages is not visible!').to.eq(true);
+      expect(isBoxMessagesVisible).to.eq(true);
 
       const isMessageRowVisible = await foHummingbirdMyOrderHistoryPage.isMessageRowVisible(page);
-      expect(isMessageRowVisible, 'Message is not visible!').to.eq(true);
+      expect(isMessageRowVisible).to.eq(true);
     });
 
     it('should check the message text', async function () {
@@ -300,7 +299,7 @@ describe('BO - Orders - View and edit order : Check messages block', async () =>
       await foHummingbirdHomePage.changeLanguage(page, 'en');
 
       const isHomePage = await foHummingbirdHomePage.isHomePage(page);
-      expect(isHomePage, 'Fail to open FO home page').to.eq(true);
+      expect(isHomePage).to.eq(true);
     });
 
     it('should go to login page', async function () {
@@ -309,7 +308,7 @@ describe('BO - Orders - View and edit order : Check messages block', async () =>
       await foHummingbirdHomePage.goToLoginPage(page);
 
       const pageTitle = await foHummingbirdLoginPage.getPageTitle(page);
-      expect(pageTitle, 'Fail to open FO login page').to.contains(foHummingbirdLoginPage.pageTitle);
+      expect(pageTitle).to.contains(foHummingbirdLoginPage.pageTitle);
     });
 
     it('should sign in with default customer', async function () {

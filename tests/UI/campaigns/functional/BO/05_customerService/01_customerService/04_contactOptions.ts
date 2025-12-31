@@ -81,7 +81,7 @@ describe('BO - Customer Service : Contact options', async () => {
       page = await boCustomerServicePage.viewMyShop(page);
 
       const isHomePage = await foHummingbirdHomePage.isHomePage(page);
-      expect(isHomePage, 'Fail to open FO home page').to.eq(true);
+      expect(isHomePage).to.eq(true);
     });
 
     it('should go to contact us page', async function () {
@@ -163,7 +163,7 @@ describe('BO - Customer Service : Contact options', async () => {
         page = await boCustomerServicePage.viewMyShop(page);
 
         const isHomePage = await foHummingbirdHomePage.isHomePage(page);
-        expect(isHomePage, 'Fail to open FO home page').to.eq(true);
+        expect(isHomePage).to.eq(true);
       });
 
       it('should go to contact us page', async function () {

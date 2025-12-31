@@ -37,7 +37,7 @@ describe('FO - Cart : Display modal of product customization', async () => {
       await foHummingbirdHomePage.changeLanguage(page, 'en');
 
       const isHomePage = await foHummingbirdHomePage.isHomePage(page);
-      expect(isHomePage, 'Fail to open FO home page').to.eq(true);
+      expect(isHomePage).to.eq(true);
     });
 
     it(`should search for the product '${dataProducts.demo_14.name}'`, async function () {

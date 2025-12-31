@@ -48,7 +48,7 @@ describe('FO - Contact us : Check mail link on contact us page', async () => {
       await foHummingbirdHomePage.clickOnHeaderLink(page, 'Contact us');
 
       const pageTitle = await foHummingbirdContactUsPage.getPageTitle(page);
-      expect(pageTitle, 'Fail to open FO login page').to.contains(foHummingbirdContactUsPage.pageTitle);
+      expect(pageTitle).to.contains(foHummingbirdContactUsPage.pageTitle);
     });
 
     it('should check email us link', async function () {

@@ -80,31 +80,28 @@ describe('BO - Shop Parameters - Product Settings : Enable/Disable catalog mode'
     });
 
     if (test.args.enable) {
-      const testShowPrices = [
+      [
         {
-          args:
-            {
-              action: 'disable', enable: false, isPriceExist: false, isAddToCartExist: false,
-            },
+          action: 'disable', enable: false, isPriceExist: false, isAddToCartExist: false,
         },
         {
-          args:
-            {
-              action: 'enable', enable: true, isPriceExist: true, isAddToCartExist: false,
-            },
+          action: 'enable', enable: true, isPriceExist: true, isAddToCartExist: false,
         },
-      ];
-
-      testShowPrices.forEach((showPrices, index: number) => {
-        it(`should ${showPrices.args.action} show prices`, async function () {
+      ].forEach((showPrices: {
+        action: string,
+        enable: boolean,
+        isPriceExist: boolean,
+        isAddToCartExist: boolean,
+      }, index: number) => {
+        it(`should ${showPrices.action} show prices`, async function () {
           await testContext.addContextItem(
             this,
             'testIdentifier',
-            `${showPrices.args.action}ShowPrices`,
+            `${showPrices.action}ShowPrices`,
             baseContext,
           );
 
-          const result = await boProductSettingsPage.setShowPricesStatus(page, showPrices.args.enable);
+          const result = await boProductSettingsPage.setShowPricesStatus(page, showPrices.enable);
           expect(result).to.contains(boProductSettingsPage.successfulUpdateMessage);
         });
 
@@ -115,14 +112,14 @@ describe('BO - Shop Parameters - Product Settings : Enable/Disable catalog mode'
           await foHummingbirdHomePage.changeLanguage(page, 'en');
 
           const isHomePage = await foHummingbirdHomePage.isHomePage(page);
-          expect(isHomePage, 'Fail to open FO home page').to.eq(true);
+          expect(isHomePage).to.eq(true);
         });
 
         it('should check the product price of the first product in the home page', async function () {
           await testContext.addContextItem(this, 'testIdentifier', `checkPricesInHomePage${index}`, baseContext);
 
           const isPriceVisible = await foHummingbirdHomePage.isPriceVisible(page, 1);
-          expect(isPriceVisible).to.equal(showPrices.args.enable);
+          expect(isPriceVisible).to.equal(showPrices.enable);
         });
 
         it('should go to the first product page', async function () {
@@ -138,10 +135,10 @@ describe('BO - Shop Parameters - Product Settings : Enable/Disable catalog mode'
           await testContext.addContextItem(this, 'testIdentifier', `checkPrice&AddToCartButton${index}`, baseContext);
 
           let isVisible = await foHummingbirdProductPage.isPriceDisplayed(page);
-          expect(isVisible).to.equal(showPrices.args.isPriceExist);
+          expect(isVisible).to.equal(showPrices.isPriceExist);
 
           isVisible = await foHummingbirdProductPage.isAddToCartButtonDisplayed(page);
-          expect(isVisible).to.equal(showPrices.args.isAddToCartExist);
+          expect(isVisible).to.equal(showPrices.isAddToCartExist);
         });
 
         it('should close the page and go back to BO', async function () {
@@ -161,7 +158,7 @@ describe('BO - Shop Parameters - Product Settings : Enable/Disable catalog mode'
         await foHummingbirdHomePage.changeLanguage(page, 'en');
 
         const isHomePage = await foHummingbirdHomePage.isHomePage(page);
-        expect(isHomePage, 'Fail to open FO home page').to.eq(true);
+        expect(isHomePage).to.eq(true);
       });
 
       it('should check that the product price is visible in the home page', async function () {

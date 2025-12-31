@@ -255,7 +255,7 @@ describe('BO - Cart rules - Conditions : Case 9 - Compatibility with other cart 
       await foHummingbirdHomePage.changeLanguage(page, 'en');
 
       const isHomePage = await foHummingbirdHomePage.isHomePage(page);
-      expect(isHomePage, 'Fail to open FO home page').to.eq(true);
+      expect(isHomePage).to.eq(true);
     });
   });
 

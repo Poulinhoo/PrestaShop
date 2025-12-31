@@ -57,7 +57,7 @@ describe('FO - Header and Footer : Check links in header page', async () => {
       await foHummingbirdHomePage.clickOnHeaderLink(page, 'Contact us');
 
       const pageTitle = await foHummingbirdContactUsPage.getPageTitle(page);
-      expect(pageTitle, 'Fail to open FO login page').to.contains(foHummingbirdContactUsPage.pageTitle);
+      expect(pageTitle).to.contains(foHummingbirdContactUsPage.pageTitle);
     });
 
     it('should check \'sign in\' link', async function () {

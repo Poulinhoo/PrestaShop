@@ -30,7 +30,6 @@ describe('BO - Shop Parameters - Order Settings : Test minimum purchase total re
   const alertMessage: string = `A minimum shopping cart total of €${newPurchaseTotalRequired}.00 (tax excl.) is required`
     + ' to validate your order.';
 
-  // before and after functions
   before(async function () {
     browserContext = await utilsPlaywright.createBrowserContext(this.browser);
     page = await utilsPlaywright.newTab(browserContext);

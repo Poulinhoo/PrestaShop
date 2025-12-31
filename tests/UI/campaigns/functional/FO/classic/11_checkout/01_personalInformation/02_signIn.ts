@@ -58,7 +58,7 @@ describe('FO - Checkout - Personal information : Sign in', async () => {
       await foClassicHomePage.changeLanguage(page, 'en');
 
       const isHomePage = await foClassicHomePage.isHomePage(page);
-      expect(isHomePage, 'Fail to open FO home page').to.eq(true);
+      expect(isHomePage).to.eq(true);
     });
 
     it('should add product to cart', async function () {

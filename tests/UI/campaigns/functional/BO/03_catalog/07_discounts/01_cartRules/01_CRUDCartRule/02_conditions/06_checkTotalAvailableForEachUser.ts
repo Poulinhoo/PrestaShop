@@ -109,7 +109,7 @@ describe('BO - Catalog - Cart rules : Check Total available for each user', asyn
       await foHummingbirdHomePage.changeLanguage(page, 'en');
 
       const isHomePage = await foHummingbirdHomePage.isHomePage(page);
-      expect(isHomePage, 'Fail to open FO home page').to.eq(true);
+      expect(isHomePage).to.eq(true);
     });
   });
 

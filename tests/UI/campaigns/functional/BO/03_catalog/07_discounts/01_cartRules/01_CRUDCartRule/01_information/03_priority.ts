@@ -139,7 +139,7 @@ describe('BO - Catalog - Cart rules : CRUD cart rule with priority', async () =>
       await foHummingbirdHomePage.changeLanguage(page, 'en');
 
       const isHomePage = await foHummingbirdHomePage.isHomePage(page);
-      expect(isHomePage, 'Fail to open FO home page').to.eq(true);
+      expect(isHomePage).to.eq(true);
     });
 
     it('should go to the first product page', async function () {

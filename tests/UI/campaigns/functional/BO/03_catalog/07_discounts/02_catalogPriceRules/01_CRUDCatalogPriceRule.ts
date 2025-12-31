@@ -161,7 +161,7 @@ describe('BO - Catalog - Discounts : CRUD catalog price rules', async () => {
         await foHummingbirdHomePage.changeLanguage(page, 'en');
 
         const isHomePage = await foHummingbirdHomePage.isHomePage(page);
-        expect(isHomePage, 'Fail to open FO home page').to.eq(true);
+        expect(isHomePage).to.eq(true);
       });
 
       it('should go to the first product page', async function () {
@@ -178,7 +178,7 @@ describe('BO - Catalog - Discounts : CRUD catalog price rules', async () => {
 
         // Check discount percentage
         let columnValue = await foHummingbirdProductPage.getDiscountAmount(page);
-        expect(columnValue).to.equal(`Save €${catalogPriceRuleData0.reduction.toFixed(2)}`);
+        expect(columnValue).to.equal(`(Save €${catalogPriceRuleData0.reduction.toFixed(2)})`);
 
         // Check final price
         let finalPrice = await foHummingbirdProductPage.getProductInformation(page);
@@ -193,7 +193,7 @@ describe('BO - Catalog - Discounts : CRUD catalog price rules', async () => {
 
         // Check discount value
         columnValue = await foHummingbirdProductPage.getDiscountAmount(page);
-        expect(columnValue).to.equal(`Save €${catalogPriceRuleData0.reduction.toFixed(2)}`);
+        expect(columnValue).to.equal(`(Save €${catalogPriceRuleData0.reduction.toFixed(2)})`);
 
         // Check final price
         finalPrice = await foHummingbirdProductPage.getProductInformation(page);

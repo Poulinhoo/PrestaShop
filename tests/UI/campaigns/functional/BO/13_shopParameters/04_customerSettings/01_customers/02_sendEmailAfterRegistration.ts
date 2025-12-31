@@ -124,7 +124,7 @@ describe('BO - Shop Parameters - Customer Settings : Enable/Disable send an emai
         await foHummingbirdHomePage.changeLanguage(page, 'en');
 
         const isHomePage = await foHummingbirdHomePage.isHomePage(page);
-        expect(isHomePage, 'Fail to open FO home page').to.eq(true);
+        expect(isHomePage).to.eq(true);
       });
 
       it('should create a customer account from FO', async function () {

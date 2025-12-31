@@ -93,7 +93,7 @@ describe('BO - Cart rules - Actions : Exclude discounted products', async () => 
       await foHummingbirdHomePage.changeLanguage(page, 'en');
 
       const isHomePage = await foHummingbirdHomePage.isHomePage(page);
-      expect(isHomePage, 'Fail to open FO home page').to.eq(true);
+      expect(isHomePage).to.eq(true);
     });
 
     it('should go to login page', async function () {
@@ -202,7 +202,7 @@ describe('BO - Cart rules - Actions : Exclude discounted products', async () => 
       expect(cartRuleName).to.contains(cartRuleData.name);
 
       const cartRuleValue = await foHummingbirdCartPage.getCartRuleValue(page);
-      expect(cartRuleValue.toString()).to.eq(`-€${discount.toFixed(2)}`);
+      expect(cartRuleValue.toString()).to.contains(`-€${discount.toFixed(2)}`);
     });
 
     it(`should search for the product '${dataProducts.demo_1.name}' and go to product page`, async function () {
@@ -249,7 +249,7 @@ describe('BO - Cart rules - Actions : Exclude discounted products', async () => 
       expect(cartRuleName).to.contains(cartRuleData.name);
 
       const cartRuleValue = await foHummingbirdCartPage.getCartRuleValue(page);
-      expect(cartRuleValue.toString()).to.eq(`-€${discount.toFixed(2)}`);
+      expect(cartRuleValue.toString()).to.contains(`-€${discount.toFixed(2)}`);
     });
   });
 

@@ -72,7 +72,7 @@ describe('FO - Checkout : Display of highlighted cart rule', async () => {
       await foHummingbirdHomePage.changeLanguage(page, 'en');
 
       const isHomePage = await foHummingbirdHomePage.isHomePage(page);
-      expect(isHomePage, 'Fail to open FO home page').to.equal(true);
+      expect(isHomePage).to.equal(true);
     });
 
     it('should go to login page', async function () {
@@ -81,7 +81,7 @@ describe('FO - Checkout : Display of highlighted cart rule', async () => {
       await foHummingbirdHomePage.goToLoginPage(page);
 
       const pageTitle = await foHummingbirdLoginPage.getPageTitle(page);
-      expect(pageTitle, 'Fail to open FO login page').to.contains(foHummingbirdLoginPage.pageTitle);
+      expect(pageTitle).to.contains(foHummingbirdLoginPage.pageTitle);
     });
 
     it(`should search for the product ${dataProducts.demo_6.name}`, async function () {

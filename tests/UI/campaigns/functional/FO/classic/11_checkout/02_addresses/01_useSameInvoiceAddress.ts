@@ -60,7 +60,7 @@ describe('FO - Checkout - Addresses: Use same invoice address', async () => {
       await foClassicHomePage.changeLanguage(page, 'en');
 
       const isHomePage = await foClassicHomePage.isHomePage(page);
-      expect(isHomePage, 'Fail to open FO home page').to.equal(true);
+      expect(isHomePage).to.equal(true);
     });
 
     it('should go to the fourth product page', async function () {

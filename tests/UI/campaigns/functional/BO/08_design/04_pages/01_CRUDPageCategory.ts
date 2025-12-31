@@ -20,11 +20,11 @@ import {
 const baseContext: string = 'functional_BO_design_pages_CRUDPageCategory';
 
 /*
-Create category and check it in FO
-Create page and check it in FO
-Update category and check it in FO
-Update page and check it in FO
-Delete page and category from BO
+ * Create category and check it in FO
+ * Create page and check it in FO
+ * Update category and check it in FO
+ * Update page and check it in FO
+ * Delete page and category from BO
  */
 describe('BO - Design - Pages : CRUD category and page', async () => {
   let browserContext: BrowserContext;
@@ -43,7 +43,6 @@ describe('BO - Design - Pages : CRUD category and page', async () => {
   const categoriesTableName: string = 'cms_page_category';
   const pagesTableName: string = 'cms_page';
 
-  // before and after functions
   before(async function () {
     browserContext = await utilsPlaywright.createBrowserContext(this.browser);
     page = await utilsPlaywright.newTab(browserContext);
