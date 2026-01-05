@@ -271,7 +271,7 @@ class DiscountFeatureContext extends AbstractDomainFeatureContext
                     $command->setReductionAmount(
                         new DecimalNumber($data['reduction_amount']),
                         $this->getSharedStorage()->get($data['reduction_currency']),
-                        PrimitiveUtils::castStringBooleanIntoBoolean($data['taxIncluded']),
+                        PrimitiveUtils::castStringBooleanIntoBoolean($data['reduction_tax_included']),
                     );
                 } catch (DiscountConstraintException $e) {
                     $this->setLastException($e);
@@ -453,7 +453,7 @@ class DiscountFeatureContext extends AbstractDomainFeatureContext
                 $command->setReductionAmount(
                     new DecimalNumber($data['reduction_amount']),
                     $this->getSharedStorage()->get($data['reduction_currency']),
-                    PrimitiveUtils::castStringBooleanIntoBoolean($data['taxIncluded']),
+                    PrimitiveUtils::castStringBooleanIntoBoolean($data['reduction_tax_included']),
                 );
             } catch (DiscountConstraintException $e) {
                 $this->setLastException($e);
@@ -633,18 +633,22 @@ class DiscountFeatureContext extends AbstractDomainFeatureContext
             if (empty($expectedData['reduction_amount'])) {
                 Assert::assertNull($discountForEditing->getReductionAmount(), 'Expected amount discount to be null');
             } else {
-                Assert::assertSame((float) $expectedData['reduction_amount'], (float) (string) $discountForEditing->getReductionAmount(), 'Unexpected amount discount');
+                Assert::assertSame((float) $expectedData['reduction_amount'], (float) (string) $discountForEditing->getReductionAmount()->getAmount(), 'Unexpected amount discount');
             }
         }
         if (isset($expectedData['reduction_currency'])) {
             if (empty($expectedData['reduction_currency'])) {
-                Assert::assertSame(0, $discountForEditing->getReductionAmountCurrencyId(), 'Unexpected reduction currency');
+                Assert::assertNull($discountForEditing->getReductionAmount(), 'Unexpected reduction amount currency');
             } else {
-                Assert::assertSame($this->getSharedStorage()->get($expectedData['reduction_currency']), $discountForEditing->getReductionAmountCurrencyId(), 'Unexpected reduction currency');
+                Assert::assertSame($this->getSharedStorage()->get($expectedData['reduction_currency']), $discountForEditing->getReductionAmount()->getCurrencyId()->getValue(), 'Unexpected reduction currency');
             }
         }
-        if (isset($expectedData['taxIncluded'])) {
-            Assert::assertSame(PrimitiveUtils::castStringBooleanIntoBoolean($expectedData['taxIncluded']), $discountForEditing->getReductionAmountTaxIncluded(), 'Unexpected tax included');
+        if (isset($expectedData['reduction_tax_included'])) {
+            if (empty($expectedData['reduction_tax_included'])) {
+                Assert::assertNull($discountForEditing->getReductionAmount(), 'Unexpected reduction amount tax included');
+            } else {
+                Assert::assertSame(PrimitiveUtils::castStringBooleanIntoBoolean($expectedData['reduction_tax_included']), $discountForEditing->getReductionAmount()->isTaxIncluded(), 'Unexpected tax included');
+            }
         }
         if (isset($expectedData['type'])) {
             Assert::assertSame($expectedData['type'], $discountForEditing->getType()->getValue(), 'Unexpected type');
@@ -659,17 +663,25 @@ class DiscountFeatureContext extends AbstractDomainFeatureContext
             Assert::assertEquals($expectedData['minimum_product_quantity'], $discountForEditing->getMinimumProductQuantity());
         }
         if (isset($expectedData['minimum_amount'])) {
-            Assert::assertSame((float) $expectedData['minimum_amount'], (float) (string) $discountForEditing->getMinimumAmount(), 'Unexpected minimum amount');
+            if (empty($expectedData['minimum_amount'])) {
+                Assert::assertNull($discountForEditing->getMinimumAmount(), 'Unexpected minimum amount');
+            } else {
+                Assert::assertSame((float) $expectedData['minimum_amount'], (float) (string) $discountForEditing->getMinimumAmount()->getAmount(), 'Unexpected minimum amount');
+            }
         }
         if (isset($expectedData['minimum_amount_currency'])) {
             if (empty($expectedData['minimum_amount_currency'])) {
-                Assert::assertSame(0, $discountForEditing->getMinimumAmountCurrencyId(), 'Unexpected minimum amount currency');
+                Assert::assertNull($discountForEditing->getMinimumAmount(), 'Unexpected minimum amount currency');
             } else {
-                Assert::assertSame($this->getSharedStorage()->get($expectedData['minimum_amount_currency']), $discountForEditing->getMinimumAmountCurrencyId(), 'Unexpected minimum amount currency');
+                Assert::assertSame($this->getSharedStorage()->get($expectedData['minimum_amount_currency']), $discountForEditing->getMinimumAmount()->getCurrencyId()->getValue(), 'Unexpected minimum amount currency');
             }
         }
         if (isset($expectedData['minimum_amount_tax_included'])) {
-            Assert::assertSame(PrimitiveUtils::castStringBooleanIntoBoolean($expectedData['minimum_amount_tax_included']), $discountForEditing->getMinimumAmountTaxIncluded(), 'Unexpected minimum amount tax included');
+            if (empty($expectedData['minimum_amount_tax_included'])) {
+                Assert::assertNull($discountForEditing->getMinimumAmount(), 'Unexpected minimum amount tax included');
+            } else {
+                Assert::assertSame(PrimitiveUtils::castStringBooleanIntoBoolean($expectedData['minimum_amount_tax_included']), $discountForEditing->getMinimumAmount()->isTaxIncluded(), 'Unexpected minimum amount tax included');
+            }
         }
         if (isset($expectedData['minimum_amount_shipping_included'])) {
             Assert::assertSame(

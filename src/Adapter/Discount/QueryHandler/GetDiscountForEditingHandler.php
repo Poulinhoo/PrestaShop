@@ -56,6 +56,7 @@ class GetDiscountForEditingHandler implements GetDiscountForEditingHandlerInterf
         $carrierIds = $this->discountRepository->getCarriersIds($query->getDiscountId());
         $countryIds = $this->discountRepository->getCountriesIds($query->getDiscountId());
         $customerGroupIds = $this->discountRepository->getCustomerGroupsIds($query->getDiscountId());
+        $compatibleDiscountTypeIds = $this->discountTypeRepository->getCompatibleTypesIdsForDiscount($query->getDiscountId()->getValue());
 
         return new DiscountForEditing(
             $query->getDiscountId()->getValue(),
@@ -68,7 +69,7 @@ class GetDiscountForEditingHandler implements GetDiscountForEditingHandlerInterf
             $cartRule->quantity_per_user,
             $cartRule->description,
             $cartRule->code,
-            (int) $cartRule->id_customer,
+            $cartRule->id_customer ?: null,
             $cartRule->highlight,
             $cartRule->partial_use,
             $cartRule->getType(),
@@ -77,8 +78,8 @@ class GetDiscountForEditingHandler implements GetDiscountForEditingHandlerInterf
             $cartRule->reduction_currency,
             $cartRule->reduction_tax,
             $cartRule->reduction_product === DiscountSettings::CHEAPEST_PRODUCT,
-            $cartRule->gift_product,
-            $cartRule->gift_product_attribute,
+            $cartRule->gift_product ?: null,
+            $cartRule->gift_product_attribute ?: null,
             $cartRule->minimum_product_quantity,
             $productConditions,
             (float) $cartRule->minimum_amount > 0.00 ? new DecimalNumber($cartRule->minimum_amount) : null,
@@ -88,7 +89,7 @@ class GetDiscountForEditingHandler implements GetDiscountForEditingHandlerInterf
             $carrierIds,
             $countryIds,
             $customerGroupIds,
-            $this->discountTypeRepository->getCompatibleTypesIdsForDiscount($query->getDiscountId()->getValue())
+            $compatibleDiscountTypeIds,
         );
     }
 }

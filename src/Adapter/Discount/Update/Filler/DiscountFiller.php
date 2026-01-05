@@ -27,6 +27,7 @@
 namespace PrestaShop\PrestaShop\Adapter\Discount\Update\Filler;
 
 use CartRule;
+use PrestaShop\PrestaShop\Adapter\Discount\Trait\ProductConditionsTrait;
 use PrestaShop\PrestaShop\Adapter\Domain\LocalizedObjectModelTrait;
 use PrestaShop\PrestaShop\Core\Domain\Discount\Command\UpdateDiscountCommand;
 use PrestaShop\PrestaShop\Core\Domain\Discount\DiscountSettings;
@@ -35,6 +36,7 @@ use PrestaShop\PrestaShop\Core\Util\DateTime\DateTime as DateTimeUtil;
 class DiscountFiller
 {
     use LocalizedObjectModelTrait;
+    use ProductConditionsTrait;
 
     public function fillUpdatableProperties(CartRule $cartRule, UpdateDiscountCommand $command): array
     {
@@ -97,15 +99,7 @@ class DiscountFiller
         // an error) but only if the command isn't modifying the cheapest product target as well, in which case reduction_product
         // value uses DiscountSettings::CHEAPEST_PRODUCT
         if (null !== $command->getProductConditions() && null === $command->getCheapestProduct()) {
-            $segmentTargeted = false;
-            foreach ($command->getProductConditions() as $productCondition) {
-                if (!$productCondition->isEmpty()) {
-                    $segmentTargeted = true;
-                    break;
-                }
-            }
-
-            if ($segmentTargeted) {
+            if ($this->isSegmentTargeted($command->getProductConditions())) {
                 $cartRule->reduction_product = DiscountSettings::PRODUCT_SEGMENT;
                 $updatableProperties[] = 'reduction_product';
             }

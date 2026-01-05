@@ -59,9 +59,8 @@ Feature: Add discount
       | code                       | product_discount_one_product |
       | reduction_percent          | 10.0                         |
       | reduction_amount           |                              |
-      # Default currency is always used by default
-      | reduction_currency         | usd                          |
-      | reduction_tax_included     | false                        |
+      | reduction_currency         |                              |
+      | reduction_tax_included     |                              |
       | productConditionQuantity   | 42                           |
       | productCondition[products] | beer_product                 |
 

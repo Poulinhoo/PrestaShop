@@ -35,14 +35,15 @@ use PrestaShop\PrestaShop\Core\Domain\ValueObject\Money;
 
 class DiscountForEditing
 {
-    private ?Money $reductionAmount;
+    private ?Money $reductionAmount = null;
+    private ?Money $minimumAmount = null;
 
     public function __construct(
-        private readonly int $id,
+        private readonly int $discountId,
         private readonly array $localizedNames,
         private readonly int $priority,
         private readonly bool $active,
-        private readonly ?DateTimeImmutable $validFrom,
+        private readonly DateTimeImmutable $validFrom,
         private readonly ?DateTimeImmutable $validTo,
         private readonly ?int $totalQuantity,
         private readonly ?int $quantityPerUser,
@@ -61,23 +62,26 @@ class DiscountForEditing
         private readonly ?int $giftCombinationId,
         private readonly int $minimumProductQuantity,
         private readonly array $productConditions,
-        private readonly ?DecimalNumber $minimumAmount,
-        private readonly ?int $minimumAmountCurrencyId,
-        private readonly ?bool $minimumAmountTaxIncluded,
-        private readonly ?bool $minimumAmountShippingIncluded,
+        ?DecimalNumber $minimumAmount,
+        ?int $minimumAmountCurrencyId,
+        ?bool $minimumAmountTaxIncluded,
+        private readonly bool $minimumAmountShippingIncluded,
         private readonly array $carrierIds,
         private readonly array $countryIds,
         private readonly array $customerGroupIds,
         private readonly array $compatibleDiscountTypeIds,
     ) {
-        if ($reductionAmount && $reductionAmountCurrencyId && $reductionAmountTaxIncluded) {
+        if ($reductionAmount !== null && $reductionAmountCurrencyId !== null && $reductionAmountTaxIncluded !== null) {
             $this->reductionAmount = new Money($reductionAmount, new CurrencyId($reductionAmountCurrencyId), $reductionAmountTaxIncluded);
+        }
+        if ($minimumAmount !== null && $minimumAmountCurrencyId !== null && $minimumAmountTaxIncluded !== null) {
+            $this->minimumAmount = new Money($minimumAmount, new CurrencyId($minimumAmountCurrencyId), $minimumAmountTaxIncluded);
         }
     }
 
     public function getDiscountId(): int
     {
-        return $this->id;
+        return $this->discountId;
     }
 
     public function getPriority(): int
@@ -90,7 +94,7 @@ class DiscountForEditing
         return $this->active;
     }
 
-    public function getValidFrom(): ?DateTimeImmutable
+    public function getValidFrom(): DateTimeImmutable
     {
         return $this->validFrom;
     }
@@ -183,22 +187,12 @@ class DiscountForEditing
         return $this->productConditions;
     }
 
-    public function getMinimumAmount(): ?DecimalNumber
+    public function getMinimumAmount(): ?Money
     {
         return $this->minimumAmount;
     }
 
-    public function getMinimumAmountCurrencyId(): ?int
-    {
-        return $this->minimumAmountCurrencyId;
-    }
-
-    public function getMinimumAmountTaxIncluded(): ?bool
-    {
-        return $this->minimumAmountTaxIncluded;
-    }
-
-    public function getMinimumAmountShippingIncluded(): ?bool
+    public function getMinimumAmountShippingIncluded(): bool
     {
         return $this->minimumAmountShippingIncluded;
     }
@@ -211,6 +205,9 @@ class DiscountForEditing
         return $this->carrierIds;
     }
 
+    /**
+     * @return int[]
+     */
     public function getCountryIds(): array
     {
         return $this->countryIds;

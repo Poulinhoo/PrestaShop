@@ -184,10 +184,10 @@ class DiscountFormDataProvider implements FormDataProviderInterface
                 'reduction' => [
                     'type' => $isAmountDiscount ? DiscountSettings::AMOUNT : DiscountSettings::PERCENT,
                     'value' => $isAmountDiscount
-                        ? (float) (string) $discountForEditing->getReductionAmount()
+                        ? (float) (string) $discountForEditing->getReductionAmount()->getAmount()
                         : (float) (string) $discountForEditing->getReductionPercent(),
-                    'currency' => $discountForEditing->getReductionAmountCurrencyId(),
-                    'include_tax' => $discountForEditing->getReductionAmountTaxIncluded(),
+                    'currency' => $discountForEditing->getReductionAmount()?->getCurrencyId()->getValue(),
+                    'include_tax' => $discountForEditing->getReductionAmount()?->isTaxIncluded(),
                 ],
             ],
             'free_gift' => [
@@ -208,9 +208,9 @@ class DiscountFormDataProvider implements FormDataProviderInterface
                     'children_selector' => $selectedCartCondition,
                     'minimum_product_quantity' => $discountForEditing->getMinimumProductQuantity(),
                     'minimum_amount' => [
-                        'value' => $discountForEditing->getMinimumAmount() ? (float) (string) $discountForEditing->getMinimumAmount() : null,
-                        'currency' => $discountForEditing->getMinimumAmountCurrencyId(),
-                        'tax_included' => $discountForEditing->getMinimumAmountTaxIncluded(),
+                        'value' => $discountForEditing->getMinimumAmount() ? (float) (string) $discountForEditing->getMinimumAmount()->getAmount() : null,
+                        'currency' => $discountForEditing->getMinimumAmount()?->getCurrencyId()->getValue(),
+                        'tax_included' => $discountForEditing->getMinimumAmount()?->isTaxIncluded(),
                         'shipping_included' => $discountForEditing->getMinimumAmountShippingIncluded(),
                     ],
                 ],
@@ -245,6 +245,10 @@ class DiscountFormDataProvider implements FormDataProviderInterface
 
     private function getSpecificProducts(DiscountForEditing $discountForEditing): array
     {
+        if (empty($discountForEditing->getProductConditions())) {
+            return [];
+        }
+
         $specificProducts = [];
         foreach ($discountForEditing->getProductConditions() as $conditions) {
             foreach ($conditions->getRules() as $rule) {
@@ -365,6 +369,10 @@ class DiscountFormDataProvider implements FormDataProviderInterface
             ],
             'quantity' => 0,
         ];
+
+        if (empty($discountForEditing->getProductConditions())) {
+            return $productSegment;
+        }
 
         // We can loop through all the rule groups but there should be only one anyway
         foreach ($discountForEditing->getProductConditions() as $condition) {

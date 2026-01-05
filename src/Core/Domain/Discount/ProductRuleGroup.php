@@ -36,6 +36,20 @@ namespace PrestaShop\PrestaShop\Core\Domain\Discount;
  */
 class ProductRuleGroup
 {
+    public static function fromArray(array $data): ProductRuleGroup
+    {
+        return new ProductRuleGroup(
+            $data['quantity'],
+            array_map(static function (array $productRule): ProductRule {
+                return new ProductRule(
+                    ProductRuleType::from($productRule['type']),
+                    $productRule['itemIds'] ?? [],
+                );
+            }, $data['rules'] ?? []),
+            isset($data['type']) ? ProductRuleGroupType::from($data['type']) : ProductRuleGroupType::AT_LEAST_ONE_PRODUCT_RULE,
+        );
+    }
+
     /**
      * @param int $quantity
      * @param ProductRule[] $rules
@@ -64,24 +78,5 @@ class ProductRuleGroup
     public function getType(): ProductRuleGroupType
     {
         return $this->type;
-    }
-
-    public function isEmpty(): bool
-    {
-        if ($this->getQuantity() <= 0) {
-            return true;
-        }
-
-        if (empty($this->getRules())) {
-            return true;
-        }
-
-        foreach ($this->getRules() as $rule) {
-            if (!empty($rule->getItemIds())) {
-                return false;
-            }
-        }
-
-        return true;
     }
 }

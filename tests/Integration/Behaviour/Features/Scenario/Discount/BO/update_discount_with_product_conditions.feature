@@ -69,9 +69,9 @@ Feature: Update discount condition
       | name[en-US]                      | Promotion     |
       | type                             | free_shipping |
       | minimum_product_quantity         | 0             |
-      | minimum_amount                   | 0.0           |
+      | minimum_amount                   |               |
       | minimum_amount_currency          |               |
-      | minimum_amount_tax_included      | false         |
+      | minimum_amount_tax_included      |               |
       | minimum_amount_shipping_included | false         |
     When I update discount "discount_with_min_amount" with the following properties:
       | minimum_amount                   | 12.56 |

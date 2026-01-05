@@ -31,6 +31,7 @@ use CartRule;
 use PrestaShop\Decimal\DecimalNumber;
 use PrestaShop\PrestaShop\Adapter\AbstractObjectModelValidator;
 use PrestaShop\PrestaShop\Adapter\Discount\Repository\DiscountRepository;
+use PrestaShop\PrestaShop\Adapter\Discount\Trait\ProductConditionsTrait;
 use PrestaShop\PrestaShop\Adapter\Product\Repository\ProductRepository;
 use PrestaShop\PrestaShop\Core\Domain\Discount\DiscountSettings;
 use PrestaShop\PrestaShop\Core\Domain\Discount\Exception\DiscountConstraintException;
@@ -46,6 +47,8 @@ use PrestaShopException;
  */
 class DiscountValidator extends AbstractObjectModelValidator
 {
+    use ProductConditionsTrait;
+
     protected ?DiscountRepository $discountRepository = null;
 
     public function __construct(
@@ -143,12 +146,7 @@ class DiscountValidator extends AbstractObjectModelValidator
                     $productConditions = $this->discountRepository->getProductRulesGroup(new DiscountId((int) $discount->id));
                 }
                 if (!empty($productConditions)) {
-                    foreach ($productConditions as $productCondition) {
-                        if (!$productCondition->isEmpty()) {
-                            $segmentTargeted = true;
-                            break;
-                        }
-                    }
+                    $segmentTargeted = $this->isSegmentTargeted($productConditions);
                 }
                 // At least one target must be selected, but never both
                 if (!$discountCheapestProduct && !$segmentTargeted) {

@@ -37,9 +37,8 @@ Feature: Update discount
       | code                   | updated_product_level_discount |
       | reduction_percent      | 10.0                           |
       | reduction_amount       |                                |
-      # Default currency is always used by default
-      | reduction_currency     | usd                            |
-      | reduction_tax_included | false                          |
+      | reduction_currency     |                                |
+      | reduction_tax_included |                                |
       | cheapest_product       | true                           |
     # Switch to a product segment target instead, cheapest_product should now be false (partial update)
     Then I update discount "updated_product_level_discount" with the following properties:
@@ -127,11 +126,10 @@ Feature: Update discount
       | reduction_percent | 10.0 |
     Then discount "updated_product_level_discount" should have the following properties:
       # No more reduction percent
-      | reduction_percent      | 10.0  |
-      # No reduction amount (Default currency is always used by default)
-      | reduction_amount       |       |
-      | reduction_currency     | usd   |
-      | reduction_tax_included | false |
+      | reduction_percent      | 10.0 |
+      | reduction_amount       |      |
+      | reduction_currency     |      |
+      | reduction_tax_included |      |
 
   Scenario: Check that updating product level to an invalid state is forbidden
     # First create a valid product level discount
@@ -199,10 +197,9 @@ Feature: Update discount
       | valid_to                   | 2019-12-01 00:00:00 |
       | code                       | valid_product_level |
       | reduction_percent          | 10.0                |
-      # No reduction amount (Default currency is always used by default)
       | reduction_amount           |                     |
-      | reduction_currency         | usd                 |
-      | reduction_tax_included     | false               |
+      | reduction_currency         |                     |
+      | reduction_tax_included     |                     |
       | cheapest_product           | false               |
       | productConditionQuantity   | 42                  |
       | productCondition[products] | product1            |
@@ -228,10 +225,9 @@ Feature: Update discount
       | valid_to                   | 2019-12-01 00:00:00 |
       | code                       | valid_product_level |
       | reduction_percent          | 10.0                |
-      # No reduction amount (Default currency is always used by default)
       | reduction_amount           |                     |
-      | reduction_currency         | usd                 |
-      | reduction_tax_included     | false               |
+      | reduction_currency         |                     |
+      | reduction_tax_included     |                     |
       | cheapest_product           | false               |
       | productConditionQuantity   | 42                  |
       | productCondition[products] | product1            |

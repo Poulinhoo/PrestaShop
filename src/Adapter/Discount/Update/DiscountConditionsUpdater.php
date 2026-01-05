@@ -46,12 +46,18 @@ class DiscountConditionsUpdater
     }
 
     /**
+     * For all provided fields, if the value is null, no modification is done and the fields remain untouched
+     * (partial update), for the list of IDs if an empty array is provided the existing associations are removed
+     * and no new association is created, so empty array is used to remove all existing associations.
+     *
      * @param DiscountId $discountId
      * @param int|null $minimumProductQuantity
      * @param array|null $productConditions
      * @param Money|null $minimumAmount
      * @param bool|null $minimumShippingIncluded
      * @param int[]|null $carrierIds
+     * @param int[]|null $countryIds
+     * @param int[]|null $customerGroupIds
      *
      * @return void
      */
@@ -65,9 +71,19 @@ class DiscountConditionsUpdater
         ?array $countryIds = null,
         ?array $customerGroupIds = null,
     ): void {
-        // todo: when other conditions are added we check that only one is provided
+        // Nothing to modify we return immediately
+        if ($minimumProductQuantity === null
+            && $productConditions === null
+            && $minimumAmount === null
+            && $minimumShippingIncluded === null
+            && $carrierIds === null
+            && $countryIds === null
+            && $customerGroupIds === null) {
+            return;
+        }
+
         $discount = $this->discountRepository->get($discountId);
-        $updatableProperties = $this->cleanAllConditions($discount);
+        $updatableProperties = [];
         if (null !== $minimumProductQuantity) {
             $updatableProperties = array_merge($updatableProperties, $this->updateMinimalProductQuantity($discount, $minimumProductQuantity));
         }
@@ -90,7 +106,7 @@ class DiscountConditionsUpdater
         }
 
         if (null !== $customerGroupIds) {
-            $updatableProperties = array_merge($updatableProperties, $this->applyCustomerGroupConditions($discount, $customerGroupIds));
+            $updatableProperties = array_merge($updatableProperties, $this->applyCustomerGroups($discount, $customerGroupIds));
         }
 
         $updatableProperties = array_unique($updatableProperties);
@@ -131,6 +147,10 @@ class DiscountConditionsUpdater
         CartRule $discount,
         array $productRuleGroups,
     ): array {
+        // First clear all product rules (meaning if empty array is provided in this method, they are removed and no
+        // new one is created, which is used to remove product conditions)
+        $updatableProperties = $this->cleanDiscountProductRules($discount);
+
         // Check that the product rules really target products, if not we don't apply them to avoid
         // creating empty rule groups
         $containsRules = false;
@@ -142,8 +162,9 @@ class DiscountConditionsUpdater
                 }
             }
         }
+
         if (!$containsRules) {
-            return [];
+            return $updatableProperties;
         }
 
         foreach ($productRuleGroups as $productRuleGroup) {
@@ -199,23 +220,24 @@ class DiscountConditionsUpdater
             }
         }
         $discount->product_restriction = !empty($productRuleGroups);
-        $updatedProperties = ['product_restriction'];
+        $updatableProperties[] = 'product_restriction';
 
         // Product level discount now uses a condition on a segment of product, we need to update the
         // reduction_product property with the specific value (only for product level because this property
         // tells us that the discount applies on the whole segment)
         if ($discount->getType() === DiscountType::PRODUCT_LEVEL) {
             $discount->reduction_product = DiscountSettings::PRODUCT_SEGMENT;
-            $updatedProperties[] = 'reduction_product';
+            $updatableProperties[] = 'reduction_product';
         }
 
-        return $updatedProperties;
+        return $updatableProperties;
     }
 
     private function applyCarrierConditions(CartRule $discount, array $carrierIds): array
     {
+        $updatableProperties = $this->cleanDiscountCarriers($discount);
         if (empty($carrierIds)) {
-            return [];
+            return $updatableProperties;
         }
 
         $discount->carrier_restriction = true;
@@ -235,8 +257,9 @@ class DiscountConditionsUpdater
 
     private function applyCountryConditions(CartRule $discount, array $countryIds): array
     {
+        $updatableProperties = $this->cleanDiscountCountries($discount);
         if (empty($countryIds)) {
-            return [];
+            return $updatableProperties;
         }
 
         $discount->country_restriction = true;
@@ -252,29 +275,6 @@ class DiscountConditionsUpdater
         }
 
         return ['country_restriction'];
-    }
-
-    private function cleanAllConditions(CartRule $discount): array
-    {
-        $discount->minimum_product_quantity = 0;
-        $discount->minimum_amount = 0;
-        $discount->minimum_amount_currency = 0;
-        $discount->minimum_amount_tax = false;
-        $discount->minimum_amount_shipping = false;
-
-        return array_merge(
-            $this->cleanDiscountProductRules($discount),
-            $this->cleanDiscountCarriers($discount),
-            $this->cleanDiscountCountries($discount),
-            $this->cleanCustomerGroups($discount),
-            [
-                'minimum_product_quantity',
-                'minimum_amount',
-                'minimum_amount_currency',
-                'minimum_amount_tax',
-                'minimum_amount_shipping',
-            ],
-        );
     }
 
     private function cleanDiscountProductRules(CartRule $discount): array
@@ -303,16 +303,16 @@ class DiscountConditionsUpdater
             WHERE pr.id_product_rule = NULL
         ');
 
-        $updatedProperties = ['product_restriction'];
+        $updatableProperties = ['product_restriction'];
 
         // If the discount was targeting a product segment, since we just removed it we reset the reduction_product property
         if ($discount->reduction_product === DiscountSettings::PRODUCT_SEGMENT) {
             // No more segment, no more target
             $discount->reduction_product = 0;
-            $updatedProperties[] = 'reduction_product';
+            $updatableProperties[] = 'reduction_product';
         }
 
-        return $updatedProperties;
+        return $updatableProperties;
     }
 
     private function cleanDiscountCarriers(CartRule $discount): array
@@ -353,22 +353,23 @@ class DiscountConditionsUpdater
      *
      * @return array List of updated properties
      */
-    private function applyCustomerGroupConditions(CartRule $discount, array $customerGroupIds): array
+    private function applyCustomerGroups(CartRule $discount, array $customerGroupIds): array
     {
-        if (!empty($customerGroupIds)) {
-            $discount->group_restriction = true;
-            foreach ($customerGroupIds as $groupId) {
-                $this->connection->createQueryBuilder()
-                    ->insert($this->dbPrefix . 'cart_rule_group')
-                    ->values([
-                        'id_cart_rule' => (int) $discount->id,
-                        'id_group' => $groupId,
-                    ])
-                    ->executeStatement()
-                ;
-            }
+        $updatableProperties = $this->cleanCustomerGroups($discount);
+        if (empty($customerGroupIds)) {
+            return $updatableProperties;
+        }
 
-            return ['group_restriction'];
+        $discount->group_restriction = true;
+        foreach ($customerGroupIds as $groupId) {
+            $this->connection->createQueryBuilder()
+                ->insert($this->dbPrefix . 'cart_rule_group')
+                ->values([
+                    'id_cart_rule' => (int) $discount->id,
+                    'id_group' => $groupId,
+                ])
+                ->executeStatement()
+            ;
         }
 
         return ['group_restriction'];
