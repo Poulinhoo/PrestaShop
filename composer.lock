@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "4a909806fc5806b3c60c8d77fb06443b",
+    "content-hash": "83f5e0a5d4fe3a054b4a6edb4ae97e77",
     "packages": [
         {
             "name": "api-platform/core",
@@ -5208,16 +5208,16 @@
         },
         {
             "name": "prestashop/ps_apiresources",
-            "version": "dev-dev",
+            "version": "dev-make-nullable-discount-quantity-and-quantity-per-user",
             "source": {
                 "type": "git",
-                "url": "https://github.com/PrestaShop/ps_apiresources.git",
-                "reference": "9b22f4e8c9848705132455ac623c369e0ec63d64"
+                "url": "https://github.com/boherm/ps_apiresources.git",
+                "reference": "fa5a345e7df9e97364a61201c7c3da77c56c0b13"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/PrestaShop/ps_apiresources/zipball/9b22f4e8c9848705132455ac623c369e0ec63d64",
-                "reference": "9b22f4e8c9848705132455ac623c369e0ec63d64",
+                "url": "https://api.github.com/repos/boherm/ps_apiresources/zipball/fa5a345e7df9e97364a61201c7c3da77c56c0b13",
+                "reference": "fa5a345e7df9e97364a61201c7c3da77c56c0b13",
                 "shasum": ""
             },
             "require": {
@@ -5231,7 +5231,6 @@
                 "prestashop/php-dev-tools": "^4.3",
                 "rector/rector": "^2.0"
             },
-            "default-branch": true,
             "type": "prestashop-module",
             "autoload": {
                 "psr-4": {
@@ -5282,10 +5281,9 @@
             "description": "PrestaShop - API Resources",
             "homepage": "https://github.com/PrestaShop/ps_apiresources",
             "support": {
-                "source": "https://github.com/PrestaShop/ps_apiresources/tree/dev",
-                "issues": "https://github.com/PrestaShop/ps_apiresources/issues"
+                "source": "https://github.com/boherm/ps_apiresources/tree/make-nullable-discount-quantity-and-quantity-per-user"
             },
-            "time": "2025-12-16T08:18:10+00:00"
+            "time": "2025-12-16T14:50:38+00:00"
         },
         {
             "name": "prestashop/ps_banner",
@@ -18269,7 +18267,7 @@
         "ext-simplexml": "*",
         "ext-zip": "*"
     },
-    "platform-dev": [],
+    "platform-dev": {},
     "platform-overrides": {
         "php": "8.1.0"
     },

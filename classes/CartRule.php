@@ -131,8 +131,8 @@ class CartRuleCore extends ObjectModel
             'date_from' => ['type' => self::TYPE_DATE, 'validate' => 'isDate', 'required' => true],
             'date_to' => ['type' => self::TYPE_DATE, 'validate' => 'isDate', 'required' => true],
             'description' => ['type' => self::TYPE_STRING, 'validate' => 'isCleanHtml', 'size' => DiscountSettings::MAX_DESCRIPTION_LENGTH],
-            'quantity' => ['type' => self::TYPE_INT, 'validate' => 'isUnsignedInt'],
-            'quantity_per_user' => ['type' => self::TYPE_INT, 'validate' => 'isUnsignedInt'],
+            'quantity' => ['type' => self::TYPE_INT, 'allow_null' => true, 'validate' => 'isUnsignedInt'],
+            'quantity_per_user' => ['type' => self::TYPE_INT, 'allow_null' => true, 'validate' => 'isUnsignedInt'],
             'priority' => ['type' => self::TYPE_INT, 'validate' => 'isUnsignedInt'],
             'partial_use' => ['type' => self::TYPE_BOOL, 'validate' => 'isBool'],
             'code' => ['type' => self::TYPE_STRING, 'validate' => 'isCleanHtml', 'size' => 254],
@@ -450,7 +450,7 @@ class CartRuleCore extends ObjectModel
         // Then, conditions for date, voucher active property and total amount of vouchers in stock
         $sql .= ' AND NOW() BETWEEN cr.date_from AND cr.date_to
             ' . ($active ? 'AND cr.`active` = 1' : '') . '
-            ' . ($inStock ? 'AND cr.`quantity` > 0' : '');
+            ' . ($inStock ? 'AND (cr.`quantity` > 0 OR cr.`quantity` is null)' : '');
 
         // If we want to select only vouchers that have free shipping as the action
         if ($free_shipping_only) {
@@ -797,7 +797,7 @@ class CartRuleCore extends ObjectModel
             }
 
             // We verify the total available quantity
-            if (!$this->quantity) {
+            if ($this->quantity !== null && !$this->quantity) {
                 return (!$display_error) ? false : $this->trans('This voucher has already been used', [], 'Shop.Notifications.Error');
             }
 
@@ -840,7 +840,7 @@ class CartRuleCore extends ObjectModel
                     ++$quantityUsed;
                 }
 
-                if ($quantityUsed > $this->quantity_per_user) {
+                if ($this->quantity_per_user !== null && $quantityUsed > $this->quantity_per_user) {
                     return (!$display_error) ? false : $this->trans('You cannot use this voucher anymore (usage limit reached)', [], 'Shop.Notifications.Error');
                 }
             }
@@ -1991,7 +1991,7 @@ class CartRuleCore extends ObjectModel
 		LEFT JOIN ' . _DB_PREFIX_ . 'cart_rule_country crco ON cr.id_cart_rule = crco.id_cart_rule
 		WHERE cr.active = 1
 		AND cr.code = ""
-		AND cr.quantity > 0
+		AND (cr.quantity > 0 OR cr.quantity is null)
 		AND NOW() BETWEEN cr.date_from AND cr.date_to
 		AND (
 			cr.id_customer = 0
