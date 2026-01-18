@@ -456,11 +456,9 @@ class ProductControllerCore extends ProductPresentingFrontControllerCore
         $product = $this->getTemplateVarProduct();
 
         // After refresh, we will show the customer a new quantity he has to use
-        $minimalProductQuantity = $this->getProductMinimalQuantity($product);
-
-        // If the product is already in the cart, we can set the minimal quantity to 1
-        if ($product['cart_quantity'] >= $minimalProductQuantity) {
-            $minimalProductQuantity = 1;
+        $newMinimalQuantity = $product['quantity_required'];
+        if (empty($newMinimalQuantity)) {
+            $newMinimalQuantity = 1;
         }
 
         ob_end_clean();
@@ -498,7 +496,8 @@ class ProductControllerCore extends ProductPresentingFrontControllerCore
                     'adtoken' => Tools::getValue('adtoken'),
                 ] : []
             ),
-            'product_minimal_quantity' => $minimalProductQuantity,
+            // A new minimal quantity to use on the input after refresh
+            'product_minimal_quantity' => $newMinimalQuantity,
             'product_has_combinations' => !empty($this->combinations),
             'id_product_attribute' => $product['id_product_attribute'],
             'id_customization' => $product['id_customization'],
@@ -1192,9 +1191,17 @@ class ProductControllerCore extends ProductPresentingFrontControllerCore
         $product['id_product_attribute'] = $this->getIdProductAttributeByGroupOrRequestOrDefault();
 
         // @todo These three properties should be migrated into the lazy array, so they are available also in listings
+        // Minimal quantity setting of this product or combination
         $product['minimal_quantity'] = $this->getProductMinimalQuantity($product);
+
+        // Quantity of this product in the current cart
         $product['cart_quantity'] = $this->context->cart->getProductQuantity((int) $this->product->id, $product['id_product_attribute'])['quantity'];
-        $product['quantity_wanted'] = $this->getRequiredQuantity($product);
+
+        // Quantity requested by the customer by the quantity input on product page - may be force-altered by us
+        $product['quantity_wanted'] = $this->getWantedQuantity($product);
+
+        // Required quantity to add to cart to reach minimal quantity
+        $product['quantity_required'] = $this->getRequiredQuantity($product);
 
         // Render hook displayProductExtraContent
         $product['extraContent'] = (new ProductExtraContentFinder())->addParams(['product' => $this->product])->present();
@@ -1233,7 +1240,8 @@ class ProductControllerCore extends ProductPresentingFrontControllerCore
     }
 
     /**
-     * Gets the minimal quantity allowed for the product or its combination.
+     * Gets the minimal quantity allowed for the product or its combination. With no adjustments
+     * by the current context.
      *
      * @todo This method should be migrated to ProductLazyArray, so it's available also in listings.
      *
@@ -1314,10 +1322,10 @@ class ProductControllerCore extends ProductPresentingFrontControllerCore
      *
      * @return int
      */
-    protected function getRequiredQuantity(array $product)
+    protected function getRequiredQuantity(ProductLazyArray|array $product)
     {
         // For the required quantity, we will need to limit it by the minimal quantity on the low side.
-        $minimalProductQuantity = $this->getProductMinimalQuantity($product);
+        $minimalRequiredQuantityForPurchase = $this->getProductMinimalQuantity($product);
 
         /*
          * We reduce it by the quantity we already have in cart. If the user already has a sufficient
@@ -1326,23 +1334,33 @@ class ProductControllerCore extends ProductPresentingFrontControllerCore
          * may not be the correct one.
          */
         if (!empty($product['cart_quantity'])) {
-            $minimalProductQuantity -= $product['cart_quantity'];
+            $minimalRequiredQuantityForPurchase -= $product['cart_quantity'];
         }
 
+        return $minimalRequiredQuantityForPurchase;
+    }
+
+    /**
+     * Gets the quantity wanted by the customer for the product. We will take his request,
+     * but we will adjust it if it's lower than the required quantity.
+     *
+     * @param array $product
+     *
+     * @return int
+     */
+    public function getWantedQuantity(ProductLazyArray|array $product): int
+    {
         // Get the quantity wanted from the request
-        $requiredQuantity = (int) Tools::getValue('quantity_wanted');
+        $quantityWantedByTheCustomer = (int) Tools::getValue('quantity_wanted', 1);
 
-        // Safety check to fall back on one, if some nonsense was passed
-        if (empty($requiredQuantity)) {
-            $requiredQuantity = 1;
+        // Get minimal required quantity for purchase
+        $minimalRequiredQuantityForPurchase = $this->getRequiredQuantity($product);
+
+        if ($quantityWantedByTheCustomer < $minimalRequiredQuantityForPurchase) {
+            $quantityWantedByTheCustomer = $minimalRequiredQuantityForPurchase;
         }
 
-        // And adjust the lower boundary depending on the minimal quantity
-        if ($requiredQuantity < $minimalProductQuantity) {
-            $requiredQuantity = $minimalProductQuantity;
-        }
-
-        return $requiredQuantity;
+        return $quantityWantedByTheCustomer;
     }
 
     /**
