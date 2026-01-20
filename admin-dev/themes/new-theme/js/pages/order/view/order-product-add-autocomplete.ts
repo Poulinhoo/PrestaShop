@@ -148,8 +148,13 @@ export default class OrderProductAutocomplete {
   }
 
   populateShipmentSelect(productId: number): void {
-    this.selectShipment.prop('disabled', true);
     const orderId = Number(this.input.data('order'));
+
+    if (!orderId || !productId) {
+      throw new Error('Missing orderId or productId, cant fetch shipment for product');
+    }
+
+    this.selectShipment.prop('disabled', true);
 
     fetch(this.router.generate('admin_orders_get_shipments', {orderId, productId}), {
       method: 'POST',
