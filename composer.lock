@@ -4713,16 +4713,16 @@
         },
         {
             "name": "prestashop/classic",
-            "version": "3.0.4",
+            "version": "3.0.5",
             "source": {
                 "type": "git",
                 "url": "https://github.com/PrestaShop/classic-theme.git",
-                "reference": "b84c8548e15fea8052364aa88c0b5944c0333e01"
+                "reference": "09a8934bcb5e8f0cc0a3e234d5e9b18a61c27ec2"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/PrestaShop/classic-theme/zipball/b84c8548e15fea8052364aa88c0b5944c0333e01",
-                "reference": "b84c8548e15fea8052364aa88c0b5944c0333e01",
+                "url": "https://api.github.com/repos/PrestaShop/classic-theme/zipball/09a8934bcb5e8f0cc0a3e234d5e9b18a61c27ec2",
+                "reference": "09a8934bcb5e8f0cc0a3e234d5e9b18a61c27ec2",
                 "shasum": ""
             },
             "require-dev": {
@@ -4746,9 +4746,10 @@
             ],
             "description": "Classic theme for develop PrestaShop version",
             "support": {
-                "source": "https://github.com/PrestaShop/classic-theme/tree/3.0.4"
+                "issues": "https://github.com/PrestaShop/classic-theme/issues",
+                "source": "https://github.com/PrestaShop/classic-theme/tree/3.0.5"
             },
-            "time": "2025-10-31T11:00:29+00:00"
+            "time": "2025-12-15T16:49:50+00:00"
         },
         {
             "name": "prestashop/contactform",
@@ -4879,16 +4880,16 @@
         },
         {
             "name": "prestashop/dashproducts",
-            "version": "v2.2.0",
+            "version": "v2.2.1",
             "source": {
                 "type": "git",
                 "url": "https://github.com/PrestaShop/dashproducts.git",
-                "reference": "cfb0cb933fcc2b0315a31d96060cb21f32fd7014"
+                "reference": "4e49c91fc700ece417f57aea9aa31f279f1ad906"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/PrestaShop/dashproducts/zipball/cfb0cb933fcc2b0315a31d96060cb21f32fd7014",
-                "reference": "cfb0cb933fcc2b0315a31d96060cb21f32fd7014",
+                "url": "https://api.github.com/repos/PrestaShop/dashproducts/zipball/4e49c91fc700ece417f57aea9aa31f279f1ad906",
+                "reference": "4e49c91fc700ece417f57aea9aa31f279f1ad906",
                 "shasum": ""
             },
             "require": {
@@ -4911,9 +4912,10 @@
             "description": "PrestaShop module dashproducts",
             "homepage": "https://github.com/PrestaShop/dashproducts",
             "support": {
-                "source": "https://github.com/PrestaShop/dashproducts/tree/v2.2.0"
+                "issues": "https://github.com/PrestaShop/dashproducts/issues",
+                "source": "https://github.com/PrestaShop/dashproducts/tree/v2.2.1"
             },
-            "time": "2025-11-14T12:14:20+00:00"
+            "time": "2026-01-07T15:24:44+00:00"
         },
         {
             "name": "prestashop/dashtrends",
@@ -5919,16 +5921,16 @@
         },
         {
             "name": "prestashop/ps_distributionapiclient",
-            "version": "v2.1.0",
+            "version": "v2.1.1",
             "source": {
                 "type": "git",
                 "url": "https://github.com/PrestaShop/ps_distributionapiclient.git",
-                "reference": "78260e7092f66e01825fe179c77a5029e344c504"
+                "reference": "258ffa15da6beae017d5d43555fd7bc7b5f24219"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/PrestaShop/ps_distributionapiclient/zipball/78260e7092f66e01825fe179c77a5029e344c504",
-                "reference": "78260e7092f66e01825fe179c77a5029e344c504",
+                "url": "https://api.github.com/repos/PrestaShop/ps_distributionapiclient/zipball/258ffa15da6beae017d5d43555fd7bc7b5f24219",
+                "reference": "258ffa15da6beae017d5d43555fd7bc7b5f24219",
                 "shasum": ""
             },
             "require": {
@@ -5965,9 +5967,9 @@
             "homepage": "https://github.com/PrestaShop/ps_distributionapiclient",
             "support": {
                 "issues": "https://github.com/PrestaShop/ps_distributionapiclient/issues",
-                "source": "https://github.com/PrestaShop/ps_distributionapiclient/tree/v2.1.0"
+                "source": "https://github.com/PrestaShop/ps_distributionapiclient/tree/v2.1.1"
             },
-            "time": "2025-08-06T16:39:56+00:00"
+            "time": "2026-01-07T13:47:18+00:00"
         },
         {
             "name": "prestashop/ps_emailalerts",
