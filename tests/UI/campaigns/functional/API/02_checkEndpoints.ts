@@ -273,6 +273,8 @@ describe('API : Check endpoints', async () => {
         '/modules/{technicalName}: GET',
         // tests/UI/campaigns/functional/API/02_endpoints/07_module/11_getModules.ts
         '/modules: GET',
+        // @todo: add tests
+        '/products/combinations/{combinationId}: GET',
         // tests/UI/campaigns/functional/API/02_endpoints/08_product/01_deleteProductImageId.ts
         '/products/images/{imageId}: DELETE',
         // tests/UI/campaigns/functional/API/02_endpoints/08_product/02_getProductImageId.ts
@@ -281,6 +283,12 @@ describe('API : Check endpoints', async () => {
         '/products/images/{imageId}: POST',
         // tests/UI/campaigns/functional/API/02_endpoints/08_product/11_getProductsSearch.ts
         '/products/search: GET',
+        // @todo: add tests
+        '/products/{productId}/combination-ids: GET',
+        // @todo: add tests
+        '/products/{productId}/combinations: GET',
+        // @todo: add tests
+        '/products/{productId}/generate-combinations: POST',
         // tests/UI/campaigns/functional/API/02_endpoints/08_product/05_getProductIdImages.ts
         '/products/{productId}/images: GET',
         // tests/UI/campaigns/functional/API/02_endpoints/08_product/04_postProductIdImage.ts
