@@ -285,7 +285,7 @@ describe('BO - Catalog - Products : Details tab', async () => {
 
       const productFeatures = await foHummingbirdProductPage.getProductFeaturesList(page);
       expect(productFeatures).to.eq(
-        `Data sheet ${editProductData.features[0].featureName} ${editProductData.features[0].customizedValueEn}`
+        `${editProductData.features[0].featureName} ${editProductData.features[0].customizedValueEn}`
         + ` ${editProductData.features[1].preDefinedValue}`
         + ` ${editProductData.features[2].featureName}`
         + ` ${editProductData.features[2].preDefinedValue}`);
@@ -295,7 +295,7 @@ describe('BO - Catalog - Products : Details tab', async () => {
       await testContext.addContextItem(this, 'testIdentifier', 'goBackToBO2', baseContext);
 
       // Go back to BO
-      page = await foClassicProductPage.closePage(browserContext, page, 0);
+      page = await foHummingbirdProductPage.closePage(browserContext, page, 0);
 
       const pageTitle = await boProductsCreatePage.getPageTitle(page);
       expect(pageTitle).to.contains(boProductsCreatePage.pageTitle);
