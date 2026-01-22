@@ -323,7 +323,6 @@ admin_orders_get_shipments_for_product:
   methods: [ POST ]
   defaults:
     _controller: PrestaShopBundle\Controller\Admin\Sell\Order\OrderController::getShipmentsForProduct
-    _legacy_controller: AdminOrders
   requirements:
     orderId: \d+
     productId: \d+

@@ -886,6 +886,7 @@ class OrderController extends PrestaShopAdminController
         return !($allSelected && $allQuantitiesMatch);
     }
 
+    #[AdminSecurity("is_granted('update', 'AdminOrders')", message: 'You do not have permission to show this.')]
     public function getShipmentsForProduct(
         int $orderId,
         int $productId,
@@ -1444,6 +1445,7 @@ class OrderController extends PrestaShopAdminController
         ]);
     }
 
+    #[AdminSecurity("is_granted('update', 'AdminOrders')", message: 'You do not have permission to edit this.')]
     public function getCarriersAction(int $orderId): Response
     {
         try {
