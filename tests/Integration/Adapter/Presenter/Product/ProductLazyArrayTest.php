@@ -94,6 +94,7 @@ class ProductLazyArrayTest extends TestCase
         'out_of_stock' => OutOfStockType::OUT_OF_STOCK_DEFAULT,
         'customizable' => 0,
         'active' => 1,
+        'minimal_quantity' => 1,
     ];
 
     private const PRODUCT_DISCONTINUED = 'This product is no longer available for sale.';

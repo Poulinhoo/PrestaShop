@@ -1199,12 +1199,8 @@ class ProductLazyArray extends AbstractLazyArray
         }
 
         // Disable because of stock management
-        if (
-            $settings->stock_management_enabled
-            && !$product['allow_oosp']
-            && ($product['quantity'] <= 0
-                || $product['quantity'] - $this->getQuantityWanted() < 0
-                || $product['quantity'] - $this->getMinimalQuantity() < 0)
+        if ($settings->stock_management_enabled && !$product['allow_oosp']
+            && ($product['quantity'] <= 0 || $product['quantity'] - $this->getQuantityWanted() < 0)
         ) {
             $shouldEnable = false;
         }
@@ -1213,22 +1209,77 @@ class ProductLazyArray extends AbstractLazyArray
     }
 
     /**
-     * @return int Quantity of product requested by the customer
+     * Gets the quantity wanted by the customer for the product. We will take his request,
+     * but we will adjust it if it's lower than the required quantity.
+     *
+     * @return int Quantity of product requested by the customer, altered if needed, always a positive integer
      */
-    private function getQuantityWanted()
+    #[LazyArrayAttribute(arrayAccess: true)]
+    public function getQuantityWanted()
     {
-        return (int) Tools::getValue(
-            'quantity_wanted',
-            $this->product['quantity_wanted'] ?? 1
-        );
+        if (empty($this->product['quantity_wanted'])) {
+            // Get the quantity wanted from the request
+            $quantityWantedByTheCustomer = (int) Tools::getValue('quantity_wanted', 1);
+
+            // Get minimal required quantity for purchase
+            $requiredQuantityForPurchase = $this->getQuantityRequired();
+
+            if ($quantityWantedByTheCustomer < $requiredQuantityForPurchase) {
+                $quantityWantedByTheCustomer = $requiredQuantityForPurchase;
+            }
+
+            $this->product['quantity_wanted'] = $quantityWantedByTheCustomer;
+        }
+
+        return $this->product['quantity_wanted'];
     }
 
     /**
-     * @return int Minimal quantity of product requested by the customer
+     * Gets the minimal quantity the customer has to purchase. We cannot just let him buy 1 piece
+     * if the minimal quantity is higher. Also, we adjust it by the quantity already in cart.
+     *
+     * @return int Minimal quantity of product the customer buy right now, always a positive integer
      */
-    private function getMinimalQuantity()
+    #[LazyArrayAttribute(arrayAccess: true)]
+    public function getQuantityRequired()
     {
-        return (int) $this->product['minimal_quantity'];
+        // For the required quantity, we will need to limit it by the minimal quantity on the low side.
+        $requiredQuantityForPurchase = $this->getMinimalQuantity();
+
+        /*
+         * We reduce it by the quantity we already have in cart. If the user already has a sufficient
+         * quantity in the cart, we don't need to add more. Although it may seem that we can just reset
+         * the minimal quantity to one in that case, we must not do that, because the quantity in the cart
+         * may not be the correct one.
+         */
+        if (!empty($this->product['cart_quantity'])) {
+            $requiredQuantityForPurchase -= $this->product['cart_quantity'];
+            if ($requiredQuantityForPurchase < 1) {
+                $requiredQuantityForPurchase = 1;
+            }
+        }
+
+        return $requiredQuantityForPurchase;
+    }
+
+    /**
+     * Gets the minimal quantity allowed for the product or its combination. With no adjustments
+     * by the current context. The builder of this object is responsible for passing the correct
+     * minimal quantity depending on the combination selected.
+     *
+     * @return int Minimal quantity of product from it's settings, always a positive integer
+     */
+    #[LazyArrayAttribute(arrayAccess: true)]
+    public function getMinimalQuantity()
+    {
+        $minimalQuantity = (int) $this->product['minimal_quantity'];
+
+        // If we received faulty data, we correct it to 1
+        if ($minimalQuantity < 1) {
+            $minimalQuantity = 1;
+        }
+
+        return $minimalQuantity;
     }
 
     /**
