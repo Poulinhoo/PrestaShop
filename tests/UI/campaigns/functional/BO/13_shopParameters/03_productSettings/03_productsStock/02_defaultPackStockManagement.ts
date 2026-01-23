@@ -126,7 +126,10 @@ describe('BO - Shop Parameters - Product Settings : Default pack stock managemen
       {
         args: {
           option: 'Use quantity of products in the pack',
-          packQuantity: productPackData.quantity - 1,
+          // The lower quantity is defined by the first product based on the quantity required in the pack
+          packQuantity: Math.floor(
+            (firstProductData.quantity - productPackData.pack[0].quantity) / productPackData.pack[0].quantity,
+          ),
           firstProductQuantity: firstProductData.quantity - productPackData.pack[0].quantity,
           secondProductQuantity: secondProductData.quantity - productPackData.pack[1].quantity,
         },
@@ -134,7 +137,10 @@ describe('BO - Shop Parameters - Product Settings : Default pack stock managemen
       {
         args: {
           option: 'Use both, whatever is lower',
-          packQuantity: productPackData.quantity - 2,
+          // The lower quantity is defined by the first product based on the quantity required in the pack
+          packQuantity: Math.floor(
+            (firstProductData.quantity - 2 * productPackData.pack[0].quantity) / productPackData.pack[0].quantity,
+          ),
           firstProductQuantity: firstProductData.quantity - 2 * productPackData.pack[0].quantity,
           secondProductQuantity: secondProductData.quantity - 2 * productPackData.pack[1].quantity,
         },
