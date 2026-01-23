@@ -36,3 +36,6 @@ services:
       - '%database_prefix%'
 
   PrestaShop\PrestaShop\Adapter\Order\Repository\OrderDetailRepository:
+    arguments:
+      - '@doctrine.dbal.default_connection'
+      - '%database_prefix%'
