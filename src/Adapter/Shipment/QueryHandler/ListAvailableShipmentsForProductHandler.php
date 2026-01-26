@@ -27,15 +27,15 @@
 namespace PrestaShop\PrestaShop\Adapter\Shipment\QueryHandler;
 
 use PrestaShop\PrestaShop\Adapter\Product\Repository\ProductRepository;
+use PrestaShop\PrestaShop\Adapter\Shop\Context as ShopContext;
 use PrestaShop\PrestaShop\Core\CommandBus\Attributes\AsQueryHandler;
+use PrestaShop\PrestaShop\Core\Domain\Product\ValueObject\ProductId;
 use PrestaShop\PrestaShop\Core\Domain\Shipment\Exception\ShipmentNotFoundException;
 use PrestaShop\PrestaShop\Core\Domain\Shipment\Query\ListAvailableShipmentsForProduct;
 use PrestaShop\PrestaShop\Core\Domain\Shipment\QueryHandler\ListAvailableShipmentsForProductHandlerInterface;
 use PrestaShop\PrestaShop\Core\Domain\Shipment\QueryResult\ShipmentsForProduct;
-use PrestaShop\PrestaShop\Adapter\Shop\Context as ShopContext;
 use PrestaShop\PrestaShop\Core\Domain\Shop\ValueObject\ShopId;
 use PrestaShopBundle\Entity\Repository\ShipmentRepository;
-use PrestaShop\PrestaShop\Core\Domain\Product\ValueObject\ProductId;
 use Symfony\Contracts\Translation\TranslatorInterface;
 use Throwable;
 

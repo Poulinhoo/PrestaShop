@@ -176,7 +176,7 @@ export default class OrderProductAutocomplete {
         data.shipments.forEach(
           ({id, name}: { id: string; name: string }) => {
             this.selectShipment.append(
-              new Option(name, id)
+              new Option(name, id),
             );
           },
         );
