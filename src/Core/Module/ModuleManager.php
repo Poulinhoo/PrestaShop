@@ -445,4 +445,13 @@ class ModuleManager implements ModuleManagerInterface
     {
         $this->eventDispatcher->dispatch(new ModuleManagementEvent($module), ModuleManagementEvent::PRE_ACTION);
     }
+
+    /**
+     * When set to true, all override operations (conflict check, install, uninstall)
+     * are skipped during module lifecycle actions (install, enable, disable, uninstall).
+     */
+    public function setSkipOverrides(bool $skip): void
+    {
+        LegacyModule::skipOverrides($skip);
+    }
 }

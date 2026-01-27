@@ -17,6 +17,7 @@ use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Helper\FormatterHelper;
 use Symfony\Component\Console\Input\InputArgument;
 use Symfony\Component\Console\Input\InputInterface;
+use Symfony\Component\Console\Input\InputOption;
 use Symfony\Component\Console\Output\OutputInterface;
 use Symfony\Contracts\Translation\TranslatorInterface;
 
@@ -61,7 +62,8 @@ class ModuleCommand extends Command
             ->setDescription('Manage your modules via command line')
             ->addArgument('action', InputArgument::REQUIRED, sprintf('Action to execute (Allowed actions: %s).', implode(' / ', $this->allowedActions)))
             ->addArgument('module name', InputArgument::REQUIRED, 'Module on which the action will be executed')
-            ->addArgument('file path', InputArgument::OPTIONAL, 'YML file path for configuration');
+            ->addArgument('file path', InputArgument::OPTIONAL, 'YML file path for configuration')
+            ->addOption('skip-overrides', null, InputOption::VALUE_NONE, 'Skip installing/uninstalling module overrides');
     }
 
     protected function init(InputInterface $input, OutputInterface $output)
@@ -82,6 +84,10 @@ class ModuleCommand extends Command
     protected function execute(InputInterface $input, OutputInterface $output): int
     {
         $this->init($input, $output);
+
+        if ($input->getOption('skip-overrides')) {
+            $this->moduleManager->setSkipOverrides(true);
+        }
 
         $moduleName = $input->getArgument('module name');
         $action = $input->getArgument('action');
