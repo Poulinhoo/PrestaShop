@@ -39,13 +39,6 @@ export default class OrderProductRenderer {
   addOrUpdateProductToList($productRow: JQuery, newRow: HTMLElement): void {
     if ($productRow.length > 0) {
       $productRow.html($(newRow).html());
-    } else {
-      $(OrderViewPageMap.productAddModal).hide();
-      // $(OrderViewPageMap.productAddRow).before(
-      //   $(newRow)
-      //     .hide()
-      //     .fadeIn(),
-      // );
     }
   }
 
@@ -77,25 +70,16 @@ export default class OrderProductRenderer {
       orderInvoiceId,
       isOrderTaxIncluded,
     });
-    $(OrderViewPageMap.productAddActionBtn).addClass('d-none');
-    // $(OrderViewPageMap.productAddRow).addClass('d-none');
-
   }
 
   moveProductsPanelToModificationPosition(scrollTarget = 'body'): void {
     $(OrderViewPageMap.productActionBtn).addClass('d-none');
-    $(
-      `${OrderViewPageMap.productAddActionBtn}`,
-    ).removeClass('d-none');
     this.moveProductPanelToTop(scrollTarget);
   }
 
   moveProductsPanelToRefundPosition(): void {
     this.resetAllEditRows();
-    $(
-      /* eslint-disable-next-line max-len */
-      `${OrderViewPageMap.productAddActionBtn}, ${OrderViewPageMap.productActionBtn}`,
-    ).addClass('d-none');
+    $(OrderViewPageMap.productActionBtn).addClass('d-none');
     this.moveProductPanelToTop();
   }
 
@@ -143,9 +127,7 @@ export default class OrderProductRenderer {
 
     $(OrderViewPageMap.productsPagination).removeClass('d-none');
     $(OrderViewPageMap.productActionBtn).removeClass('d-none');
-    $(
-      `${OrderViewPageMap.productAddActionBtn}, ${OrderViewPageMap.productAddRow}`,
-    ).addClass('d-none');
+    $(OrderViewPageMap.productAddRow).addClass('d-none');
 
     // Restore pagination
     this.paginate(1);
@@ -163,7 +145,6 @@ export default class OrderProductRenderer {
     $(OrderViewPageMap.productAddAvailableText).html('');
     $(OrderViewPageMap.productAddLocationText).html('');
     $(OrderViewPageMap.productAddNewInvoiceInfo).addClass('d-none');
-    $(OrderViewPageMap.productAddActionBtn).prop('disabled', true);
   }
 
   resetAllEditRows(): void {

@@ -242,6 +242,16 @@ admin_orders_shipment_get_edit_form:
   options:
     expose: true
 
+admin_orders_get_add_product_form:
+  path: /{orderId}/product/add
+  methods: [ GET ]
+  defaults:
+    _controller: PrestaShopBundle\Controller\Admin\Sell\Order\OrderController::getAddProductForm
+  requirements:
+    orderId: \d+
+  options:
+    expose: true
+
 admin_orders_merge_shipment:
   path: /{orderId}/shipment/merge
   methods: [ POST ]

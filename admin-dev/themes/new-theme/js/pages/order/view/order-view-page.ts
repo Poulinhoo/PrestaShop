@@ -33,11 +33,12 @@ import OrderPricesRefresher from '@pages/order/view/order-prices-refresher';
 import OrderPaymentsRefresher from '@pages/order/view/order-payments-refresher';
 import OrderShippingRefresher from '@pages/order/view/order-shipping-refresher';
 import Router from '@components/router';
+import OrderProductAutocomplete from '@pages/order/view/order-product-add-autocomplete';
+import OrderProductAdd from '@pages/order/view/order-product-add';
 import OrderInvoicesRefresher from './order-invoices-refresher';
 import OrderProductCancel from './order-product-cancel';
 import OrderDocumentsRefresher from './order-documents-refresher';
 import OrderShipmentsRefresher from './order-shipments-refresher';
-import {Modal} from 'bootstrap';
 
 const {$} = window;
 
@@ -217,12 +218,7 @@ export default class OrderViewPage {
     $(OrderViewPageMap.productAddBtn).on(
       'click',
       () => {
-        const modalEl = document.querySelector(OrderViewPageMap.productAddModal);
-
-        if (modalEl) {
-          const modal = new Modal(modalEl);
-          modal.show();
-        }
+        this.getAddProductForm();
         this.orderProductRenderer.toggleProductAddNewInvoiceInfo();
         // this.orderProductRenderer.moveProductsPanelToModificationPosition(OrderViewPageMap.productSearchInput);
       },
@@ -398,5 +394,45 @@ export default class OrderViewPage {
           message: 'Failed to reload the products list. Please reload the page',
         });
       });
+  }
+
+  private get modal(): HTMLDivElement {
+    const modal = document.querySelector(OrderViewPageMap.productAddModal) as HTMLDivElement;
+
+    if (!modal) {
+      throw new Error('Add product modal not found');
+    }
+    return modal;
+  }
+
+  async getAddProductForm(): Promise<void> {
+    this.modal.dataset.state = 'loading';
+
+    try {
+      const response = await fetch(this.router.generate('admin_orders_get_add_product_form', {
+        orderId: 6,
+      }), {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      });
+
+      if (!response.ok) {
+        throw new Error(await response.text());
+      }
+      const formContainer = document.querySelector(OrderViewPageMap.addProductModalContainer) as HTMLElement;
+      formContainer!.innerHTML = await response.text();
+
+      const orderAddAutocomplete = new OrderProductAutocomplete($(OrderViewPageMap.productSearchInput));
+      const orderAdd = new OrderProductAdd();
+
+      orderAddAutocomplete.listenForSearch();
+      orderAddAutocomplete.onItemClickedCallback =
+        (product: Record<string, any> | undefined): void => orderAdd.setProduct(product);
+      this.modal.dataset.state = 'loaded';
+    } catch (error) {
+      console.error(error);
+    }
   }
 }

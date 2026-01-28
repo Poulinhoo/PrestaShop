@@ -28,11 +28,11 @@ namespace PrestaShopBundle\Form\Admin\Sell\Order;
 
 use PrestaShop\PrestaShop\Core\Form\ConfigurableFormChoiceProviderInterface;
 use PrestaShopBundle\Form\Admin\Type\TranslatorAwareType;
-use Symfony\Component\Form\Extension\Core\Type\ButtonType;
 use Symfony\Component\Form\Extension\Core\Type\CheckboxType;
 use Symfony\Component\Form\Extension\Core\Type\ChoiceType;
 use Symfony\Component\Form\Extension\Core\Type\HiddenType;
 use Symfony\Component\Form\Extension\Core\Type\NumberType;
+use Symfony\Component\Form\Extension\Core\Type\MoneyType;
 use Symfony\Component\Form\Extension\Core\Type\TextType;
 use Symfony\Component\Form\FormBuilderInterface;
 use Symfony\Component\OptionsResolver\OptionsResolver;
@@ -86,7 +86,7 @@ class AddProductRowType extends TranslatorAwareType
                     'class' => 'col-sm-12',
                     'autocomplete' => 'off',
                     'placeholder' => $this->trans('Search for a product', 'Admin.Orderscustomers.Feature'),
-                    'data-currency' => $options['currency_id'],
+                    'data-currency' => $options['currency']['id_currency'],
                     'data-order' => $options['order_id'],
                 ],
             ])
@@ -95,19 +95,19 @@ class AddProductRowType extends TranslatorAwareType
                     'class' => 'custom-select',
                 ],
             ])
-            ->add('price_tax_excluded', NumberType::class, [
-                'label' => false,
-                'unit' => sprintf('%s %s',
-                    $options['symbol'],
-                    $this->trans('tax excl.', 'Admin.Global')
-                ),
+            ->add('price_tax_excluded', MoneyType::class, [
+                'label' => $this->trans('tax excl.', 'Admin.Global'),
+                'currency' => $options['currency']['iso_code'],
+                'attr' => [
+                    'class' => 'form-control',
+                ],
             ])
-            ->add('price_tax_included', NumberType::class, [
-                'label' => false,
-                'unit' => sprintf('%s %s',
-                    $options['symbol'],
-                    $this->trans('tax incl.', 'Admin.Global')
-                ),
+            ->add('price_tax_included', MoneyType::class, [
+                'label' => $this->trans('tax incl.', 'Admin.Global'),
+                'currency' => $options['currency']['iso_code'],
+                'attr' => [
+                    'class' => 'form-control',
+                ],
             ])
             ->add('quantity', NumberType::class, [
                 'label' => false,
@@ -145,14 +145,13 @@ class AddProductRowType extends TranslatorAwareType
     public function configureOptions(OptionsResolver $resolver): void
     {
         $resolver
-            ->setRequired(['symbol'])
+            ->setRequired([])
             ->setDefaults([
                 'order_id' => null,
-                'currency_id' => null,
+                'currency' => [],
             ])
             ->setAllowedTypes('order_id', ['int', 'null'])
-            ->setAllowedTypes('currency_id', ['int', 'null'])
-            ->setAllowedTypes('symbol', ['string'])
+            ->setAllowedTypes('currency', ['array'])
         ;
     }
 }

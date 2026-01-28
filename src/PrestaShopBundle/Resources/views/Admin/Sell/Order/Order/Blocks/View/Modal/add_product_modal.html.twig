@@ -31,14 +31,6 @@
 >
   <div class="modal-dialog modal-lg" role="document">
     <div class="modal-content">
-
-      {{ form_start(addProductRowForm, {
-        attr: {
-          id: 'addProductRowForm',
-          class: 'form-horizontal'
-        }
-      }) }}
-
       <div class="modal-header">
         <h5 class="modal-title">
           {{ 'Add a product'|trans({}, 'Admin.Orderscustomers.Feature') }}
@@ -50,92 +42,17 @@
           <span aria-hidden="true">&times;</span>
         </button>
       </div>
+      <div class="modal-body" id="addProductFormContainer"></div>
 
-      <div class="modal-body">
-
-        {{ form_widget(addProductRowForm.product_id) }}
-        {{ form_widget(addProductRowForm.tax_rate) }}
-
-        <div class="form-group" id="searchProductToAddProduct">
-          {{ form_label(addProductRowForm.search) }}
-          {{ form_widget(addProductRowForm.search) }}
-
-          <div class="dropdown">
-            <div class="dropdown-menu w-100"></div>
-          </div>
-        </div>
-
-        <div class="form-group d-none" id="addProductCombinations">
-          <label class="form-control-label">
-            {{ 'Combinations'|trans({}, 'Admin.Global') }}
-          </label>
-            <div class="input-group mt-2">
-            <div class="input-group-prepend">
-              <div class="input-group-text">{{ 'Combinations'|trans({}, 'Admin.Global') }}</div>
-            </div>
-            <select id="addProductCombinationId" class="custom-select"></select>
-          </div>
-        </div>
-
-        <div class="row">
-          <div class="col-md-6">
-            <div class="form-group">
-              <label class="form-control-label">
-                {{ 'Price (tax excl.)'|trans({}, 'Admin.Global') }}
-              </label>
-              {{ form_widget(addProductRowForm.price_tax_excluded) }}
-            </div>
-          </div>
-
-          <div class="col-md-6">
-            <div class="form-group">
-              <label class="form-control-label">
-                {{ 'Price (tax incl.)'|trans({}, 'Admin.Global') }}
-              </label>
-              {{ form_widget(addProductRowForm.price_tax_included) }}
-            </div>
-          </div>
-        </div>
-
-        {% if addProductRowForm.addShipment is defined %}
-          <div class="form-group">
-            {{ form_label(addProductRowForm.addShipment, null, {
-              label_attr: {class: 'form-control-label'}
-            }) }}
-            {{ form_widget(addProductRowForm.addShipment) }}
-          </div>
-        {% endif %}
-
-        <div class="form-group">
-          <label class="form-control-label">
-            {{ 'Quantity'|trans({}, 'Admin.Global') }}
-          </label>
-          {{ form_widget(addProductRowForm.quantity) }}
-        </div>
-
-        {% if orderForViewing.hasInvoice() %}
-        <div class="form-group">
-          <label class="form-control-label">
-            {{ 'Invoice'|trans({}, 'Admin.Global') }}
-          </label>
-          {{ form_widget(addProductRowForm.invoice) }}
-        </div>
-        {% endif %}
-
-      </div>
-
-      <div class="modal-footer shipment-form__footer">
+      <div class="modal-footer">
         <button type="button" class="btn btn-outline-secondary" data-dismiss="modal">
           {{ 'Cancel'|trans({}, 'Admin.Actions') }}
         </button>
 
-        <button type="submit" class="btn btn-primary" id="add_product_row_add" data-order-id="{{ orderForViewing.id }}">
+        <button type="submit" class="btn btn-primary" id="add_product_row_add" data-order-id="{{ orderForViewing.id }}" disabled>
           {{ 'Add'|trans({}, 'Admin.Actions') }}
         </button>
       </div>
-
-      {{ form_end(addProductRowForm, {render_rest: false}) }}
-
     </div>
   </div>
 </div>

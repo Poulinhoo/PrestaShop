@@ -118,7 +118,7 @@ export default class OrderProductAdd {
   }
 
   setupListener(): void {
-    this.combinationsSelect.on('change', (event) => {
+    this.combinationsSelect.off('change').on('change', (event) => {
       const taxExcluded = window.ps_round(
         $(event.currentTarget)
           .find(':selected')
@@ -153,7 +153,7 @@ export default class OrderProductAdd {
       );
     });
 
-    this.quantityInput.on('change keyup', (event: JQueryEventObject) => {
+    this.quantityInput.off('change keyup').on('change keyup', (event: JQueryEventObject) => {
       if (this.available !== null) {
         const input = <HTMLInputElement>event.target;
         const newQuantity = Number(input.value);
@@ -190,12 +190,12 @@ export default class OrderProductAdd {
       }
     });
 
-    this.productIdInput.on('change', () => {
+    this.productIdInput.off('change').on('change', () => {
       this.productAddActionBtn.removeAttr('disabled');
       this.invoiceSelect.removeAttr('disabled');
     });
 
-    this.priceTaxIncludedInput.on('change keyup', (event) => {
+    this.priceTaxIncludedInput.off('change keyup').on('change keyup', (event) => {
       const input = <HTMLInputElement>event.target;
       this.taxIncluded = parseFloat(input.value);
       this.taxExcluded = this.priceTaxCalculator.calculateTaxExcluded(
@@ -219,7 +219,7 @@ export default class OrderProductAdd {
       );
     });
 
-    this.priceTaxExcludedInput.on('change keyup', (event) => {
+    this.priceTaxExcludedInput.off('change keyup').on('change keyup', (event) => {
       const input = <HTMLInputElement>event.target;
       this.taxExcluded = parseFloat(input.value);
       this.taxIncluded = this.priceTaxCalculator.calculateTaxIncluded(
@@ -243,9 +243,9 @@ export default class OrderProductAdd {
       );
     });
 
-    this.productAddActionBtn.on('click', (event: JQueryEventObject) => this.confirmNewInvoice(event),
+    this.productAddActionBtn.off('click').on('click', (event: JQueryEventObject) => this.confirmNewInvoice(event),
     );
-    this.invoiceSelect.on('change', () => this.orderProductRenderer.toggleProductAddNewInvoiceInfo(),
+    this.invoiceSelect.off('change').on('change', () => this.orderProductRenderer.toggleProductAddNewInvoiceInfo(),
     );
   }
 
@@ -415,5 +415,32 @@ export default class OrderProductAdd {
       throw new Error('Add product modal not found');
     }
     return modal;
+  }
+
+  async getAddProductForm(): Promise<void> {
+    this.modal.dataset.state = 'loading';
+
+    try {
+      const response = await fetch(this.router.generate('admin_orders_get_add_product_form', {
+        orderId: 6,
+      }), {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      });
+
+      if (!response.ok) {
+        throw new Error(await response.text());
+      }
+      const formContainer = document.querySelector(OrderViewPageMap.addProductModalContainer) as HTMLElement;
+      formContainer!.innerHTML = await response.text();
+
+      this.modal.dataset.state = 'loaded';
+
+      window.prestaShopUiKit.init();
+    } catch (error) {
+      console.error(error);
+    }
   }
 }

@@ -50,8 +50,6 @@ $(() => {
     'TextWithLengthCounter',
   ]);
   const orderViewPage = new OrderViewPage();
-  const orderAddAutocomplete = new OrderProductAutocomplete($(OrderViewPageMap.productSearchInput));
-  const orderAdd = new OrderProductAdd();
 
   orderViewPage.listenForProductPack();
   orderViewPage.listenForProductDelete();
@@ -60,9 +58,6 @@ $(() => {
   orderViewPage.listenForProductPagination();
   orderViewPage.listenForRefund();
   orderViewPage.listenForCancelProduct();
-
-  orderAddAutocomplete.listenForSearch();
-  orderAddAutocomplete.onItemClickedCallback = (product: Record<string, any> | undefined): void => orderAdd.setProduct(product);
 
   handlePaymentDetailsToggle();
   handlePrivateNoteChange();
@@ -77,6 +72,7 @@ $(() => {
     event.preventDefault();
     togglePrivateNoteBlock();
   });
+
 
   $(OrderViewPageMap.orderNoteToggleBtn).on('click', (event) => {
     event.preventDefault();

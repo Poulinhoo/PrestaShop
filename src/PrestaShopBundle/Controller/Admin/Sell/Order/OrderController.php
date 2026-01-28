@@ -523,11 +523,6 @@ class OrderController extends PrestaShopAdminController
         // @todo: Fix me. Should not rely on legacy object model - Currency
         $orderCurrency = $currencyDataProvider->getCurrencyById($orderForViewing->getCurrencyId());
 
-        $addProductRowForm = $this->createForm(AddProductRowType::class, [], [
-            'order_id' => $orderId,
-            'currency_id' => $orderForViewing->getCurrencyId(),
-            'symbol' => $orderCurrency->symbol,
-        ]);
         $editProductRowForm = $this->createForm(EditProductRowType::class, [], [
             'order_id' => $orderId,
             'symbol' => $orderCurrency->symbol,
@@ -620,7 +615,6 @@ class OrderController extends PrestaShopAdminController
             'invoiceManagementIsEnabled' => $orderForViewing->isInvoiceManagementIsEnabled(),
             'changeOrderAddressForm' => $changeOrderAddressForm?->createView(),
             'orderMessageForm' => $orderMessageForm->createView(),
-            'addProductRowForm' => $addProductRowForm->createView(),
             'editProductRowForm' => $editProductRowForm->createView(),
             'backOfficeOrderButtons' => $backOfficeOrderButtons,
             'merchandiseReturnEnabled' => $merchandiseReturnEnabled,
@@ -669,6 +663,24 @@ class OrderController extends PrestaShopAdminController
             'shipmentInformation' => $form->getData(),
             'orderId' => $orderId,
             'shipmentId' => $shipmentId,
+        ]);
+    }
+
+    #[AdminSecurity("is_granted('update', 'AdminOrders')", redirectRoute: 'admin_orders_view', redirectQueryParamsToKeep: ['orderId'], message: 'You do not have permission to edit this.')]
+    public function getAddProductForm(int $orderId): Response
+    {
+        $orderForViewing = $this->dispatchQuery(new GetOrderForViewing($orderId, QuerySorting::DESC));
+        $currency = Currency::getCurrency($orderForViewing->getCurrencyId());
+
+        $form = $this->createForm(AddProductRowType::class, [], [
+            'order_id' => $orderId,
+            'currency' => $currency,
+        ]);
+
+        return $this->render('@PrestaShop/Admin/Sell/Order/Order/Blocks/View/add_product_form.html.twig', [
+            'addProductForm' => $form->createView(),
+            'orderForViewing' => $orderForViewing,
+            'orderId' => $orderId,
         ]);
     }
 

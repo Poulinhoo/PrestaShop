@@ -87,6 +87,7 @@ export default {
   allMessagesModal: '#view_all_messages_modal',
   allMessagesList: '#all-messages-list',
   openAllMessagesBtn: '.js-open-all-messages-btn',
+  addProductModalContainer: '#addProductFormContainer',
   // Products table elements
   productOriginalPosition: '#orderProductsOriginalPosition',
   productModificationPosition: '#orderProductsModificationPosition',
