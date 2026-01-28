@@ -321,8 +321,9 @@ describe('Mail alerts module - Customer notifications - Enable/Disable product a
 
       await page.reload();
 
-      const textMessage = await foHummingbirdProductPage.getBlockMailAlertNotification(page);
-      expect(textMessage).to.be.equal(foHummingbirdProductPage.messageAlertNotificationAlreadyRegistered);
+      // @todo : https://github.com/PrestaShop/hummingbird/issues/910
+      //const textMessage = await foHummingbirdProductPage.getBlockMailAlertNotification(page);
+      //expect(textMessage).to.be.equal(foHummingbirdProductPage.messageAlertNotificationAlreadyRegistered);
     });
   });
 

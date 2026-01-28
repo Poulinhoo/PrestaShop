@@ -20,7 +20,6 @@ describe('BO - Catalog - Products list : Bulk actions, Enable/Disable, 3-dot but
   let numberOfProducts: number = 0;
   let productName: string = '';
 
-  // before and after functions
   before(async function () {
     browserContext = await utilsPlaywright.createBrowserContext(this.browser);
     page = await utilsPlaywright.newTab(browserContext);

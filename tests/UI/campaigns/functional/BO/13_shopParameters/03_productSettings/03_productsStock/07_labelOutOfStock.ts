@@ -18,8 +18,7 @@ import {
 
 const baseContext: string = 'functional_BO_shopParameters_productSettings_productsStock_labelOutOfStock';
 
-describe('BO - Shop Parameters - product Settings : Set label out-of-stock with  '
-  + 'allowed/denied backorders', async () => {
+describe('BO - Shop Parameters - product Settings : Set label out-of-stock with allowed/denied backorders', async () => {
   let browserContext: BrowserContext;
   let page: Page;
 
@@ -30,7 +29,6 @@ describe('BO - Shop Parameters - product Settings : Set label out-of-stock with 
     labelWhenInStock: ' ',
   });
 
-  // before and after functions
   before(async function () {
     browserContext = await utilsPlaywright.createBrowserContext(this.browser);
     page = await utilsPlaywright.newTab(browserContext);
@@ -101,49 +99,45 @@ describe('BO - Shop Parameters - product Settings : Set label out-of-stock with 
 
     const tests = [
       {
-        args: {
-          action: 'enable',
-          enable: true,
-          backordersAction: 'allowed',
-          label: 'You can order',
-          labelToCheck: 'You can order',
-        },
+        action: 'enable',
+        enable: true,
+        backordersAction: 'allowed',
+        label: 'You can order',
       },
       {
-        args: {
-          action: 'enable', enable: true, backordersAction: 'allowed', label: ' ', labelToCheck: '',
-        },
+        action: 'enable',
+        enable: true,
+        backordersAction: 'allowed',
+        label: ' ',
       },
       {
-        args: {
-          action: 'disable', enable: false, backordersAction: 'denied', label: ' ', labelToCheck: '',
-        },
+        action: 'disable',
+        enable: false,
+        backordersAction: 'denied',
+        label: ' ',
       },
       {
-        args: {
-          action: 'disable',
-          enable: false,
-          backordersAction: 'denied',
-          label: 'Out-of-Stock',
-          labelToCheck: 'Out-of-Stock',
-        },
+        action: 'disable',
+        enable: false,
+        backordersAction: 'denied',
+        label: 'Out-of-Stock',
       },
     ];
 
-    tests.forEach((test, index: number) => {
-      it(`should ${test.args.action} allow ordering of out-of-stock products`, async function () {
+    tests.forEach((arg, index: number) => {
+      it(`should ${arg.action} allow ordering of out-of-stock products`, async function () {
         await testContext.addContextItem(
           this,
           'testIdentifier',
-          `${test.args.action}AllowOrderingOutOfStock${index}`,
+          `${arg.action}AllowOrderingOutOfStock${index}`,
           baseContext,
         );
 
-        const result = await boProductSettingsPage.setAllowOrderingOutOfStockStatus(page, test.args.enable);
+        const result = await boProductSettingsPage.setAllowOrderingOutOfStockStatus(page, arg.enable);
         expect(result).to.contains(boProductSettingsPage.successfulUpdateMessage);
       });
 
-      it(`should set Label of out-of-stock products with ${test.args.backordersAction} backorders`, async function () {
+      it(`should set Label of out-of-stock products with ${arg.backordersAction} backorders`, async function () {
         await testContext.addContextItem(
           this,
           'testIdentifier',
@@ -153,10 +147,10 @@ describe('BO - Shop Parameters - product Settings : Set label out-of-stock with 
 
         let result;
 
-        if (test.args.enable) {
-          result = await boProductSettingsPage.setLabelOosAllowedBackorders(page, test.args.label);
+        if (arg.enable) {
+          result = await boProductSettingsPage.setLabelOosAllowedBackorders(page, arg.label);
         } else {
-          result = await boProductSettingsPage.setLabelOosDeniedBackorders(page, test.args.label);
+          result = await boProductSettingsPage.setLabelOosDeniedBackorders(page, arg.label);
         }
 
         expect(result).to.contains(boProductSettingsPage.successfulUpdateMessage);
@@ -166,7 +160,7 @@ describe('BO - Shop Parameters - product Settings : Set label out-of-stock with 
         await testContext.addContextItem(
           this,
           'testIdentifier',
-          `viewMyShop${test.args.action}${index}`,
+          `viewMyShop${arg.action}${index}`,
           baseContext,
         );
 
@@ -180,7 +174,7 @@ describe('BO - Shop Parameters - product Settings : Set label out-of-stock with 
         await testContext.addContextItem(
           this,
           'testIdentifier',
-          `goToProductPage${test.args.action}${index}`,
+          `goToProductPage${arg.action}${index}`,
           baseContext,
         );
 
@@ -196,16 +190,23 @@ describe('BO - Shop Parameters - product Settings : Set label out-of-stock with 
         await testContext.addContextItem(
           this,
           'testIdentifier',
-          `checkOrderingOutOfStock${test.args.action}${index}`,
+          `checkOrderingOutOfStock${arg.action}${index}`,
           baseContext,
         );
 
+        const hasLabel: boolean = arg.label.trim() !== '';
+
         // Check quantity and availability label
         const lastQuantityIsVisible = await foHummingbirdProductPage.isAddToCartButtonEnabled(page);
-        expect(lastQuantityIsVisible).to.be.equal(test.args.enable);
+        expect(lastQuantityIsVisible).to.be.equal(arg.enable);
 
-        const availabilityLabel = await foHummingbirdProductPage.getProductAvailabilityLabel(page);
-        expect(availabilityLabel).to.contains(test.args.labelToCheck);
+        const hasProductAvailabilityLabel = await foHummingbirdProductPage.hasProductAvailabilityLabel(page);
+        expect(hasProductAvailabilityLabel).to.equals(hasLabel);
+
+        if (hasLabel) {
+          const availabilityLabel = await foHummingbirdProductPage.getProductAvailabilityLabel(page);
+          expect(availabilityLabel).to.contains(arg.label);
+        }
       });
 
       it('should go back to BO', async function () {

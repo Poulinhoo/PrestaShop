@@ -5083,16 +5083,16 @@
         },
         {
             "name": "prestashop/hummingbird",
-            "version": "v2.0.0-beta.2",
+            "version": "v2.0.0-beta.3",
             "source": {
                 "type": "git",
                 "url": "https://github.com/PrestaShop/hummingbird.git",
-                "reference": "d2576caa72ca08468ea372ce6f133f8ac52dacb2"
+                "reference": "9732762a0d7b88b6b40a4c9d36b299e52deedaff"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/PrestaShop/hummingbird/zipball/d2576caa72ca08468ea372ce6f133f8ac52dacb2",
-                "reference": "d2576caa72ca08468ea372ce6f133f8ac52dacb2",
+                "url": "https://api.github.com/repos/PrestaShop/hummingbird/zipball/9732762a0d7b88b6b40a4c9d36b299e52deedaff",
+                "reference": "9732762a0d7b88b6b40a4c9d36b299e52deedaff",
                 "shasum": ""
             },
             "require-dev": {
@@ -5117,9 +5117,9 @@
             "description": "Hummingbird development theme for PrestaShop",
             "support": {
                 "issues": "https://github.com/PrestaShop/hummingbird/issues",
-                "source": "https://github.com/PrestaShop/hummingbird/tree/v2.0.0-beta.2"
+                "source": "https://github.com/PrestaShop/hummingbird/tree/v2.0.0-beta.3"
             },
-            "time": "2025-12-15T17:19:33+00:00"
+            "time": "2026-01-21T14:00:19+00:00"
         },
         {
             "name": "prestashop/pagesnotfound",
@@ -18267,9 +18267,9 @@
         "ext-simplexml": "*",
         "ext-zip": "*"
     },
-    "platform-dev": {},
+    "platform-dev": [],
     "platform-overrides": {
         "php": "8.1.0"
     },
-    "plugin-api-version": "2.6.0"
+    "plugin-api-version": "2.2.0"
 }

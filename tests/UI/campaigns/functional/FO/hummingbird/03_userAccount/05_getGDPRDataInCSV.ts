@@ -87,7 +87,6 @@ describe('FO - Account : Get GDPR data in CSV', async () => {
 
   const createCustomerName: string = `${customerData.firstName[0]}. ${customerData.lastName}`;
 
-  // before and after functions
   before(async function () {
     browserContext = await utilsPlaywright.createBrowserContext(this.browser);
     page = await utilsPlaywright.newTab(browserContext);
@@ -319,7 +318,7 @@ describe('FO - Account : Get GDPR data in CSV', async () => {
 
         const isVisible = await utilsFile.isTextInFile(
           filePath,
-          '"MODULE:NEWSLETTERSUBSCRIPTION""Newslettersubscription:noemailtoexport,thiscustomerhasnotregistered.""',
+          '"MODULE:NEWSLETTERSUBSCRIPTION""Newslettersubscription:noemailtoexport,thiscustomerhasnotregistered."',
           true,
           true,
           'utf16le',
@@ -332,12 +331,12 @@ describe('FO - Account : Get GDPR data in CSV', async () => {
 
         const isVisible = await utilsFile.isTextInFile(
           filePath,
-          '""MODULE:PRODUCTCOMMENTS""MODULE:MAILALERTS"',
+          '""MODULE:PRODUCTCOMMENTS""MODULE:NEWSLETTERSUBSCRIPTION"',
           true,
           true,
           'utf16le',
         );
-        expect(isVisible, 'Products comments is not empty!').to.eq(true);
+        expect(isVisible).to.eq(true);
       });
 
       it('should check that mail alerts table is empty', async function () {
@@ -345,12 +344,12 @@ describe('FO - Account : Get GDPR data in CSV', async () => {
 
         const isVisible = await utilsFile.isTextInFile(
           filePath,
-          'MODULE:MAILALERTS""Mailalert:Unabletoexportcustomerusingemail."',
+          '"MODULE:MAILALERTS""Mailalert:Unabletoexportcustomerusingemail."',
           true,
           true,
           'utf16le',
         );
-        expect(isVisible, 'Mail alert table is not empty!').to.eq(true);
+        expect(isVisible).to.eq(true);
       });
     });
   });

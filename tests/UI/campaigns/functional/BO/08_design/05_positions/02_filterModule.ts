@@ -20,6 +20,8 @@ describe('BO - Design - Positions : Filter module', async () => {
 
   const hooks: string[] = [
     'displayAdminCustomers',
+    'displayCustomerAccount',
+    'displayFooter',
     'displayMyAccountBlock',
     'displayProductActions',
   ];

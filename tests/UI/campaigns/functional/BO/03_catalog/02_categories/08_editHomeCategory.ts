@@ -109,7 +109,7 @@ describe('BO - Catalog - Categories : Edit home category', async () => {
 
     // Check category name
     const pageTitle = await foHummingbirdCategoryPage.getHeaderPageName(page);
-    expect(pageTitle).to.contains(editCategoryData.name.toUpperCase());
+    expect(pageTitle).to.contains(editCategoryData.name);
 
     // Check category description
     const categoryDescription = await foHummingbirdCategoryPage.getCategoryDescription(page);

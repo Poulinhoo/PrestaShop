@@ -14,7 +14,7 @@ import {
   dataProducts,
   foHummingbirdHomePage,
   foHummingbirdLoginPage,
-  foClassicModalWishlistPage,
+  foHummingbirdModalWishlistPage,
   foHummingbirdMyWishlistsViewPage,
   foHummingbirdProductPage,
   foHummingbirdSearchResultsPage,
@@ -161,14 +161,14 @@ describe('Wishlist module - Reset module', async () => {
 
       await foHummingbirdProductPage.clickAddToWishlistButton(page);
 
-      const textResult = await foClassicModalWishlistPage.getModalAddToCreateWislistLabel(page);
+      const textResult = await foHummingbirdModalWishlistPage.getModalAddToCreateWislistLabel(page);
       expect(textResult).to.contains(labelButton);
     });
 
     it('should go to \'Modules > Module Manager\' page', async function () {
       await testContext.addContextItem(this, 'testIdentifier', 'goToModuleManagerPageForReset', baseContext);
 
-      page = await foClassicModalWishlistPage.changePage(browserContext, 0);
+      page = await foHummingbirdModalWishlistPage.changePage(browserContext, 0);
       await boDashboardPage.goToSubMenu(
         page,
         boDashboardPage.modulesParentLink,
@@ -201,7 +201,7 @@ describe('Wishlist module - Reset module', async () => {
       await foHummingbirdProductPage.reloadPage(page);
       await foHummingbirdProductPage.clickAddToWishlistButton(page);
 
-      const textResult = await foClassicModalWishlistPage.getModalAddToCreateWislistLabel(page);
+      const textResult = await foHummingbirdModalWishlistPage.getModalAddToCreateWislistLabel(page);
       expect(textResult).to.contains(modBlockwishlistBoMain.defaultValueCreateButtonLabel);
     });
   });

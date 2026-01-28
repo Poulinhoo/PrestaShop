@@ -304,8 +304,7 @@ describe('BO - Catalog - Products : Pricing tab', async () => {
       expect(pageTitle).to.contains(newProductData.name);
     });
 
-    // @todo : https://github.com/PrestaShop/hummingbird/issues/879
-    it.skip('should check the on sale flag', async function () {
+    it('should check the on sale flag', async function () {
       await testContext.addContextItem(this, 'testIdentifier', 'checkOnSaleFlag', baseContext);
 
       const flagText = await foHummingbirdProductPage.getProductTag(page);

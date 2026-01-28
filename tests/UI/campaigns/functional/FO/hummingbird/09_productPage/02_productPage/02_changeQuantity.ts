@@ -57,13 +57,13 @@ describe('FO - Product page : Change quantity', async () => {
     it('should change the quantity by using the arrow \'Down\' button', async function () {
       await testContext.addContextItem(this, 'testIdentifier', 'decrement', baseContext);
 
-      await foHummingbirdProductPage.setQuantityByArrowUpDown(page, 1, 'down');
+      await foHummingbirdProductPage.setQuantityByArrowUpDown(page, 1, 'decrement');
 
       const productQuantity = await foHummingbirdProductPage.getProductQuantity(page);
       expect(productQuantity).to.equal(1);
     });
 
-    it('should change the quantity by using the arrow \'UP\' button', async function () {
+    it('should change the quantity by using the arrow \'Up\' button', async function () {
       await testContext.addContextItem(this, 'testIdentifier', 'incrementQuantity', baseContext);
 
       await foHummingbirdProductPage.setQuantityByArrowUpDown(page, 2, 'increment');

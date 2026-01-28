@@ -24,7 +24,6 @@ describe('BO - Shop Parameters - Product Settings : Update separator of attribut
 
   const productAttributes: string[] = ['1', 'size', 's/8', 'color', 'white'];
 
-  // before and after functions
   before(async function () {
     browserContext = await utilsPlaywright.createBrowserContext(this.browser);
     page = await utilsPlaywright.newTab(browserContext);
@@ -57,18 +56,16 @@ describe('BO - Shop Parameters - Product Settings : Update separator of attribut
     expect(pageTitle).to.contains(boProductSettingsPage.pageTitle);
   });
 
-  const tests = [
-    {args: {option: ',', attributesInProductLink: productAttributes.join(',')}},
-    {args: {option: '-', attributesInProductLink: productAttributes.join('-')}},
-  ];
-
-  tests.forEach((test, index: number) => {
-    it(`should choose the separator option '${test.args.option}'`, async function () {
+  [
+    {option: ',', attributesInProductLink: productAttributes.join(',')},
+    {option: '-', attributesInProductLink: productAttributes.join('-')},
+  ].forEach((arg, index: number) => {
+    it(`should choose the separator option '${arg.option}'`, async function () {
       await testContext.addContextItem(this, 'testIdentifier', `chooseOption_${index}`, baseContext);
 
       const result = await boProductSettingsPage.setSeparatorOfAttributeOnProductLink(
         page,
-        test.args.option,
+        arg.option,
       );
       expect(result).to.contains(boProductSettingsPage.successfulUpdateMessage);
     });
@@ -97,7 +94,7 @@ describe('BO - Shop Parameters - Product Settings : Update separator of attribut
       await testContext.addContextItem(this, 'testIdentifier', `checkAttributeSeparator_${index}`, baseContext);
 
       const currentURL = await foHummingbirdProductPage.getProductPageURL(page);
-      expect(currentURL).to.contains(test.args.attributesInProductLink);
+      expect(currentURL).to.contains(arg.attributesInProductLink);
     });
 
     it('should close the page and go back to BO', async function () {

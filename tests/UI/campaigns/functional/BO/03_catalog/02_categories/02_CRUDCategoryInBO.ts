@@ -173,7 +173,7 @@ describe('BO - Catalog - Categories : CRUD Category in BO', async () => {
 
         // Check category name
         const pageTitle = await foHummingbirdCategoryPage.getHeaderPageName(page);
-        expect(pageTitle).to.contains(createCategoryData.name.toUpperCase());
+        expect(pageTitle).to.contains(createCategoryData.name);
 
         // Check category description
         const categoryDescription = await foHummingbirdCategoryPage.getCategoryDescription(page);
@@ -258,7 +258,7 @@ describe('BO - Catalog - Categories : CRUD Category in BO', async () => {
 
         // Check subcategory name
         const pageTitle = await foHummingbirdCategoryPage.getHeaderPageName(page);
-        expect(pageTitle).to.contains(createSubCategoryData.name.toUpperCase());
+        expect(pageTitle).to.contains(createSubCategoryData.name);
 
         // Check subcategory description
         const subcategoryDescription = await foHummingbirdCategoryPage.getCategoryDescription(page);
@@ -431,7 +431,7 @@ describe('BO - Catalog - Categories : CRUD Category in BO', async () => {
 
         // Check if it is redirected to the category
         const categoryName = await foHummingbirdCategoryPage.getHeaderPageName(page);
-        expect(categoryName).to.contains(arg.category.redirectedCategory!.name.toUpperCase());
+        expect(categoryName).to.contains(arg.category.redirectedCategory!.name);
       });
 
       it('should go back to BO', async function () {

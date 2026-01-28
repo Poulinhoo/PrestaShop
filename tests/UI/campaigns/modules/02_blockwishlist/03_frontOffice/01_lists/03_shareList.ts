@@ -7,7 +7,7 @@ import {
   dataModules,
   foHummingbirdHomePage,
   foHummingbirdLoginPage,
-  foClassicModalWishlistPage,
+  foHummingbirdModalWishlistPage,
   foHummingbirdMyAccountPage,
   foHummingbirdMyWishlistsPage,
   foHummingbirdMyWishlistsViewPage,
@@ -90,10 +90,10 @@ describe('Wishlist module - Share a list', async () => {
 
       await foHummingbirdMyWishlistsPage.clickShareWishlistButton(page, 1);
 
-      const hasModalShare = await foClassicModalWishlistPage.hasModalShare(page);
+      const hasModalShare = await foHummingbirdModalWishlistPage.hasModalShare(page);
       expect(hasModalShare).to.equal(true);
 
-      const isModalVisible = await foClassicModalWishlistPage.clickCancelOnModalShare(page);
+      const isModalVisible = await foHummingbirdModalWishlistPage.clickCancelOnModalShare(page);
       expect(isModalVisible).to.equal(false);
     });
 
@@ -102,11 +102,11 @@ describe('Wishlist module - Share a list', async () => {
 
       await foHummingbirdMyWishlistsPage.clickShareWishlistButton(page, 1);
 
-      const hasModalLogin = await foClassicModalWishlistPage.hasModalShare(page);
+      const hasModalLogin = await foHummingbirdModalWishlistPage.hasModalShare(page);
       expect(hasModalLogin).to.equal(true);
 
-      const textToast = await foClassicModalWishlistPage.clickShareOnModalShare(page);
-      expect(textToast).to.equal(foClassicModalWishlistPage.messageLinkSharedWishlist);
+      const textToast = await foHummingbirdModalWishlistPage.clickShareOnModalShare(page);
+      expect(textToast).to.equal(foHummingbirdModalWishlistPage.messageLinkSharedWishlist);
     });
 
     it('should click on the Create new list link and cancel', async function () {
@@ -114,10 +114,10 @@ describe('Wishlist module - Share a list', async () => {
 
       await foHummingbirdMyWishlistsPage.clickCreateWishlistButton(page);
 
-      const hasModalCreate = await foClassicModalWishlistPage.hasModalCreate(page);
+      const hasModalCreate = await foHummingbirdModalWishlistPage.hasModalCreate(page);
       expect(hasModalCreate).to.equal(true);
 
-      const isModalVisible = await foClassicModalWishlistPage.clickCancelOnModalCreate(page);
+      const isModalVisible = await foHummingbirdModalWishlistPage.clickCancelOnModalCreate(page);
       expect(isModalVisible).to.equal(false);
     });
 
@@ -126,13 +126,13 @@ describe('Wishlist module - Share a list', async () => {
 
       await foHummingbirdMyWishlistsPage.clickCreateWishlistButton(page);
 
-      const hasModalCreate = await foClassicModalWishlistPage.hasModalCreate(page);
+      const hasModalCreate = await foHummingbirdModalWishlistPage.hasModalCreate(page);
       expect(hasModalCreate).to.equal(true);
 
-      await foClassicModalWishlistPage.setNameOnModalCreate(page, wishlistName);
+      await foHummingbirdModalWishlistPage.setNameOnModalCreate(page, wishlistName);
 
-      const textToast = await foClassicModalWishlistPage.clickCreateOnModalCreate(page);
-      expect(textToast).to.equal(foClassicModalWishlistPage.messageWishlistCreated);
+      const textToast = await foHummingbirdModalWishlistPage.clickCreateOnModalCreate(page);
+      expect(textToast).to.equal(foHummingbirdModalWishlistPage.messageWishlistCreated);
     });
 
     it('should click on the share icon (in dropdown) and cancel the modal', async function () {
@@ -140,10 +140,10 @@ describe('Wishlist module - Share a list', async () => {
 
       await foHummingbirdMyWishlistsPage.clickShareWishlistButton(page, 2);
 
-      const hasModalShare = await foClassicModalWishlistPage.hasModalShare(page);
+      const hasModalShare = await foHummingbirdModalWishlistPage.hasModalShare(page);
       expect(hasModalShare).to.equal(true);
 
-      const isModalVisible = await foClassicModalWishlistPage.clickCancelOnModalShare(page);
+      const isModalVisible = await foHummingbirdModalWishlistPage.clickCancelOnModalShare(page);
       expect(isModalVisible).to.equal(false);
     });
 
@@ -152,11 +152,11 @@ describe('Wishlist module - Share a list', async () => {
 
       await foHummingbirdMyWishlistsPage.clickShareWishlistButton(page, 2);
 
-      const hasModalLogin = await foClassicModalWishlistPage.hasModalShare(page);
+      const hasModalLogin = await foHummingbirdModalWishlistPage.hasModalShare(page);
       expect(hasModalLogin).to.equal(true);
 
-      const textToast = await foClassicModalWishlistPage.clickShareOnModalShare(page);
-      expect(textToast).to.equal(foClassicModalWishlistPage.messageLinkSharedWishlist);
+      const textToast = await foHummingbirdModalWishlistPage.clickShareOnModalShare(page);
+      expect(textToast).to.equal(foHummingbirdModalWishlistPage.messageLinkSharedWishlist);
 
       wishlistUrl = await foHummingbirdMyWishlistsPage.getClipboardText(page);
       expect(wishlistUrl).to.be.a('string');

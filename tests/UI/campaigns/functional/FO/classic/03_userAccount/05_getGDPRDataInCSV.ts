@@ -252,7 +252,7 @@ describe('FO - Account : Get GDPR data in CSV', async () => {
           true,
           'utf16le',
         );
-        expect(isVisible, 'General info is not correct!').to.eq(true);
+        expect(isVisible).to.eq(true);
       });
 
       it('should check that Addresses table is empty', async function () {
@@ -265,7 +265,7 @@ describe('FO - Account : Get GDPR data in CSV', async () => {
           true,
           'utf16le',
         );
-        expect(isVisible, 'Addresses table is not empty!').to.eq(true);
+        expect(isVisible).to.eq(true);
       });
 
       it('should check that Orders table is empty', async function () {
@@ -278,7 +278,7 @@ describe('FO - Account : Get GDPR data in CSV', async () => {
           true,
           'utf16le',
         );
-        expect(isVisible, 'Orders table is not empty!').to.eq(true);
+        expect(isVisible).to.eq(true);
       });
 
       it('should check that Carts table is empty', async function () {
@@ -291,7 +291,7 @@ describe('FO - Account : Get GDPR data in CSV', async () => {
           true,
           'utf16le',
         );
-        expect(isVisible, 'Carts table is not empty!').to.eq(true);
+        expect(isVisible).to.eq(true);
       });
 
       it('should check that Messages table is empty', async function () {
@@ -326,7 +326,7 @@ describe('FO - Account : Get GDPR data in CSV', async () => {
 
         const isVisible = await utilsFile.isTextInFile(
           filePath,
-          '"MODULE:NEWSLETTERSUBSCRIPTION""Newslettersubscription:noemailtoexport,thiscustomerhasnotregistered.""',
+          '"MODULE:NEWSLETTERSUBSCRIPTION""Newslettersubscription:noemailtoexport,thiscustomerhasnotregistered."',
           true,
           true,
           'utf16le',
@@ -339,7 +339,7 @@ describe('FO - Account : Get GDPR data in CSV', async () => {
 
         const isVisible = await utilsFile.isTextInFile(
           filePath,
-          '""MODULE:PRODUCTCOMMENTS""MODULE:MAILALERTS"',
+          '""MODULE:PRODUCTCOMMENTS""MODULE:NEWSLETTERSUBSCRIPTION"',
           true,
           true,
           'utf16le',
@@ -352,7 +352,7 @@ describe('FO - Account : Get GDPR data in CSV', async () => {
 
         const isVisible = await utilsFile.isTextInFile(
           filePath,
-          'MODULE:MAILALERTS""Mailalert:Unabletoexportcustomerusingemail."',
+          '"MODULE:MAILALERTS""Mailalert:Unabletoexportcustomerusingemail."',
           true,
           true,
           'utf16le',

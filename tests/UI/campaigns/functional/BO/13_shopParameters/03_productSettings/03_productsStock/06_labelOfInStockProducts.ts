@@ -20,7 +20,6 @@ describe('BO - Shop Parameters - Product Settings : Update label of in-stock pro
   let browserContext: BrowserContext;
   let page: Page;
 
-  // before and after functions
   before(async function () {
     browserContext = await utilsPlaywright.createBrowserContext(this.browser);
     page = await utilsPlaywright.newTab(browserContext);
@@ -87,11 +86,13 @@ describe('BO - Shop Parameters - Product Settings : Update label of in-stock pro
     it('should check the label of in-stock product in FO product page', async function () {
       await testContext.addContextItem(this, 'testIdentifier', `checkLabelInStock_${index}`, baseContext);
 
-      const isVisible = await foHummingbirdProductPage.isAvailabilityQuantityDisplayed(page);
+      const isVisible = await foHummingbirdProductPage.hasProductAvailabilityLabel(page);
       expect(isVisible).to.be.equal(test.args.exist);
 
-      const availabilityLabel = await foHummingbirdProductPage.getProductAvailabilityLabel(page);
-      expect(availabilityLabel).to.contains(test.args.labelToCheck);
+      if (test.args.exist) {
+        const availabilityLabel = await foHummingbirdProductPage.getProductAvailabilityLabel(page);
+        expect(availabilityLabel).to.contains(test.args.labelToCheck);
+      }
     });
 
     it('should go back to BO', async function () {

@@ -114,7 +114,7 @@ describe('Faceted search module - Reset module', async () => {
   it('should check the "All products" page', async function () {
     await testContext.addContextItem(this, 'testIdentifier', 'goToAllProductsPage', baseContext);
 
-    await foHummingbirdHomePage.goToAllProductsBlockPage(page, 1);
+    await foHummingbirdHomePage.goToAllProductsPage(page);
 
     const isCategoryPageVisible = await foHummingbirdCategoryPage.isCategoryPage(page);
     expect(isCategoryPageVisible).to.be.eq(true);
@@ -203,7 +203,7 @@ describe('Faceted search module - Reset module', async () => {
   it('should check the "All products" page', async function () {
     await testContext.addContextItem(this, 'testIdentifier', 'goToAllProductsPage1', baseContext);
 
-    await foHummingbirdHomePage.goToAllProductsBlockPage(page, 1);
+    await foHummingbirdHomePage.goToAllProductsPage(page);
 
     const isCategoryPageVisible = await foHummingbirdCategoryPage.isCategoryPage(page);
     expect(isCategoryPageVisible).to.be.eq(true);

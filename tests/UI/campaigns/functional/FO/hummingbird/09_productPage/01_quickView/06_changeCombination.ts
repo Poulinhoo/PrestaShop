@@ -104,7 +104,7 @@ describe('FO - Product page - Quick view : Change combination', async () => {
       await foHummingbirdModalQuickViewPage.setAttribute(page, secondAttributes[1]);
 
       const quickViewImageMain = await foHummingbirdModalQuickViewPage.getQuickViewImageMain(page);
-      expect(quickViewImageMain).to.contains('1-home_default');
+      expect(quickViewImageMain).to.contains('1-default_xl');
     });
 
     it('should select the color white and check the cover image', async function () {
@@ -113,7 +113,7 @@ describe('FO - Product page - Quick view : Change combination', async () => {
       await foHummingbirdModalQuickViewPage.setAttribute(page, firstAttributes[1]);
 
       const quickViewImageMain = await foHummingbirdModalQuickViewPage.getQuickViewImageMain(page);
-      expect(quickViewImageMain).to.contains('2-home_default');
+      expect(quickViewImageMain).to.contains('2-default_xl');
     });
 
     it('should close the quick view modal', async function () {

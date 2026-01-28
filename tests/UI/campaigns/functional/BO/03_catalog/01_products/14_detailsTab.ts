@@ -432,12 +432,11 @@ describe('BO - Catalog - Products : Details tab', async () => {
       expect(pageTitle).to.contains(newProductData.name);
     });
 
-    // @todo : https://github.com/PrestaShop/hummingbird/pull/898
-    it.skip('should check the product condition', async function () {
+    it('should check the product condition', async function () {
       await testContext.addContextItem(this, 'testIdentifier', 'checkProductCondition', baseContext);
 
       const productCondition = await foHummingbirdProductPage.getProductCondition(page);
-      expect(productCondition).to.eq(`Condition ${editProductData.condition}`);
+      expect(productCondition).to.eq(editProductData.condition);
     });
 
     it('should go back to BO', async function () {
