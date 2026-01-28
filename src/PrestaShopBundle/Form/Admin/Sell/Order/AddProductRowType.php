@@ -81,7 +81,7 @@ class AddProductRowType extends TranslatorAwareType
             ->add('product_id', HiddenType::class)
             ->add('tax_rate', HiddenType::class)
             ->add('search', TextType::class, [
-                'label' => $this->trans('Add a product', 'Admin.Orderscustomers.Feature'),
+                'label' => $this->trans('Search a product', 'Admin.Orderscustomers.Feature'),
                 'attr' => [
                     'class' => 'col-sm-12',
                     'autocomplete' => 'off',
@@ -136,20 +136,6 @@ class AddProductRowType extends TranslatorAwareType
                     ],
                 ]
             )
-            ->add('cancel', ButtonType::class, [
-                'label' => $this->trans('Cancel', 'Admin.Actions'),
-                'attr' => [
-                    'class' => 'btn btn-sm btn-secondary js-product-add-action-btn mr-2 mt-2 mb-2',
-                ],
-            ])
-            ->add('add', ButtonType::class, [
-                'label' => $this->trans('Add', 'Admin.Actions'),
-                'disabled' => true,
-                'attr' => [
-                    'class' => 'btn btn-sm btn-primary js-product-add-action-btn mt-2 mb-2',
-                    'data-order-id' => $options['order_id'],
-                ],
-            ])
         ;
     }
 

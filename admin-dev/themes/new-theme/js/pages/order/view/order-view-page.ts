@@ -37,6 +37,7 @@ import OrderInvoicesRefresher from './order-invoices-refresher';
 import OrderProductCancel from './order-product-cancel';
 import OrderDocumentsRefresher from './order-documents-refresher';
 import OrderShipmentsRefresher from './order-shipments-refresher';
+import {Modal} from 'bootstrap';
 
 const {$} = window;
 
@@ -133,7 +134,7 @@ export default class OrderViewPage {
     });
 
     EventEmitter.on(OrderViewEventMap.productAddedToOrder, (event) => {
-      this.orderProductRenderer.resetAddRow();
+      // this.orderProductRenderer.resetAddRow();
       this.orderPricesRefresher.refreshProductPrices(event.orderId);
       this.orderPricesRefresher.refresh(event.orderId);
       this.refreshProductsList(event.orderId);
@@ -143,6 +144,7 @@ export default class OrderViewPage {
       this.orderDocumentsRefresher.refresh(event.orderId);
       this.orderShippingRefresher.refresh(event.orderId);
       this.orderProductRenderer.moveProductPanelToOriginalPosition();
+      // this.orderProductRenderer.moveProductPanelToOriginalPosition();
     });
   }
 
@@ -215,8 +217,14 @@ export default class OrderViewPage {
     $(OrderViewPageMap.productAddBtn).on(
       'click',
       () => {
+        const modalEl = document.querySelector(OrderViewPageMap.productAddModal);
+
+        if (modalEl) {
+          const modal = new Modal(modalEl);
+          modal.show();
+        }
         this.orderProductRenderer.toggleProductAddNewInvoiceInfo();
-        this.orderProductRenderer.moveProductsPanelToModificationPosition(OrderViewPageMap.productSearchInput);
+        // this.orderProductRenderer.moveProductsPanelToModificationPosition(OrderViewPageMap.productSearchInput);
       },
     );
     $(OrderViewPageMap.productCancelAddBtn).on(

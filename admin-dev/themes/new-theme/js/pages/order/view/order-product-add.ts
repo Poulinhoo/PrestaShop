@@ -317,6 +317,8 @@ export default class OrderProductAdd {
       data: params,
     }).then(
       (response) => {
+        this.closeAndResetAddProductModal();
+
         EventEmitter.emit(OrderViewEventMap.productAddedToOrder, {
           orderId,
           orderProductId: params.product_id,
@@ -337,6 +339,19 @@ export default class OrderProductAdd {
         }
       },
     );
+  }
+
+  closeAndResetAddProductModal(): void {
+    document.querySelector(OrderViewPageMap.productAddModal)?.classList.remove('show');
+    document.querySelector('.modal-backdrop')?.remove();
+    this.productAddActionBtn.prop('disabled', true);
+    this.productIdInput.val('');
+    this.combinationsSelect.val('');
+    this.priceTaxIncludedInput.val('');
+    this.priceTaxExcludedInput.val('');
+    this.quantityInput.val('');
+    this.invoiceSelect.val('');
+    this.freeShippingSelect.prop('checked', false);
   }
 
   confirmNewInvoice(event: JQueryEventObject): void {
@@ -391,5 +406,14 @@ export default class OrderProductAdd {
     } else {
       this.addProduct(orderId);
     }
+  }
+
+  private get modal(): HTMLDivElement {
+    const modal = document.querySelector(OrderViewPageMap.productAddModal) as HTMLDivElement;
+
+    if (!modal) {
+      throw new Error('Add product modal not found');
+    }
+    return modal;
   }
 }

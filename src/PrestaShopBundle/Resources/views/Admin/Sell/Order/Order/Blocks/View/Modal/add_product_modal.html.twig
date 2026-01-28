@@ -23,82 +23,119 @@
  * @license   https://opensource.org/licenses/OSL-3.0 Open Software License (OSL 3.0)
  * #}
 
-<div class="modal fade" id="addOrderProductModal" tabindex="-1" role="dialog">
-  <div class="modal-dialog" role="document">
-    {{ form_start(addProductToOrderForm, {action: '#'}) }}
-      <div class="modal-content">
-        <div class="modal-header">
-          <h5 class="modal-title">
-            {{ 'Add a product'|trans({}, 'Admin.Orderscustomers.Feature') }}
-          </h5>
-          <button type="button" class="close" data-dismiss="modal" aria-label="{{ 'Close'|trans({}, 'Admin.Actions') }}">
-            <span aria-hidden="true">×</span>
-          </button>
-        </div>
-        <div class="modal-body">
+ <div class="modal fade"
+     id="addOrderProductModal"
+     tabindex="-1"
+     role="dialog"
+     data-is-order-tax-included="{{ orderForViewing.isTaxIncluded }}"
+>
+  <div class="modal-dialog modal-lg" role="document">
+    <div class="modal-content">
 
-          <div class="form-group">
-            <label class="form-control-label" for="{{ addProductToOrderForm.product_id.vars.id }}">
-              {{ 'Product'|trans({}, 'Admin.Global') }}
-            </label>
-            {{ form_widget(addProductToOrderForm.product_id) }}
-          </div>
+      {{ form_start(addProductRowForm, {
+        attr: {
+          id: 'addProductRowForm',
+          class: 'form-horizontal'
+        }
+      }) }}
 
-          <div class="form-group">
-            <label class="form-control-label" for="{{ addProductToOrderForm.combination_id.vars.id }}">
-              {{ 'Combination'|trans({}, 'Admin.Global') }}
-            </label>
-            {{ form_widget(addProductToOrderForm.combination_id) }}
-          </div>
-
-          <div class="row">
-            <div class="col">
-              <div class="form-group">
-                <label class="form-control-label" for="{{ addProductToOrderForm.price_tax_excl.vars.id }}">
-                  {{ 'Price tax excluded'|trans({}, 'Admin.Advparameters.Feature') }}
-                </label>
-
-                <div class="input-group">
-                  {{ form_widget(addProductToOrderForm.price_tax_excl) }}
-                  <div class="input-group-append">
-                    <span class="input-group-text">{{ orderForViewing.currencyId }}</span>
-                  </div>
-                </div>
-              </div>
-            </div>
-            <div class="col">
-              <div class="form-group mb-0">
-                <label class="form-control-label" for="{{ addProductToOrderForm.price_tax_incl.vars.id }}">
-                  {{ 'Price tax included'|trans({}, 'Admin.Advparameters.Feature') }}
-                </label>
-
-                <div class="input-group">
-                  {{ form_widget(addProductToOrderForm.price_tax_incl) }}
-                  <div class="input-group-append">
-                    <span class="input-group-text">{{ orderForViewing.currencyId }}</span>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          <div class="form-group">
-            <label class="form-control-label" for="{{ addProductToOrderForm.quantity.vars.id }}">
-              {{ 'Quantity'|trans({}, 'Admin.Global') }}
-            </label>
-            {{ form_widget(addProductToOrderForm.quantity) }}
-          </div>
-
-        </div>
-        <div class="modal-footer">
-          <button type="button" class="btn btn-outline-secondary" data-dismiss="modal">
-            {{ 'Cancel'|trans({}, 'Admin.Actions') }}
-          </button>
-          <button type="submit" class="btn btn-primary">
-            {{ 'Add'|trans({}, 'Admin.Actions') }}
-          </button>
-        </div>
+      <div class="modal-header">
+        <h5 class="modal-title">
+          {{ 'Add a product'|trans({}, 'Admin.Orderscustomers.Feature') }}
+        </h5>
+        <button type="button"
+                class="close"
+                data-dismiss="modal"
+                aria-label="{{ 'Close'|trans({}, 'Admin.Actions') }}">
+          <span aria-hidden="true">&times;</span>
+        </button>
       </div>
-    {{ form_end(addProductToOrderForm) }}
+
+      <div class="modal-body">
+
+        {{ form_widget(addProductRowForm.product_id) }}
+        {{ form_widget(addProductRowForm.tax_rate) }}
+
+        <div class="form-group" id="searchProductToAddProduct">
+          {{ form_label(addProductRowForm.search) }}
+          {{ form_widget(addProductRowForm.search) }}
+
+          <div class="dropdown">
+            <div class="dropdown-menu w-100"></div>
+          </div>
+        </div>
+
+        <div class="form-group d-none" id="addProductCombinations">
+          <label class="form-control-label">
+            {{ 'Combinations'|trans({}, 'Admin.Global') }}
+          </label>
+            <div class="input-group mt-2">
+            <div class="input-group-prepend">
+              <div class="input-group-text">{{ 'Combinations'|trans({}, 'Admin.Global') }}</div>
+            </div>
+            <select id="addProductCombinationId" class="custom-select"></select>
+          </div>
+        </div>
+
+        <div class="row">
+          <div class="col-md-6">
+            <div class="form-group">
+              <label class="form-control-label">
+                {{ 'Price (tax excl.)'|trans({}, 'Admin.Global') }}
+              </label>
+              {{ form_widget(addProductRowForm.price_tax_excluded) }}
+            </div>
+          </div>
+
+          <div class="col-md-6">
+            <div class="form-group">
+              <label class="form-control-label">
+                {{ 'Price (tax incl.)'|trans({}, 'Admin.Global') }}
+              </label>
+              {{ form_widget(addProductRowForm.price_tax_included) }}
+            </div>
+          </div>
+        </div>
+
+        {% if addProductRowForm.addShipment is defined %}
+          <div class="form-group">
+            {{ form_label(addProductRowForm.addShipment, null, {
+              label_attr: {class: 'form-control-label'}
+            }) }}
+            {{ form_widget(addProductRowForm.addShipment) }}
+          </div>
+        {% endif %}
+
+        <div class="form-group">
+          <label class="form-control-label">
+            {{ 'Quantity'|trans({}, 'Admin.Global') }}
+          </label>
+          {{ form_widget(addProductRowForm.quantity) }}
+        </div>
+
+        {% if orderForViewing.hasInvoice() %}
+        <div class="form-group">
+          <label class="form-control-label">
+            {{ 'Invoice'|trans({}, 'Admin.Global') }}
+          </label>
+          {{ form_widget(addProductRowForm.invoice) }}
+        </div>
+        {% endif %}
+
+      </div>
+
+      <div class="modal-footer shipment-form__footer">
+        <button type="button" class="btn btn-outline-secondary" data-dismiss="modal">
+          {{ 'Cancel'|trans({}, 'Admin.Actions') }}
+        </button>
+
+        <button type="submit" class="btn btn-primary" id="add_product_row_add" data-order-id="{{ orderForViewing.id }}">
+          {{ 'Add'|trans({}, 'Admin.Actions') }}
+        </button>
+      </div>
+
+      {{ form_end(addProductRowForm, {render_rest: false}) }}
+
+    </div>
   </div>
 </div>

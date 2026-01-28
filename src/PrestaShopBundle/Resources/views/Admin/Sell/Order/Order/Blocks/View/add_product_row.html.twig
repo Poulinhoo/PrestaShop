@@ -23,7 +23,7 @@
  * @license   https://opensource.org/licenses/OSL-3.0 Open Software License (OSL 3.0)
  * #}
 
-<tr id="addProductTableRow" class="add-product d-none" data-is-order-tax-included="{{ orderForViewing.isTaxIncluded }}">
+{# <tr id="addProductTableRow" class="add-product d-none" data-is-order-tax-included="{{ orderForViewing.isTaxIncluded }}">
   <td colspan="2" class="pr-2">
     {{ form_row(addProductRowForm.product_id) }}
     {{ form_row(addProductRowForm.tax_rate) }}
@@ -79,8 +79,8 @@
       {{ form_row(addProductRowForm.add) }}
     </div>
   </td>
-</tr>
-<tr id="addProductNewInvoiceInfo" class="d-none">
+</tr> #}
+{# <tr id="addProductNewInvoiceInfo" class="d-none">
   <td colspan="12">
     <div>
       <h4>{{ 'New invoice information'|trans({}, 'Admin.Orderscustomers.Feature') }}</h4>
@@ -88,4 +88,4 @@
       {{ form_row(addProductRowForm.free_shipping) }}
     </div>
   </td>
-</tr>
+</tr> #}

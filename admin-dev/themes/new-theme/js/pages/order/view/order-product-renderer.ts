@@ -40,11 +40,12 @@ export default class OrderProductRenderer {
     if ($productRow.length > 0) {
       $productRow.html($(newRow).html());
     } else {
-      $(OrderViewPageMap.productAddRow).before(
-        $(newRow)
-          .hide()
-          .fadeIn(),
-      );
+      $(OrderViewPageMap.productAddModal).hide();
+      // $(OrderViewPageMap.productAddRow).before(
+      //   $(newRow)
+      //     .hide()
+      //     .fadeIn(),
+      // );
     }
   }
 
@@ -77,13 +78,14 @@ export default class OrderProductRenderer {
       isOrderTaxIncluded,
     });
     $(OrderViewPageMap.productAddActionBtn).addClass('d-none');
-    $(OrderViewPageMap.productAddRow).addClass('d-none');
+    // $(OrderViewPageMap.productAddRow).addClass('d-none');
+
   }
 
   moveProductsPanelToModificationPosition(scrollTarget = 'body'): void {
     $(OrderViewPageMap.productActionBtn).addClass('d-none');
     $(
-      `${OrderViewPageMap.productAddActionBtn}, ${OrderViewPageMap.productAddRow}`,
+      `${OrderViewPageMap.productAddActionBtn}`,
     ).removeClass('d-none');
     this.moveProductPanelToTop(scrollTarget);
   }
@@ -92,7 +94,7 @@ export default class OrderProductRenderer {
     this.resetAllEditRows();
     $(
       /* eslint-disable-next-line max-len */
-      `${OrderViewPageMap.productAddActionBtn}, ${OrderViewPageMap.productAddRow}, ${OrderViewPageMap.productActionBtn}`,
+      `${OrderViewPageMap.productAddActionBtn}, ${OrderViewPageMap.productActionBtn}`,
     ).addClass('d-none');
     this.moveProductPanelToTop();
   }
@@ -111,8 +113,8 @@ export default class OrderProductRenderer {
     $modificationPosition.removeClass('d-none');
 
     // Show column location & refunded
-    this.toggleColumn(OrderViewPageMap.productsCellLocation);
-    this.toggleColumn(OrderViewPageMap.productsCellRefunded);
+    // this.toggleColumn(OrderViewPageMap.productsCellLocation);
+    // this.toggleColumn(OrderViewPageMap.productsCellRefunded);
 
     // Show all rows, hide pagination controls
     const $rows = $(OrderViewPageMap.productsTable).find(
