@@ -1090,9 +1090,12 @@ class HookCore extends ObjectModel
                     continue;
                 }
 
-                // If we are in the backoffice, we check if the current employee has view rights for this module
-                if (
-                    Validate::isLoadedObject($context->employee)
+                /*
+                 * Next, we check employee permissions in backoffice - we check for 'view' permission on the given module.
+                 * We only do this for display hooks, other hooks are not concerned by this check and should be always executed.
+                 */
+                if (Hook::isDisplayHookName($registeredHookName)
+                    && Validate::isLoadedObject($context->employee)
                     && !Module::getPermissionStatic(
                         $hookRegistration['id_module'],
                         'view',
