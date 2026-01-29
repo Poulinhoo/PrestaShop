@@ -50,18 +50,13 @@ class PreferencesType extends TranslatorAwareType
     private $requestStack;
 
     /**
-     * @var bool
-     */
-    private $featureFlag;
-
-    /**
      * @param TranslatorInterface $translator
      * @param array $locales
      * @param ConfigurationInterface $configuration
      * @param bool $isShopFeatureEnabled
      * @param bool $isSingleShopContext
      * @param bool $isAllShopContext
-     * @param bool $featureFlag
+     * @param FeatureFlagStateCheckerInterface $featureFlag
      */
     public function __construct(
         RequestStack $requestStack,
@@ -71,7 +66,7 @@ class PreferencesType extends TranslatorAwareType
         bool $isShopFeatureEnabled,
         bool $isSingleShopContext,
         bool $isAllShopContext,
-        FeatureFlagStateCheckerInterface $featureFlag
+        private readonly FeatureFlagStateCheckerInterface $featureFlag,
     ) {
         parent::__construct($translator, $locales);
 
@@ -80,7 +75,6 @@ class PreferencesType extends TranslatorAwareType
         $this->isAllShopContext = $isAllShopContext;
         $this->configuration = $configuration;
         $this->requestStack = $requestStack;
-        $this->featureFlag = $featureFlag;
     }
 
     /**

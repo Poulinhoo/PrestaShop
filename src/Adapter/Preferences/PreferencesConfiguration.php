@@ -24,12 +24,12 @@ class PreferencesConfiguration implements DataConfigurationInterface
     /**
      * @var Configuration
      */
-    //    private $configuration;
-    //
-    //    /**
-    //     * @var EmployeeContext
-    //     */
-    //    private $employeeContext;
+    private $configuration;
+
+    /**
+     * @var EmployeeContext
+     */
+    private $employeeContext;
 
     public function __construct(
         Configuration $configuration,
@@ -104,7 +104,7 @@ class PreferencesConfiguration implements DataConfigurationInterface
 
         if ($b2cChanged || $b2bChanged) {
             $employee = $this->employeeContext->getEmployee();
-            $employeeId = $employee ? (int) $employee->getId() : 0;
+            $employeeId = (int) $employee?->getId();
 
             $payload = [
                 'employee_id' => $employeeId,
