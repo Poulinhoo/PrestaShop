@@ -18,7 +18,7 @@ enum SwitchContainer {
   B2B,
 }
 
-class ShopModes {
+class Preferences {
   private readonly b2cContainer: HTMLElement | null;
   private readonly b2bContainer: HTMLElement | null;
   private readonly b2cInputs: HTMLInputElement[];
@@ -136,5 +136,5 @@ class ShopModes {
 }
 
 $(() => {
-  new ShopModes();
+  new Preferences();
 });

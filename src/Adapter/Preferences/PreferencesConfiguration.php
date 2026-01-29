@@ -10,6 +10,9 @@ use PrestaShop\PrestaShop\Adapter\Configuration;
 use PrestaShop\PrestaShop\Core\Configuration\DataConfigurationInterface;
 use PrestaShop\PrestaShop\Core\Http\CookieOptions;
 use PrestaShop\PrestaShop\Core\Context\EmployeeContext;
+use PrestaShop\PrestaShop\Core\Feature\B2CModeFeature;
+use PrestaShop\PrestaShop\Core\Feature\B2BModeFeature;
+use PrestaShopBundle\Form\Admin\Configure\ShopParameters\General\PreferencesType;
 
 /**
  * This class will provide Shop Preferences configuration.
@@ -19,12 +22,12 @@ class PreferencesConfiguration implements DataConfigurationInterface
     /**
      * @var Configuration
      */
-    private $configuration;
-    
-    /**
-     * @var EmployeeContext
-     */
-    private $employeeContext;
+//    private $configuration;
+//    
+//    /**
+//     * @var EmployeeContext
+//     */
+//    private $employeeContext;
 
     public function __construct(
         Configuration $configuration,
@@ -42,8 +45,8 @@ class PreferencesConfiguration implements DataConfigurationInterface
         return [
             'enable_ssl' => $this->configuration->getBoolean('PS_SSL_ENABLED'),
             'enable_token' => $this->configuration->getBoolean('PS_TOKEN_ENABLE'),
-            'enable_b2c_mode' => $this->configuration->getBoolean('PS_B2C_MODE_ENABLE'),
-            'enable_b2b_mode' => $this->configuration->getBoolean('PS_B2B_MODE_ENABLE'),
+            PreferencesType::ENABLE_B2C_MODE => $this->configuration->getBoolean(B2CModeFeature::CONFIGURATION_NAME),
+            PreferencesType::ENABLE_B2B_MODE => $this->configuration->getBoolean(B2BModeFeature::CONFIGURATION_NAME),
             'allow_html_iframes' => $this->configuration->getBoolean('PS_ALLOW_HTML_IFRAME'),
             'use_htmlpurifier' => $this->configuration->getBoolean('PS_USE_HTMLPURIFIER'),
             'price_round_mode' => $this->configuration->get('PS_PRICE_ROUND_MODE'),
@@ -80,8 +83,8 @@ class PreferencesConfiguration implements DataConfigurationInterface
             ];
         }
 
-        $newB2c = (bool) $configuration['enable_b2c_mode'];
-        $newB2b = (bool) $configuration['enable_b2b_mode'];
+        $newB2c = (bool) $configuration[PreferencesType::ENABLE_B2C_MODE];
+        $newB2b = (bool) $configuration[PreferencesType::ENABLE_B2B_MODE];
         
         if (!$newB2c && !$newB2b) {
             return [[
@@ -91,8 +94,8 @@ class PreferencesConfiguration implements DataConfigurationInterface
             ]];
         }
         
-        $oldB2c = $this->configuration->getBoolean('PS_B2C_MODE_ENABLE');
-        $oldB2b = $this->configuration->getBoolean('PS_B2B_MODE_ENABLE');
+        $oldB2c = $this->configuration->getBoolean(PreferencesType::ENABLE_B2C_MODE);
+        $oldB2b = $this->configuration->getBoolean(PreferencesType::ENABLE_B2B_MODE);
 
         $b2cChanged = ($oldB2c !== $newB2c);
         $b2bChanged = ($oldB2b !== $newB2b);
@@ -108,10 +111,10 @@ class PreferencesConfiguration implements DataConfigurationInterface
             ];
 
             if ($b2cChanged) {
-                $payload['changes']['PS_B2C_MODE_ENABLE'] = ['old' => $oldB2c ? 1 : 0, 'new' => $newB2c ? 1 : 0];
+                $payload['changes'][PreferencesType::ENABLE_B2C_MODE] = ['old' => $oldB2c ? 1 : 0, 'new' => $newB2c ? 1 : 0];
             }
             if ($b2bChanged) {
-                $payload['changes']['PS_B2B_MODE_ENABLE'] = ['old' => $oldB2b ? 1 : 0, 'new' => $newB2b ? 1 : 0];
+                $payload['changes'][PreferencesType::ENABLE_B2B_MODE] = ['old' => $oldB2b ? 1 : 0, 'new' => $newB2b ? 1 : 0];
             }
 
             \PrestaShopLogger::addLog(
@@ -126,8 +129,8 @@ class PreferencesConfiguration implements DataConfigurationInterface
 
         $this->configuration->set('PS_SSL_ENABLED', $configuration['enable_ssl']);
         $this->configuration->set('PS_TOKEN_ENABLE', $configuration['enable_token']);
-        $this->configuration->set('PS_B2C_MODE_ENABLE', $configuration['enable_b2c_mode']);
-        $this->configuration->set('PS_B2B_MODE_ENABLE', $configuration['enable_b2b_mode']);
+        $this->configuration->set(B2CModeFeature::CONFIGURATION_NAME, $configuration[PreferencesType::ENABLE_B2C_MODE]);
+        $this->configuration->set(B2BModeFeature::CONFIGURATION_NAME, $configuration[PreferencesType::ENABLE_B2B_MODE]);
         $this->configuration->set('PS_ALLOW_HTML_IFRAME', $configuration['allow_html_iframes']);
         $this->configuration->set('PS_USE_HTMLPURIFIER', $configuration['use_htmlpurifier']);
         $this->configuration->set('PS_PRICE_ROUND_MODE', $configuration['price_round_mode']);
@@ -161,8 +164,8 @@ class PreferencesConfiguration implements DataConfigurationInterface
         return isset(
             $configuration['enable_ssl'],
             $configuration['enable_token'],
-            $configuration['enable_b2c_mode'],
-            $configuration['enable_b2b_mode'],
+            $configuration[PreferencesType::ENABLE_B2C_MODE],
+            $configuration[PreferencesType::ENABLE_B2B_MODE],
             $configuration['allow_html_iframes'],
             $configuration['use_htmlpurifier'],
             $configuration['price_round_mode'],

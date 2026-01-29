@@ -15,8 +15,6 @@ use Symfony\Component\Form\FormBuilderInterface;
 use Symfony\Component\HttpFoundation\RequestStack;
 use Symfony\Component\OptionsResolver\OptionsResolver;
 use Symfony\Contracts\Translation\TranslatorInterface;
-use Symfony\Component\Security\Core\Authorization\AuthorizationCheckerInterface;
-use PrestaShop\PrestaShop\Core\Security\Permission;
 use PrestaShop\PrestaShop\Core\FeatureFlag\FeatureFlagStateCheckerInterface;
 
 /**
@@ -25,6 +23,8 @@ use PrestaShop\PrestaShop\Core\FeatureFlag\FeatureFlagStateCheckerInterface;
  */
 class PreferencesType extends TranslatorAwareType
 {
+    public const ENABLE_B2B_MODE = 'enable_b2b_mode';
+    public const ENABLE_B2C_MODE = 'enable_b2c_mode';
     /**
      * @var bool
      */
@@ -49,8 +49,9 @@ class PreferencesType extends TranslatorAwareType
      */
     private $requestStack;
     
-    private $authorizationChecker;
-    
+    /**
+     * @var bool
+     */
     private $featureFlag;
 
     /**
@@ -67,7 +68,6 @@ class PreferencesType extends TranslatorAwareType
         TranslatorInterface $translator,
         array $locales,
         ConfigurationInterface $configuration,
-        AuthorizationCheckerInterface $authorizationChecker,
         bool $isShopFeatureEnabled,
         bool $isSingleShopContext,
         bool $isAllShopContext,
@@ -80,7 +80,6 @@ class PreferencesType extends TranslatorAwareType
         $this->isAllShopContext = $isAllShopContext;
         $this->configuration = $configuration;
         $this->requestStack = $requestStack;
-        $this->authorizationChecker = $authorizationChecker;
         $this->featureFlag = $featureFlag;
     }
 
@@ -90,12 +89,6 @@ class PreferencesType extends TranslatorAwareType
     public function buildForm(FormBuilderInterface $builder, array $options)
     {
         $configuration = $this->configuration;
-        
-        $currentLegacyController = $this->requestStack->getCurrentRequest()->attributes->get('_legacy_controller');
-        $currentEmployeeHasNecessaryRights = $this->authorizationChecker->isGranted(
-            Permission::UPDATE,
-            $currentLegacyController
-        );
         
         $showB2bToggles = $this->featureFlag->isEnabled('improved_b2b');
         
@@ -124,17 +117,15 @@ class PreferencesType extends TranslatorAwareType
         
         if ($showB2bToggles) {
             $builder
-                ->add('enable_b2c_mode', SwitchType::class, [
-                    'disabled' => !$currentEmployeeHasNecessaryRights,
+                ->add(self::ENABLE_B2C_MODE, SwitchType::class, [
                     'label' => $this->trans('Enable b2c mode (by default)', 'Admin.Shopparameters.Feature'),
                     'help' => $this->trans(
                         'The B2c model allows a client to order for themselves',
                         'Admin.Shopparameters.Help'
                     ),
                 ])
-                ->add('enable_b2b_mode', SwitchType::class, [
-                    'disabled' => !$currentEmployeeHasNecessaryRights,
-                    'label' => $this->trans('Enable improved b2b mode', 'Admin.Shopparameters.Feature'),
+                ->add(self::ENABLE_B2B_MODE, SwitchType::class, [
+                    'label' => $this->trans('Enable b2b mode', 'Admin.Shopparameters.Feature'),
                     'help' => $this->trans(
                         'The B2B model allows a client to order for different business entities.',
                         'Admin.Shopparameters.Help'
