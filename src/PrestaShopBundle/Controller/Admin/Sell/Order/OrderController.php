@@ -667,10 +667,10 @@ class OrderController extends PrestaShopAdminController
     }
 
     #[AdminSecurity("is_granted('update', 'AdminOrders')", redirectRoute: 'admin_orders_view', redirectQueryParamsToKeep: ['orderId'], message: 'You do not have permission to edit this.')]
-    public function getAddProductForm(int $orderId): Response
+    public function getAddProductForm(int $orderId, CurrencyDataProvider $currencyDataProvider): Response
     {
         $orderForViewing = $this->dispatchQuery(new GetOrderForViewing($orderId, QuerySorting::DESC));
-        $currency = Currency::getCurrency($orderForViewing->getCurrencyId());
+        $currency = $currencyDataProvider->getCurrencyById($orderForViewing->getCurrencyId());
 
         $form = $this->createForm(AddProductRowType::class, [], [
             'order_id' => $orderId,

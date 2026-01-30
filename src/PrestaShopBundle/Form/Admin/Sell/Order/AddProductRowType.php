@@ -86,7 +86,7 @@ class AddProductRowType extends TranslatorAwareType
                     'class' => 'col-sm-12',
                     'autocomplete' => 'off',
                     'placeholder' => $this->trans('Search for a product', 'Admin.Orderscustomers.Feature'),
-                    'data-currency' => $options['currency']['id_currency'],
+                    'data-currency' => $options['currency']->id,
                     'data-order' => $options['order_id'],
                 ],
             ])
@@ -97,14 +97,14 @@ class AddProductRowType extends TranslatorAwareType
             ])
             ->add('price_tax_excluded', MoneyType::class, [
                 'label' => $this->trans('tax excl.', 'Admin.Global'),
-                'currency' => $options['currency']['iso_code'],
+                'currency' => $options['currency']->iso_code,
                 'attr' => [
                     'class' => 'form-control',
                 ],
             ])
             ->add('price_tax_included', MoneyType::class, [
                 'label' => $this->trans('tax incl.', 'Admin.Global'),
-                'currency' => $options['currency']['iso_code'],
+                'currency' => $options['currency']->iso_code,
                 'attr' => [
                     'class' => 'form-control',
                 ],
@@ -160,7 +160,7 @@ class AddProductRowType extends TranslatorAwareType
                 'currency' => [],
             ])
             ->setAllowedTypes('order_id', ['int', 'null'])
-            ->setAllowedTypes('currency', ['array'])
+            ->setAllowedTypes('currency', ['object'])
         ;
     }
 }
