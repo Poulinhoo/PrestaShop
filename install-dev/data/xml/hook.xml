@@ -5638,5 +5638,30 @@
       <title>Action after initializing context currency</title>
       <description>Allows modules to modify the context currency after it has been initialized.</description>
     </hook>
+    <hook id="actionFacetedSearchSetSupportedControllers">
+      <name>actionFacetedSearchSetSupportedControllers</name>
+      <title/>
+      <description/>
+    </hook>
+    <hook id="actionFacetedSearchFilters">
+      <name>actionFacetedSearchFilters</name>
+      <title/>
+      <description/>
+    </hook>
+    <hook id="actionMainMenuModifier">
+      <name>actionMainMenuModifier</name>
+      <title/>
+      <description/>
+    </hook>
+    <hook id="actionFacetedSearchCacheKeyGeneration">
+      <name>actionFacetedSearchCacheKeyGeneration</name>
+      <title/>
+      <description/>
+    </hook>
+    <hook id="gSitemapAppendUrls">
+      <name>gSitemapAppendUrls</name>
+      <title/>
+      <description/>
+    </hook>
   </entities>
 </entity_hook>

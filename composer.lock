@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "3d51d2e720417b2662928b43e3a23ad7",
+    "content-hash": "90d647f23adfcfd08405108bfe8913fd",
     "packages": [
         {
             "name": "api-platform/core",
@@ -4662,16 +4662,16 @@
         },
         {
             "name": "prestashop/classic",
-            "version": "3.0.5",
+            "version": "3.1.0",
             "source": {
                 "type": "git",
                 "url": "https://github.com/PrestaShop/classic-theme.git",
-                "reference": "09a8934bcb5e8f0cc0a3e234d5e9b18a61c27ec2"
+                "reference": "9af074d6cdbb8002323780e85b11e30d210f002b"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/PrestaShop/classic-theme/zipball/09a8934bcb5e8f0cc0a3e234d5e9b18a61c27ec2",
-                "reference": "09a8934bcb5e8f0cc0a3e234d5e9b18a61c27ec2",
+                "url": "https://api.github.com/repos/PrestaShop/classic-theme/zipball/9af074d6cdbb8002323780e85b11e30d210f002b",
+                "reference": "9af074d6cdbb8002323780e85b11e30d210f002b",
                 "shasum": ""
             },
             "require-dev": {
@@ -4696,9 +4696,9 @@
             "description": "Classic theme for develop PrestaShop version",
             "support": {
                 "issues": "https://github.com/PrestaShop/classic-theme/issues",
-                "source": "https://github.com/PrestaShop/classic-theme/tree/3.0.5"
+                "source": "https://github.com/PrestaShop/classic-theme/tree/3.1.0"
             },
-            "time": "2025-12-15T16:49:50+00:00"
+            "time": "2026-01-16T10:02:47+00:00"
         },
         {
             "name": "prestashop/contactform",
@@ -5208,16 +5208,16 @@
         },
         {
             "name": "prestashop/ps_apiresources",
-            "version": "dev-add-combinations-endpoint",
+            "version": "v0.3.0",
             "source": {
                 "type": "git",
-                "url": "https://github.com/sebajps/ps_apiresources.git",
-                "reference": "86e47474aa9004dfeaf7b726bfb192e66ab15779"
+                "url": "https://github.com/PrestaShop/ps_apiresources.git",
+                "reference": "af1b194acca43dc48d932daee4b9e2f908177ad4"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/sebajps/ps_apiresources/zipball/86e47474aa9004dfeaf7b726bfb192e66ab15779",
-                "reference": "86e47474aa9004dfeaf7b726bfb192e66ab15779",
+                "url": "https://api.github.com/repos/PrestaShop/ps_apiresources/zipball/af1b194acca43dc48d932daee4b9e2f908177ad4",
+                "reference": "af1b194acca43dc48d932daee4b9e2f908177ad4",
                 "shasum": ""
             },
             "require": {
@@ -5281,9 +5281,10 @@
             "description": "PrestaShop - API Resources",
             "homepage": "https://github.com/PrestaShop/ps_apiresources",
             "support": {
-                "source": "https://github.com/sebajps/ps_apiresources/tree/add-combinations-endpoint"
+                "source": "https://github.com/PrestaShop/ps_apiresources/tree/v0.3.0",
+                "issues": "https://github.com/PrestaShop/ps_apiresources/issues"
             },
-            "time": "2026-01-21T07:13:47+00:00"
+            "time": "2026-01-22T10:05:01+00:00"
         },
         {
             "name": "prestashop/ps_banner",
@@ -6002,16 +6003,16 @@
         },
         {
             "name": "prestashop/ps_facetedsearch",
-            "version": "v4.0.2",
+            "version": "v4.0.3",
             "source": {
                 "type": "git",
                 "url": "https://github.com/PrestaShop/ps_facetedsearch.git",
-                "reference": "8ebc5f07be387e378baf907a02f53f1496e6347b"
+                "reference": "bd9f09e81d1d49a936b4c0c3fa6b7e846bc53e76"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/PrestaShop/ps_facetedsearch/zipball/8ebc5f07be387e378baf907a02f53f1496e6347b",
-                "reference": "8ebc5f07be387e378baf907a02f53f1496e6347b",
+                "url": "https://api.github.com/repos/PrestaShop/ps_facetedsearch/zipball/bd9f09e81d1d49a936b4c0c3fa6b7e846bc53e76",
+                "reference": "bd9f09e81d1d49a936b4c0c3fa6b7e846bc53e76",
                 "shasum": ""
             },
             "require": {
@@ -6047,9 +6048,10 @@
             "description": "PrestaShop module ps_facetedsearch",
             "homepage": "https://github.com/PrestaShop/ps_facetedsearch",
             "support": {
-                "source": "https://github.com/PrestaShop/ps_facetedsearch/tree/v4.0.2"
+                "issues": "https://github.com/PrestaShop/ps_facetedsearch/issues",
+                "source": "https://github.com/PrestaShop/ps_facetedsearch/tree/v4.0.3"
             },
-            "time": "2025-11-21T13:36:43+00:00"
+            "time": "2025-12-31T13:27:28+00:00"
         },
         {
             "name": "prestashop/ps_faviconnotificationbo",
@@ -18248,9 +18250,7 @@
     ],
     "aliases": [],
     "minimum-stability": "dev",
-    "stability-flags": {
-        "prestashop/ps_apiresources": 20
-    },
+    "stability-flags": {},
     "prefer-stable": true,
     "prefer-lowest": false,
     "platform": {
@@ -18267,9 +18267,9 @@
         "ext-simplexml": "*",
         "ext-zip": "*"
     },
-    "platform-dev": [],
+    "platform-dev": {},
     "platform-overrides": {
         "php": "8.1.0"
     },
-    "plugin-api-version": "2.2.0"
+    "plugin-api-version": "2.6.0"
 }

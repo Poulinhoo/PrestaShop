@@ -58,7 +58,7 @@
         "prestashop/blockreassurance": "^5",
         "prestashop/blockwishlist": "^3.0",
         "prestashop/circuit-breaker": "^4.0",
-        "prestashop/classic": "^3",
+        "prestashop/classic": "~3.1.0",
         "prestashop/contactform": "^4",
         "prestashop/dashactivity": "^2",
         "prestashop/dashgoals": "^2",
@@ -71,7 +71,7 @@
         "prestashop/hummingbird": "^2.0",
         "prestashop/pagesnotfound": "^3",
         "prestashop/productcomments": "^8.0",
-        "prestashop/ps_apiresources": "dev-add-combinations-endpoint",
+        "prestashop/ps_apiresources": "^0.3",
         "prestashop/ps_banner": "^2",
         "prestashop/ps_bestsellers": "^1.0",
         "prestashop/ps_brandlist": "^1.0",
@@ -212,7 +212,7 @@
         },
         "ps_apiresources": {
             "type": "vcs",
-            "url": "https://github.com/sebajps/ps_apiresources"
+            "url": "https://github.com/PrestaShop/ps_apiresources"
         }
     },
     "minimum-stability": "dev",
