@@ -96,10 +96,6 @@ export default class OrderProductRenderer {
       .appendTo($modificationPosition);
     $modificationPosition.removeClass('d-none');
 
-    // Show column location & refunded
-    // this.toggleColumn(OrderViewPageMap.productsCellLocation);
-    // this.toggleColumn(OrderViewPageMap.productsCellRefunded);
-
     // Show all rows, hide pagination controls
     const $rows = $(OrderViewPageMap.productsTable).find(
       'tr[id^="orderProduct_"]',

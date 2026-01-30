@@ -79,15 +79,6 @@
       {{ form_widget(addProductForm.quantity) }}
     </div>
 
-        {% if addProductForm.addShipment is defined %}
-      <div class="form-group">
-        {{ form_label(addProductForm.addShipment, null, {
-          label_attr: {class: 'form-control-label'}
-        }) }}
-        {{ form_widget(addProductForm.addShipment) }}
-      </div>
-    {% endif %}
-
     {% if orderForViewing.hasInvoice() %}
     <div class="form-group">
       <label class="form-control-label">

@@ -135,7 +135,6 @@ export default class OrderViewPage {
     });
 
     EventEmitter.on(OrderViewEventMap.productAddedToOrder, (event) => {
-      // this.orderProductRenderer.resetAddRow();
       this.orderPricesRefresher.refreshProductPrices(event.orderId);
       this.orderPricesRefresher.refresh(event.orderId);
       this.refreshProductsList(event.orderId);
@@ -145,7 +144,6 @@ export default class OrderViewPage {
       this.orderDocumentsRefresher.refresh(event.orderId);
       this.orderShippingRefresher.refresh(event.orderId);
       this.orderProductRenderer.moveProductPanelToOriginalPosition();
-      // this.orderProductRenderer.moveProductPanelToOriginalPosition();
     });
   }
 
