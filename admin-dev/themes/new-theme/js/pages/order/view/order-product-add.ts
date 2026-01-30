@@ -118,6 +118,17 @@ export default class OrderProductAdd {
   }
 
   setupListener(): void {
+    const confirmCheckbox = document.querySelector<HTMLInputElement>(OrderViewPageMap.addProductConfirmNewInvoiceCheckbox);
+
+    if (confirmCheckbox) {
+      confirmCheckbox.addEventListener('change', () => {
+        const invoiceId = parseInt(<string> this.invoiceSelect.val(), 10);
+
+        if (invoiceId === 0) {
+          this.productAddActionBtn.prop('disabled', !confirmCheckbox.checked);
+        }
+      });
+    }
     this.combinationsSelect.off('change').on('change', (event) => {
       const taxExcluded = window.ps_round(
         $(event.currentTarget)
@@ -245,8 +256,17 @@ export default class OrderProductAdd {
 
     this.productAddActionBtn.off('click').on('click', (event: JQueryEventObject) => this.confirmNewInvoice(event),
     );
-    this.invoiceSelect.off('change').on('change', () => this.orderProductRenderer.toggleProductAddNewInvoiceInfo(),
-    );
+    this.invoiceSelect.off('change').on('change', () => {
+      this.orderProductRenderer.toggleProductAddNewInvoiceInfo();
+
+      const invoiceId = parseInt(<string> this.invoiceSelect.val(), 10);
+
+      if (invoiceId === 0 && confirmCheckbox) {
+        this.productAddActionBtn.prop('disabled', !confirmCheckbox.checked);
+      } else {
+        this.productAddActionBtn.prop('disabled', false);
+      }
+    });
   }
 
   setProduct(product: Record<string, any> | undefined): void {
@@ -317,7 +337,7 @@ export default class OrderProductAdd {
       data: params,
     }).then(
       (response) => {
-        this.closeAndResetAddProductModal();
+        $(OrderViewPageMap.productAddModal).modal('hide');
 
         EventEmitter.emit(OrderViewEventMap.productAddedToOrder, {
           orderId,
@@ -341,38 +361,14 @@ export default class OrderProductAdd {
     );
   }
 
-  closeAndResetAddProductModal(): void {
-    document.querySelector(OrderViewPageMap.productAddModal)?.classList.remove('show');
-    document.querySelector('.modal-backdrop')?.remove();
-    this.productAddActionBtn.prop('disabled', true);
-    this.productIdInput.val('');
-    this.combinationsSelect.val('');
-    this.priceTaxIncludedInput.val('');
-    this.priceTaxExcludedInput.val('');
-    this.quantityInput.val('');
-    this.invoiceSelect.val('');
-    this.freeShippingSelect.prop('checked', false);
-  }
-
   confirmNewInvoice(event: JQueryEventObject): void {
     const invoiceId = parseInt(<string> this.invoiceSelect.val(), 10);
-    const orderId = $(event.currentTarget).data('orderId');
+    const target = event.currentTarget as HTMLElement;
+    const orderId = Number(target.dataset.orderId);
 
     // Explicit 0 value is used when we the user selected New Invoice
     if (invoiceId === 0) {
-      const modal = new ConfirmModal(
-        {
-          id: 'modal-confirm-new-invoice',
-          confirmTitle: this.invoiceSelect.data('modal-title'),
-          confirmMessage: this.invoiceSelect.data('modal-body'),
-          confirmButtonLabel: this.invoiceSelect.data('modal-apply'),
-          closeButtonLabel: this.invoiceSelect.data('modal-cancel'),
-        },
-        () => {
-          this.confirmNewPrice(orderId, invoiceId);
-        },
-      );
-      modal.show();
+      this.confirmNewPrice(orderId, invoiceId);
     } else {
       // Last case is Nan, the selector is not even present, we simply add product and let the BO handle it
       this.addProduct(orderId);
@@ -388,6 +384,8 @@ export default class OrderProductAdd {
       <number>combinationId,
       invoiceId,
     );
+
+    console.log(productPriceMatch);
 
     if (productPriceMatch === 'invoice') {
       const modalEditPrice = new ConfirmModal(
@@ -405,42 +403,6 @@ export default class OrderProductAdd {
       modalEditPrice.show();
     } else {
       this.addProduct(orderId);
-    }
-  }
-
-  private get modal(): HTMLDivElement {
-    const modal = document.querySelector(OrderViewPageMap.productAddModal) as HTMLDivElement;
-
-    if (!modal) {
-      throw new Error('Add product modal not found');
-    }
-    return modal;
-  }
-
-  async getAddProductForm(): Promise<void> {
-    this.modal.dataset.state = 'loading';
-
-    try {
-      const response = await fetch(this.router.generate('admin_orders_get_add_product_form', {
-        orderId: 6,
-      }), {
-        method: 'GET',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-      });
-
-      if (!response.ok) {
-        throw new Error(await response.text());
-      }
-      const formContainer = document.querySelector(OrderViewPageMap.addProductModalContainer) as HTMLElement;
-      formContainer!.innerHTML = await response.text();
-
-      this.modal.dataset.state = 'loaded';
-
-      window.prestaShopUiKit.init();
-    } catch (error) {
-      console.error(error);
     }
   }
 }

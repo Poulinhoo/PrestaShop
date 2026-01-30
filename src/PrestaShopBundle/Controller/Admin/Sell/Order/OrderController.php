@@ -1093,8 +1093,6 @@ class OrderController extends PrestaShopAdminController
     public function addProductAction(
         int $orderId,
         Request $request,
-        #[Autowire(service: 'prestashop.core.form.identifiable_object.builder.cancel_product_form_builder')] FormBuilderInterface $formBuilder,
-        CurrencyDataProvider $currencyDataProvider
     ): Response {
         /** @var OrderForViewing $orderForViewing */
         $orderForViewing = $this->dispatchQuery(new GetOrderForViewing($orderId, QuerySorting::DESC));
@@ -1139,38 +1137,9 @@ class OrderController extends PrestaShopAdminController
             );
         }
 
-        /**
-         * Returning the products list view is not required since we reload the whole list
-         * We keep it for now to avoid Breaking Change
-         */
-        /** @var OrderForViewing $orderForViewing */
-        $orderForViewing = $this->dispatchQuery(new GetOrderForViewing($orderId, QuerySorting::DESC));
-
-        $updatedProducts = [];
-        foreach ($orderForViewing->getProducts()->getProducts() as $orderProductForViewing) {
-            $updatedProducts[$orderProductForViewing->getOrderDetailId()] = $orderProductForViewing;
-        }
-
-        $newProducts = array_diff_key($updatedProducts, $previousProducts);
-
-        $cancelProductForm = $formBuilder->getFormFor($orderId);
-
-        $orderCurrency = $currencyDataProvider->getCurrencyById($orderForViewing->getCurrencyId());
-
-        $addedGridRows = '';
-        foreach ($newProducts as $newProduct) {
-            $addedGridRows .= $this->renderView('@PrestaShop/Admin/Sell/Order/Order/Blocks/View/product.html.twig', [
-                'orderForViewing' => $orderForViewing,
-                'product' => $newProduct,
-                'isColumnLocationDisplayed' => $newProduct->getLocation() !== '',
-                'isColumnRefundedDisplayed' => $newProduct->getQuantityRefunded() > 0,
-                'isAvailableQuantityDisplayed' => (bool) $this->getConfiguration()->get('PS_STOCK_MANAGEMENT'),
-                'cancelProductForm' => $cancelProductForm->createView(),
-                'orderCurrency' => $orderCurrency,
-            ]);
-        }
-
-        return new Response($addedGridRows);
+        return $this->redirectToRoute('admin_orders_view', [
+            'orderId' => $orderId,
+        ]);
     }
 
     /**

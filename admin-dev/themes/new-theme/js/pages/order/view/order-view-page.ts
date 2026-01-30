@@ -220,7 +220,6 @@ export default class OrderViewPage {
       () => {
         this.getAddProductForm();
         this.orderProductRenderer.toggleProductAddNewInvoiceInfo();
-        // this.orderProductRenderer.moveProductsPanelToModificationPosition(OrderViewPageMap.productSearchInput);
       },
     );
     $(OrderViewPageMap.productCancelAddBtn).on(
@@ -407,10 +406,11 @@ export default class OrderViewPage {
 
   async getAddProductForm(): Promise<void> {
     this.modal.dataset.state = 'loading';
+    const orderId = Number(this.modal.dataset.orderId);
 
     try {
       const response = await fetch(this.router.generate('admin_orders_get_add_product_form', {
-        orderId: 6,
+        orderId,
       }), {
         method: 'GET',
         headers: {

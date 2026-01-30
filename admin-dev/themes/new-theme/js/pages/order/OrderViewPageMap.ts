@@ -88,6 +88,7 @@ export default {
   allMessagesList: '#all-messages-list',
   openAllMessagesBtn: '.js-open-all-messages-btn',
   addProductModalContainer: '#addProductFormContainer',
+  addProductConfirmNewInvoiceCheckbox: '[name="add_product_row[confirm_new_invoice]',
   // Products table elements
   productOriginalPosition: '#orderProductsOriginalPosition',
   productModificationPosition: '#orderProductsModificationPosition',

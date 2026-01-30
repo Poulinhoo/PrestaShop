@@ -136,6 +136,15 @@ class AddProductRowType extends TranslatorAwareType
                     ],
                 ]
             )
+            ->add('confirm_new_invoice', CheckboxType::class,
+                [
+                    'required' => false,
+                    'label' => $this->trans('I confirm the creation of a new invoice', 'Admin.Orderscustomers.Feature', []),
+                    'attr' => [
+                        'material_design' => true,
+                    ],
+                ]
+            )
         ;
     }
 
