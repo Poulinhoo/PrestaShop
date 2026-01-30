@@ -385,8 +385,6 @@ export default class OrderProductAdd {
       invoiceId,
     );
 
-    console.log(productPriceMatch);
-
     if (productPriceMatch === 'invoice') {
       const modalEditPrice = new ConfirmModal(
         {
