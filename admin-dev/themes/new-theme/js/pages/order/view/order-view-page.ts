@@ -426,8 +426,7 @@ export default class OrderViewPage {
       const orderAdd = new OrderProductAdd();
 
       orderAddAutocomplete.listenForSearch();
-      orderAddAutocomplete.onItemClickedCallback =
-        (product: Record<string, any> | undefined): void => orderAdd.setProduct(product);
+      orderAddAutocomplete.onItemClickedCallback = (p: Record<string, any> | undefined): void => orderAdd.setProduct(p);
       this.modal.dataset.state = 'loaded';
     } catch (error) {
       console.error(error);
