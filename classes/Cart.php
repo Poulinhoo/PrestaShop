@@ -828,10 +828,21 @@ class CartCore extends ObjectModel
         $pa_ids = [];
         $cart_base_product_quantity = [];
         if (is_iterable($products)) {
+            $customerGroupId = (int) (new Customer((int) $this->id_customer))->id_default_group;
             foreach ($products as $key => $product) {
                 $products_ids[] = $product['id_product'];
                 $pa_ids[] = $product['id_product_attribute'];
-                $specific_price = SpecificPrice::getSpecificPrice($product['id_product'], $this->id_shop, $this->id_currency, $id_country, $this->id_shop_group, $product['cart_quantity'], $product['id_product_attribute'], $this->id_customer, $this->id);
+                $specific_price = SpecificPrice::getSpecificPrice(
+                    $product['id_product'],
+                    $this->id_shop,
+                    $this->id_currency,
+                    $id_country,
+                    $customerGroupId,
+                    $product['cart_quantity'],
+                    $product['id_product_attribute'],
+                    $this->id_customer,
+                    $this->id
+                );
                 if ($specific_price) {
                     $reduction_type_row = ['reduction_type' => $specific_price['reduction_type']];
                 } else {
