@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "90d647f23adfcfd08405108bfe8913fd",
+    "content-hash": "a432fafce6e80f362185427cad5f4b8d",
     "packages": [
         {
             "name": "api-platform/core",
@@ -5208,16 +5208,16 @@
         },
         {
             "name": "prestashop/ps_apiresources",
-            "version": "v0.3.0",
+            "version": "dev-add-discountType-resource",
             "source": {
                 "type": "git",
                 "url": "https://github.com/PrestaShop/ps_apiresources.git",
-                "reference": "af1b194acca43dc48d932daee4b9e2f908177ad4"
+                "reference": "f7d72022404d9c03691e3d63bde7ccae2f26a04a"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/PrestaShop/ps_apiresources/zipball/af1b194acca43dc48d932daee4b9e2f908177ad4",
-                "reference": "af1b194acca43dc48d932daee4b9e2f908177ad4",
+                "url": "https://api.github.com/repos/PrestaShop/ps_apiresources/zipball/f7d72022404d9c03691e3d63bde7ccae2f26a04a",
+                "reference": "f7d72022404d9c03691e3d63bde7ccae2f26a04a",
                 "shasum": ""
             },
             "require": {
@@ -5281,10 +5281,10 @@
             "description": "PrestaShop - API Resources",
             "homepage": "https://github.com/PrestaShop/ps_apiresources",
             "support": {
-                "source": "https://github.com/PrestaShop/ps_apiresources/tree/v0.3.0",
+                "source": "https://github.com/PrestaShop/ps_apiresources/tree/add-discountType-resource",
                 "issues": "https://github.com/PrestaShop/ps_apiresources/issues"
             },
-            "time": "2026-01-22T10:05:01+00:00"
+            "time": "2026-01-28T06:41:30+00:00"
         },
         {
             "name": "prestashop/ps_banner",
@@ -18250,7 +18250,9 @@
     ],
     "aliases": [],
     "minimum-stability": "dev",
-    "stability-flags": {},
+    "stability-flags": {
+        "prestashop/ps_apiresources": 20
+    },
     "prefer-stable": true,
     "prefer-lowest": false,
     "platform": {
@@ -18271,5 +18273,5 @@
     "platform-overrides": {
         "php": "8.1.0"
     },
-    "plugin-api-version": "2.6.0"
+    "plugin-api-version": "2.9.0"
 }

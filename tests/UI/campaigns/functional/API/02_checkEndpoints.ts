@@ -204,6 +204,8 @@ describe('API : Check endpoints', async () => {
         // @todo: add tests
         '/customers: POST',
         // @todo: add tests
+        '/discount-types: GET',
+        // @todo: add tests
         '/discounts/bulk-delete: DELETE',
         // @todo: add tests
         '/discounts/bulk-update-status: PATCH',

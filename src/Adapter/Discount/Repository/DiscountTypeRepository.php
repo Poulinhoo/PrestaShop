@@ -41,6 +41,52 @@ class DiscountTypeRepository
     }
 
     /**
+     * Get all discount types grouped by discount type ID with translations
+     *
+     * @return array<int, array{id_cart_rule_type: int, discount_type: string, is_core: bool, enabled: bool, names: array<int, string>, descriptions: array<int, string>}>
+     */
+    public function getAllTypes(): array
+    {
+        $qb = $this->connection->createQueryBuilder();
+        $qb
+            ->select('crt.id_cart_rule_type', 'crt.discount_type', 'crt.is_core', 'crt.active', 'crtl.name', 'crtl.description', 'crtl.id_lang')
+            ->from($this->dbPrefix . 'cart_rule_type', 'crt')
+            ->leftJoin('crt', $this->dbPrefix . 'cart_rule_type_lang', 'crtl', 'crt.id_cart_rule_type = crtl.id_cart_rule_type')
+            ->orderBy('crt.id_cart_rule_type', 'ASC')
+            ->addOrderBy('crtl.id_lang', 'ASC')
+        ;
+
+        $allTypes = $qb->executeQuery()->fetchAllAssociative();
+        $groupedTypes = [];
+
+        foreach ($allTypes as $type) {
+            $discountTypeId = (int) $type['id_cart_rule_type'];
+            $langId = !empty($type['id_lang']) ? (int) $type['id_lang'] : null;
+
+            if (!isset($groupedTypes[$discountTypeId])) {
+                $groupedTypes[$discountTypeId] = [
+                    'id_cart_rule_type' => $discountTypeId,
+                    'discount_type' => $type['discount_type'],
+                    'is_core' => (bool) $type['is_core'],
+                    'enabled' => (bool) $type['active'],
+                    'names' => [],
+                    'descriptions' => [],
+                ];
+            }
+
+            // Add translations if available
+            if ($langId !== null && !empty($type['name'])) {
+                $groupedTypes[$discountTypeId]['names'][$langId] = $type['name'];
+            }
+            if ($langId !== null && !empty($type['description'])) {
+                $groupedTypes[$discountTypeId]['descriptions'][$langId] = $type['description'];
+            }
+        }
+
+        return $groupedTypes;
+    }
+
+    /**
      * Get all active discount types
      *
      * @return array
