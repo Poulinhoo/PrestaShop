@@ -93,7 +93,9 @@ final class AttributeGroupQueryBuilder extends AbstractDoctrineQueryBuilder
 
         $this->searchCriteriaApplicator
             ->applyPagination($searchCriteria, $qb)
-            ->applySorting($searchCriteria, $qb);
+            ->applySorting($searchCriteria, $qb)
+            ->applyDeterministicSorting($searchCriteria, $qb, 'ag', 'id_attribute_group')
+        ;
 
         return $qb;
     }

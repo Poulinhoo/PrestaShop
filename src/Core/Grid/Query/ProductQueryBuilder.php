@@ -126,6 +126,8 @@ class ProductQueryBuilder extends AbstractDoctrineQueryBuilder
             $this->searchCriteriaApplicator->applySorting($searchCriteria, $qb);
         }
 
+        $this->searchCriteriaApplicator->applyDeterministicSorting($searchCriteria, $qb, 'p', 'id_product');
+
         return $qb;
     }
 

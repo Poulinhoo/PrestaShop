@@ -82,6 +82,7 @@ final class CartRuleQueryBuilder extends AbstractDoctrineQueryBuilder
         $this->searchCriteriaApplicator
             ->applyPagination($searchCriteria, $qb)
             ->applySorting($searchCriteria, $qb)
+            ->applyDeterministicSorting($searchCriteria, $qb, 'cr', 'id_cart_rule')
         ;
 
         return $qb;

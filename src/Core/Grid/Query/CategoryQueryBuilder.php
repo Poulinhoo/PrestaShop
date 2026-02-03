@@ -116,7 +116,9 @@ final class CategoryQueryBuilder extends AbstractDoctrineQueryBuilder
 
         $this->searchCriteriaApplicator
             ->applyPagination($searchCriteria, $qb)
-            ->applySorting($searchCriteria, $qb);
+            ->applySorting($searchCriteria, $qb)
+            ->applyDeterministicSorting($searchCriteria, $qb, 'c', 'id_category')
+        ;
 
         return $qb;
     }
