@@ -1745,7 +1745,7 @@ class OrderController extends PrestaShopAdminController
      *
      * @return JsonResponse
      */
-    #[AdminSecurity("is_granted('create', request.get('_legacy_controller')) && is_granted('update', request.get('_legacy_controller'))", message: 'You do not have permission to perform this search.')]
+    #[AdminSecurity("is_granted('create', request.get('_legacy_controller')) || is_granted('update', request.get('_legacy_controller'))", message: 'You do not have permission to perform this search.')]
     public function searchProductsAction(Request $request): JsonResponse
     {
         try {
