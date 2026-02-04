@@ -225,6 +225,24 @@
   }
 }
 
+#addOrderProductModal {
+  // Default state
+  .modal-body {
+    display: none;
+  }
+
+  // Loaded state: show modal body, hide skeleton
+  &[data-state="loaded"] {
+    .modal-body {
+      display: block;
+    }
+
+    .skeleton-add-product-form {
+      display: none;
+    }
+  }
+}
+
 /* Skeleton Split Shipment Modal */
 #splitShipmentModal{
   // Hide loader if modal is not loading

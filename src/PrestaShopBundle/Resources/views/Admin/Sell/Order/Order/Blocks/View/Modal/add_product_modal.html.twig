@@ -45,6 +45,8 @@
       </div>
       <div class="modal-body" id="addProductFormContainer"></div>
 
+      {{ include('@PrestaShop/Admin/Sell/Order/Order/Blocks/View/Modal/Skeletons/add_product_skeleton.html.twig') }}
+
       <div class="modal-footer">
         <button type="button" class="btn btn-outline-secondary" data-dismiss="modal">
           {{ 'Cancel'|trans({}, 'Admin.Actions') }}
