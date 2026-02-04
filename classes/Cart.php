@@ -2143,13 +2143,13 @@ class CartCore extends ObjectModel
     }
 
     /**
+     * @deprecated since 9.1.0 - no longer used and will be removed
+     *
      * Get total in Cart using a tax calculation method.
      *
      * @param int $id_cart Cart ID
      *
      * @return string Formatted total amount in Cart
-     *
-     * @todo: What is this?
      */
     public static function getOrderTotalUsingTaxCalculationMethod($id_cart)
     {
@@ -2171,7 +2171,7 @@ class CartCore extends ObjectModel
      *                  - Cart::ONLY_PRODUCTS_WITHOUT_GIFTS
      * @param array $products
      * @param int $id_carrier
-     * @param bool $use_cache @deprecated
+     * @param bool $use_cache deprecated and has no effect
      * @param bool $keepOrderPrices When true use the Order saved prices instead of the most recent ones from catalog (if Order exists)
      *
      * @return float Order total
@@ -2384,6 +2384,8 @@ class CartCore extends ObjectModel
     }
 
     /**
+     * @deprecated since 9.1.0 - no longer used and will be removed
+     *
      * @return float
      */
     public function getDiscountSubtotalWithoutGifts($withTaxes = true)
@@ -4083,6 +4085,9 @@ class CartCore extends ObjectModel
     }
 
     /**
+     * @deprecated since 9.1.0 - used only by one core class and will be removed.
+     *             Use CartLazyArray as proper performant source of truth.
+     *
      * Return useful information about the cart for display purpose.
      * Products are splitted between paid ones and gift
      * Gift price and shipping (if shipping is free) are removed from Discounts
@@ -4101,6 +4106,9 @@ class CartCore extends ObjectModel
     }
 
     /**
+     * @deprecated since 9.1.0 - used only by one core class and will be removed.
+     *             Use CartLazyArray as proper performant source of truth.
+     *
      * Returns useful raw information about the cart.
      * Products, Discounts, Prices ... are returned in an array without any modification.
      *
@@ -5152,11 +5160,11 @@ class CartCore extends ObjectModel
      */
     public function getCartTotalPrice()
     {
-        $summary = $this->getSummaryDetails();
-
+        // Check if order exists for this cart
         $id_order = (int) Order::getIdByCartId($this->id);
         $order = new Order($id_order);
 
+        // And select appropriate tax display method
         if (Validate::isLoadedObject($order)) {
             $taxCalculationMethod = $order->getTaxCalculationMethod();
         } else {
@@ -5164,8 +5172,8 @@ class CartCore extends ObjectModel
         }
 
         return $taxCalculationMethod == PS_TAX_EXC ?
-            $summary['total_price_without_tax'] :
-            $summary['total_price'];
+            $this->getOrderTotal(false) :
+            $this->getOrderTotal(true);
     }
 
     /**

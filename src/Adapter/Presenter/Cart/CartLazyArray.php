@@ -107,7 +107,7 @@ class CartLazyArray extends AbstractLazyArray
         if ($this->shouldSeparateGifts) {
             $rawProducts = $this->cart->getProductsWithSeparatedGifts();
         } else {
-            $rawProducts = $this->cart->getProducts(true);
+            $rawProducts = $this->cart->getProducts();
         }
 
         /*
@@ -169,7 +169,7 @@ class CartLazyArray extends AbstractLazyArray
     {
         $subtotals = [];
         $totalCartAmount = $this->cart->getOrderTotal($this->cartPresenter->includeTaxes(), Cart::ONLY_PRODUCTS);
-        $total_discount = $this->cart->getDiscountSubtotalWithoutGifts($this->cartPresenter->includeTaxes());
+        $total_discount = $this->cart->getOrderTotal($this->cartPresenter->includeTaxes(), Cart::ONLY_DISCOUNTS);
         $subtotals['products'] = [
             'type' => 'products',
             'label' => $this->translator->trans('Subtotal', [], 'Shop.Theme.Checkout'),

@@ -93,7 +93,6 @@ final class GetCartForViewingHandler implements GetCartForViewingHandlerInterfac
         $context->customer = $customer;
 
         $products = $cart->getProducts();
-        $summary = $cart->getSummaryDetails();
 
         $id_order = (int) Order::getIdByCartId($cart->id);
         $order = new Order($id_order);
@@ -107,17 +106,17 @@ final class GetCartForViewingHandler implements GetCartForViewingHandlerInterfac
         }
 
         if ($tax_calculation_method == PS_TAX_EXC) {
-            $total_products = $summary['total_products'];
-            $total_discounts = $summary['total_discounts_tax_exc'];
-            $total_wrapping = $summary['total_wrapping_tax_exc'];
-            $total_price = $summary['total_price_without_tax'];
-            $total_shipping = $summary['total_shipping_tax_exc'];
+            $total_products = $cart->getOrderTotal(false, Cart::ONLY_PRODUCTS);
+            $total_discounts = $cart->getOrderTotal(false, Cart::ONLY_DISCOUNTS);
+            $total_wrapping = $cart->getOrderTotal(false, Cart::ONLY_WRAPPING);
+            $total_price = $cart->getOrderTotal(false);
+            $total_shipping = $cart->getTotalShippingCost(null, false);
         } else {
-            $total_products = $summary['total_products_wt'];
-            $total_discounts = $summary['total_discounts'];
-            $total_wrapping = $summary['total_wrapping'];
-            $total_price = $summary['total_price'];
-            $total_shipping = $summary['total_shipping'];
+            $total_products = $cart->getOrderTotal(true, Cart::ONLY_PRODUCTS);
+            $total_discounts = $cart->getOrderTotal(true, Cart::ONLY_DISCOUNTS);
+            $total_wrapping = $cart->getOrderTotal(true, Cart::ONLY_WRAPPING);
+            $total_price = $cart->getOrderTotal(true);
+            $total_shipping = $cart->getTotalShippingCost();
         }
 
         // Sort products by Reference ID (and if equals (like combination) by Supplier Reference)
