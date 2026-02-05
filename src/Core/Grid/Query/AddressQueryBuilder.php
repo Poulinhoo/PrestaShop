@@ -85,6 +85,7 @@ final class AddressQueryBuilder extends AbstractDoctrineQueryBuilder
         $this->searchCriteriaApplicator
             ->applyPagination($searchCriteria, $qb)
             ->applySorting($searchCriteria, $qb)
+            ->applyDeterministicSorting($searchCriteria, $qb, 'a', 'id_address')
         ;
 
         return $qb;

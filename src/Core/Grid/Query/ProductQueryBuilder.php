@@ -94,7 +94,7 @@ class ProductQueryBuilder extends AbstractDoctrineQueryBuilder
     {
         $qb = $this->getQueryBuilder($searchCriteria);
         $qb
-            ->addSelect('p.`id_product`, p.`reference`, p.`id_shop_default`')
+            ->addSelect('p.`id_product`, p.`reference`, p.`id_shop_default`, p.`product_type`')
             ->addSelect('ps.`price` AS `price_tax_excluded`, ps.`ecotax` AS `ecotax_tax_excluded`, ps.`id_tax_rules_group`, ps.`active`')
             ->addSelect('pl.`name`, pl.`link_rewrite`')
             ->addSelect('cl.`name` AS `category`')
@@ -125,6 +125,8 @@ class ProductQueryBuilder extends AbstractDoctrineQueryBuilder
             // Sort by position only works when we filter by category, so we need to be cautious and apply it only when the filter is present
             $this->searchCriteriaApplicator->applySorting($searchCriteria, $qb);
         }
+
+        $this->searchCriteriaApplicator->applyDeterministicSorting($searchCriteria, $qb, 'p', 'id_product');
 
         return $qb;
     }

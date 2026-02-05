@@ -85,6 +85,8 @@ class ProductStockInformation
      */
     private $availableDate;
 
+    private ?int $packQuantity;
+
     /**
      * @param int $packStockType
      * @param int $outOfStockType
@@ -96,6 +98,7 @@ class ProductStockInformation
      * @param array $localizedAvailableLaterLabels
      * @param string $location
      * @param DateTimeInterface|null $availableDate
+     * @param int|null $packQuantity
      */
     public function __construct(
         int $packStockType,
@@ -107,7 +110,8 @@ class ProductStockInformation
         array $localizedAvailableNowLabels,
         array $localizedAvailableLaterLabels,
         string $location,
-        ?DateTimeInterface $availableDate
+        ?DateTimeInterface $availableDate,
+        ?int $packQuantity = null,
     ) {
         $this->packStockType = $packStockType;
         $this->outOfStockType = $outOfStockType;
@@ -119,6 +123,7 @@ class ProductStockInformation
         $this->localizedAvailableNowLabels = $localizedAvailableNowLabels;
         $this->localizedAvailableLaterLabels = $localizedAvailableLaterLabels;
         $this->availableDate = $availableDate;
+        $this->packQuantity = $packQuantity;
     }
 
     /**
@@ -199,5 +204,15 @@ class ProductStockInformation
     public function getAvailableDate(): ?DateTimeInterface
     {
         return $this->availableDate;
+    }
+
+    /**
+     * Dynamic quantity of the pack based on its config and the quantity of its products
+     *
+     * @return int|null
+     */
+    public function getPackQuantity(): ?int
+    {
+        return $this->packQuantity;
     }
 }

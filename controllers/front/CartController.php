@@ -449,14 +449,24 @@ class CartControllerCore extends FrontController
              * No subtracting of quantity in the cart here.
              */
             $availableProductQuantity = Product::getQuantity($this->id_product, $this->id_product_attribute);
-            $this->errors[] = $this->trans(
-                'You can only buy %quantity% "%product%". Please adjust the quantity in your cart to continue.',
-                [
-                    '%product%' => $product->name,
-                    '%quantity%' => $availableProductQuantity,
-                ],
-                'Shop.Notifications.Error'
-            );
+            $productName = Product::getProductName($this->id_product, $this->id_product_attribute);
+
+            if ($availableProductQuantity > 0) {
+                $this->errors[] = $this->trans(
+                    'You can only buy %quantity% "%product%". Please adjust the quantity in your cart to continue.',
+                    [
+                        '%product%' => $productName,
+                        '%quantity%' => $availableProductQuantity,
+                    ],
+                    'Shop.Notifications.Error'
+                );
+            } else {
+                $this->errors[] = $this->trans(
+                    'This product (%product%) is no longer available.',
+                    ['%product%' => $productName],
+                    'Shop.Notifications.Error'
+                );
+            }
 
             return;
         }
@@ -538,14 +548,24 @@ class CartControllerCore extends FrontController
                  * No subtracting of quantity in the cart here.
                  */
                 $availableProductQuantity = Product::getQuantity($this->id_product, $this->id_product_attribute);
-                $this->{$ErrorKey}[] = $this->trans(
-                    'You can only buy %quantity% "%product%". Please adjust the quantity in your cart to continue.',
-                    [
-                        '%product%' => $product->name,
-                        '%quantity%' => $availableProductQuantity,
-                    ],
-                    'Shop.Notifications.Error'
-                );
+                $productName = Product::getProductName($this->id_product, $this->id_product_attribute);
+
+                if ($availableProductQuantity > 0) {
+                    $this->{$ErrorKey}[] = $this->trans(
+                        'You can only buy %quantity% "%product%". Please adjust the quantity in your cart to continue.',
+                        [
+                            '%product%' => $productName,
+                            '%quantity%' => $availableProductQuantity,
+                        ],
+                        'Shop.Notifications.Error'
+                    );
+                } else {
+                    $this->{$ErrorKey}[] = $this->trans(
+                        'This product (%product%) is no longer available.',
+                        ['%product%' => $productName],
+                        'Shop.Notifications.Error'
+                    );
+                }
             }
         }
 
@@ -669,11 +689,13 @@ class CartControllerCore extends FrontController
             return true;
         }
 
-        if ($product['active']) {
+        $productName = !empty($product['attributes']) ? $product['name'] . ' ' . $product['attributes'] : $product['name'];
+
+        if ($product['active'] && $product['quantity_available'] > 0) {
             return $this->trans(
                 'You can only buy %quantity% "%product%". Please adjust the quantity in your cart to continue.',
                 [
-                    '%product%' => $product['name'],
+                    '%product%' => $productName,
                     '%quantity%' => $product['quantity_available'],
                 ],
                 'Shop.Notifications.Error'
@@ -682,7 +704,7 @@ class CartControllerCore extends FrontController
 
         return $this->trans(
             'This product (%product%) is no longer available.',
-            ['%product%' => $product['name']],
+            ['%product%' => $productName],
             'Shop.Notifications.Error'
         );
     }

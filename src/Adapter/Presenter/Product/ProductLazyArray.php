@@ -439,14 +439,11 @@ class ProductLazyArray extends AbstractLazyArray
     public function getReferenceToDisplay()
     {
         $combinationData = $this->getCombinationSpecificData();
-        if (
-            isset($combinationData['reference'])
-            && !empty($combinationData['reference'])
-        ) {
+        if (!empty($combinationData['reference'])) {
             return $combinationData['reference'];
         }
 
-        if ('' !== $this->product['reference']) {
+        if (!empty($this->product['reference'])) {
             return $this->product['reference'];
         }
 
@@ -1332,10 +1329,6 @@ class ProductLazyArray extends AbstractLazyArray
         $show_availability = $show_price && $settings->stock_management_enabled;
         $this->product['show_availability'] = $show_availability;
 
-        if (!isset($product['quantity_wanted'])) {
-            $product['quantity_wanted'] = $this->getQuantityWanted();
-        }
-
         // Validate and format availability date
         $product['available_date'] = $this->prepareAvailabilityDate($product);
 
@@ -1362,12 +1355,14 @@ class ProductLazyArray extends AbstractLazyArray
             return;
         }
 
-        // Quantity available we will display is reduced by amount we want to add to cart
-        $availableQuantity = $product['quantity'] - $product['quantity_wanted'];
-        if (isset($product['stock_quantity'])) {
-            $availableQuantity =
-                $product['stock_quantity'] - $product['quantity_wanted'];
-        }
+        /*
+         * To define availabiity, we will subtract the stock quantity by the quantity the customer
+         * wants to add to cart. Since this class can be instantiated from multiple places, we need
+         * to make sure we use proper quantity key. Normally, it's 'quantity', but on cart page,
+         * it's 'stock_quantity'.
+         */
+        $stockQuantity = isset($product['stock_quantity']) ? $product['stock_quantity'] : $product['quantity'];
+        $availableQuantity = $stockQuantity - $this->getQuantityWanted();
 
         // Combination labels
         $combinationData = $this->getCombinationSpecificData();

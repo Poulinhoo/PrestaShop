@@ -96,6 +96,12 @@ final class SupplierQueryBuilder extends AbstractDoctrineQueryBuilder
             ->applyPagination($searchCriteria, $qb)
         ;
 
+        if ($isCountFilter) {
+            $this->searchCriteriaApplicator->applyDeterministicSorting($searchCriteria, $qb, 'subQuery', 'id_supplier');
+        } else {
+            $this->searchCriteriaApplicator->applyDeterministicSorting($searchCriteria, $qb, 's', 'id_supplier');
+        }
+
         return $qb;
     }
 

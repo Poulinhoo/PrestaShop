@@ -5462,8 +5462,14 @@ class ProductCore extends ObjectModel
             return array_merge($row, self::$productPropertiesCache[$cache_key]);
         }
 
+        /*
+         * Now, to get proper prices, we need to calculate them for a specific quantity, because
+         * there can be quantity discount. The variable to use is different for different contexts.
+         * If a specific quantity_wanted is set, we use it. Usually a product page.
+         * If cart_quantity is defined, we use it. Usually cart context.
+         * Otherwise, we use minimal_quantity, if nothing was passed - on listings.
+         */
         if (isset($row['quantity_wanted'])) {
-            // 'quantity_wanted' may very well be zero even if set
             $quantityToUseForPriceCalculations = max((int) $row['minimal_quantity'], (int) $row['quantity_wanted']);
         } elseif (isset($row['cart_quantity'])) {
             $quantityToUseForPriceCalculations = max((int) $row['minimal_quantity'], (int) $row['cart_quantity']);

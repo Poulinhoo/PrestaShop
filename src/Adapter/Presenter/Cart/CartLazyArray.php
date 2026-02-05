@@ -579,6 +579,7 @@ class CartLazyArray extends AbstractLazyArray
                 $rawProduct['total']
         );
 
+        // Pass the cart quantity as quantity wanted for proper price calculation
         $rawProduct['quantity_wanted'] = $rawProduct['cart_quantity'];
 
         $presenter = new ProductListingPresenter(

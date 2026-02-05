@@ -84,10 +84,10 @@ final class CustomerQueryBuilder extends AbstractDoctrineQueryBuilder
         $this->appendLastVisitQuery($searchQueryBuilder);
         $this->applySorting($searchQueryBuilder, $searchCriteria);
 
-        $this->criteriaApplicator->applyPagination(
-            $searchCriteria,
-            $searchQueryBuilder
-        );
+        $this->criteriaApplicator
+            ->applyPagination($searchCriteria, $searchQueryBuilder)
+            ->applyDeterministicSorting($searchCriteria, $searchQueryBuilder, 'c', 'id_customer')
+        ;
 
         return $searchQueryBuilder;
     }

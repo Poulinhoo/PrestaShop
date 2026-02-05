@@ -87,6 +87,7 @@ final class ManufacturerQueryBuilder extends AbstractDoctrineQueryBuilder
         $this->searchCriteriaApplicator
             ->applyPagination($searchCriteria, $qb)
             ->applySorting($searchCriteria, $qb)
+            ->applyDeterministicSorting($searchCriteria, $qb, 'm', 'id_manufacturer')
         ;
 
         return $qb;

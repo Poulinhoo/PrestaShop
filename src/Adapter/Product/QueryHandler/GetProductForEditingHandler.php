@@ -34,6 +34,7 @@ use PrestaShop\PrestaShop\Adapter\Category\Repository\CategoryRepository;
 use PrestaShop\PrestaShop\Adapter\Configuration;
 use PrestaShop\PrestaShop\Adapter\Product\Image\ProductImagePathFactory;
 use PrestaShop\PrestaShop\Adapter\Product\Image\Repository\ProductImageRepository;
+use PrestaShop\PrestaShop\Adapter\Product\Pack\Repository\ProductPackRepository;
 use PrestaShop\PrestaShop\Adapter\Product\Repository\ProductRepository;
 use PrestaShop\PrestaShop\Adapter\Product\SpecificPrice\Repository\SpecificPriceRepository;
 use PrestaShop\PrestaShop\Adapter\Product\Stock\Repository\StockAvailableRepository;
@@ -182,7 +183,8 @@ class GetProductForEditingHandler implements GetProductForEditingHandlerInterfac
         ProductImagePathFactory $productImageUrlFactory,
         SpecificPriceRepository $specificPriceRepository,
         Configuration $configuration,
-        CategoryDisplayNameBuilder $categoryDisplayNameBuilder
+        CategoryDisplayNameBuilder $categoryDisplayNameBuilder,
+        private ProductPackRepository $packRepository,
     ) {
         $this->numberExtractor = $numberExtractor;
         $this->productRepository = $productRepository;
@@ -209,10 +211,11 @@ class GetProductForEditingHandler implements GetProductForEditingHandlerInterfac
             $query->getProductId(),
             $query->getShopConstraint()
         );
+        $productType = $product->getProductType();
 
         return new ProductForEditing(
             (int) $product->id,
-            $product->getProductType(),
+            $productType,
             (bool) $product->active,
             $this->getCustomizationOptions($product),
             $this->getBasicInformation($product),
@@ -223,7 +226,7 @@ class GetProductForEditingHandler implements GetProductForEditingHandlerInterfac
             $this->getShippingInformation($product),
             $this->getSeoOptions($product),
             $this->getAttachments($query->getProductId()),
-            $this->getProductStockInformation($product),
+            $this->getProductStockInformation($product, $query->getShopConstraint()),
             $this->getVirtualProductFile($product),
             $this->getCover($query->getProductId(), $product->getShopId()),
             array_map(fn (ShopId $shopId) => $shopId->getValue(), $this->productRepository->getAssociatedShopIds($query->getProductId()))
@@ -508,16 +511,21 @@ class GetProductForEditingHandler implements GetProductForEditingHandlerInterfac
      * Returns the product stock infos, it's important that the Product is fetched with stock data
      *
      * @param Product $product
+     * @param ShopConstraint $shopConstraint
      *
      * @return ProductStockInformation
      */
-    private function getProductStockInformation(Product $product): ProductStockInformation
+    private function getProductStockInformation(Product $product, ShopConstraint $shopConstraint): ProductStockInformation
     {
         try {
             $stockAvailable = $this->stockAvailableRepository->getForProduct(new ProductId($product->id), new ShopId($product->getShopId()));
         } catch (StockAvailableNotFoundException) {
             $stockAvailable = $this->stockAvailableRepository->createStockAvailable(new ProductId($product->id), new ShopId($product->getShopId()));
         }
+
+        // Compute pack quantity based on its configuration
+        $shopId = $shopConstraint->getShopId() !== null ? $shopConstraint->getShopId() : new ShopId($product->getShopId());
+        $packQuantity = $this->packRepository->getDynamicPackQuantity(new ProductId((int) $product->id), $shopId);
 
         return new ProductStockInformation(
             (int) $product->pack_stock_type,
@@ -529,7 +537,8 @@ class GetProductForEditingHandler implements GetProductForEditingHandlerInterfac
             $product->available_now,
             $product->available_later,
             $stockAvailable->location,
-            DateTimeUtil::buildDateTimeOrNull($product->available_date)
+            DateTimeUtil::buildDateTimeOrNull($product->available_date),
+            $packQuantity,
         );
     }
 

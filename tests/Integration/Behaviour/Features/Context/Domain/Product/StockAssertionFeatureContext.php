@@ -422,6 +422,15 @@ class StockAssertionFeatureContext extends AbstractProductFeatureContext
         $this->assertBoolProperty($productForEditing, $data, 'low_stock_alert', $shopErrorMessage);
         $this->assertDateTimeProperty($productForEditing, $data, 'available_date', $shopErrorMessage);
 
+        if (isset($data['pack_quantity'])) {
+            if ($data['pack_quantity'] === '') {
+                Assert::assertNull($productForEditing->getStockInformation()->getPackQuantity(), 'invalid pack quantity, null expected');
+            } else {
+                Assert::assertEquals((int) $data['pack_quantity'], $productForEditing->getStockInformation()->getPackQuantity(), 'invalid pack quantity');
+            }
+            unset($data['pack_quantity']);
+        }
+
         // Assertions checking isset() can hide some errors if it doesn't find array key,
         // to make sure all provided fields were checked we need to unset every asserted field
         // and finally, if provided data is not empty, it means there are some unnasserted values left

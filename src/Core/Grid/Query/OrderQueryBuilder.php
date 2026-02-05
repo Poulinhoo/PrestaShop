@@ -105,6 +105,7 @@ final class OrderQueryBuilder implements DoctrineQueryBuilderInterface
 
         $this->criteriaApplicator
             ->applyPagination($searchCriteria, $qb)
+            ->applyDeterministicSorting($searchCriteria, $qb, 'o', 'id_order')
         ;
 
         return $qb;

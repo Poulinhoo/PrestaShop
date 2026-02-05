@@ -65,4 +65,21 @@ class ProductListingLazyArray extends ProductLazyArray
 
         return parent::shouldEnableAddToCartButton($product, $settings);
     }
+
+    /**
+     * Returns the quantity wanted value for products in listings. We have this specific implementation
+     * because in listings, the quantity wanted is not to be taken from the request directly.
+     * If a specific value was already provided, we use it. For example, in cart context.
+     *
+     * @return int Quantity wanted, usually 1, altered if needed, always a positive integer
+     */
+    #[LazyArrayAttribute(arrayAccess: true)]
+    public function getQuantityWanted()
+    {
+        if (empty($this->product['quantity_wanted'])) {
+            $this->product['quantity_wanted'] = $this->getQuantityRequired();
+        }
+
+        return $this->product['quantity_wanted'];
+    }
 }
