@@ -1,4 +1,5 @@
 <?php
+
 namespace Tests\Integration\PrestaShopBundle\Command;
 
 use Symfony\Bundle\FrameworkBundle\Console\Application;
@@ -23,7 +24,7 @@ class GenerateHtaccessCommandTest extends KernelTestCase
         self::bootKernel();
 
         // Temporary folder for output
-        $this->outputFile =_PS_ROOT_DIR_ . '/.htaccess';
+        $this->outputFile = _PS_ROOT_DIR_ . '/.htaccess';
         if ($this->fileSystem->exists($this->outputFile)) {
             $this->fileSystem->remove($this->outputFile);
         }
