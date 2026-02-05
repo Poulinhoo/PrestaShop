@@ -26,6 +26,8 @@
 
 namespace PrestaShopBundle\Entity;
 
+use Doctrine\Common\Collections\ArrayCollection;
+use Doctrine\Common\Collections\Collection;
 use Doctrine\ORM\Mapping as ORM;
 
 /**
@@ -54,7 +56,21 @@ class B2bRole
      */
     private string $role;
 
-    // Getters and setters
+    /**
+     * @ORM\OneToMany(targetEntity="PrestaShopBundle\Entity\BusinessEntityCustomerB2b", mappedBy="roleB2b")
+     */
+    private Collection $businessEntityCustomerB2bs;
+
+    /**
+     * @ORM\OneToMany(targetEntity="PrestaShopBundle\Entity\B2bRoleAuthorizationRole", mappedBy="role")
+     */
+    private Collection $b2bRoleAuthorizationRoles;
+
+    public function __construct()
+    {
+        $this->businessEntityCustomerB2bs = new ArrayCollection();
+        $this->b2bRoleAuthorizationRoles = new ArrayCollection(); // Initialisation de la collection
+    }
 
     public function getIdRole(): int
     {
@@ -69,6 +85,62 @@ class B2bRole
     public function setRole(string $role): self
     {
         $this->role = $role;
+
+        return $this;
+    }
+
+    public function getBusinessEntityCustomerB2bs(): Collection
+    {
+        return $this->businessEntityCustomerB2bs;
+    }
+
+    public function addBusinessEntityCustomerB2b(BusinessEntityCustomerB2b $businessEntityCustomerB2b): self
+    {
+        if (!$this->businessEntityCustomerB2bs->contains($businessEntityCustomerB2b)) {
+            $this->businessEntityCustomerB2bs[] = $businessEntityCustomerB2b;
+            $businessEntityCustomerB2b->setRoleB2b($this);
+        }
+
+        return $this;
+    }
+
+    public function removeBusinessEntityCustomerB2b(BusinessEntityCustomerB2b $businessEntityCustomerB2b): self
+    {
+        if ($this->businessEntityCustomerB2bs->contains($businessEntityCustomerB2b)) {
+            $this->businessEntityCustomerB2bs->removeElement($businessEntityCustomerB2b);
+            if ($businessEntityCustomerB2b->getRoleB2b() === $this) {
+                $businessEntityCustomerB2b->setRoleB2b(null);
+            }
+        }
+
+        return $this;
+    }
+
+    // Gestion de la relation OneToMany avec B2bRoleAuthorizationRole
+
+    public function getB2bRoleAuthorizationRoles(): Collection
+    {
+        return $this->b2bRoleAuthorizationRoles;
+    }
+
+    public function addB2bRoleAuthorizationRole(B2bRoleAuthorizationRole $b2bRoleAuthorizationRole): self
+    {
+        if (!$this->b2bRoleAuthorizationRoles->contains($b2bRoleAuthorizationRole)) {
+            $this->b2bRoleAuthorizationRoles[] = $b2bRoleAuthorizationRole;
+            $b2bRoleAuthorizationRole->setRole($this);
+        }
+
+        return $this;
+    }
+
+    public function removeB2bRoleAuthorizationRole(B2bRoleAuthorizationRole $b2bRoleAuthorizationRole): self
+    {
+        if ($this->b2bRoleAuthorizationRoles->contains($b2bRoleAuthorizationRole)) {
+            $this->b2bRoleAuthorizationRoles->removeElement($b2bRoleAuthorizationRole);
+            if ($b2bRoleAuthorizationRole->getRole() === $this) {
+                $b2bRoleAuthorizationRole->setRole(null);
+            }
+        }
 
         return $this;
     }

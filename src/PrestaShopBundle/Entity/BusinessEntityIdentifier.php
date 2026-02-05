@@ -29,21 +29,21 @@ namespace PrestaShopBundle\Entity;
 use Doctrine\ORM\Mapping as ORM;
 
 /**
- * BusinessEntityDomain.
+ * BusinessEntityIdentifier.
  *
- * @ORM\Table(name="PREFIX_business_entity_domain", indexes={
+ * @ORM\Table(name="PREFIX_business_entity_identifier", indexes={
  *
- *     @ORM\Index(name="business_entity_domain_id_business_entity_idx", columns={"id_business_entity"}),
- *     @ORM\Index(name="business_entity_domain_id_business_identifier_idx", columns={"id_business_identifier"}),
- *     @ORM\Index(name="business_entity_domain_value_idx", columns={"value"})
+ *     @ORM\Index(name="business_entity_identifier_id_business_entity_idx", columns={"id_business_entity"}),
+ *     @ORM\Index(name="business_entity_identifier_id_business_identifier_idx", columns={"id_business_identifier"}),
+ *     @ORM\Index(name="business_entity_identifier_value_idx", columns={"value"})
  * }, uniqueConstraints={
  *
- *     @ORM\UniqueConstraint(name="uniq_business_entity_domain", columns={"id_business_entity", "id_business_identifier"})
+ *     @ORM\UniqueConstraint(name="uniq_business_entity_identifier", columns={"id_business_entity", "id_business_identifier"})
  * })
  *
  * @ORM\Entity()
  */
-class BusinessEntityDomain
+class BusinessEntityIdentifier
 {
     /**
      * @ORM\Id
@@ -52,28 +52,30 @@ class BusinessEntityDomain
      *
      * @ORM\GeneratedValue(strategy="AUTO")
      */
-    private int $idDomain;
+    private int $idIdentifier;
 
     /**
-     * @ORM\ManyToOne(targetEntity="PrestaShopBundle\Entity\BusinessEntity", inversedBy="domains")
+     * @ORM\ManyToOne(targetEntity="PrestaShopBundle\Entity\BusinessEntity", inversedBy="businessEntityIdentifiers")
      *
      * @ORM\JoinColumn(name="id_business_entity", referencedColumnName="id_business_entity", nullable=false)
      */
     private BusinessEntity $businessEntity;
 
     /**
-     * @ORM\Column(name="id_business_identifier", type="integer", options={"unsigned"=true})
+     * @ORM\ManyToOne(targetEntity="PrestaShopBundle\Entity\BusinessIdentifier")
+     *
+     * @ORM\JoinColumn(name="id_business_identifier", referencedColumnName="id_business_identifier", nullable=false)
      */
-    private int $businessIdentifierId;
+    private BusinessIdentifier $businessIdentifier;
 
     /**
      * @ORM\Column(name="value", type="string", length=255)
      */
     private string $value;
 
-    public function getIdDomain(): int
+    public function getIdIdentifier(): int
     {
-        return $this->idDomain;
+        return $this->idIdentifier;
     }
 
     public function getBusinessEntity(): BusinessEntity
@@ -81,9 +83,9 @@ class BusinessEntityDomain
         return $this->businessEntity;
     }
 
-    public function getBusinessIdentifierId(): int
+    public function getBusinessIdentifier(): BusinessIdentifier
     {
-        return $this->businessIdentifierId;
+        return $this->businessIdentifier;
     }
 
     public function getValue(): string
@@ -98,9 +100,9 @@ class BusinessEntityDomain
         return $this;
     }
 
-    public function setBusinessIdentifierId(int $businessIdentifierId): self
+    public function setBusinessIdentifier(BusinessIdentifier $businessIdentifier): self
     {
-        $this->businessIdentifierId = $businessIdentifierId;
+        $this->businessIdentifier = $businessIdentifier;
 
         return $this;
     }

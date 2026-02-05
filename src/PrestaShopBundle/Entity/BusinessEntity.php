@@ -27,7 +27,10 @@
 namespace PrestaShopBundle\Entity;
 
 use DateTime;
+use Doctrine\Common\Collections\ArrayCollection;
+use Doctrine\Common\Collections\Collection;
 use Doctrine\ORM\Mapping as ORM;
+use PrestaShopBundle\Entity\Enum\BusinessEntityStatus;
 
 /**
  * BusinessEntity.
@@ -77,9 +80,9 @@ class BusinessEntity
     private bool $flagDeliveryAuthorized = false;
 
     /**
-     * @ORM\Column(name="status", type="string", length=50, columnDefinition="ENUM('pending', 'active', 'inactive', 'rejected') DEFAULT 'pending'")
+     * @ORM\Column(name="status", enumType=BusinessEntityStatus::class, options={"default"="pending"})
      */
-    private string $status = 'pending';
+    private BusinessEntityStatus $status;
 
     /**
      * @ORM\Column(name="created_at", type="datetime")
@@ -91,6 +94,31 @@ class BusinessEntity
      */
     private DateTime $updatedAt;
 
+    /**
+     * @ORM\OneToMany(targetEntity="PrestaShopBundle\Entity\BusinessEntityAddress", mappedBy="businessEntity")
+     */
+    private Collection $businessEntityAddresses;
+
+    /**
+     * @ORM\OneToMany(targetEntity="PrestaShopBundle\Entity\BusinessEntityIdentifier", mappedBy="businessEntity")
+     */
+    private Collection $businessEntityIdentifiers;
+
+    /**
+     * @ORM\OneToMany(targetEntity="PrestaShopBundle\Entity\BusinessEntityCustomerB2b", mappedBy="businessEntity")
+     */
+    private Collection $businessEntityCustomerB2bs;
+
+    public function __construct()
+    {
+        $this->businessEntityAddresses = new ArrayCollection();
+        $this->businessEntityIdentifiers = new ArrayCollection();
+        $this->businessEntityCustomerB2bs = new ArrayCollection();
+        $this->status = BusinessEntityStatus::PENDING;
+        $this->createdAt = new DateTime();
+        $this->updatedAt = new DateTime();
+    }
+
     public function getId(): int
     {
         return $this->id;
@@ -101,46 +129,16 @@ class BusinessEntity
         return $this->enterpriseId;
     }
 
-    public function getExternalRef(): ?string
-    {
-        return $this->externalRef;
-    }
-
-    public function getName(): string
-    {
-        return $this->name;
-    }
-
-    public function getLegalName(): ?string
-    {
-        return $this->legalName;
-    }
-
-    public function isFlagDeliveryAuthorized(): bool
-    {
-        return $this->flagDeliveryAuthorized;
-    }
-
-    public function getStatus(): string
-    {
-        return $this->status;
-    }
-
-    public function getCreatedAt(): DateTime
-    {
-        return $this->createdAt;
-    }
-
-    public function getUpdatedAt(): DateTime
-    {
-        return $this->updatedAt;
-    }
-
     public function setEnterpriseId(string $enterpriseId): self
     {
         $this->enterpriseId = $enterpriseId;
 
         return $this;
+    }
+
+    public function getExternalRef(): ?string
+    {
+        return $this->externalRef;
     }
 
     public function setExternalRef(?string $externalRef): self
@@ -150,11 +148,21 @@ class BusinessEntity
         return $this;
     }
 
+    public function getName(): string
+    {
+        return $this->name;
+    }
+
     public function setName(string $name): self
     {
         $this->name = $name;
 
         return $this;
+    }
+
+    public function getLegalName(): ?string
+    {
+        return $this->legalName;
     }
 
     public function setLegalName(?string $legalName): self
@@ -164,6 +172,11 @@ class BusinessEntity
         return $this;
     }
 
+    public function isFlagDeliveryAuthorized(): bool
+    {
+        return $this->flagDeliveryAuthorized;
+    }
+
     public function setFlagDeliveryAuthorized(bool $flagDeliveryAuthorized): self
     {
         $this->flagDeliveryAuthorized = $flagDeliveryAuthorized;
@@ -171,11 +184,21 @@ class BusinessEntity
         return $this;
     }
 
-    public function setStatus(string $status): self
+    public function getStatus(): BusinessEntityStatus
+    {
+        return $this->status;
+    }
+
+    public function setStatus(BusinessEntityStatus $status): self
     {
         $this->status = $status;
 
         return $this;
+    }
+
+    public function getCreatedAt(): DateTime
+    {
+        return $this->createdAt;
     }
 
     public function setCreatedAt(DateTime $createdAt): self
@@ -185,9 +208,89 @@ class BusinessEntity
         return $this;
     }
 
+    public function getUpdatedAt(): DateTime
+    {
+        return $this->updatedAt;
+    }
+
     public function setUpdatedAt(DateTime $updatedAt): self
     {
         $this->updatedAt = $updatedAt;
+
+        return $this;
+    }
+
+    /**
+     * @return Collection<int, BusinessEntityAddress>
+     */
+    public function getBusinessEntityAddresses(): Collection
+    {
+        return $this->businessEntityAddresses;
+    }
+
+    public function addBusinessEntityAddress(BusinessEntityAddress $businessEntityAddress): self
+    {
+        if (!$this->businessEntityAddresses->contains($businessEntityAddress)) {
+            $this->businessEntityAddresses[] = $businessEntityAddress;
+            $businessEntityAddress->setBusinessEntity($this);
+        }
+
+        return $this;
+    }
+
+    public function removeBusinessEntityAddress(BusinessEntityAddress $businessEntityAddress): self
+    {
+        $this->businessEntityAddresses->removeElement($businessEntityAddress);
+
+        return $this;
+    }
+
+    /**
+     * @return Collection<int, BusinessEntityIdentifier>
+     */
+    public function getBusinessEntityIdentifiers(): Collection
+    {
+        return $this->businessEntityIdentifiers;
+    }
+
+    public function addBusinessEntityIdentifier(BusinessEntityIdentifier $businessEntityIdentifier): self
+    {
+        if (!$this->businessEntityIdentifiers->contains($businessEntityIdentifier)) {
+            $this->businessEntityIdentifiers[] = $businessEntityIdentifier;
+            $businessEntityIdentifier->setBusinessEntity($this);
+        }
+
+        return $this;
+    }
+
+    public function removeBusinessEntityIdentifier(BusinessEntityIdentifier $businessEntityIdentifier): self
+    {
+        $this->businessEntityIdentifiers->removeElement($businessEntityIdentifier);
+
+        return $this;
+    }
+
+    /**
+     * @return Collection<int, BusinessEntityCustomerB2b>
+     */
+    public function getBusinessEntityCustomerB2bs(): Collection
+    {
+        return $this->businessEntityCustomerB2bs;
+    }
+
+    public function addBusinessEntityCustomerB2b(BusinessEntityCustomerB2b $businessEntityCustomerB2b): self
+    {
+        if (!$this->businessEntityCustomerB2bs->contains($businessEntityCustomerB2b)) {
+            $this->businessEntityCustomerB2bs[] = $businessEntityCustomerB2b;
+            $businessEntityCustomerB2b->setBusinessEntity($this);
+        }
+
+        return $this;
+    }
+
+    public function removeBusinessEntityCustomerB2b(BusinessEntityCustomerB2b $businessEntityCustomerB2b): self
+    {
+        $this->businessEntityCustomerB2bs->removeElement($businessEntityCustomerB2b);
 
         return $this;
     }

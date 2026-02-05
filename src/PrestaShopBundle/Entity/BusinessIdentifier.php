@@ -26,6 +26,8 @@
 
 namespace PrestaShopBundle\Entity;
 
+use Doctrine\Common\Collections\ArrayCollection;
+use Doctrine\Common\Collections\Collection;
 use Doctrine\ORM\Mapping as ORM;
 
 /**
@@ -56,7 +58,15 @@ class BusinessIdentifier
      */
     private bool $deleted = false;
 
-    // Getters and setters
+    /**
+     * @ORM\OneToMany(targetEntity="PrestaShopBundle\Entity\BusinessEntityIdentifier", mappedBy="businessIdentifier")
+     */
+    private Collection $businessEntityIdentifiers;
+
+    public function __construct()
+    {
+        $this->businessEntityIdentifiers = new ArrayCollection();
+    }
 
     public function getIdBusinessIdentifier(): int
     {
@@ -83,6 +93,33 @@ class BusinessIdentifier
     public function setDeleted(bool $deleted): self
     {
         $this->deleted = $deleted;
+
+        return $this;
+    }
+
+    public function getBusinessEntityIdentifiers(): Collection
+    {
+        return $this->businessEntityIdentifiers;
+    }
+
+    public function addBusinessEntityIdentifier(BusinessEntityIdentifier $businessEntityIdentifier): self
+    {
+        if (!$this->businessEntityIdentifiers->contains($businessEntityIdentifier)) {
+            $this->businessEntityIdentifiers[] = $businessEntityIdentifier;
+            $businessEntityIdentifier->setBusinessIdentifier($this);
+        }
+
+        return $this;
+    }
+
+    public function removeBusinessEntityIdentifier(BusinessEntityIdentifier $businessEntityIdentifier): self
+    {
+        if ($this->businessEntityIdentifiers->contains($businessEntityIdentifier)) {
+            $this->businessEntityIdentifiers->removeElement($businessEntityIdentifier);
+            if ($businessEntityIdentifier->getBusinessIdentifier() === $this) {
+                $businessEntityIdentifier->setBusinessIdentifier(null);
+            }
+        }
 
         return $this;
     }

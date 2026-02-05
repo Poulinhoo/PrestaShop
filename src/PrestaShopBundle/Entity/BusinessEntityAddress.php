@@ -27,6 +27,8 @@
 namespace PrestaShopBundle\Entity;
 
 use Doctrine\ORM\Mapping as ORM;
+use InvalidArgumentException;
+use PrestaShopBundle\Entity\Enum\AddressTypeEnum;
 
 /**
  * BusinessEntityAddress.
@@ -43,7 +45,7 @@ class BusinessEntityAddress
     /**
      * @ORM\Id
      *
-     * @ORM\ManyToOne(targetEntity="PrestaShopBundle\Entity\BusinessEntity")
+     * @ORM\ManyToOne(targetEntity="PrestaShopBundle\Entity\BusinessEntity", inversedBy="businessEntityAddresses")
      *
      * @ORM\JoinColumn(name="id_business_entity", referencedColumnName="id_business_entity", nullable=false)
      */
@@ -52,22 +54,30 @@ class BusinessEntityAddress
     /**
      * @ORM\Id
      *
-     * @ORM\ManyToOne(targetEntity="PrestaShopBundle\Entity\Address")
+     * @ORM\ManyToOne(targetEntity="PrestaShopBundle\Entity\Address", inversedBy="businessEntityAddresses")
      *
      * @ORM\JoinColumn(name="id_address", referencedColumnName="id_address", nullable=false)
      */
     private Address $address;
 
     /**
-     * @ORM\Column(name="address_type", type="string", length=50, columnDefinition="ENUM('both', 'invoice', 'delivery') DEFAULT 'both'")
+     * @ORM\Column(name="address_type", type="string", length=50)
      */
-    private string $addressType = 'both';
+    private string $addressType = AddressTypeEnum::BOTH;
 
+    /**
+     * @return BusinessEntity
+     */
     public function getBusinessEntity(): BusinessEntity
     {
         return $this->businessEntity;
     }
 
+    /**
+     * @param BusinessEntity $businessEntity
+     *
+     * @return $this
+     */
     public function setBusinessEntity(BusinessEntity $businessEntity): self
     {
         $this->businessEntity = $businessEntity;
@@ -75,11 +85,19 @@ class BusinessEntityAddress
         return $this;
     }
 
+    /**
+     * @return Address
+     */
     public function getAddress(): Address
     {
         return $this->address;
     }
 
+    /**
+     * @param Address $address
+     *
+     * @return $this
+     */
     public function setAddress(Address $address): self
     {
         $this->address = $address;
@@ -87,13 +105,27 @@ class BusinessEntityAddress
         return $this;
     }
 
+    /**
+     * @return string
+     */
     public function getAddressType(): string
     {
         return $this->addressType;
     }
 
+    /**
+     * @param string $addressType
+     *
+     * @return $this
+     *
+     * @throws InvalidArgumentException
+     */
     public function setAddressType(string $addressType): self
     {
+        if (!AddressTypeEnum::isValid($addressType)) {
+            throw new InvalidArgumentException('Invalid address type provided.');
+        }
+
         $this->addressType = $addressType;
 
         return $this;

@@ -3136,17 +3136,17 @@ CREATE TABLE `PREFIX_business_entity_customer_b2b`
 ) ENGINE = ENGINE_TYPE
   DEFAULT CHARSET = utf8mb4 COLLATION;
 
-CREATE TABLE `PREFIX_business_entity_domain`
+CREATE TABLE `PREFIX_business_entity_identifier`
 (
-  `id_domain`                  INT UNSIGNED AUTO_INCREMENT        NOT NULL,
+  `id_identifier`                  INT UNSIGNED AUTO_INCREMENT    NOT NULL,
   `id_business_entity`         INT UNSIGNED                       NOT NULL,
   `id_business_identifier`     INT UNSIGNED                       NOT NULL,
   `value`              VARCHAR(255) NOT NULL,
-  UNIQUE INDEX `uniq_business_entity_domain` (`id_business_entity`, `id_business_identifier`),
-  INDEX                `business_entity_domain_id_business_entity_idx` (`id_business_entity`),
-  INDEX                `business_entity_domain_id_business_identifier_idx` (`id_business_identifier`),
-  INDEX                `business_entity_domain_value_idx` (`value`),
-  PRIMARY KEY (`id_domain`)
+  UNIQUE INDEX `uniq_business_entity_identifier` (`id_business_entity`, `id_business_identifier`),
+  INDEX                `business_entity_identifier_id_business_entity_idx` (`id_business_entity`),
+  INDEX                `business_entity_identifier_id_business_identifier_idx` (`id_business_identifier`),
+  INDEX                `business_entity_identifier_value_idx` (`value`),
+  PRIMARY KEY (`id_identifier`)
 ) ENGINE = ENGINE_TYPE
   DEFAULT CHARSET = utf8mb4 COLLATION;
 
