@@ -8,8 +8,6 @@ use Symfony\Component\Console\Tester\CommandTester;
 
 class GenerateHtaccessCommandTest extends KernelTestCase
 {
-
-
     public function setUp(): void
     {
         // Load PrestaShop environment constants (defines like _PS_IMG_)
