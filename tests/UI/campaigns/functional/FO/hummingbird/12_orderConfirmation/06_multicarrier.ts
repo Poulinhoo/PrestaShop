@@ -522,17 +522,17 @@ describe('FO - Checkout - Shipping methods : MultiCarrier', async () => {
     });
 
     [
-      {args: {orderToMake: orderData.products[0]}},
-      {args: {orderToMake: orderData.products[1]}},
-      {args: {orderToMake: orderData.products[2]}},
-      {args: {orderToMake: orderData.products[3]}},
+      {orderToMake: orderData.products[0]},
+      {orderToMake: orderData.products[1]},
+      {orderToMake: orderData.products[2]},
+      {orderToMake: orderData.products[3]},
     ].forEach((test, index) => {
-      it(`should search for the product '${test.args.orderToMake.product.name}'`, async function () {
+      it(`should search for the product '${test.orderToMake.product.name}'`, async function () {
         await testContext.addContextItem(this, 'testIdentifier', `addProductToCart${index}`, baseContext);
 
         // Go to home page
         await foHummingbirdLoginPage.goToHomePage(page);
-        await foHummingbirdHomePage.searchProduct(page, test.args.orderToMake.product.name);
+        await foHummingbirdHomePage.searchProduct(page, test.orderToMake.product.name);
       });
 
       it('should quick view the product', async function () {
@@ -547,7 +547,7 @@ describe('FO - Checkout - Shipping methods : MultiCarrier', async () => {
       it('should set quantity and add to cart', async function () {
         await testContext.addContextItem(this, 'testIdentifier', `setQuantityAndAddToCart${index}`, baseContext);
 
-        await foHummingbirdModalQuickViewPage.setQuantityAndAddToCart(page, test.args.orderToMake.quantity);
+        await foHummingbirdModalQuickViewPage.setQuantityAndAddToCart(page, test.orderToMake.quantity);
 
         const isQuickViewModalClosed = await foHummingbirdModalBlockCartPage.closeBlockCartModal(page);
         expect(isQuickViewModalClosed).to.eq(true);
@@ -862,12 +862,12 @@ describe('FO - Checkout - Shipping methods : MultiCarrier', async () => {
 
   // 2 - Post-condition: Delete created products
   [
-    {args: {testIdentifier: 'postTest_2', productData: firstProductData}},
-    {args: {testIdentifier: 'postTest_3', productData: secondProductData}},
-    {args: {testIdentifier: 'postTest_4', productData: thirdProductData}},
-    {args: {testIdentifier: 'postTest_5', productData: productVData}},
-  ].forEach((test) => {
-    deleteProductTest(test.args.productData, `${baseContext}${test.args.testIdentifier}`);
+    firstProductData,
+    secondProductData,
+    thirdProductData,
+    productVData,
+  ].forEach((product, index) => {
+    deleteProductTest(product, `postTest_${index + 2}`);
   });
 
   // 3 - Post-condition: Delete created carriers
@@ -894,17 +894,17 @@ describe('FO - Checkout - Shipping methods : MultiCarrier', async () => {
       expect(pageTitle).to.contains(boCarriersPage.pageTitle);
     });
     [
-      {args: {carrier: firstCarrierData}},
-      {args: {carrier: secondCarrierData}},
+      {carrier: firstCarrierData},
+      {carrier: secondCarrierData},
     ].forEach((test, index) => {
       it('should filter list by name', async function () {
         await testContext.addContextItem(this, 'testIdentifier', `filterCarriersForDelete${index}`, baseContext);
 
         await boCarriersPage.resetFilter(page);
-        await boCarriersPage.filterTable(page, 'input', 'name', test.args.carrier.name);
+        await boCarriersPage.filterTable(page, 'input', 'name', test.carrier.name);
 
         const carrierName = await boCarriersPage.getTextColumn(page, 1, 'name');
-        expect(carrierName).to.contains(test.args.carrier.name);
+        expect(carrierName).to.contains(test.carrier.name);
       });
 
       it('should delete carrier', async function () {
