@@ -114,12 +114,7 @@ class BusinessIdentifier
 
     public function removeBusinessEntityIdentifier(BusinessEntityIdentifier $businessEntityIdentifier): self
     {
-        if ($this->businessEntityIdentifiers->contains($businessEntityIdentifier)) {
-            $this->businessEntityIdentifiers->removeElement($businessEntityIdentifier);
-            if ($businessEntityIdentifier->getBusinessIdentifier() === $this) {
-                $businessEntityIdentifier->setBusinessIdentifier(null);
-            }
-        }
+        $this->businessEntityIdentifiers->removeElement($businessEntityIdentifier);
 
         return $this;
     }

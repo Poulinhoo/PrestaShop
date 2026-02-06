@@ -27,6 +27,7 @@
 namespace PrestaShopBundle\Entity;
 
 use Doctrine\ORM\Mapping as ORM;
+use PrestaShopBundle\Entity\Employee\AuthorizationRole;
 
 /**
  * B2bRoleAuthorizationRole.

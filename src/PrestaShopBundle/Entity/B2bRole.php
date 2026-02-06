@@ -56,7 +56,7 @@ class B2bRole
     private string $role;
 
     /**
-     * @ORM\OneToMany(targetEntity="PrestaShopBundle\Entity\BusinessEntityCustomerB2b", mappedBy="roleB2b")
+     * @ORM\OneToMany(targetEntity="PrestaShopBundle\Entity\BusinessEntityCustomerB2b", mappedBy="b2bRole")
      */
     private Collection $businessEntityCustomerB2bs;
 
@@ -73,7 +73,7 @@ class B2bRole
 
     public function getIdRole(): int
     {
-        return $this->idRole;
+        return $this->id;
     }
 
     public function getRole(): string
@@ -97,7 +97,7 @@ class B2bRole
     {
         if (!$this->businessEntityCustomerB2bs->contains($businessEntityCustomerB2b)) {
             $this->businessEntityCustomerB2bs[] = $businessEntityCustomerB2b;
-            $businessEntityCustomerB2b->setRoleB2b($this);
+            $businessEntityCustomerB2b->setB2bRole($this);
         }
 
         return $this;
@@ -105,12 +105,7 @@ class B2bRole
 
     public function removeBusinessEntityCustomerB2b(BusinessEntityCustomerB2b $businessEntityCustomerB2b): self
     {
-        if ($this->businessEntityCustomerB2bs->contains($businessEntityCustomerB2b)) {
-            $this->businessEntityCustomerB2bs->removeElement($businessEntityCustomerB2b);
-            if ($businessEntityCustomerB2b->getRoleB2b() === $this) {
-                $businessEntityCustomerB2b->setRoleB2b(null);
-            }
-        }
+        $this->businessEntityCustomerB2bs->removeElement($businessEntityCustomerB2b);
 
         return $this;
     }
@@ -132,12 +127,7 @@ class B2bRole
 
     public function removeB2bRoleAuthorizationRole(B2bRoleAuthorizationRole $b2bRoleAuthorizationRole): self
     {
-        if ($this->b2bRoleAuthorizationRoles->contains($b2bRoleAuthorizationRole)) {
-            $this->b2bRoleAuthorizationRoles->removeElement($b2bRoleAuthorizationRole);
-            if ($b2bRoleAuthorizationRole->getRole() === $this) {
-                $b2bRoleAuthorizationRole->setRole(null);
-            }
-        }
+        $this->b2bRoleAuthorizationRoles->removeElement($b2bRoleAuthorizationRole);
 
         return $this;
     }

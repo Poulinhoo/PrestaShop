@@ -56,7 +56,7 @@ class BusinessEntityCustomerB2b
      *
      * @ORM\GeneratedValue(strategy="AUTO")
      */
-    private int $idBusinessEntityCustomerB2b;
+    private ?int $idBusinessEntityCustomerB2b = null;
 
     /**
      * @ORM\ManyToOne(targetEntity="PrestaShopBundle\Entity\BusinessEntity", inversedBy="businessEntityCustomerB2bs")
@@ -66,18 +66,16 @@ class BusinessEntityCustomerB2b
     private BusinessEntity $businessEntity;
 
     /**
-     * @ORM\ManyToOne(targetEntity="PrestaShopBundle\Entity\CustomerB2b", inversedBy="businessEntityCustomerB2bs")
-     *
-     * @ORM\JoinColumn(name="id_customer_b2b", referencedColumnName="id_customer_b2b", nullable=false)
+     * @ORM\Column(name="id_customer_b2b", type="integer", options={"unsigned"=true})
      */
-    private CustomerB2b $customerB2b;
+    private int $idCustomerB2b;
 
     /**
-     * @ORM\ManyToOne(targetEntity="PrestaShopBundle\Entity\RoleB2b", inversedBy="businessEntityCustomerB2bs")
+     * @ORM\ManyToOne(targetEntity="PrestaShopBundle\Entity\B2bRole", inversedBy="businessEntityCustomerB2bs")
      *
-     * @ORM\JoinColumn(name="id_role_b2b", referencedColumnName="id_role_b2b", nullable=false)
+     * @ORM\JoinColumn(name="id_role_b2b", referencedColumnName="id_role", nullable=false)
      */
-    private RoleB2b $roleB2b;
+    private B2bRole $b2bRole;
 
     /**
      * @ORM\Column(name="is_default", type="boolean", options={"default"=false})
@@ -106,26 +104,26 @@ class BusinessEntityCustomerB2b
         return $this;
     }
 
-    public function getCustomerB2b(): CustomerB2b
+    public function getCustomerB2b(): int
     {
-        return $this->customerB2b;
+        return $this->idCustomerB2b;
     }
 
-    public function setCustomerB2b(CustomerB2b $customerB2b): self
+    public function setCustomerB2b(int $idCustomerB2b): self
     {
-        $this->customerB2b = $customerB2b;
+        $this->idCustomerB2b = $idCustomerB2b;
 
         return $this;
     }
 
-    public function getRoleB2b(): RoleB2b
+    public function getB2bRole(): B2bRole
     {
-        return $this->roleB2b;
+        return $this->b2bRole;
     }
 
-    public function setRoleB2b(RoleB2b $roleB2b): self
+    public function setB2bRole(B2bRole $b2bRole): self
     {
-        $this->roleB2b = $roleB2b;
+        $this->b2bRole = $b2bRole;
 
         return $this;
     }
@@ -156,12 +154,9 @@ class BusinessEntityCustomerB2b
 
     /**
      * @ORM\PrePersist
-     *
-     * @ORM\PreUpdate
      */
-    public function updatedTimestamps(): void
+    public function setTimestampsOnCreate(): void
     {
-        $this->updatedAt = new DateTime();
         if (!isset($this->createdAt)) {
             $this->createdAt = new DateTime();
         }

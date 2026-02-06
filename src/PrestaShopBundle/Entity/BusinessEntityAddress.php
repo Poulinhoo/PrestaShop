@@ -52,11 +52,9 @@ class BusinessEntityAddress
     /**
      * @ORM\Id
      *
-     * @ORM\ManyToOne(targetEntity="PrestaShopBundle\Entity\Address", inversedBy="businessEntityAddresses")
-     *
-     * @ORM\JoinColumn(name="id_address", referencedColumnName="id_address", nullable=false)
+     * @ORM\Column(name="id_address", type="integer", options={"unsigned"=true})
      */
-    private Address $address;
+    private int $idAddress;
 
     /**
      * @ORM\Column(name="address_type", type="string", length=50)
@@ -84,21 +82,21 @@ class BusinessEntityAddress
     }
 
     /**
-     * @return Address
+     * @return int $idAddress
      */
-    public function getAddress(): Address
+    public function getAddress(): int
     {
-        return $this->address;
+        return $this->idAddress;
     }
 
     /**
-     * @param Address $address
+     * @param int $idAddress
      *
      * @return $this
      */
-    public function setAddress(Address $address): self
+    public function setAddress(int $idAddress): self
     {
-        $this->address = $address;
+        $this->idAddress = $idAddress;
 
         return $this;
     }
