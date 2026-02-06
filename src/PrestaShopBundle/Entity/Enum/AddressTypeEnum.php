@@ -26,11 +26,11 @@
 
 namespace PrestaShopBundle\Entity\Enum;
 
-class AddressTypeEnum
+enum AddressTypeEnum: string
 {
-    public const BOTH = 'both';
-    public const INVOICE = 'invoice';
-    public const DELIVERY = 'delivery';
+    case BOTH = 'both';
+    case INVOICE = 'invoice';
+    case DELIVERY = 'delivery';
 
     /**
      * @return array

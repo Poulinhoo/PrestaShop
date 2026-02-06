@@ -27,7 +27,6 @@
 namespace PrestaShopBundle\Entity;
 
 use Doctrine\ORM\Mapping as ORM;
-use InvalidArgumentException;
 use PrestaShopBundle\Entity\Enum\AddressTypeEnum;
 
 /**
@@ -62,7 +61,7 @@ class BusinessEntityAddress
     /**
      * @ORM\Column(name="address_type", type="string", length=50)
      */
-    private string $addressType = AddressTypeEnum::BOTH;
+    private AddressTypeEnum $addressType = AddressTypeEnum::BOTH;
 
     /**
      * @return BusinessEntity
@@ -105,26 +104,20 @@ class BusinessEntityAddress
     }
 
     /**
-     * @return string
+     * @return AddressTypeEnum
      */
-    public function getAddressType(): string
+    public function getAddressType(): AddressTypeEnum
     {
         return $this->addressType;
     }
 
     /**
-     * @param string $addressType
+     * @param AddressTypeEnum $addressType
      *
      * @return $this
-     *
-     * @throws InvalidArgumentException
      */
-    public function setAddressType(string $addressType): self
+    public function setAddressType(AddressTypeEnum $addressType): self
     {
-        if (!AddressTypeEnum::isValid($addressType)) {
-            throw new InvalidArgumentException('Invalid address type provided.');
-        }
-
         $this->addressType = $addressType;
 
         return $this;
