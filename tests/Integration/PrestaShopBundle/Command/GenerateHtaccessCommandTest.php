@@ -38,6 +38,4 @@ class GenerateHtaccessCommandTest extends KernelTestCase
         $this->assertStringContainsString('.htaccess successfully generated', $display);
         $this->assertStringContainsString(_PS_ROOT_DIR_ . '/.htaccess', $display);
     }
-
-
 }
