@@ -856,7 +856,7 @@ describe('FO - Checkout - Shipping methods : MultiCarrier', async () => {
     thirdProductData,
     productVData,
   ].forEach((product, index) => {
-    deleteProductTest(product, `postTest_${index + 2}`);
+    deleteProductTest(product, `${baseContext}_postTest_${index + 2}`);
   });
 
   // 3 - Post-condition: Delete created carriers
@@ -931,5 +931,5 @@ describe('FO - Checkout - Shipping methods : MultiCarrier', async () => {
   });
 
   // 5 - Post-condition : Disable the theme classic
-  disableTheme('classic', `${baseContext}_postTest_3`);
+  disableTheme('classic', `${baseContext}_postTest_6`);
 });

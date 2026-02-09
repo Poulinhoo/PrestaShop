@@ -867,7 +867,7 @@ describe('FO - Checkout - Shipping methods : MultiCarrier', async () => {
     thirdProductData,
     productVData,
   ].forEach((product, index) => {
-    deleteProductTest(product, `postTest_${index + 2}`);
+    deleteProductTest(product, `${baseContext}_postTest_${index + 2}`);
   });
 
   // 3 - Post-condition: Delete created carriers
