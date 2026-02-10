@@ -3854,7 +3854,7 @@ class CartCore extends ObjectModel
          */
         // Get the configuration value and convert it to the current currency
         $shippingFreePrice = (float) Configuration::get('PS_SHIPPING_FREE_PRICE');
-        if (!empty(($shippingFreePrice))) {
+        if (!empty($shippingFreePrice)) {
             $shippingFreePrice = Tools::convertPrice((float) $shippingFreePrice, Currency::getCurrencyInstance((int) $this->id_currency));
         }
 
