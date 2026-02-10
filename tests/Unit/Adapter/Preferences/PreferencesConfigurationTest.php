@@ -12,8 +12,6 @@ use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
 use PrestaShop\PrestaShop\Adapter\Configuration;
 use PrestaShop\PrestaShop\Adapter\Preferences\PreferencesConfiguration;
-use PrestaShop\PrestaShop\Core\Context\Employee;
-use PrestaShop\PrestaShop\Core\Context\EmployeeContext;
 use PrestaShop\PrestaShop\Core\Feature\B2BModeFeature;
 use PrestaShop\PrestaShop\Core\Feature\B2CModeFeature;
 use PrestaShop\PrestaShop\Core\Http\CookieOptions;
@@ -30,8 +28,6 @@ class PreferencesConfigurationTest extends TestCase
      * @var Configuration|MockObject
      */
     private $mockConfiguration;
-    /** @var EmployeeContext|MockObject */
-    private $mockEmployeeContext;
 
     protected function setUp(): void
     {
@@ -39,23 +35,7 @@ class PreferencesConfigurationTest extends TestCase
             ->onlyMethods(['get', 'getBoolean', 'set'])
             ->disableOriginalConstructor()
             ->getMock();
-        $this->mockEmployeeContext = $this->mockEmployeeContext();
-        $this->object = new PreferencesConfiguration($this->mockConfiguration, $this->mockEmployeeContext);
-    }
-
-    private function mockEmployeeContext(): EmployeeContext|MockObject
-    {
-        $employee = $this->createMock(Employee::class);
-        $employee
-            ->method('getId')
-            ->willReturn(20);
-
-        $employeeContext = $this->createMock(EmployeeContext::class);
-        $employeeContext
-            ->method('getEmployee')
-            ->willReturn($employee);
-
-        return $employeeContext;
+        $this->object = new PreferencesConfiguration($this->mockConfiguration);
     }
 
     public function testGetConfiguration()
