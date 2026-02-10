@@ -6,10 +6,8 @@
 
 namespace PrestaShop\PrestaShop\Adapter\Preferences;
 
-use DateTimeImmutable;
 use PrestaShop\PrestaShop\Adapter\Configuration;
 use PrestaShop\PrestaShop\Core\Configuration\DataConfigurationInterface;
-use PrestaShop\PrestaShop\Core\Context\EmployeeContext;
 use PrestaShop\PrestaShop\Core\Feature\B2BModeFeature;
 use PrestaShop\PrestaShop\Core\Feature\B2CModeFeature;
 use PrestaShop\PrestaShop\Core\Http\CookieOptions;
@@ -26,17 +24,10 @@ class PreferencesConfiguration implements DataConfigurationInterface
      */
     private $configuration;
 
-    /**
-     * @var EmployeeContext
-     */
-    private $employeeContext;
-
     public function __construct(
         Configuration $configuration,
-        EmployeeContext $employeeContext
     ) {
         $this->configuration = $configuration;
-        $this->employeeContext = $employeeContext;
     }
 
     /**
@@ -85,10 +76,10 @@ class PreferencesConfiguration implements DataConfigurationInterface
             ];
         }
 
-        $newB2c = (bool) $configuration[PreferencesType::ENABLE_B2C_MODE];
-        $newB2b = (bool) $configuration[PreferencesType::ENABLE_B2B_MODE];
+        $newB2cModeValue = (bool) $configuration[PreferencesType::ENABLE_B2C_MODE];
+        $newB2bModeValue = (bool) $configuration[PreferencesType::ENABLE_B2B_MODE];
 
-        if (!$newB2c && !$newB2b) {
+        if (!$newB2cModeValue && !$newB2bModeValue) {
             return [[
                 'key' => 'At least one mode must be enabled (B2C or B2B).',
                 'domain' => 'Admin.Notifications.Warning',
@@ -96,31 +87,23 @@ class PreferencesConfiguration implements DataConfigurationInterface
             ]];
         }
 
-        $oldB2c = $this->configuration->getBoolean(PreferencesType::ENABLE_B2C_MODE);
-        $oldB2b = $this->configuration->getBoolean(PreferencesType::ENABLE_B2B_MODE);
+        $oldB2cModeValue = $this->configuration->getBoolean(PreferencesType::ENABLE_B2C_MODE);
+        $oldB2bModeValue = $this->configuration->getBoolean(PreferencesType::ENABLE_B2B_MODE);
 
-        $b2cChanged = ($oldB2c !== $newB2c);
-        $b2bChanged = ($oldB2b !== $newB2b);
-
-        if ($b2cChanged || $b2bChanged) {
-            $employee = $this->employeeContext->getEmployee();
-            $employeeId = (int) $employee?->getId();
-
-            $payload = [
-                'employee_id' => $employeeId,
-                'datetime' => (new DateTimeImmutable())->format(DATE_ATOM),
-                'changes' => [],
-            ];
-
-            if ($b2cChanged) {
-                $payload['changes'][PreferencesType::ENABLE_B2C_MODE] = ['old' => $oldB2c ? 1 : 0, 'new' => $newB2c ? 1 : 0];
-            }
-            if ($b2bChanged) {
-                $payload['changes'][PreferencesType::ENABLE_B2B_MODE] = ['old' => $oldB2b ? 1 : 0, 'new' => $newB2b ? 1 : 0];
-            }
-
+        if ($oldB2cModeValue !== $newB2cModeValue) {
             PrestaShopLogger::addLog(
-                'B2C/B2B modes updated: ' . json_encode($payload, JSON_UNESCAPED_UNICODE),
+                sprintf('B2C modes updated: from %s to %s', $oldB2cModeValue, $newB2cModeValue),
+                1,
+                null,
+                'Configuration',
+                0,
+                true
+            );
+        }
+
+        if ($oldB2bModeValue !== $newB2bModeValue) {
+            PrestaShopLogger::addLog(
+                sprintf('B2B modes updated: from %s to %s', $oldB2bModeValue, $newB2bModeValue),
                 1,
                 null,
                 'Configuration',

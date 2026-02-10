@@ -56,7 +56,7 @@ class PreferencesType extends TranslatorAwareType
      * @param bool $isShopFeatureEnabled
      * @param bool $isSingleShopContext
      * @param bool $isAllShopContext
-     * @param FeatureFlagStateCheckerInterface $featureFlag
+     * @param ?FeatureFlagStateCheckerInterface $featureFlagStateChecker
      */
     public function __construct(
         RequestStack $requestStack,
@@ -66,7 +66,7 @@ class PreferencesType extends TranslatorAwareType
         bool $isShopFeatureEnabled,
         bool $isSingleShopContext,
         bool $isAllShopContext,
-        private readonly FeatureFlagStateCheckerInterface $featureFlag,
+        private readonly ?FeatureFlagStateCheckerInterface $featureFlagStateChecker,
     ) {
         parent::__construct($translator, $locales);
 
@@ -84,7 +84,7 @@ class PreferencesType extends TranslatorAwareType
     {
         $configuration = $this->configuration;
 
-        $showB2bToggles = $this->featureFlag->isEnabled('improved_b2b');
+        $showB2bToggles = $this->featureFlagStateChecker?->isEnabled('improved_b2b') ?? false;
 
         if ($this->requestStack->getCurrentRequest()->isSecure()) {
             $builder->add('enable_ssl', SwitchType::class, [
