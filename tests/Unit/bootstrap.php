@@ -48,3 +48,6 @@ define('_NEW_COOKIE_KEY_', PhpEncryption::createNewRandomKey());
 if (!defined('__PS_BASE_URI__')) {
     define('__PS_BASE_URI__', '');
 }
+
+// Load MockDb mock for unit tests to avoid database dependency
+require_once __DIR__ . '/Classes/Db/MockDb.php';
