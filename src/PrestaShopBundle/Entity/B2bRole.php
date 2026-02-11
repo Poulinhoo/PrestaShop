@@ -29,6 +29,7 @@ namespace PrestaShopBundle\Entity;
 use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
 use Doctrine\ORM\Mapping as ORM;
+use PrestaShopBundle\Entity\Employee\AuthorizationRole;
 
 /**
  * B2bRole.
@@ -61,14 +62,22 @@ class B2bRole
     private Collection $businessEntityCustomerB2bs;
 
     /**
-     * @ORM\OneToMany(targetEntity="PrestaShopBundle\Entity\B2bRoleAuthorizationRole", mappedBy="role")
+     * @var Collection<int, AuthorizationRole>
+     *
+     * @ORM\ManyToMany(targetEntity="PrestaShopBundle\Entity\Employee\AuthorizationRole")
+     *
+     * @ORM\JoinTable(
+     *     name="PREFIX_b2b_role_authorization_role",
+     *     joinColumns={@ORM\JoinColumn(name="id_role", referencedColumnName="id_role", nullable=false)},
+     *     inverseJoinColumns={@ORM\JoinColumn(name="id_authorization_role", referencedColumnName="id_authorization_role", nullable=false)}
+     * )
      */
-    private Collection $b2bRoleAuthorizationRoles;
+    private Collection $authorizationRoles;
 
     public function __construct()
     {
         $this->businessEntityCustomerB2bs = new ArrayCollection();
-        $this->b2bRoleAuthorizationRoles = new ArrayCollection();
+        $this->authorizationRoles = new ArrayCollection();
     }
 
     public function getIdRole(): int
@@ -110,24 +119,23 @@ class B2bRole
         return $this;
     }
 
-    public function getB2bRoleAuthorizationRoles(): Collection
+    public function getAuthorizationRoles(): Collection
     {
-        return $this->b2bRoleAuthorizationRoles;
+        return $this->authorizationRoles;
     }
 
-    public function addB2bRoleAuthorizationRole(B2bRoleAuthorizationRole $b2bRoleAuthorizationRole): self
+    public function addAuthorizationRole(AuthorizationRole $authorizationRole): self
     {
-        if (!$this->b2bRoleAuthorizationRoles->contains($b2bRoleAuthorizationRole)) {
-            $this->b2bRoleAuthorizationRoles[] = $b2bRoleAuthorizationRole;
-            $b2bRoleAuthorizationRole->setRole($this);
+        if (!$this->authorizationRoles->contains($authorizationRole)) {
+            $this->authorizationRoles[] = $authorizationRole;
         }
 
         return $this;
     }
 
-    public function removeB2bRoleAuthorizationRole(B2bRoleAuthorizationRole $b2bRoleAuthorizationRole): self
+    public function removeAuthorizationRole(AuthorizationRole $authorizationRole): self
     {
-        $this->b2bRoleAuthorizationRoles->removeElement($b2bRoleAuthorizationRole);
+        $this->authorizationRoles->removeElement($authorizationRole);
 
         return $this;
     }

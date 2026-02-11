@@ -57,7 +57,7 @@ class BusinessEntityAddress
     private int $idAddress;
 
     /**
-     * @ORM\Column(name="address_type", type="string", length=50)
+     * @ORM\Column(name="address_type", enumType=AddressTypeEnum::class, length=50)
      */
     private AddressTypeEnum $addressType = AddressTypeEnum::BOTH;
 
@@ -84,7 +84,7 @@ class BusinessEntityAddress
     /**
      * @return int $idAddress
      */
-    public function getAddress(): int
+    public function getAddressId(): int
     {
         return $this->idAddress;
     }
@@ -94,7 +94,7 @@ class BusinessEntityAddress
      *
      * @return $this
      */
-    public function setAddress(int $idAddress): self
+    public function setAddressId(int $idAddress): self
     {
         $this->idAddress = $idAddress;
 

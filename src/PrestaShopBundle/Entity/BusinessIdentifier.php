@@ -46,7 +46,7 @@ class BusinessIdentifier
      *
      * @ORM\GeneratedValue(strategy="AUTO")
      */
-    private int $idBusinessIdentifier;
+    private int $id;
 
     /**
      * @ORM\Column(name="unremovable", type="boolean", options={"default"=false})
@@ -68,9 +68,9 @@ class BusinessIdentifier
         $this->businessEntityIdentifiers = new ArrayCollection();
     }
 
-    public function getIdBusinessIdentifier(): int
+    public function getId(): int
     {
-        return $this->idBusinessIdentifier;
+        return $this->id;
     }
 
     public function getUnremovable(): bool

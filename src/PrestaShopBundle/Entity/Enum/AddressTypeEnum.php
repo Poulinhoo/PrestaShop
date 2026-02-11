@@ -38,9 +38,9 @@ enum AddressTypeEnum: string
     public static function getValues(): array
     {
         return [
-            self::BOTH,
-            self::INVOICE,
-            self::DELIVERY,
+            self::BOTH->value,
+            self::INVOICE->value,
+            self::DELIVERY->value,
         ];
     }
 

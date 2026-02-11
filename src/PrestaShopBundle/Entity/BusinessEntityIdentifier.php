@@ -52,7 +52,7 @@ class BusinessEntityIdentifier
      *
      * @ORM\GeneratedValue(strategy="AUTO")
      */
-    private int $idIdentifier;
+    private int $id;
 
     /**
      * @ORM\ManyToOne(targetEntity="PrestaShopBundle\Entity\BusinessEntity", inversedBy="businessEntityIdentifiers")
@@ -73,9 +73,9 @@ class BusinessEntityIdentifier
      */
     private string $value;
 
-    public function getIdIdentifier(): int
+    public function getId(): int
     {
-        return $this->idIdentifier;
+        return $this->id;
     }
 
     public function getBusinessEntity(): BusinessEntity
