@@ -290,6 +290,7 @@ class ReleaseCreator
             ->generateCachedirFiles()
             ->runComposerInstall()
             ->runBuildAssets()
+            ->generateMetadataFile()
             ->createPackage();
         $endTime = date('H:i:s');
         $this->consoleWriter->displayText(
@@ -526,6 +527,34 @@ class ReleaseCreator
                 throw new BuildException('Unable to create ' . $filePath);
             }
         }
+        $this->consoleWriter->displayText(" DONE{$this->lineSeparator}", ConsoleWriter::COLOR_GREEN);
+
+        return $this;
+    }
+
+    /**
+     * Generate app/metadata.json with build information
+     *
+     * @return $this
+     * @throws BuildException
+     */
+    protected function generateMetadataFile()
+    {
+        $this->consoleWriter->displayText('Generating app/metadata.json...', ConsoleWriter::COLOR_YELLOW);
+
+        $metadataPath = $this->tempProjectPath . '/app/metadata.json';
+
+        $metadata = [
+            'distribution' => 'open_source',
+            'distributionVersion' => $this->version,
+            'buildDate' => date('Y-m-d H:i:s'),
+        ];
+
+        $jsonContent = json_encode($metadata, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES);
+        if (file_put_contents($metadataPath, $jsonContent) === false) {
+            throw new BuildException("Unable to write metadata file '{$metadataPath}'");
+        }
+
         $this->consoleWriter->displayText(" DONE{$this->lineSeparator}", ConsoleWriter::COLOR_GREEN);
 
         return $this;
