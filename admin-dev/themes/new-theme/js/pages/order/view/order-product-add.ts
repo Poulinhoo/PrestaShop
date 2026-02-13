@@ -269,7 +269,7 @@ export default class OrderProductAdd {
       );
     });
 
-    this.productAddActionBtn.on('click', (event: JQueryEventObject) => this.confirmNewInvoice(event),
+    this.productAddActionBtn.off('click').on('click', (event: JQueryEventObject) => this.confirmNewInvoice(event),
     );
     this.invoiceSelect.on('change', () => {
       this.orderProductRenderer.toggleProductAddNewInvoiceInfo();
