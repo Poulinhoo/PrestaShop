@@ -348,7 +348,7 @@ export default class OrderProductAdd {
       quantity: this.quantityInput.val(),
       invoice_id: this.invoiceSelect.val(),
       free_shipping: this.freeShippingSelect.prop('checked'),
-      virtual: this.product.virtual,
+      virtual: Number(this.product.virtual),
       ...(this.isMultishipmentIsEnabled && {
         shipment_id: this.productShipmentSelect.val(),
       }),

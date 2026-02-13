@@ -1166,7 +1166,8 @@ class OrderController extends PrestaShopAdminController
             $this->dispatchCommand($addProductCommand);
             if ($featureFlagStateChecker->isEnabled(FeatureFlagSettings::FEATURE_FLAG_IMPROVED_SHIPMENT) && $this->orderHasShipment($orderForViewing->getId()) === true) {
                 $shipmentId = (int) $request->get('shipment_id');
-                $isVirtual = $request->get('virtual');
+                $isVirtual = (bool) $request->get('virtual');
+
                 if (!$isVirtual) {
                     $this->dispatchCommand(new AddProductToShipment($shipmentId, $productId, $orderId, $combinationId));
                 }
@@ -1206,6 +1207,7 @@ class OrderController extends PrestaShopAdminController
                 'isAvailableQuantityDisplayed' => (bool) $this->getConfiguration()->get('PS_STOCK_MANAGEMENT'),
                 'cancelProductForm' => $cancelProductForm->createView(),
                 'orderCurrency' => $orderCurrency,
+                'isImprovedShipmentFeatureFlagEnabled' => $featureFlagStateChecker->isEnabled(FeatureFlagSettings::FEATURE_FLAG_IMPROVED_SHIPMENT),
             ]);
         }
 
@@ -1969,7 +1971,8 @@ class OrderController extends PrestaShopAdminController
     public function getProductsListAction(
         int $orderId,
         #[Autowire(service: 'prestashop.core.form.identifiable_object.builder.cancel_product_form_builder')] FormBuilderInterface $formBuilder,
-        CurrencyDataProvider $currencyDataProvider
+        CurrencyDataProvider $currencyDataProvider,
+        FeatureFlagStateCheckerInterface $featureFlagStateChecker
     ): Response {
         /** @var OrderForViewing $orderForViewing */
         $orderForViewing = $this->dispatchQuery(new GetOrderForViewing($orderId, QuerySorting::DESC));
@@ -2005,6 +2008,7 @@ class OrderController extends PrestaShopAdminController
             'isColumnLocationDisplayed' => $isColumnLocationDisplayed,
             'isColumnRefundedDisplayed' => $isColumnRefundedDisplayed,
             'isAvailableQuantityDisplayed' => (bool) $this->getConfiguration()->get('PS_STOCK_MANAGEMENT'),
+            'isImprovedShipmentFeatureFlagEnabled' => $featureFlagStateChecker->isEnabled(FeatureFlagSettings::FEATURE_FLAG_IMPROVED_SHIPMENT),
         ]);
     }
 
