@@ -24,134 +24,43 @@
  * @license   https://opensource.org/licenses/OSL-3.0 Open Software License (OSL 3.0)
  */
 
-// Create a fake Db class on the global namespace
+namespace Tests\Unit\Classes;
 
-namespace {
-    abstract class Db extends DbCore
+use PHPUnit\Framework\TestCase;
+use RequestSql;
+
+class RequestSqlTest extends TestCase
+{
+    /**
+     * @dataProvider provider
+     */
+    public function testValidateSql(string $sql, bool $valid): void
     {
-        public static function getInstance($master = true)
-        {
-            return new FakeDb();
-        }
+        $requestSql = $this->createRequestSqlMock();
+        $parser = $requestSql->parsingSql($sql);
+        $this->assertSame($valid, $requestSql->validateParser($parser, false, $sql));
     }
 
-    class FakeDb extends Db
+    public function provider(): iterable
     {
-        public function __construct()
-        {
-        }
-
-        /* @phpstan-ignore-next-line */
-        public function connect()
-        {
-        }
-
-        /* @phpstan-ignore-next-line */
-        public function disconnect()
-        {
-        }
-
-        protected function _query($sql)
-        {
-            return true;
-        }
-
-        /* @phpstan-ignore-next-line */
-        protected function _numRows($result)
-        {
-        }
-
-        /* @phpstan-ignore-next-line */
-        public function Insert_ID()
-        {
-        }
-
-        /* @phpstan-ignore-next-line */
-        public function Affected_Rows()
-        {
-        }
-
-        /* @phpstan-ignore-next-line */
-        public function nextRow($result = false)
-        {
-        }
-
-        /* @phpstan-ignore-next-line */
-        protected function getAll($result = false)
-        {
-            /* @phpstan-ignore-next-line */
-            return true;
-        }
-
-        /* @phpstan-ignore-next-line */
-        public function getVersion()
-        {
-        }
-
-        /* @phpstan-ignore-next-line */
-        public function _escape($str)
-        {
-        }
-
-        /* @phpstan-ignore-next-line */
-        public function getMsgError()
-        {
-        }
-
-        /* @phpstan-ignore-next-line */
-        public function getNumberError()
-        {
-        }
-
-        /* @phpstan-ignore-next-line */
-        public function set_db($db_name)
-        {
-        }
-
-        /* @phpstan-ignore-next-line */
-        public function getBestEngine()
-        {
-        }
+        yield ['select * from ps_table', true];
+        yield ['select * from ps_notexistingtable', false];
+        yield ['select * from ps_table WHERE EXISTS (select 1 from ps_table)', true];
+        yield ['select * from ps_table WHERE EXISTS 1', false];
+        yield ['wrong * from ps_table', false];
     }
-}
 
-namespace Tests\Unit\Classes {
-    use PHPUnit\Framework\TestCase;
-    use RequestSql;
-
-    class RequestSqlTest extends TestCase
+    private function createRequestSqlMock()
     {
-        /**
-         * @dataProvider provider
-         */
-        public function testValidateSql(string $sql, bool $valid): void
-        {
-            $requestSql = $this->createRequestSqlMock();
-            $parser = $requestSql->parsingSql($sql);
-            $this->assertSame($valid, $requestSql->validateParser($parser, false, $sql));
-        }
+        $requestSql = $this->getMockBuilder(RequestSql::class)
+            ->onlyMethods(['getTables'])
+            ->getMock()
+        ;
 
-        public function provider(): iterable
-        {
-            yield ['select * from ps_table', true];
-            yield ['select * from ps_notexistingtable', false];
-            yield ['select * from ps_table WHERE EXISTS (select 1 from ps_table)', true];
-            yield ['select * from ps_table WHERE EXISTS 1', false];
-            yield ['wrong * from ps_table', false];
-        }
+        $requestSql->method('getTables')->willReturn([
+            'ps_table',
+        ]);
 
-        private function createRequestSqlMock()
-        {
-            $requestSql = $this->getMockBuilder(RequestSql::class)
-                ->onlyMethods(['getTables'])
-                ->getMock()
-            ;
-
-            $requestSql->method('getTables')->willReturn([
-                'ps_table',
-            ]);
-
-            return $requestSql;
-        }
+        return $requestSql;
     }
 }
