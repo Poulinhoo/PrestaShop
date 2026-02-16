@@ -20,10 +20,10 @@ on:
         required: true
         type: string
       target_ref:
-        description: 'Target git ref - tag, branch or SHA (e.g. HEAD)'
+        description: 'Leave empty to use the provided base_branch. Tou can optionally specify target git ref - tag, branch or SHA (e.g. HEAD)'
         required: false
         type: string
-        default: 'HEAD'
+        default: ''
       next_version:
         description: 'Next version for the changelog (e.g. 9.1.0 Beta 1)'
         required: true
@@ -60,7 +60,7 @@ jobs:
           github_token: ${{ github.token }}
           repository: ${{ github.repository }}
           previous_ref: ${{ inputs.previous_ref }}
-          target_ref: ${{ inputs.target_ref }}
+          target_ref: ${{ inputs.target_ref != '' && inputs.target_ref || input.base-branch }}
           next_version: ${{ inputs.next_version }}
           release_date: ${{ inputs.release_date }}
 
