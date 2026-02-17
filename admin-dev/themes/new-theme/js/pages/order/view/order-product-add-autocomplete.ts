@@ -46,9 +46,13 @@ export default class OrderProductAutocomplete {
 
   dropdownMenu: JQuery;
 
+  selectShipment: HTMLSelectElement;
+
   searchTimeoutId: undefined | number | ReturnType<typeof setTimeout>;
 
   onItemClickedCallback: (product?: Record<string, any> | undefined) => void;
+
+  isMultishipmentIsEnabled: boolean;
 
   constructor(input: JQuery) {
     this.activeSearchRequest = null;
@@ -56,7 +60,15 @@ export default class OrderProductAutocomplete {
     this.input = input;
     this.results = [];
     this.searchTimeoutId = undefined;
-    this.dropdownMenu = $(OrderViewPageMap.productSearchInputAutocompleteMenu);
+    this.selectShipment = document.querySelector<HTMLSelectElement>(OrderViewPageMap.selectAddShipment)!;
+    // eslint-disable-next-line max-len
+    this.isMultishipmentIsEnabled = document.querySelector<HTMLElement>(OrderViewPageMap.productsTable)?.dataset.multishipmentEnabled === '1';
+
+    if (this.isMultishipmentIsEnabled) {
+      this.dropdownMenu = $(OrderViewPageMap.productSearchInputAutocompleteMenuOnModale);
+    } else {
+      this.dropdownMenu = $(OrderViewPageMap.productSearchInputAutocompleteMenu);
+    }
     /**
      * Permit to link to each value of dropdown a callback after item is clicked
      */
@@ -76,7 +88,6 @@ export default class OrderProductAutocomplete {
 
   delaySearch(input: HTMLInputElement): void {
     clearTimeout(<number> this.searchTimeoutId);
-
     // Search only if the search phrase length is greater than 2 characters
     if (input.value.length < 2) {
       return;
@@ -139,7 +150,53 @@ export default class OrderProductAutocomplete {
 
     if (selectedProduct.length !== 0) {
       this.input.val(selectedProduct[0].name);
+      const shipmentSelectorContainer = document.querySelector<HTMLElement>(OrderViewPageMap.selectAddShipmentContainer)!;
+      shipmentSelectorContainer.classList.toggle('d-none', selectedProduct[0].virtual === true);
+
+      if (this.selectShipment && selectedProduct[0].virtual === false) {
+        this.populateShipmentSelect(id);
+      }
       this.onItemClickedCallback(selectedProduct[0]);
     }
+  }
+
+  populateShipmentSelect(productId: number): void {
+    const orderId = Number(this.input.data('order'));
+
+    if (!orderId || !productId) {
+      throw new Error('Missing orderId or productId, cant fetch shipment for product');
+    }
+
+    this.selectShipment.disabled = true;
+
+    fetch(this.router.generate('admin_orders_get_shipments_for_product', {orderId, productId}), {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+    })
+      .then((response) => {
+        if (!response.ok) {
+          throw new Error('An error occured while fetching shipments');
+        }
+        return response.json();
+      })
+      .then((data) => {
+        this.selectShipment.innerHTML = '';
+
+        data.shipments.forEach(
+          ({id, name}: { id: string; name: string }) => {
+            this.selectShipment.append(
+              new Option(name, id),
+            );
+          },
+        );
+
+        this.selectShipment.disabled = false;
+      })
+      .catch((error) => {
+        console.error('An error occured while fetching shipments ', error);
+        this.selectShipment.disabled = true;
+      });
   }
 }

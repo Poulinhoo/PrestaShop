@@ -40,6 +40,8 @@ $(() => {
   const DISCOUNT_TYPE_AMOUNT = 'amount';
   const DISCOUNT_TYPE_PERCENT = 'percent';
   const DISCOUNT_TYPE_FREE_SHIPPING = 'free_shipping';
+  // eslint-disable-next-line max-len
+  const multishipmentIsEnabled = document.querySelector<HTMLElement>(OrderViewPageMap.productsTable)?.dataset.multishipmentEnabled === '1';
 
   new SplitShipmentManager();
   new MergeShipmentManager();
@@ -50,8 +52,14 @@ $(() => {
     'TextWithLengthCounter',
   ]);
   const orderViewPage = new OrderViewPage();
-  const orderAddAutocomplete = new OrderProductAutocomplete($(OrderViewPageMap.productSearchInput));
-  const orderAdd = new OrderProductAdd();
+
+  if (!multishipmentIsEnabled) {
+    const orderAddAutocomplete = new OrderProductAutocomplete($(OrderViewPageMap.productSearchInput));
+    const orderAdd = new OrderProductAdd();
+
+    orderAddAutocomplete.listenForSearch();
+    orderAddAutocomplete.onItemClickedCallback = (product: Record<string, any> | undefined): void => orderAdd.setProduct(product);
+  }
 
   orderViewPage.listenForProductPack();
   orderViewPage.listenForProductDelete();
@@ -60,9 +68,6 @@ $(() => {
   orderViewPage.listenForProductPagination();
   orderViewPage.listenForRefund();
   orderViewPage.listenForCancelProduct();
-
-  orderAddAutocomplete.listenForSearch();
-  orderAddAutocomplete.onItemClickedCallback = (product: Record<string, any> | undefined): void => orderAdd.setProduct(product);
 
   handlePaymentDetailsToggle();
   handlePrivateNoteChange();

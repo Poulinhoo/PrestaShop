@@ -32,12 +32,17 @@ const {$} = window;
 export default class OrderProductRenderer {
   router: Router;
 
+  isMultishipmentIsEnabled: boolean;
+
   constructor() {
     this.router = new Router();
+
+    // eslint-disable-next-line max-len
+    this.isMultishipmentIsEnabled = document.querySelector<HTMLElement>(OrderViewPageMap.productsTable)?.dataset.multishipmentEnabled === '1';
   }
 
   addOrUpdateProductToList($productRow: JQuery, newRow: HTMLElement): void {
-    if ($productRow.length > 0) {
+    if ($productRow.length > 0 && !this.isMultishipmentIsEnabled) {
       $productRow.html($(newRow).html());
     } else {
       $(OrderViewPageMap.productAddRow).before(
@@ -76,24 +81,32 @@ export default class OrderProductRenderer {
       orderInvoiceId,
       isOrderTaxIncluded,
     });
-    $(OrderViewPageMap.productAddActionBtn).addClass('d-none');
-    $(OrderViewPageMap.productAddRow).addClass('d-none');
+    if (!this.isMultishipmentIsEnabled) {
+      $(OrderViewPageMap.productAddActionBtn).addClass('d-none');
+      $(OrderViewPageMap.productAddRow).addClass('d-none');
+    }
   }
 
   moveProductsPanelToModificationPosition(scrollTarget = 'body'): void {
     $(OrderViewPageMap.productActionBtn).addClass('d-none');
-    $(
-      `${OrderViewPageMap.productAddActionBtn}, ${OrderViewPageMap.productAddRow}`,
-    ).removeClass('d-none');
+    if (!this.isMultishipmentIsEnabled) {
+      $(
+        `${OrderViewPageMap.productAddActionBtn}, ${OrderViewPageMap.productAddRow}`,
+      ).removeClass('d-none');
+    }
     this.moveProductPanelToTop(scrollTarget);
   }
 
   moveProductsPanelToRefundPosition(): void {
     this.resetAllEditRows();
-    $(
-      /* eslint-disable-next-line max-len */
-      `${OrderViewPageMap.productAddActionBtn}, ${OrderViewPageMap.productAddRow}, ${OrderViewPageMap.productActionBtn}`,
-    ).addClass('d-none');
+    if (!this.isMultishipmentIsEnabled) {
+      $(
+        /* eslint-disable-next-line max-len */
+        `${OrderViewPageMap.productAddActionBtn}, ${OrderViewPageMap.productAddRow}, ${OrderViewPageMap.productActionBtn}`,
+      ).addClass('d-none');
+    } else {
+      $(OrderViewPageMap.productActionBtn).addClass('d-none');
+    }
     this.moveProductPanelToTop();
   }
 
@@ -141,9 +154,13 @@ export default class OrderProductRenderer {
 
     $(OrderViewPageMap.productsPagination).removeClass('d-none');
     $(OrderViewPageMap.productActionBtn).removeClass('d-none');
-    $(
-      `${OrderViewPageMap.productAddActionBtn}, ${OrderViewPageMap.productAddRow}`,
-    ).addClass('d-none');
+    if (!this.isMultishipmentIsEnabled) {
+      $(
+        `${OrderViewPageMap.productAddActionBtn}, ${OrderViewPageMap.productAddRow}`,
+      ).addClass('d-none');
+    } else {
+      $(OrderViewPageMap.productAddRow).addClass('d-none');
+    }
 
     // Restore pagination
     this.paginate(1);
@@ -161,7 +178,9 @@ export default class OrderProductRenderer {
     $(OrderViewPageMap.productAddAvailableText).html('');
     $(OrderViewPageMap.productAddLocationText).html('');
     $(OrderViewPageMap.productAddNewInvoiceInfo).addClass('d-none');
-    $(OrderViewPageMap.productAddActionBtn).prop('disabled', true);
+    if (!this.isMultishipmentIsEnabled) {
+      $(OrderViewPageMap.productAddActionBtn).prop('disabled', true);
+    }
   }
 
   resetAllEditRows(): void {
