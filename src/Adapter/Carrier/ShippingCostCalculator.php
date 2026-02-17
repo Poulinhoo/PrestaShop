@@ -63,7 +63,6 @@ class ShippingCostCalculator
         }
 
         $zoneId = $this->resolveZoneId($request);
-
         $carrier = $this->getCarrier($request->getCarrierId());
 
         if (!$carrier || !Validate::isLoadedObject($carrier) || !$carrier->active) {
@@ -98,7 +97,6 @@ class ShippingCostCalculator
         }
 
         $baseCost = $this->addProductShippingCosts($baseCost, $physicalProducts);
-
         $baseCost = $this->convertCurrency($baseCost, $request->getCurrencyId());
 
         return $this->applyTaxAndRound($baseCost, $carrier, $request->getAddressId());
