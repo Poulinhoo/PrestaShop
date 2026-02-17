@@ -3,8 +3,10 @@
  * For the full copyright and license information, please view the
  * docs/licenses/LICENSE.txt file that was distributed with this source code.
  */
+
 use PrestaShop\PrestaShop\Adapter\MailTemplate\MailPartialTemplateRenderer;
 use PrestaShop\PrestaShop\Adapter\Shipment\OrderShipmentCreator;
+use PrestaShop\PrestaShop\Adapter\Shipment\OrderShipmentService;
 use PrestaShop\PrestaShop\Adapter\StockManager;
 use PrestaShop\PrestaShop\Core\FeatureFlag\FeatureFlagSettings;
 use PrestaShop\PrestaShop\Core\FeatureFlag\FeatureFlagStateCheckerInterface;
@@ -211,6 +213,7 @@ abstract class PaymentModuleCore extends Module
             'id_order_state' => &$id_order_state,
             'payment_method' => $payment_method,
         ]);
+        $orderShipmentService = $this->get(OrderShipmentService::class);
 
         $this->context->cart = new Cart((int) $id_cart);
         $this->context->customer = new Customer((int) $this->context->cart->id_customer);
@@ -469,11 +472,22 @@ abstract class PaymentModuleCore extends Module
 
                 $product_price = Product::getTaxCalculationMethod() == PS_TAX_EXC ? Tools::ps_round($price, Context::getContext()->getComputingPrecision()) : $price_wt;
 
+                $carrierName = null;
+                if ($orderShipmentService->orderHasShipment($order->id)) {
+                    $carrierName = $orderShipmentService->getCarrierForProduct($order->id, (int) $product['id_product'])->name;
+                }
+
                 $product_var_tpl = [
                     'id_product' => $product['id_product'],
                     'id_product_attribute' => $product['id_product_attribute'],
                     'reference' => $product['reference'],
-                    'name' => $product['name'] . (!empty($product['attributes']) ? ' - ' . $product['attributes'] : ''),
+                    'name' => $this->trans(
+                        '%name%%attributes%%carrier%',
+                        [
+                            '%name%' => $product['name'],
+                            '%attributes%' => !empty($product['attributes']) ? $this->trans(' - %attributes%', ['%attributes%' => $product['attributes']], 'Emails.Body') : '',
+                            '%carrier%' => $carrierName ? $this->trans(' - Carrier: %carrier_name%', ['%carrier_name%' => $carrierName], 'Emails.Body') : '',
+                        ], 'Emails.Body'),
                     'price' => Tools::getContextLocale($this->context)->formatPrice($product_price * $product['quantity'], $this->context->currency->iso_code),
                     'quantity' => $product['quantity'],
                     'customization' => [],
@@ -662,6 +676,15 @@ abstract class PaymentModuleCore extends Module
                 }
 
                 if (Validate::isEmail($this->context->customer->email)) {
+                    if ($orderShipmentService->orderHasShipment($order->id)) {
+                        $carriers = $orderShipmentService->getAllCarriersForOrder($order->id);
+                        $carrierNames = array_map(fn ($carrier) => $carrier->name, $carriers);
+                        $carrierNames = implode(', ', $carrierNames);
+                    } else {
+                        $carrier = new Carrier($order->id_carrier);
+                        $carrierNames = $carrier->name;
+                    }
+
                     $data = [
                         '{firstname}' => $this->context->customer->firstname,
                         '{lastname}' => $this->context->customer->lastname,
@@ -702,7 +725,7 @@ abstract class PaymentModuleCore extends Module
                         '{order_name}' => $order->getUniqReference(),
                         '{id_order}' => $order->id,
                         '{date}' => Tools::displayDate(date('Y-m-d H:i:s'), true),
-                        '{carrier}' => ($virtual_product || !isset($carrier->name)) ? $this->trans('No carrier', [], 'Admin.Payment.Notification') : $carrier->name,
+                        '{carrier}' => ($virtual_product || !isset($carrierNames)) ? $this->trans('No carrier', [], 'Admin.Payment.Notification') : $carrierNames,
                         '{payment}' => $order->payment,
                         '{products}' => $product_list_html,
                         '{products_txt}' => $product_list_txt,
