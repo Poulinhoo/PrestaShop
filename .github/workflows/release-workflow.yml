@@ -40,9 +40,8 @@ jobs:
         run: COMPOSER_PROCESS_TIMEOUT=600 composer install --ansi --prefer-dist --no-interaction --no-progress
 
       # Run header stamp
-      ## This is temporarily commented, a dedicated PR will fix everything and uncomment/enable this check
-      #- name: Header stamp dry run
-      #  run: composer header-stamp
+      - name: Header stamp dry run
+        run: composer header-stamp
       # Little hint to help contributors fix their PRs
       - name: Hint to fix
         if: failure()

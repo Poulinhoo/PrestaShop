@@ -1,4 +1,9 @@
 license: .header-stamp-osl3-license.txt
+discriminationString:
+  # New discriminator since 9.1
+  - For the full copyright and license information
+  # Old discriminator, important to handle migration/update correctly
+  - NOTICE OF LICENSE
 extensions:
   - 'php'
   - 'js'
@@ -25,6 +30,8 @@ excludedFiles:
   - 'admin-dev/themes/default/css/bundle'
   - 'admin-dev/themes/default/css/overrides.css'
   - 'admin-dev/themes/default/css/font.css'
+  # Config files
+  - 'app/config/parameters.php'
   # js dependencies
   - 'js/tiny_mce'
   - 'js/jquery'

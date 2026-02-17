@@ -16718,16 +16718,16 @@
         },
         {
             "name": "prestashop/header-stamp",
-            "version": "v3.0.0",
+            "version": "v3.1.0",
             "source": {
                 "type": "git",
                 "url": "https://github.com/PrestaShopCorp/header-stamp.git",
-                "reference": "60af59faee76bcc26ee9fc9e367ae899661b28ce"
+                "reference": "936c4526eb1b7fe0468ec52a1fe2bdea013c9039"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/PrestaShopCorp/header-stamp/zipball/60af59faee76bcc26ee9fc9e367ae899661b28ce",
-                "reference": "60af59faee76bcc26ee9fc9e367ae899661b28ce",
+                "url": "https://api.github.com/repos/PrestaShopCorp/header-stamp/zipball/936c4526eb1b7fe0468ec52a1fe2bdea013c9039",
+                "reference": "936c4526eb1b7fe0468ec52a1fe2bdea013c9039",
                 "shasum": ""
             },
             "require": {
@@ -16765,9 +16765,9 @@
             "homepage": "https://github.com/PrestaShopCorp/header-stamp",
             "support": {
                 "issues": "https://github.com/PrestaShopCorp/header-stamp/issues",
-                "source": "https://github.com/PrestaShopCorp/header-stamp/tree/v3.0.0"
+                "source": "https://github.com/PrestaShopCorp/header-stamp/tree/v3.1.0"
             },
-            "time": "2026-02-13T12:19:40+00:00"
+            "time": "2026-02-16T17:28:00+00:00"
         },
         {
             "name": "rector/rector",
