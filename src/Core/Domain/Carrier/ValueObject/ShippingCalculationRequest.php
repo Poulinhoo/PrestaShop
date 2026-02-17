@@ -26,9 +26,10 @@
 
 declare(strict_types=1);
 
-namespace PrestaShop\PrestaShop\Core\Domain\Shipping\ValueObject;
+namespace PrestaShop\PrestaShop\Core\Domain\Carrier\ValueObject;
 
 use Country;
+use InvalidArgumentException;
 
 final class ShippingCalculationRequest
 {
@@ -58,7 +59,7 @@ final class ShippingCalculationRequest
      * @param int|null $customerId Customer ID for carrier filtering by customer groups (optional)
      * @param float $orderTotal Order total for price-based shipping calculations
      *
-     * @throws \InvalidArgumentException If products array is invalid or missing required fields
+     * @throws InvalidArgumentException If products array is invalid or missing required fields
      */
     public function __construct(
         array $products,
@@ -89,7 +90,7 @@ final class ShippingCalculationRequest
         $required = ['id_product', 'quantity', 'is_virtual'];
         foreach ($required as $field) {
             if (!isset($product[$field])) {
-                throw new \InvalidArgumentException("Product missing required field: {$field}");
+                throw new InvalidArgumentException("Product missing required field: {$field}");
             }
         }
     }

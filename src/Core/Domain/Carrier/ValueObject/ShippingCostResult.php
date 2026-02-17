@@ -26,8 +26,9 @@
 
 declare(strict_types=1);
 
-namespace PrestaShop\PrestaShop\Core\Domain\Shipping\ValueObject;
+namespace PrestaShop\PrestaShop\Core\Domain\Carrier\ValueObject;
 
+use InvalidArgumentException;
 use PrestaShop\Decimal\DecimalNumber;
 
 /**
@@ -50,7 +51,7 @@ final class ShippingCostResult
      * @param int $selectedCarrierId The carrier ID that was selected/used for calculation
      * @param int $precision Computing precision used for calculations
      *
-     * @throws \InvalidArgumentException If amounts are negative or carrier ID is invalid
+     * @throws InvalidArgumentException If amounts are negative or carrier ID is invalid
      */
     public function __construct(
         DecimalNumber $taxExcluded,
@@ -59,13 +60,13 @@ final class ShippingCostResult
         int $precision
     ) {
         if ($taxExcluded->isNegative()) {
-            throw new \InvalidArgumentException('Tax excluded amount cannot be negative');
+            throw new InvalidArgumentException('Tax excluded amount cannot be negative');
         }
         if ($taxIncluded->isNegative()) {
-            throw new \InvalidArgumentException('Tax included amount cannot be negative');
+            throw new InvalidArgumentException('Tax included amount cannot be negative');
         }
         if ($selectedCarrierId <= 0) {
-            throw new \InvalidArgumentException('Selected carrier ID must be positive');
+            throw new InvalidArgumentException('Selected carrier ID must be positive');
         }
 
         $this->taxExcluded = $taxExcluded;
@@ -93,7 +94,6 @@ final class ShippingCostResult
     {
         return $this->precision;
     }
-
 
     public function getTaxExcludedAsFloat(): float
     {

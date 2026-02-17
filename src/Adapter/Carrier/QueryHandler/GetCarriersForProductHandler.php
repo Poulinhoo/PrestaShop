@@ -27,11 +27,11 @@
 namespace PrestaShop\PrestaShop\Adapter\Carrier\QueryHandler;
 
 use PrestaShop\PrestaShop\Adapter\Product\Repository\ProductRepository;
+use PrestaShop\PrestaShop\Adapter\Shop\Context as ShopContext;
 use PrestaShop\PrestaShop\Core\CommandBus\Attributes\AsQueryHandler;
 use PrestaShop\PrestaShop\Core\Domain\Carrier\Query\GetCarriersForProduct;
 use PrestaShop\PrestaShop\Core\Domain\Carrier\QueryHandler\GetCarriersForProductHandlerInterface;
 use PrestaShop\PrestaShop\Core\Domain\Carrier\QueryResult\CarrierSummary;
-use PrestaShop\PrestaShop\Adapter\Shop\Context as ShopContext;
 use PrestaShop\PrestaShop\Core\Domain\Shop\ValueObject\ShopId;
 
 #[AsQueryHandler]
@@ -51,7 +51,7 @@ final class GetCarriersForProductHandler implements GetCarriersForProductHandler
         $productCarriers = $this->productRepository->getCarriers($query->getProductId(), new ShopId($this->shopContext->getContextShopID()));
         $carriers = [];
 
-        foreach($productCarriers as $productCarrier) {
+        foreach ($productCarriers as $productCarrier) {
             $carriers[] = new CarrierSummary($productCarrier['id_carrier'], $productCarrier['name']);
         }
 

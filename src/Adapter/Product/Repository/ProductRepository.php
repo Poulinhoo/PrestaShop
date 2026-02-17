@@ -1001,9 +1001,9 @@ class ProductRepository extends AbstractMultiShopObjectModelRepository
         $qb = $this->connection->createQueryBuilder();
 
         return $qb->select(
-                'c.id_carrier',
-                'c.name'
-            )
+            'c.id_carrier',
+            'c.name'
+        )
             ->from($this->dbPrefix . 'carrier', 'c')
             ->where('c.deleted = 0')
             ->andWhere('c.active = 1')
@@ -1018,9 +1018,9 @@ class ProductRepository extends AbstractMultiShopObjectModelRepository
         $qb = $this->connection->createQueryBuilder();
 
         return $qb->select(
-                'c.id_carrier',
-                'c.name'
-            )
+            'c.id_carrier',
+            'c.name'
+        )
             ->from($this->dbPrefix . 'product_carrier', 'pc')
             ->innerJoin(
                 'pc',

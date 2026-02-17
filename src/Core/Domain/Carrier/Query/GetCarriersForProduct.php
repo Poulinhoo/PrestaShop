@@ -38,7 +38,6 @@ class GetCarriersForProduct
      */
     private $productId;
 
-
     public function __construct(int $productId)
     {
         $this->productId = new ProductId($productId);

@@ -31,19 +31,19 @@ namespace PrestaShop\PrestaShop\Adapter\Shipment\CommandHandler;
 use Exception;
 use Order;
 use PrestaShop\PrestaShop\Adapter\Address\Repository\AddressRepository;
+use PrestaShop\PrestaShop\Adapter\Carrier\ShippingCostCalculator;
 use PrestaShop\PrestaShop\Adapter\Country\Repository\CountryRepository;
 use PrestaShop\PrestaShop\Adapter\Order\Repository\OrderRepository;
 use PrestaShop\PrestaShop\Adapter\Product\Repository\ProductRepository;
-use PrestaShop\PrestaShop\Adapter\Shipping\ShippingCostCalculatorInterface;
 use PrestaShop\PrestaShop\Core\CommandBus\Attributes\AsCommandHandler;
 use PrestaShop\PrestaShop\Core\Domain\Address\ValueObject\AddressId;
+use PrestaShop\PrestaShop\Core\Domain\Carrier\ValueObject\ShippingCalculationRequest;
 use PrestaShop\PrestaShop\Core\Domain\Country\ValueObject\CountryId;
 use PrestaShop\PrestaShop\Core\Domain\Product\ValueObject\ProductId;
 use PrestaShop\PrestaShop\Core\Domain\Shipment\Command\CreateShipment;
 use PrestaShop\PrestaShop\Core\Domain\Shipment\CommandHandler\CreateShipmentHandlerInterface;
 use PrestaShop\PrestaShop\Core\Domain\Shipment\Exception\ShipmentException;
 use PrestaShop\PrestaShop\Core\Domain\Shipment\Exception\ShipmentNotFoundException;
-use PrestaShop\PrestaShop\Core\Domain\Shipping\ValueObject\ShippingCalculationRequest;
 use PrestaShop\PrestaShop\Core\Domain\Shop\ValueObject\ShopId;
 use PrestaShopBundle\Entity\Repository\ShipmentRepository;
 use PrestaShopBundle\Entity\Shipment;
@@ -57,7 +57,7 @@ class CreateShipmentHandler implements CreateShipmentHandlerInterface
         private readonly AddressRepository $addressRepository,
         private readonly ProductRepository $productRepository,
         private readonly CountryRepository $countryRepository,
-        private readonly ShippingCostCalculatorInterface $shippingCostCalculator,
+        private readonly ShippingCostCalculator $shippingCostCalculator,
     ) {
     }
 

@@ -15,6 +15,7 @@ use PrestaShop\PrestaShop\Adapter\Order\Repository\OrderDetailRepository;
 use PrestaShop\PrestaShop\Adapter\PDF\OrderInvoicePdfGenerator;
 use PrestaShop\PrestaShop\Adapter\Tools;
 use PrestaShop\PrestaShop\Core\Action\ActionsBarButtonsCollection;
+use PrestaShop\PrestaShop\Core\Domain\Carrier\Query\GetCarriersForProduct;
 use PrestaShop\PrestaShop\Core\Domain\Cart\Query\GetCartForOrderCreation;
 use PrestaShop\PrestaShop\Core\Domain\CartRule\Exception\InvalidCartRuleDiscountValueException;
 use PrestaShop\PrestaShop\Core\Domain\CustomerMessage\Command\AddOrderCustomerMessageCommand;
@@ -66,6 +67,7 @@ use PrestaShop\PrestaShop\Core\Domain\Product\Exception\ProductSearchEmptyPhrase
 use PrestaShop\PrestaShop\Core\Domain\Product\Query\SearchProducts;
 use PrestaShop\PrestaShop\Core\Domain\Product\QueryResult\FoundProduct;
 use PrestaShop\PrestaShop\Core\Domain\Shipment\Command\AddProductToShipment;
+use PrestaShop\PrestaShop\Core\Domain\Shipment\Command\CreateShipment;
 use PrestaShop\PrestaShop\Core\Domain\Shipment\Command\EditShipment;
 use PrestaShop\PrestaShop\Core\Domain\Shipment\Command\MergeProductsToShipment;
 use PrestaShop\PrestaShop\Core\Domain\Shipment\Command\SplitShipment;
@@ -127,8 +129,6 @@ use Symfony\Component\HttpFoundation\RedirectResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\RouterInterface;
-use PrestaShop\PrestaShop\Core\Domain\Carrier\Query\GetCarriersForProduct;
-use PrestaShop\PrestaShop\Core\Domain\Shipment\Command\CreateShipment;
 
 /**
  * Manages "Sell > Orders" page
@@ -889,7 +889,7 @@ class OrderController extends PrestaShopAdminController
         $shipments = $this->dispatchCommand(new ListAvailableShipmentsForProduct($orderId, $productId));
         $shipments[] = [
             'id' => 0,
-            'name' => $this->trans('Create a shipment', [], 'Admin.Orderscustomers.Feature')
+            'name' => $this->trans('Create a shipment', [], 'Admin.Orderscustomers.Feature'),
         ];
 
         return $this->json(
@@ -1163,12 +1163,12 @@ class OrderController extends PrestaShopAdminController
                 $shipmentId = (int) $request->get('shipment_id');
                 $isVirtual = (bool) $request->get('virtual');
 
-                if (!$isVirtual) {
-                    $this->dispatchCommand(new AddProductToShipment($shipmentId, $productId, $orderId, $combinationId));
-                }
-                if ($shipmentId === 0) {
+                if ($shipmentId === 0 && !$isVirtual) {
                     $carrierId = (int) $request->get('carrier_id');
                     $shipmentId = $this->dispatchCommand(new CreateShipment($orderId, $carrierId, $productId, (int) $request->get('quantity')));
+                }
+                if (!$isVirtual) {
+                    $this->dispatchCommand(new AddProductToShipment($shipmentId, $productId, $orderId, $combinationId));
                 }
             }
         } catch (Exception $e) {

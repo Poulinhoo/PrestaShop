@@ -26,7 +26,7 @@
 
 declare(strict_types=1);
 
-namespace PrestaShop\PrestaShop\Adapter\Shipping;
+namespace PrestaShop\PrestaShop\Adapter\Carrier;
 
 use Address;
 use Carrier;
@@ -35,11 +35,11 @@ use Currency;
 use PrestaShop\Decimal\DecimalNumber;
 use PrestaShop\PrestaShop\Adapter\LegacyContext;
 use PrestaShop\PrestaShop\Adapter\Tools;
-use PrestaShop\PrestaShop\Core\Domain\Shipping\ValueObject\ShippingCalculationRequest;
-use PrestaShop\PrestaShop\Core\Domain\Shipping\ValueObject\ShippingCostResult;
+use PrestaShop\PrestaShop\Core\Domain\Carrier\ValueObject\ShippingCalculationRequest;
+use PrestaShop\PrestaShop\Core\Domain\Carrier\ValueObject\ShippingCostResult;
 use Validate;
 
-class ShippingCostCalculator implements ShippingCostCalculatorInterface
+class ShippingCostCalculator
 {
     private array $carrierCache = [];
 
