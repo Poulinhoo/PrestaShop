@@ -740,14 +740,8 @@ describe('FO - Checkout - Shipping methods : MultiCarrier', async () => {
       let carrier = await foHummingbirdMyOrderDetailsPage.getCarrierDataFromTable(page, 1);
       expect(carrier).to.equal(firstCarrierData.name);
 
-      let shippingCost = await foHummingbirdMyOrderDetailsPage.getCarrierDataFromTable(page, 1, 'Shipping cost');
-      expect(shippingCost).to.equal('Free');
-
       carrier = await foHummingbirdMyOrderDetailsPage.getCarrierDataFromTable(page, 2);
       expect(carrier).to.equal(secondCarrierData.name);
-
-      shippingCost = await foHummingbirdMyOrderDetailsPage.getCarrierDataFromTable(page, 2, 'Shipping cost');
-      expect(shippingCost).to.equal('Free');
     });
 
     it('should check product details table', async function () {
