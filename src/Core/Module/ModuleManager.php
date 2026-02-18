@@ -8,6 +8,7 @@ declare(strict_types=1);
 
 namespace PrestaShop\PrestaShop\Core\Module;
 
+use Configuration;
 use Exception;
 use Language as LegacyLanguage;
 use Module as LegacyModule;
@@ -452,6 +453,6 @@ class ModuleManager implements ModuleManagerInterface
      */
     public function setSkipOverrides(bool $skip): void
     {
-        LegacyModule::skipOverrides($skip);
+        Configuration::set('PS_DISABLE_MODULE_OVERRIDES', (int) $skip);
     }
 }

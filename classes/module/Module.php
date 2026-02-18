@@ -195,8 +195,6 @@ abstract class ModuleCore implements ModuleInterface
 
     protected static $update_translations_after_install = true;
 
-    protected static bool $skip_overrides = false;
-
     protected static $_batch_mode = false;
     protected static $_defered_clearCache = [];
     protected static $_defered_func_call = [];
@@ -418,7 +416,7 @@ abstract class ModuleCore implements ModuleInterface
         }
 
         // Check for override conflicts
-        if (!Module::$skip_overrides) {
+        if (!Configuration::get('PS_DISABLE_MODULE_OVERRIDES')) {
             $moduleOverrideChecker = $this->get(ModuleOverrideChecker::class);
             if (!$moduleOverrideChecker) {
                 $moduleOverrideChecker = new ModuleOverrideChecker($this->getTranslator(), _PS_OVERRIDE_DIR_);
@@ -432,7 +430,7 @@ abstract class ModuleCore implements ModuleInterface
 
         if (!$this->installControllers()) {
             $this->_errors[] = Context::getContext()->getTranslator()->trans('Could not install module controllers.', [], 'Admin.Modules.Notification');
-            if (!Module::$skip_overrides) {
+            if (!Configuration::get('PS_DISABLE_MODULE_OVERRIDES')) {
                 $this->uninstallOverrides();
             }
 
@@ -450,7 +448,7 @@ abstract class ModuleCore implements ModuleInterface
             if (method_exists($this, 'uninstallTabs')) {
                 $this->uninstallTabs();
             }
-            if (!Module::$skip_overrides) {
+            if (!Configuration::get('PS_DISABLE_MODULE_OVERRIDES')) {
                 $this->uninstallOverrides();
             }
 
@@ -531,17 +529,6 @@ abstract class ModuleCore implements ModuleInterface
     public static function updateTranslationsAfterInstall($update = true)
     {
         Module::$update_translations_after_install = (bool) $update;
-    }
-
-    /**
-     * When set to true, all override operations (conflict check, install, uninstall)
-     * are skipped during module lifecycle actions (install, enable, disable, uninstall).
-     *
-     * @param bool $skip
-     */
-    public static function skipOverrides(bool $skip = true): void
-    {
-        Module::$skip_overrides = $skip;
     }
 
     public function updateModuleTranslations()
@@ -922,7 +909,7 @@ abstract class ModuleCore implements ModuleInterface
         }
 
         // Uninstall all overrides this module may have used
-        if (!Module::$skip_overrides && !$this->uninstallOverrides()) {
+        if (!Configuration::get('PS_DISABLE_MODULE_OVERRIDES') && !$this->uninstallOverrides()) {
             return false;
         }
 
@@ -1050,7 +1037,7 @@ abstract class ModuleCore implements ModuleInterface
         if (!$moduleOverrideChecker) {
             $moduleOverrideChecker = new ModuleOverrideChecker($this->getTranslator(), _PS_OVERRIDE_DIR_);
         }
-        if ($this->getOverrides() != null && !Module::$skip_overrides) {
+        if ($this->getOverrides() != null && !Configuration::get('PS_DISABLE_MODULE_OVERRIDES')) {
             if (!$moduleOverrideChecker->hasOverrideConflict($this->getLocalPath() . 'override')) {
                 // Install overrides
                 try {
@@ -1188,7 +1175,7 @@ abstract class ModuleCore implements ModuleInterface
         Hook::exec('actionModuleDisable', ['module' => $this]);
 
         $result = true;
-        if (!Module::$skip_overrides && $this->getOverrides() != null) {
+        if (!Configuration::get('PS_DISABLE_MODULE_OVERRIDES') && $this->getOverrides() != null) {
             $result &= $this->uninstallOverrides();
         }
 
