@@ -8,9 +8,7 @@ declare(strict_types=1);
 
 namespace PrestaShop\PrestaShop\Adapter\Carrier;
 
-use Address;
 use Carrier;
-use Currency;
 use Exception;
 use PrestaShop\Decimal\DecimalNumber;
 use PrestaShop\PrestaShop\Adapter\Address\Repository\AddressRepository;
@@ -236,7 +234,7 @@ class ShippingCostCalculator
     {
         $converted = $this->tools->convertPrice(
             (float) (string) $amount,
-            Currency::getCurrencyInstance($currencyId)
+            $this->currencyRepository->get(new CurrencyId($currencyId))
         );
 
         return new DecimalNumber((string) $converted);
@@ -253,7 +251,7 @@ class ShippingCostCalculator
         $taxIncluded = $cost;
 
         if ($this->configurationAdapter->get('PS_TAX') && $addressId && !$this->configurationAdapter->get('PS_ATCP_SHIPWRAP')) {
-            $address = Address::initialize($addressId);
+            $address = $this->addressRepository->get(new AddressId($addressId));
             $carrierTax = $carrier->getTaxesRate($address);
             $taxIncluded = $cost->times(
                 new DecimalNumber((string) (1 + ($carrierTax / 100)))
