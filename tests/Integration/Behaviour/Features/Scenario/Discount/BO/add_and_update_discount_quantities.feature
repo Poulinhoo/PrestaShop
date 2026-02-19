@@ -21,44 +21,49 @@ Feature: Add discount
       | total_quantity    | 42        |
       | quantity_per_user | 51        |
     Then discount "discount_with_quantity_limits" should have the following properties:
-      | name[en-US]       | Promotion |
-      | active            | true      |
-      | total_quantity    | 42        |
-      | quantity_per_user | 51        |
+      | name[en-US]        | Promotion |
+      | active             | true      |
+      | total_quantity     | 42        |
+      | remaining_quantity | 42        |
+      | quantity_per_user  | 51        |
 
   Scenario: Create a discount without explicit quantity limits, they are null by default (so unlimited)
     When I create a "cart_level" discount "discount_without_quantity_limits" with following properties:
       | name[en-US] | Promotion |
       | active      | true      |
     Then discount "discount_without_quantity_limits" should have the following properties:
-      | name[en-US]       | Promotion |
-      | active            | true      |
-      | total_quantity    | null      |
-      | quantity_per_user | null      |
+      | name[en-US]        | Promotion |
+      | active             | true      |
+      | total_quantity     | null      |
+      | remaining_quantity | null      |
+      | quantity_per_user  | null      |
 
   Scenario: Update a discount quantity limits
     When I create a "cart_level" discount "created_discount" with following properties:
       | name[en-US] | Promotion |
       | active      | true      |
     Then discount "created_discount" should have the following properties:
-      | name[en-US]       | Promotion |
-      | active            | true      |
-      | total_quantity    | null      |
-      | quantity_per_user | null      |
+      | name[en-US]        | Promotion |
+      | active             | true      |
+      | total_quantity     | null      |
+      | remaining_quantity | null      |
+      | quantity_per_user  | null      |
     When I update discount "created_discount" with the following properties:
       | total_quantity    | 42 |
       | quantity_per_user | 51 |
     Then discount "created_discount" should have the following properties:
-      | name[en-US]       | Promotion |
-      | active            | true      |
-      | total_quantity    | 42        |
-      | quantity_per_user | 51        |
+      | name[en-US]        | Promotion |
+      | active             | true      |
+      | total_quantity     | 42        |
+      | remaining_quantity | 42        |
+      | quantity_per_user  | 51        |
     # I can force and update no limits
     When I update discount "created_discount" with the following properties:
       | total_quantity    | null |
       | quantity_per_user | null |
     Then discount "created_discount" should have the following properties:
-      | name[en-US]       | Promotion |
-      | active            | true      |
-      | total_quantity    | null      |
-      | quantity_per_user | null      |
+      | name[en-US]        | Promotion |
+      | active             | true      |
+      | total_quantity     | null      |
+      | remaining_quantity | null      |
+      | quantity_per_user  | null      |

@@ -47,6 +47,7 @@ class GetDiscountForEditingHandler implements GetDiscountForEditingHandlerInterf
             new DateTimeImmutable($cartRule->date_from),
             new DateTimeImmutable($cartRule->date_to),
             $cartRule->total_quantity,
+            $cartRule->quantity,
             $quantityUsedInOrders,
             $cartRule->quantity_per_user,
             $cartRule->description,

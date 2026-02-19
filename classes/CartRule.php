@@ -48,9 +48,6 @@ class CartRuleCore extends ObjectModel
      */
     public $date_to;
     public $description;
-    /**
-     * @deprecated in favor of total_quantity To be removed in 10.0
-     */
     public $quantity = 1;
     public ?int $total_quantity = null;
     public $quantity_per_user = 1;
@@ -116,7 +113,7 @@ class CartRuleCore extends ObjectModel
             'date_from' => ['type' => self::TYPE_DATE, 'validate' => 'isDate', 'required' => true],
             'date_to' => ['type' => self::TYPE_DATE, 'validate' => 'isDate', 'required' => true],
             'description' => ['type' => self::TYPE_STRING, 'validate' => 'isCleanHtml', 'size' => DiscountSettings::MAX_DESCRIPTION_LENGTH],
-            'quantity' => ['type' => self::TYPE_INT, 'validate' => 'isUnsignedInt'],
+            'quantity' => ['type' => self::TYPE_INT, 'allow_null' => true, 'validate' => 'isUnsignedInt'],
             'total_quantity' => ['type' => self::TYPE_INT, 'allow_null' => true, 'validate' => 'isUnsignedInt'],
             'quantity_per_user' => ['type' => self::TYPE_INT, 'allow_null' => true, 'validate' => 'isUnsignedInt'],
             'priority' => ['type' => self::TYPE_INT, 'validate' => 'isUnsignedInt'],
@@ -186,6 +183,7 @@ class CartRuleCore extends ObjectModel
     public static function resetStaticCache()
     {
         static::$cartAmountCache = [];
+        static::$featureFlagManager = null;
     }
 
     /**
@@ -435,22 +433,8 @@ class CartRuleCore extends ObjectModel
 
         // Then, conditions for date, voucher active property and total amount of vouchers in stock
         $sql .= ' AND NOW() BETWEEN cr.date_from AND cr.date_to
-            ' . ($active ? 'AND cr.`active` = 1' : '');
-
-        if (self::isDiscountFeatureFlagEnabled()) {
-            // Dynamically count the number of times the cart rule has been used, meaning how many times
-            // it is associated to an actual order (except those that have the error status)
-            $sql .= ' AND (cr.`total_quantity` is null  OR (
-                    SELECT COUNT(*) FROM `' . _DB_PREFIX_ . 'orders` o
-                        LEFT JOIN `' . _DB_PREFIX_ . 'order_cart_rule` ocr ON o.`id_order` = ocr.`id_order`
-                        WHERE ocr.`deleted` = 0
-                        AND ' . (int) Configuration::get('PS_OS_ERROR') . ' != o.`current_state`
-                        AND ocr.`id_cart_rule` = cr.id_cart_rule
-                    ) < cr.`total_quantity`
-                )';
-        } else {
-            $sql .= $inStock ? ' AND cr.`quantity` >' : '';
-        }
+            ' . ($active ? 'AND cr.`active` = 1' : '') . '
+            ' . ($inStock ? 'AND (cr.`quantity` > 0 OR cr.`quantity` is null)' : '');
 
         // If we want to select only vouchers that have free shipping as the action
         if ($free_shipping_only) {
@@ -796,43 +780,9 @@ class CartRuleCore extends ObjectModel
                 return (!$display_error) ? false : $this->trans('This voucher is disabled', [], 'Shop.Notifications.Error');
             }
 
-            if (self::isDiscountFeatureFlagEnabled()) {
-                // If total_quantity is null it means the is no quantity limit
-                if ($this->total_quantity !== null) {
-                    // We get the total quantity used for this cart rule, if it's higher than the total limit the cart rule is invalid
-                    $totalQuantityUsed = Db::getInstance()->getValue('
-                        SELECT count(*)
-                        FROM `' . _DB_PREFIX_ . 'orders` o
-                        LEFT JOIN `' . _DB_PREFIX_ . 'order_cart_rule` ocr ON o.`id_order` = ocr.`id_order`
-                        WHERE ocr.`deleted` = 0
-                        AND ocr.`id_cart_rule` = ' . (int) $this->id . '
-                        AND ' . (int) Configuration::get('PS_OS_ERROR') . ' != o.`current_state`
-                    ');
-
-                    // If the cart rule is already in the cart the total quantity used must take into account the number inside the current cart
-                    // (that is not an order yet)
-                    if ($alreadyInCart) {
-                        $totalQuantityUsed += (int) Db::getInstance()->getValue('
-                            SELECT count(*)
-                            FROM `' . _DB_PREFIX_ . 'cart_cart_rule` ccr
-                            INNER JOIN `' . _DB_PREFIX_ . 'cart` c ON c.id_cart = ccr.id_cart
-                            LEFT JOIN `' . _DB_PREFIX_ . 'orders` o ON o.id_cart = c.id_cart
-                            WHERE c.id_customer = ' . $cart->id_customer . ' AND c.id_cart = ' . (int) $cart->id . ' AND ccr.id_cart_rule = ' . (int) $this->id . ' AND o.id_order IS NULL
-                        ');
-                    } else {
-                        // Mimic the total used it the current cart rule was added
-                        ++$totalQuantityUsed;
-                    }
-
-                    if ($totalQuantityUsed > $this->total_quantity) {
-                        return (!$display_error) ? false : $this->trans('This voucher has already been used', [], 'Shop.Notifications.Error');
-                    }
-                }
-            } else {
-                // We verify the total available quantity
-                if (!$this->quantity) {
-                    return (!$display_error) ? false : $this->trans('This voucher has already been used', [], 'Shop.Notifications.Error');
-                }
+            // We verify the total available quantity
+            if ($this->quantity !== null && !$this->quantity) {
+                return (!$display_error) ? false : $this->trans('This voucher has already been used', [], 'Shop.Notifications.Error');
             }
 
             // We verify the date range
@@ -2043,22 +1993,9 @@ class CartRuleCore extends ObjectModel
 		' . ($context->cart->id_carrier ? 'LEFT JOIN ' . _DB_PREFIX_ . 'carrier c ON (c.id_reference = crca.id_carrier AND c.deleted = 0)' : '') . '
 		LEFT JOIN ' . _DB_PREFIX_ . 'cart_rule_country crco ON cr.id_cart_rule = crco.id_cart_rule
 		WHERE cr.active = 1
-		AND cr.code = ""';
-
-        if (self::isDiscountFeatureFlagEnabled()) {
-            $sql .= ' AND (cr.`total_quantity` is null  OR (
-                    SELECT COUNT(*) FROM `' . _DB_PREFIX_ . 'orders` o
-                        LEFT JOIN `' . _DB_PREFIX_ . 'order_cart_rule` ocr ON o.`id_order` = ocr.`id_order`
-                        WHERE ocr.`deleted` = 0
-                        AND ' . (int) Configuration::get('PS_OS_ERROR') . ' != o.`current_state`
-                        AND ocr.`id_cart_rule` = cr.`id_cart_rule`
-                    ) < cr.`total_quantity`
-                )';
-        } else {
-            $sql .= ' AND cr.quantity > 0';
-        }
-
-        $sql .= ' AND NOW() BETWEEN cr.date_from AND cr.date_to
+		AND cr.code = ""
+		AND (cr.quantity > 0 OR cr.quantity is null)
+        AND NOW() BETWEEN cr.date_from AND cr.date_to
 		AND (
 			cr.id_customer = 0
 			' . (Validate::isLoadedObject($context->customer) ? 'OR cr.id_customer = ' . (int) $context->cart->id_customer : '') . '

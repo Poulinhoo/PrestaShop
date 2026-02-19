@@ -64,6 +64,11 @@ class DiscountUsabilityType extends TranslatorAwareType
                 'label' => $this->trans('Quantity used in orders:', 'Admin.Catalog.Feature'),
                 'required' => false,
             ])
+            ->add('remaining_quantity', TextPreviewType::class, [
+                'label' => $this->trans('Remaining quantity:', 'Admin.Catalog.Feature'),
+                'required' => false,
+                'default_empty_data' => $this->trans('No limit', 'Admin.Catalog.Feature'),
+            ])
             ->add('quantity_per_customer', IntegerType::class, [
                 'required' => false,
                 'label' => $this->trans('Select usage limits per customer', 'Admin.Catalog.Feature'),

@@ -46,6 +46,7 @@ Feature: Customer using discount with usage limits in FO
     And discount "vip_discount10" should have the following properties:
       | total_quantity          | 1 |
       | quantity_per_user       | 1 |
+      | remaining_quantity      | 1 |
       | quantity_used_in_orders | 0 |
     # First Johh's cart + discount with order placed
     When I create an empty cart "john_cart10" for customer "testCustomer"
@@ -67,6 +68,7 @@ Feature: Customer using discount with usage limits in FO
     And discount "vip_discount10" should have the following properties:
       | total_quantity          | 1 |
       | quantity_per_user       | 1 |
+      | remaining_quantity      | 0 |
       | quantity_used_in_orders | 1 |
     # Now Jane's cart + discount
     When I create an empty cart "jane_cart10" for customer "testCustomer2"
@@ -74,6 +76,14 @@ Feature: Customer using discount with usage limits in FO
     And I select "US" address as delivery and invoice address for customer "testCustomer2" in cart "jane_cart10"
     And I use a voucher "vip_discount10" on the cart "jane_cart10"
     Then I should get an error that the discount is invalid
+    # Now I update the total the remaining quantity should have increased as well
+    When I update discount "vip_discount10" with the following properties:
+      | total_quantity    | 5 |
+    Then discount "vip_discount10" should have the following properties:
+      | total_quantity          | 5 |
+      | quantity_per_user       | 1 |
+      | remaining_quantity      | 4 |
+      | quantity_used_in_orders | 1 |
 
   Scenario: Discount product level that is available only one time for all customers
     Given I create a "product_level" discount "vip_discount11" with following properties:
@@ -90,6 +100,7 @@ Feature: Customer using discount with usage limits in FO
     And discount "vip_discount11" should have the following properties:
       | total_quantity          | 1 |
       | quantity_per_user       | 1 |
+      | remaining_quantity      | 1 |
       | quantity_used_in_orders | 0 |
     # First Johh's cart + discount with order placed
     When I create an empty cart "john_cart12" for customer "testCustomer"
@@ -110,6 +121,7 @@ Feature: Customer using discount with usage limits in FO
     And discount "vip_discount11" should have the following properties:
       | total_quantity          | 1 |
       | quantity_per_user       | 1 |
+      | remaining_quantity      | 0 |
       | quantity_used_in_orders | 1 |
     # Now Jane's cart + discount
     When I create an empty cart "jane_cart12" for customer "testCustomer2"
@@ -132,6 +144,7 @@ Feature: Customer using discount with usage limits in FO
     And discount "vip_discount" should have the following properties:
       | total_quantity          | 100 |
       | quantity_per_user       | 1   |
+      | remaining_quantity      | 100 |
       | quantity_used_in_orders | 0   |
     # First Johh's cart + discount with order placed
     When I create an empty cart "john_cart" for customer "testCustomer"
@@ -141,9 +154,10 @@ Feature: Customer using discount with usage limits in FO
     Then cart "john_cart" total with tax included should be '$40.00'
     And I select "US" address as delivery and invoice address for customer "testCustomer" in cart "john_cart"
     And I add order "john_order" from cart "john_cart" with "dummy_payment" payment method and "Payment accepted" order status
-    And discount "vip_discount" should have the following properties:
+    Then discount "vip_discount" should have the following properties:
       | total_quantity          | 100 |
       | quantity_per_user       | 1   |
+      | remaining_quantity      | 99  |
       | quantity_used_in_orders | 1   |
     # Second John's cart with discount already used before
     When I create an empty cart "john_cart2" for customer "testCustomer"
@@ -157,6 +171,22 @@ Feature: Customer using discount with usage limits in FO
     Then cart "jane_cart" total with tax included should be '$57.00'
     When I use a voucher "vip_discount" on the cart "jane_cart"
     Then cart "jane_cart" total with tax included should be '$47.00'
+    # I create a second order
+    And I select "US" address as delivery and invoice address for customer "testCustomer" in cart "jane_cart"
+    And I add order "jane_order" from cart "jane_cart" with "dummy_payment" payment method and "Payment accepted" order status
+    Then discount "vip_discount" should have the following properties:
+      | total_quantity          | 100 |
+      | quantity_per_user       | 1   |
+      | remaining_quantity      | 98  |
+      | quantity_used_in_orders | 2   |
+    # I update total limit to a value inferior to the used one, the remaining quantity is capped at zero
+    When I update discount "vip_discount" with the following properties:
+      | total_quantity    | 1 |
+    Then discount "vip_discount" should have the following properties:
+      | total_quantity          | 1 |
+      | quantity_per_user       | 1 |
+      | remaining_quantity      | 0 |
+      | quantity_used_in_orders | 2 |
 
   Scenario: Discount that is available only one time for all customers
     Given I create a "cart_level" discount "vip_discount2" with following properties:
@@ -172,6 +202,7 @@ Feature: Customer using discount with usage limits in FO
     And discount "vip_discount2" should have the following properties:
       | total_quantity          | 1 |
       | quantity_per_user       | 1 |
+      | remaining_quantity      | 1 |
       | quantity_used_in_orders | 0 |
     # First Johh's cart + discount with order placed
     When I create an empty cart "john_cart" for customer "testCustomer"
@@ -184,6 +215,7 @@ Feature: Customer using discount with usage limits in FO
     And discount "vip_discount2" should have the following properties:
       | total_quantity          | 1 |
       | quantity_per_user       | 1 |
+      | remaining_quantity      | 0 |
       | quantity_used_in_orders | 1 |
     # Now Jane's cart + discount
     When I create an empty cart "jane_cart" for customer "testCustomer2"
@@ -206,6 +238,7 @@ Feature: Customer using discount with usage limits in FO
     And discount "vip_discount4" should have the following properties:
       | total_quantity          | null |
       | quantity_per_user       | 1    |
+      | remaining_quantity      | null |
       | quantity_used_in_orders | 0    |
     # First Johh's cart + discount with order placed
     And I create an empty cart "john_cart3" for customer "testCustomer"
@@ -218,6 +251,7 @@ Feature: Customer using discount with usage limits in FO
     And discount "vip_discount4" should have the following properties:
       | total_quantity          | null |
       | quantity_per_user       | 1    |
+      | remaining_quantity      | null |
       | quantity_used_in_orders | 1    |
     # Second John's cart with discount already used before
     When I create an empty cart "john_cart2" for customer "testCustomer"
@@ -246,6 +280,7 @@ Feature: Customer using discount with usage limits in FO
     And discount "vip_discount3" should have the following properties:
       | total_quantity          | 10   |
       | quantity_per_user       | null |
+      | remaining_quantity      | 10   |
       | quantity_used_in_orders | 0    |
     # First Johh's cart + discount with order placed
     And I create an empty cart "john_cart1" for customer "testCustomer"
@@ -258,6 +293,7 @@ Feature: Customer using discount with usage limits in FO
     And discount "vip_discount3" should have the following properties:
       | total_quantity          | 10   |
       | quantity_per_user       | null |
+      | remaining_quantity      | 9    |
       | quantity_used_in_orders | 1    |
     # Second John's cart with discount already used before
     When I create an empty cart "john_cart2" for customer "testCustomer"
