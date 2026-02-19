@@ -86,11 +86,11 @@ class CreateShipmentHandler implements CreateShipmentHandlerInterface
 
             $productArray = [
                 'id_product' => (int) $product->id,
-                'id_product_attribute' => $combinationId->getValue() ?? 0,
+                'id_product_attribute' => $combinationId->getValue(),
                 'quantity' => $quantity,
                 'weight' => (float) $product->weight,
                 'weight_attribute' => null,
-                'is_virtual' => (int) $product->is_virtual,
+                'is_virtual' => (bool) $product->is_virtual,
                 'additional_shipping_cost' => (float) $product->additional_shipping_cost,
                 'price_wt' => (float) $product->price,
             ];
