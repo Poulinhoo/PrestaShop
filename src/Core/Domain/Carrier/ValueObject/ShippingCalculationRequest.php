@@ -19,7 +19,7 @@ final class ShippingCalculationRequest
      *     quantity: int,
      *     weight: float,
      *     weight_attribute: float|null,
-     *     is_virtual: int,
+     *     is_virtual: float,
      *     additional_shipping_cost: float,
      *     price_wt: float
      * }>

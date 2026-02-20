@@ -87,7 +87,7 @@ class CreateShipmentHandler implements CreateShipmentHandlerInterface
             $shopId = new ShopId($this->shopContext->getContextShopID());
             $product = $this->productRepository->get($productId, $shopId);
             $attributeWeight = null;
-            $productPriceWt = (float) $product->price;
+            $productPrice = (float) $product->price;
 
             if (empty($combinationId->getValue())) {
                 $combination = $this->combinationRepository->get($combinationId, $shopId);
