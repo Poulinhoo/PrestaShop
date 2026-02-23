@@ -445,5 +445,5 @@ class Configuration extends ParameterBag implements ShopConfigurationInterface
     public function setTemporary(string $key, $value): void
     {
         ConfigurationLegacy::set($key, $value);
-    }    
+    }
 }
