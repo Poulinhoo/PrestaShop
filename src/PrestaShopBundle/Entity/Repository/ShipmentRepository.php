@@ -162,7 +162,7 @@ class ShipmentRepository extends EntityRepository
         // Soft delete empty shipments
         $conn->createQueryBuilder()
             ->update($this->tablePrefix . 'shipment')
-            ->set('deleted', 1)
+            ->set('deleted', '1')
             ->where('id_order = :orderId')
             ->andWhere(
                 'id_shipment NOT IN (
