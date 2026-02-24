@@ -11,6 +11,7 @@ namespace PrestaShop\PrestaShop\Adapter\Carrier\Repository;
 use Carrier;
 use Doctrine\DBAL\ArrayParameterType;
 use Doctrine\DBAL\Connection;
+use PrestaShop\Decimal\DecimalNumber;
 use PrestaShop\PrestaShop\Adapter\Shop\Repository\ShopRepository;
 use PrestaShop\PrestaShop\Core\Domain\AttributeGroup\Attribute\Exception\AttributeNotFoundException;
 use PrestaShop\PrestaShop\Core\Domain\Carrier\Exception\CannotAddCarrierException;
@@ -364,10 +365,10 @@ class CarrierRepository extends AbstractMultiShopObjectModelRepository
         }
 
         return new CarrierConstraints(
-            (float) $result['max_weight'],
-            (float) $result['max_width'],
-            (float) $result['max_height'],
-            (float) $result['max_depth']
+            new DecimalNumber($result['max_weight']),
+            (int) $result['max_width'],
+            (int) $result['max_height'],
+            (int) $result['max_depth']
         );
     }
 
