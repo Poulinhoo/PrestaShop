@@ -175,10 +175,6 @@ export default class OrderProductAutocomplete {
   }
 
   fetchCarrierFromProduct(productId: number): void {
-    if (!productId) {
-      throw new Error('productId is missing');
-    }
-
     fetch(this.router.generate('admin_orders_get_carriers_for_product', {productId}), {
       method: 'POST',
       headers: {
