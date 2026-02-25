@@ -21,12 +21,12 @@ class DiscountUsabilityType extends TranslatorAwareType
 {
     public function buildForm(FormBuilderInterface $builder, array $options)
     {
-        $cartRuleTypeChoices = [];
-        foreach ($options['available_cart_rule_types'] as $cartRuleType) {
-            if ($cartRuleType['name'] === DiscountTypeVO::ORDER_LEVEL) {
+        $discountTypeChoices = [];
+        foreach ($options['available_discount_types'] as $discountType) {
+            if ($discountType['name'] === DiscountTypeVO::ORDER_LEVEL) {
                 continue;
             }
-            $cartRuleTypeChoices[$cartRuleType['name']] = $cartRuleType['id_cart_rule_type'];
+            $discountTypeChoices[$discountType['name']] = $discountType['id_cart_rule_type'];
         }
         $builder
             ->add('mode', DiscountUsabilityModeType::class, [
@@ -92,7 +92,7 @@ class DiscountUsabilityType extends TranslatorAwareType
                 'label_tag_name' => 'h3',
                 'label' => $this->trans('Compatible with discounts', 'Admin.Catalog.Feature'),
                 'label_help_box' => $this->trans('Select which discount types this discount is compatible with.', 'Admin.Catalog.Help'),
-                'choices' => $cartRuleTypeChoices,
+                'choices' => $discountTypeChoices,
                 'multiple' => true,
                 'expanded' => true,
                 'required' => false,
@@ -118,9 +118,9 @@ class DiscountUsabilityType extends TranslatorAwareType
     {
         parent::configureOptions($resolver);
         $resolver->setDefaults([
-            'available_cart_rule_types' => [],
+            'available_discount_types' => [],
         ]);
-        $resolver->setAllowedTypes('available_cart_rule_types', ['array']);
+        $resolver->setAllowedTypes('available_discount_types', ['array']);
     }
 
     public function getParent()
