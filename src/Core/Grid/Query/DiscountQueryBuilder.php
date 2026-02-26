@@ -191,7 +191,7 @@ class DiscountQueryBuilder extends AbstractDoctrineQueryBuilder
 
     private function applyPeriodFilter(QueryBuilder $qb, mixed $value, DateTimeImmutable $now): void
     {
-        if (!is_string($value) || empty($value) || $value === DiscountSettings::PERIOD_FILTER_ALL) {
+        if (!is_string($value) || empty($value)) {
             return;
         }
 
