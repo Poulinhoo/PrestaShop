@@ -92,6 +92,7 @@ class BusinessEntityAddress
     public function setDefault(bool $default): self
     {
         $this->default = $default;
+
         return $this;
     }
 }
