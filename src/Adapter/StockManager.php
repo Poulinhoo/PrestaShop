@@ -101,9 +101,11 @@ class StockManager
             ';
         }
 
+        $stockShopId = $this->getStockShopId((int) $shopId);
+
         $updatePhysicalQuantityQuery .= '
             SET sa.physical_quantity = sa.quantity + sa.reserved_quantity
-            WHERE sa.id_shop = ' . (int) $shopId . '
+            WHERE sa.id_shop = ' . (int) $stockShopId . '
         ';
 
         if ($idProduct) {
@@ -155,12 +157,13 @@ class StockManager
                 sa.id_product_attribute = od.product_attribute_id
                 GROUP BY od.product_id, od.product_attribute_id
             )
-            WHERE sa.id_shop = :shop_id
+            WHERE sa.id_shop = :stock_shop_id
         ';
 
         $strParams = [
             '{table_prefix}' => _DB_PREFIX_,
             ':shop_id' => (int) $shopId,
+            ':stock_shop_id' => (int) $this->getStockShopId((int) $shopId),
             ':error_state' => (int) $errorState,
             ':cancellation_state' => (int) $cancellationState,
         ];
@@ -177,6 +180,26 @@ class StockManager
         $updateReservedQuantityQuery = strtr($updateReservedQuantityQuery, $strParams);
 
         return Db::getInstance()->execute($updateReservedQuantityQuery);
+    }
+
+    private function getStockShopId(int $shopId)
+    {
+        static $stockShopId = null;
+
+        if ($stockShopId !== null) {
+            return $stockShopId;
+        }
+
+        $shopAdapter = new ShopAdapter();
+        $shop_group = $shopAdapter->ShopGroup((int) $shopAdapter->getGroupFromShop((int) $shopId));
+
+        if ($shop_group->share_stock) {
+            $stockShopId = 0;
+        } else {
+            $stockShopId = $shopId;
+        }
+
+        return $stockShopId;
     }
 
     /**
