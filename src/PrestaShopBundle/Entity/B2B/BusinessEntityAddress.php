@@ -37,9 +37,7 @@ class BusinessEntityAddress
     private int $idAddress;
 
     /**
-     * @ORM\Id
-     *
-     * @ORM\Column(name="default", type="boolean", options={"default"=false})
+     * @ORM\Column(name="`default`", type="boolean", options={"default"=false})
      */
     private bool $default = false;
 
