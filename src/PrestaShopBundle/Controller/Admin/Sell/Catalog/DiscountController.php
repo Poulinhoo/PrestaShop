@@ -28,6 +28,7 @@ use PrestaShopBundle\Form\Admin\Sell\Discount\DiscountTypeSelectorType;
 use PrestaShopBundle\Security\Attribute\AdminSecurity;
 use PrestaShopBundle\Security\Attribute\DemoRestricted;
 use Symfony\Component\DependencyInjection\Attribute\Autowire;
+use Symfony\Component\Form\FormInterface;
 use Symfony\Component\HttpFoundation\RedirectResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
@@ -97,10 +98,14 @@ class DiscountController extends PrestaShopAdminController
             $form->handleRequest($request);
             $result = $formHandler->handle($form);
 
-            if ($result->isSubmitted() && $result->isValid()) {
-                $this->addFlash('success', $this->trans('Successful creation', [], 'Admin.Notifications.Success'));
+            if ($result->isSubmitted()) {
+                if ($result->isValid()) {
+                    $this->addFlash('success', $this->trans('Successful creation', [], 'Admin.Notifications.Success'));
 
-                return $this->redirectToRoute('admin_discount_edit', ['discountId' => $result->getIdentifiableObjectId()]);
+                    return $this->redirectToRoute('admin_discount_edit', ['discountId' => $result->getIdentifiableObjectId()]);
+                } else {
+                    $this->displayFormErrors($form);
+                }
             }
         } catch (Exception $e) {
             $this->addFlash('error', $this->getErrorMessageForException($e, $this->getErrorMessages($e)));
@@ -143,14 +148,7 @@ class DiscountController extends PrestaShopAdminController
 
                     return $this->redirectToRoute('admin_discount_edit', ['discountId' => $discountId]);
                 } else {
-                    // Display root level errors with flash messages
-                    foreach ($form->getErrors() as $error) {
-                        $this->addFlash('error', sprintf(
-                            '%s: %s',
-                            $error->getOrigin()->getName(),
-                            $error->getMessage()
-                        ));
-                    }
+                    $this->displayFormErrors($form);
                 }
             }
         } catch (Exception $e) {
@@ -242,6 +240,25 @@ class DiscountController extends PrestaShopAdminController
             $this->addFlash('error', $this->getErrorMessageForException($e, $this->getErrorMessages($e)));
 
             return $this->redirectToRoute('admin_discounts_index');
+        }
+    }
+
+    private function displayFormErrors(FormInterface $form): void
+    {
+        // Some errors are only on root level and not displayed so we display them as flash messages
+        $rootErrors = $form->getErrors();
+        if ($rootErrors->count()) {
+            foreach ($form->getErrors() as $error) {
+                $this->addFlash('error', sprintf(
+                    '%s: %s',
+                    $error->getOrigin()->getName(),
+                    $error->getMessage()
+                ));
+            }
+        } else {
+            // Other inline errors are linked to their input, but since the page is quite long we display a generic error message at the top to make sure the user
+            // understand something is not right
+            $this->addFlash('error', $this->trans('The form contains errors. Please fix them and save again.', [], 'Admin.Notifications.Error'));
         }
     }
 

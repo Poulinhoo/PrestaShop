@@ -12,6 +12,13 @@ import {getAllAttributeGroups, getAllFeatureGroups} from '@pages/discount/form/s
 import CustomerSearchInput from '@components/form/customer-search-input';
 
 $(() => {
+  // Scroll to the first field with a validation error
+  const firstError = document.querySelector<HTMLElement>('form .alert-danger');
+
+  if (firstError) {
+    firstError.scrollIntoView({behavior: 'smooth', block: 'center'});
+  }
+
   window.prestashop.component.initComponents(
     [
       'TranslatableInput',
