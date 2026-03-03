@@ -19,6 +19,7 @@ import {
   // Data
   dataProducts,
   FakerDiscount,
+  utilsCore,
   type BrowserContext,
   type Page,
   utilsPlaywright,
@@ -51,7 +52,6 @@ describe('BO - Catalog - Discounts : Minimum purchase amount (On cart amount)', 
     discountReductionType: '€',
     discountTax: 'Tax included',
   });
-
   const discountPurchaseAmountZero: FakerDiscount = new FakerDiscount({
     discountType: 'On cart amount',
     name: 'Test',
@@ -85,7 +85,6 @@ describe('BO - Catalog - Discounts : Minimum purchase amount (On cart amount)', 
     discountReductionType: '€',
     discountTax: 'Tax included',
   });
-
   const discountValueNegative: FakerDiscount = new FakerDiscount({
     discountType: 'On cart amount',
     name: 'Test',
@@ -97,7 +96,6 @@ describe('BO - Catalog - Discounts : Minimum purchase amount (On cart amount)', 
     discountReductionType: '€',
     discountTax: 'Tax included',
   });
-
   const discountValueZero: FakerDiscount = new FakerDiscount({
     discountType: 'On cart amount',
     name: 'Test',
@@ -172,7 +170,7 @@ describe('BO - Catalog - Discounts : Minimum purchase amount (On cart amount)', 
       expect(pageTitle).to.contains(boDiscountsPage.pageTitle);
     });
 
-    it('should click on create discount button and choose the type \'On cart amount\'', async function () {
+    it(`should click on create discount button and choose the type '${discountData.discountType}'`, async function () {
       await testContext.addContextItem(this, 'testIdentifier', 'chooseDiscountType', baseContext);
 
       await boDiscountsPage.clickOnCreateDiscountButton(page);
@@ -371,11 +369,15 @@ describe('BO - Catalog - Discounts : Minimum purchase amount (On cart amount)', 
       await testContext.addContextItem(this, 'testIdentifier', 'checkDiscountValue_2', baseContext);
 
       await foHummingbirdCartPage.reloadPage(page);
+
+      const discountTaxExcluded = utilsCore.percentage(parseFloat(editDiscountData.discountValue.toString()),
+        20) + editDiscountData.discountValue;
+
       const discountValue = await foHummingbirdCartPage.getCartRuleValue(page);
-      expect(discountValue).to.contains('-€12.00');
+      expect(discountValue).to.contains(`-€${discountTaxExcluded.toFixed(2)}`);
 
       const subTotalDiscount = await foHummingbirdCartPage.getSubtotalDiscountValue(page);
-      expect(subTotalDiscount.toString()).to.equal('-12');
+      expect(subTotalDiscount.toString()).to.equal(`-${discountTaxExcluded}`);
     });
 
     it('should check the shipping cost', async function () {
@@ -388,8 +390,12 @@ describe('BO - Catalog - Discounts : Minimum purchase amount (On cart amount)', 
     it('should check the Total (tax incl.) after the discount', async function () {
       await testContext.addContextItem(this, 'testIdentifier', 'checkTotalAfterDiscount_2', baseContext);
 
+      const total = dataProducts.demo_3.finalPrice + dataProducts.demo_5.price;
+      const discount = utilsCore.percentage(parseFloat(editDiscountData.discountValue.toString()),
+        20) + editDiscountData.discountValue;
+
       const totalAfterDiscount = await foHummingbirdCartPage.getATIPrice(page);
-      expect(totalAfterDiscount.toString()).to.equal('57.26');
+      expect(totalAfterDiscount.toString()).to.equal((total - discount).toFixed(2));
     });
   });
 
