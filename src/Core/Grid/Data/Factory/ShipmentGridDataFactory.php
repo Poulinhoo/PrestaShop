@@ -23,8 +23,7 @@ class ShipmentGridDataFactory implements GridDataFactoryInterface
         private readonly LocaleInterface $locale,
         private readonly CurrencyContext $currencyContext,
         private readonly Configuration $configuration,
-    ) {
-    }
+    ) {}
 
     public function getData(SearchCriteriaInterface $searchCriteria): GridData
     {
@@ -41,11 +40,13 @@ class ShipmentGridDataFactory implements GridDataFactoryInterface
     private function applyModifications(RecordCollectionInterface $records, int $totalRecord): RecordCollectionInterface
     {
         $updated = [];
+        $totalUnfulfilledShipments = array_filter($records->all(), fn($shipment) => !$shipment['shipped_at'] && !$shipment['tracking_number']);
 
         foreach ($records as $record) {
             $record['shipping_cost'] = $this->locale->formatPrice((float) $record['shipping_cost'], $this->currencyContext->getIsoCode());
             $record['weight'] = sprintf('%.3f %s', $record['weight'], $this->configuration->get('PS_WEIGHT_UNIT'));
             $record['total_shipments'] = $totalRecord;
+            $record['total_unfulfilled_shipments'] = count($totalUnfulfilledShipments);
             $updated[] = $record;
         }
 

@@ -50,6 +50,29 @@ admin_orders_generate_delivery_slip_pdf:
   requirements:
     orderId: \d+
 
+admin_orders_generate_shipment_delivery_slip_pdf:
+  path: /{orderId}/shipment/{shipmentId}/generate-delivery-slip-pdf
+  methods: [ GET ]
+  defaults:
+    _controller: PrestaShopBundle\Controller\Admin\Sell\Order\OrderController::generateShipmentDeliverySlipPdfAction
+    _legacy_controller: AdminOrders
+  options:
+    expose: true
+  requirements:
+    orderId: \d+
+    shipmentId: \d+
+
+admin_orders_generate_shipments_delivery_slip_pdf:
+  path: /{orderId}/shipments/generate-delivery-slip-pdf
+  methods: [ GET, POST ]
+  defaults:
+    _controller: PrestaShopBundle\Controller\Admin\Sell\Order\OrderController::generateShipmentsDeliverySlipPdfAction
+    _legacy_controller: AdminOrders
+  options:
+    expose: true
+  requirements:
+    orderId: \d+
+
 admin_orders_change_orders_status:
   path: /change-orders-status
   methods: [ POST ]
@@ -242,11 +265,31 @@ admin_orders_shipment_get_edit_form:
   options:
     expose: true
 
+admin_orders_shipment_get_fulfill_form:
+  path: /{orderId}/shipment/fulfill-form
+  methods: [ GET ]
+  defaults:
+    _controller: PrestaShopBundle\Controller\Admin\Sell\Order\OrderController::getFulfillShipmentForm
+  requirements:
+    orderId: \d+
+    shipmentId: \d+
+  options:
+    expose: true
+
 admin_orders_merge_shipment:
   path: /{orderId}/shipment/merge
   methods: [ POST ]
   defaults:
     _controller: PrestaShopBundle\Controller\Admin\Sell\Order\OrderController::mergeShipmentAction
+  requirements:
+    orderId: \d+
+    shipmentId: \d+
+
+admin_orders_fulfill_shipment:
+  path: /{orderId}/shipment/fulfill
+  methods: [ POST ]
+  defaults:
+    _controller: PrestaShopBundle\Controller\Admin\Sell\Order\OrderController::fulfillShipmentAction
   requirements:
     orderId: \d+
     shipmentId: \d+

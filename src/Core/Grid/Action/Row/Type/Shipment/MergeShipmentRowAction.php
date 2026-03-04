@@ -11,14 +11,14 @@ namespace PrestaShop\PrestaShop\Core\Grid\Action\Row\Type\Shipment;
 use PrestaShop\PrestaShop\Core\Grid\Action\Row\AbstractRowAction;
 use Symfony\Component\OptionsResolver\OptionsResolver;
 
-final class EditShipmentRowAction extends AbstractRowAction
+final class MergeShipmentRowAction extends AbstractRowAction
 {
     /**
      * {@inheritdoc}
      */
     public function getType()
     {
-        return 'edit_shipment_row_action';
+        return 'merge_shipment_row_action';
     }
 
     /**
@@ -30,7 +30,16 @@ final class EditShipmentRowAction extends AbstractRowAction
             return false;
         }
 
+        if (!$this->orderHasMultipleUnfulfilledShipments($record['total_unfulfilled_shipments'] ?? 0)) {
+            return false;
+        }
+
         return true;
+    }
+
+    private function orderHasMultipleUnfulfilledShipments(int $unfulfilledShipments): bool
+    {
+        return $unfulfilledShipments > 1;
     }
 
     private function shipmentIsPacked(array $record): bool
@@ -49,12 +58,14 @@ final class EditShipmentRowAction extends AbstractRowAction
             ->setRequired([
                 'shipment_id_field',
                 'order_id_field',
-                'tracking_number',
-                'carrier',
+                'total_shipments',
+            ])
+            ->setDefaults([
+                'items' => null,
             ])
             ->setAllowedTypes('shipment_id_field', 'string')
-            ->setAllowedTypes('order_id_field', 'string')
-            ->setAllowedTypes('tracking_number', 'string')
-            ->setAllowedTypes('carrier', 'string');
+            ->setAllowedTypes('items', ['string', 'null'])
+            ->setAllowedTypes('total_shipments', 'string')
+            ->setAllowedTypes('order_id_field', 'string');
     }
 }

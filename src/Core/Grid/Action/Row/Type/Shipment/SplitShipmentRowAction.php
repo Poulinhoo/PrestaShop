@@ -11,14 +11,14 @@ namespace PrestaShop\PrestaShop\Core\Grid\Action\Row\Type\Shipment;
 use PrestaShop\PrestaShop\Core\Grid\Action\Row\AbstractRowAction;
 use Symfony\Component\OptionsResolver\OptionsResolver;
 
-final class EditShipmentRowAction extends AbstractRowAction
+final class SplitShipmentRowAction extends AbstractRowAction
 {
     /**
      * {@inheritdoc}
      */
     public function getType()
     {
-        return 'edit_shipment_row_action';
+        return 'split_shipment_row_action';
     }
 
     /**
@@ -26,16 +26,17 @@ final class EditShipmentRowAction extends AbstractRowAction
      */
     public function isApplicable(array $record)
     {
-        if ($this->shipmentIsPacked($record)) {
+        $options = $this->getOptions();
+        $itemsField = $options['items'];
+
+        // if shipment if fulfill (tracking number is set and has a packed data)
+        // the merchant cannot anymore proceed to a merge
+        if (isset($record['tracking_number']) || isset($record['packed_at'])) {
             return false;
         }
 
-        return true;
-    }
-
-    private function shipmentIsPacked(array $record): bool
-    {
-        return isset($record['tracking_number']) || isset($record['packed_at']);
+        // Show split action only if items > 1
+        return isset($record[$itemsField]) && $record[$itemsField] > 1;
     }
 
     /**
@@ -49,12 +50,14 @@ final class EditShipmentRowAction extends AbstractRowAction
             ->setRequired([
                 'shipment_id_field',
                 'order_id_field',
-                'tracking_number',
-                'carrier',
+                'items',
+            ])
+            ->setDefaults([
+                'total_shipments' => null,
             ])
             ->setAllowedTypes('shipment_id_field', 'string')
-            ->setAllowedTypes('order_id_field', 'string')
-            ->setAllowedTypes('tracking_number', 'string')
-            ->setAllowedTypes('carrier', 'string');
+            ->setAllowedTypes('items', 'string')
+            ->setAllowedTypes('total_shipments', ['string', 'null'])
+            ->setAllowedTypes('order_id_field', 'string');
     }
 }

@@ -63,16 +63,42 @@
     </div>
   </form>
 
-  {% if orderForViewing.documents.canGenerateDeliverySlip %}
+  {% if orderForViewing.documents.canGenerateDeliverySlip and (not orderHasShipment) %}
     <form class="order-actions-delivery">
       <div class="input-group">
-        <a href="{{ path('admin_orders_generate_delivery_slip_pdf', {orderId: orderForViewing.id}) }}"
+        <a href="{{ path('admin_orders_generate_shipment_delivery_slip_pdf', {orderId: orderForViewing.id, shipmentId: 4}) }}"
            class="btn btn-action" data-role="view-delivery-slip">
           <i class="material-icons">local_shipping</i>
           {{ 'View delivery slip'|trans({}, 'Admin.Orderscustomers.Feature') }}
         </a>
       </div>
     </form>
+  {% endif %}
+
+  {# All shipments delivery slips - disabled until all shipments are fulfilled #}
+  {% set totalShipments = orderForViewing.shipments.totalCount %}
+  {% set fulfilledShipments = orderForViewing.shipments.fulfilledCount %}
+  {% set allShipmentsFulfilled = orderForViewing.shipments.areAllShipmentsPacked() %}
+
+  {% if orderForViewing.documents.canGenerateDeliverySlip and orderHasShipment %}
+  <form class="order-actions-delivery-all">
+    <div class="input-group">
+      <button
+        href="{{ path('admin_orders_generate_shipments_delivery_slip_pdf', {orderId: orderForViewing.id}) }}"
+        class="btn btn-action {% if not allShipmentsFulfilled %} disabled{% endif %}"
+        data-role="view-all-delivery-slips"
+        {% if not allShipmentsFulfilled %}
+        data-toggle="pstooltip"
+        data-placement="bottom"
+        data-original-title="{{ 'Only %fulfilled% on %total% shipments have been fulfilled'|trans({'%fulfilled%': fulfilledShipments, '%total%': totalShipments}, 'Admin.Orderscustomers.Feature') }}"
+        disabled
+        {% endif %}
+      >
+        <i class="material-icons">local_shipping</i>
+        {{ 'Download delivery slips'|trans({}, 'Admin.Orderscustomers.Feature') }}
+      </button>
+    </div>
+  </form>
   {% endif %}
 
   {{ include('@PrestaShop/Admin/Sell/Order/Order/Blocks/View/extra_order_button_actions.html.twig') }}

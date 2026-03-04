@@ -229,8 +229,9 @@
   }
 }
 
-#addOrderProductModal,
-#editOrderProductModal {
+#editOrderProductModal,
+#fulfillShipmentModal,
+#addOrderProductModal {
   // Default state
   .modal-body {
     display: none;

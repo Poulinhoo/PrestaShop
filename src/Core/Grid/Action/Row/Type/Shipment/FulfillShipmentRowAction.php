@@ -11,14 +11,30 @@ namespace PrestaShop\PrestaShop\Core\Grid\Action\Row\Type\Shipment;
 use PrestaShop\PrestaShop\Core\Grid\Action\Row\AbstractRowAction;
 use Symfony\Component\OptionsResolver\OptionsResolver;
 
-final class AdditionalShipmentRowAction extends AbstractRowAction
+final class FulfillShipmentRowAction extends AbstractRowAction
 {
     /**
      * {@inheritdoc}
      */
     public function getType()
     {
-        return 'additional_shipment_row_action';
+        return 'fulfill_shipment_row_action';
+    }
+
+    /**
+     * {@inheritdoc}
+     */
+    public function isApplicable(array $record)
+    {
+        if (isset($record['tracking_number'])) {
+            return false;
+        }
+
+        if (isset($record['packed_at'])) {
+            return false;
+        }
+
+        return true;
     }
 
     /**
@@ -32,16 +48,8 @@ final class AdditionalShipmentRowAction extends AbstractRowAction
             ->setRequired([
                 'shipment_id_field',
                 'order_id_field',
-                'items' => 'items',
-                'total_shipments' => 'total_shipments',
-                'tracking_number' => 'tracking_number',
-                'carrier' => 'carrier',
             ])
             ->setAllowedTypes('shipment_id_field', 'string')
-            ->setAllowedTypes('items', 'string')
-            ->setAllowedTypes('total_shipments', 'string')
-            ->setAllowedTypes('order_id_field', 'string')
-            ->setAllowedTypes('tracking_number', 'string')
-            ->setAllowedTypes('carrier', 'string');
+            ->setAllowedTypes('order_id_field', 'string');
     }
 }

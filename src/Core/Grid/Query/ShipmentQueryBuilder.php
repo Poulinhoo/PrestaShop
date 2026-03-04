@@ -42,6 +42,8 @@ final class ShipmentQueryBuilder extends AbstractDoctrineQueryBuilder
                 's.id_order AS order_id',
                 'c.name AS carrier',
                 's.tracking_number',
+                's.packed_at',
+                's.shipped_at',
                 'SUM(sp.quantity) AS items',
                 's.shipping_cost_tax_incl AS shipping_cost',
                 'SUM(od.product_weight * sp.quantity) AS weight',

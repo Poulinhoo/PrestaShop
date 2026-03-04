@@ -1,4 +1,5 @@
 <?php
+
 /**
  * For the full copyright and license information, please view the
  * docs/licenses/LICENSE.txt file that was distributed with this source code.
@@ -69,6 +70,7 @@ use PrestaShop\PrestaShop\Core\Domain\Product\QueryResult\FoundProduct;
 use PrestaShop\PrestaShop\Core\Domain\Shipment\Command\EditShipment;
 use PrestaShop\PrestaShop\Core\Domain\Shipment\Command\MergeProductsToShipment;
 use PrestaShop\PrestaShop\Core\Domain\Shipment\Command\SplitShipment;
+use PrestaShop\PrestaShop\Core\Domain\Shipment\Command\FulfillShipmentCommand;
 use PrestaShop\PrestaShop\Core\Domain\Shipment\Exception\CannotEditShipmentShippedException;
 use PrestaShop\PrestaShop\Core\Domain\Shipment\Query\GetOrderShipments;
 use PrestaShop\PrestaShop\Core\Domain\Shipment\Query\GetShipmentsForOrderDetail;
@@ -102,6 +104,10 @@ use PrestaShopBundle\Form\Admin\Sell\Order\ChangeOrdersStatusType;
 use PrestaShopBundle\Form\Admin\Sell\Order\InternalNoteType;
 use PrestaShopBundle\Form\Admin\Sell\Order\OrderMessageType;
 use PrestaShopBundle\Form\Admin\Sell\Order\OrderPaymentType;
+use PrestaShopBundle\Form\Admin\Sell\Order\Shipment\EditShipmentType;
+use PrestaShopBundle\Form\Admin\Sell\Order\Shipment\MergeShipmentType;
+use PrestaShopBundle\Form\Admin\Sell\Order\Shipment\SplitShipmentType;
+use PrestaShopBundle\Form\Admin\Sell\Order\Shipment\FulfillShipmentType;
 use PrestaShopBundle\Form\Admin\Sell\Order\UpdateOrderShippingType;
 use PrestaShopBundle\Form\Admin\Sell\Order\UpdateOrderStatusType;
 use PrestaShopBundle\Security\Attribute\AdminSecurity;
@@ -134,9 +140,7 @@ class OrderController extends PrestaShopAdminController
      */
     public const PRODUCTS_PAGINATION_OPTIONS = [8, 20, 50, 100];
 
-    public function __construct(private readonly FormFactoryInterface $formFactory)
-    {
-    }
+    public function __construct(private readonly FormFactoryInterface $formFactory) {}
 
     /**
      * Shows list of orders
@@ -344,6 +348,51 @@ class OrderController extends PrestaShopAdminController
     }
 
     /**
+     * Generate delivery slip PDF for a specific shipment
+     */
+    #[AdminSecurity("is_granted('read', request.get('_legacy_controller'))", message: 'You do not have permission to view this.', redirectRoute: 'admin_orders_index')]
+    public function generateShipmentDeliverySlipPdfAction(
+        int $shipmentId,
+        #[Autowire(service: 'prestashop.adapter.pdf.shipment_delivery_slip_pdf_generator')] PDFGeneratorInterface $shipmentDeliverySlipPdfGenerator,
+    ): BinaryFileResponse {
+        return new BinaryFileResponse($shipmentDeliverySlipPdfGenerator->generatePDF([$shipmentId]));
+    }
+
+    /**
+     * Generate delivery slip PDF for multiple shipments or all shipments of an order
+     */
+    #[AdminSecurity("is_granted('read', request.get('_legacy_controller'))", message: 'You do not have permission to view this.', redirectRoute: 'admin_orders_index')]
+    public function generateShipmentsDeliverySlipPdfAction(
+        Request $request,
+        int $orderId,
+        #[Autowire(service: 'prestashop.adapter.pdf.shipment_delivery_slip_pdf_generator')] PDFGeneratorInterface $shipmentDeliverySlipPdfGenerator,
+    ): BinaryFileResponse {
+        $shipmentIds = $request->isMethod('POST')
+            ? $request->request->all('shipmentIds')
+            : $request->query->all('shipmentIds');
+
+        if (empty($shipmentIds)) {
+            /** @var OrderShipment[] $orderShipments */
+            $orderShipments = $this->dispatchQuery(new GetOrderShipments($orderId));
+
+            $shipmentIds = [];
+            foreach ($orderShipments as $shipment) {
+                if ($shipment->getTrackingNumber() !== null && $shipment->getPackedAt() !== null) {
+                    $shipmentIds[] = $shipment->getId();
+                }
+            }
+        }
+
+        $shipmentIds = array_map('intval', (array) $shipmentIds);
+
+        if (empty($shipmentIds)) {
+            throw new InvalidArgumentException('No shipments found for this order');
+        }
+
+        return new BinaryFileResponse($shipmentDeliverySlipPdfGenerator->generatePDF($shipmentIds));
+    }
+
+    /**
      * @param Request $request
      *
      * @return RedirectResponse
@@ -464,13 +513,15 @@ class OrderController extends PrestaShopAdminController
 
         $updateOrderStatusForm = $this->formFactory->createNamed(
             'update_order_status',
-            UpdateOrderStatusType::class, [
+            UpdateOrderStatusType::class,
+            [
                 'new_order_status_id' => $orderForViewing->getHistory()->getCurrentOrderStatusId(),
             ]
         );
         $updateOrderStatusActionBarForm = $this->formFactory->createNamed(
             'update_order_status_action_bar',
-            UpdateOrderStatusType::class, [
+            UpdateOrderStatusType::class,
+            [
                 'new_order_status_id' => $orderForViewing->getHistory()->getCurrentOrderStatusId(),
             ]
         );
@@ -782,8 +833,77 @@ class OrderController extends PrestaShopAdminController
 
         $command = new EditShipment(
             $shipmentId,
-            $submittedData['tracking_number'],
             $submittedData['carrier']
+        );
+
+        $this->dispatchCommand($command);
+
+        return $this->redirectToRoute('admin_orders_view', [
+            'orderId' => $orderId,
+        ]);
+    }
+
+    private function getMergeFormData(int $orderId, int $shipmentId): array
+    {
+        /** @var OrderShipmentProduct[] $products */
+        $products = $this->dispatchQuery(new GetShipmentProducts($shipmentId));
+
+        /** @var OrderShipment[] $shipments */
+        $shipments = $this->dispatchQuery(new GetOrderShipments($orderId));
+
+        $shipments = array_filter($shipments, fn(OrderShipment $s) => $s->getId() !== $shipmentId);
+
+        foreach ($products as &$p) {
+            $p = $p->toArray();
+        }
+
+        return [
+            'products' => $products,
+            'shipments' => $shipments,
+        ];
+    }
+
+    #[AdminSecurity("is_granted('update', 'AdminOrders')", redirectRoute: 'admin_orders_view', redirectQueryParamsToKeep: ['orderId'], message: 'You do not have permission to edit this.')]
+    public function getFulfillShipmentForm(int $orderId, Request $request): Response
+    {
+        $shipmentId = (int) $request->query->get('shipmentId');
+        $formData = $this->dispatchQuery(new GetShipmentForEditing($orderId, $shipmentId))->toArray();
+        $formData['shipment_id'] = $shipmentId;
+        $form = $this->createForm(FulfillShipmentType::class, $formData, ['order_id' => $orderId, 'shipment_id' => $shipmentId]);
+
+        return $this->render('@PrestaShop/Admin/Sell/Order/Order/Blocks/View/fulfill_shipment_form.html.twig', [
+            'fulfillShipmentForm' => $form->createView(),
+            'shipmentInformation' => $form->getData(),
+            'orderId' => $orderId,
+            'shipmentId' => $shipmentId,
+        ]);
+    }
+
+    /**
+     * @param int $orderId
+     * @param Request $request
+     *
+     * @return RedirectResponse
+     */
+    #[AdminSecurity("is_granted('update', 'AdminOrders')", redirectRoute: 'admin_orders_view', redirectQueryParamsToKeep: ['orderId'], message: 'You do not have permission to edit this.')]
+    public function fulfillShipmentAction(int $orderId, Request $request): RedirectResponse
+    {
+        $shipmentId = (int) $request->query->get('shipmentId');
+        $formData = $this->dispatchQuery(new GetShipmentForEditing($orderId, $shipmentId))->toArray();
+        $formData['shipment_id'] = $shipmentId;
+        $form = $this->createForm(FulfillShipmentType::class, $formData, ['order_id' => $orderId, 'shipment_id' => $shipmentId]);
+        $form->handleRequest($request);
+        $submittedData = $request->request->all('fulfill_shipment');
+
+        if (!$form->isSubmitted() || !$form->isValid()) {
+            $this->addFlash('error', 'An error occurend while fulfilling shipment');
+
+            return $this->redirectToRoute('admin_orders_view', ['orderId' => $orderId]);
+        }
+
+        $command = new FulfillShipmentCommand(
+            $shipmentId,
+            $submittedData['tracking_number'],
         );
 
         $this->dispatchCommand($command);
@@ -846,6 +966,27 @@ class OrderController extends PrestaShopAdminController
             'formIsValid' => $data['form_is_valid'],
             'isShipped' => $data['is_shipped'],
         ]);
+    }
+
+    /**
+     * @param array<array{
+     *      selected?: bool,
+     *      selected_quantity?: int,
+     *      order_detail_id: int,
+     *      quantity: int,
+     *      product_name: string,
+     *      product_reference: string,
+     *      product_image_path: string
+     *  }> $products
+     *
+     * @return bool
+     */
+    private function checkFormValidity(array $products): bool
+    {
+        $allSelected = array_reduce($products, fn($carry, $product) => $carry && ($product['selected'] ?? false), true);
+        $allQuantitiesMatch = array_reduce($products, fn($carry, $product) => $carry && (($product['selected_quantity'] ?? 0) === $product['quantity']), true);
+
+        return !($allSelected && $allQuantitiesMatch);
     }
 
     #[AdminSecurity("is_granted('update', 'AdminOrders')", message: 'You do not have permission to show this.')]
@@ -1648,7 +1789,8 @@ class OrderController extends PrestaShopAdminController
 
         $routesCollection = $router->getRouteCollection();
 
-        if (!$orderMessageForm->isValid()
+        if (
+            !$orderMessageForm->isValid()
             && $viewRoute = $routesCollection->get('admin_orders_view')
         ) {
             $attributes = $viewRoute->getDefaults();

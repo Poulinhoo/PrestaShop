@@ -1,5 +1,4 @@
 <?php
-
 /**
  * For the full copyright and license information, please view the
  * docs/licenses/LICENSE.txt file that was distributed with this source code.
@@ -9,10 +8,9 @@ declare(strict_types=1);
 
 namespace PrestaShop\PrestaShop\Core\Domain\Shipment\Command;
 
-use PrestaShop\PrestaShop\Core\Domain\Carrier\ValueObject\CarrierId;
 use PrestaShop\PrestaShop\Core\Domain\Shipment\ValueObject\ShipmentId;
 
-class EditShipment
+class FulfillShipmentCommand
 {
     /**
      * @var ShipmentId
@@ -20,16 +18,20 @@ class EditShipment
     private $shipmentId;
 
     /**
-     * @var CarrierId
+     * @var string
      */
-    private $carrierId;
+    private $trackingNumber;
 
-    public function __construct(int $shipmentId, int $carrierId)
+    /**
+     * @var \DateTimeInterface|null
+     */
+    private $packedAt;
+
+    public function __construct(int $shipmentId, string $trackingNumber, ?\DateTimeInterface $packedAt = null)
     {
         $this->shipmentId = new ShipmentId($shipmentId);
-        $this->carrierId = new CarrierId(
-            $carrierId,
-        );
+        $this->trackingNumber = $trackingNumber;
+        $this->packedAt = $packedAt;
     }
 
     public function getShipmentId(): ShipmentId
@@ -37,8 +39,13 @@ class EditShipment
         return $this->shipmentId;
     }
 
-    public function getCarrierId(): CarrierId
+    public function getTrackingNumber(): string
     {
-        return $this->carrierId;
+        return $this->trackingNumber;
+    }
+
+    public function getPackedAt(): ?\DateTimeInterface
+    {
+        return $this->packedAt;
     }
 }
