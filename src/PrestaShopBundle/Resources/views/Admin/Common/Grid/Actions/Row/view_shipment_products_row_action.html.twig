@@ -1,0 +1,13 @@
+{#
+ # For the full copyright and license information, please view the
+ # docs/licenses/LICENSE.txt file that was distributed with this source code.
+ #}
+
+<a href="#"
+  class="{{ attributes.class|default('btn tooltip-link') }} js-view-shipment-products-btn d-print-none"
+  data-toggle="modal"
+  data-target="#shipmentProductsModal"
+  data-shipment-id="{{ record[action.options.shipment_id_field] }}"
+>
+  <i class="material-icons">{{ action.icon }}</i>
+</a>

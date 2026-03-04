@@ -1,3 +1,7 @@
+_shipments:
+  resource: "shipments.yml"
+  prefix: /shipments/
+
 _delivery_slips:
   resource: "delivery_slips.yml"
   prefix: /delivery-slips/

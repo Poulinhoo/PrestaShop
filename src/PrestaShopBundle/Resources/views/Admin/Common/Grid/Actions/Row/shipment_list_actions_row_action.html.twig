@@ -1,0 +1,34 @@
+{#
+ # For the full copyright and license information, please view the
+ # docs/licenses/LICENSE.txt file that was distributed with this source code.
+ #}
+
+<div class="dropdown">
+  <span
+    class="grid-{{ action.name|lower }}-row-link"
+    data-toggle="dropdown"
+    role="button"
+    aria-haspopup="true"
+    aria-expanded="false"
+    title="{{ 'Actions'|trans({}, 'Admin.Global') }}"
+  >
+    <i class="material-icons">more_vert</i>
+  </span>
+
+  <div class="dropdown-menu dropdown-menu-right">
+    <a class="dropdown-item js-view-shipment-products-btn"
+      href="#"
+      data-toggle="modal"
+      data-target="#shipmentProductsModal"
+      data-shipment-id="{{record[action.options.shipment_id_field]}}"
+      data-products-url="{{ path('admin_shipments_products', {shipmentId: record[action.options.shipment_id_field]}) }}"
+    >
+      {{ 'See product details'|trans({}, 'Admin.Actions') }}
+    </a>
+    <a class="dropdown-item"
+      href="{{ path('admin_orders_view', {orderId: record[action.options.order_id_field]}) }}"
+    >
+      {{ 'View order'|trans({}, 'Admin.Actions') }}
+    </a>
+  </div>
+</div>

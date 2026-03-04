@@ -551,6 +551,14 @@ services:
       - '@prestashop.core.grid.filter.form_factory'
       - '@prestashop.core.hook.dispatcher'
 
+  PrestaShop\PrestaShop\Core\Grid\Factory\ShipmentListFactory:
+    class: 'PrestaShop\PrestaShop\Core\Grid\GridFactory'
+    arguments:
+      - '@PrestaShop\PrestaShop\Core\Grid\Definition\Factory\ShipmentListGridDefinitionFactory'
+      - '@PrestaShop\PrestaShop\Core\Grid\Data\Factory\ShipmentGridDataFactory'
+      - '@prestashop.core.grid.filter.shipment_list_form_factory'
+      - '@prestashop.core.hook.dispatcher'
+
   PrestaShop\PrestaShop\Core\Grid\Factory\TagFactory:
     class: 'PrestaShop\PrestaShop\Core\Grid\GridFactory'
     arguments:

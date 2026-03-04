@@ -487,6 +487,11 @@ services:
     autowire: true
     public: true
 
+  PrestaShop\PrestaShop\Core\Grid\Definition\Factory\ShipmentListGridDefinitionFactory:
+    parent: PrestaShop\PrestaShop\Core\Grid\Definition\Factory\AbstractGridDefinitionFactory
+    autowire: true
+    public: true
+
   PrestaShop\PrestaShop\Core\Grid\Definition\Factory\TagGridDefinitionFactory:
     parent: PrestaShop\PrestaShop\Core\Grid\Definition\Factory\AbstractGridDefinitionFactory
     autowire: true

@@ -1,0 +1,47 @@
+admin_shipments_index:
+  path: /
+  methods: [GET]
+  defaults:
+    _controller: 'PrestaShopBundle\Controller\Admin\Sell\Order\ShipmentController::indexAction'
+    _legacy_controller: AdminShipments
+    _legacy_link: AdminShipments
+
+admin_shipments_search:
+  path: /search
+  methods: [POST]
+  defaults:
+    _controller: 'PrestaShopBundle\Controller\Admin\Sell\Order\ShipmentController::searchAction'
+    _legacy_controller: AdminShipments
+    _legacy_link: AdminShipments
+
+admin_shipments_export:
+  path: /export
+  methods: [GET]
+  defaults:
+    _controller: 'PrestaShopBundle\Controller\Admin\Sell\Order\ShipmentController::exportAction'
+    _legacy_controller: AdminShipments
+    _legacy_link: AdminShipments
+
+admin_shipments_products:
+  path: /{shipmentId}/products
+  methods: [GET]
+  defaults:
+    _controller: 'PrestaShopBundle\Controller\Admin\Sell\Order\ShipmentController::productsAction'
+    _legacy_controller: AdminShipments
+    _legacy_link: AdminShipments
+  requirements:
+    shipmentId: \d+
+  options:
+    expose: true
+
+admin_shipments_view:
+  path: /{shipmentId}/view
+  methods: [GET]
+  defaults:
+    _controller: 'PrestaShopBundle\Controller\Admin\Sell\Order\ShipmentController::viewAction'
+    _legacy_controller: AdminShipments
+    _legacy_link: AdminShipments
+  requirements:
+    shipmentId: \d+
+  options:
+    expose: true

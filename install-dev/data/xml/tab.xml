@@ -55,6 +55,11 @@
             <wording>Shopping Carts</wording>
             <wording_domain>Admin.Navigation.Menu</wording_domain>
         </tab>
+        <tab id="Shipments" id_parent="Orders" active="0" enabled="1">
+            <class_name>AdminShipments</class_name>
+            <wording>Shipments</wording>
+            <wording_domain>Admin.Navigation.Menu</wording_domain>
+        </tab>
 
         <!--CATALOG-->
         <tab id="Catalog" id_parent="SELL" active="1" enabled="1" icon="store">

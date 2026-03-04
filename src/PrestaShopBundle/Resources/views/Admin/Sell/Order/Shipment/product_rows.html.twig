@@ -1,0 +1,19 @@
+{#
+ # For the full copyright and license information, please view the
+ # docs/licenses/LICENSE.txt file that was distributed with this source code.
+ #}
+
+{% if products is empty %}
+  <div class="alert alert-warning">
+    {{ 'No products found for this shipment.'|trans({}, 'Admin.Orderscustomers.Notification') }}
+  </div>
+{% endif %}
+
+{% for product in products %}
+<tr>
+  <td><img src="{{ product.product_image_path }}" alt="" width="40" height="40" style="object-fit:contain"></td>
+  <td>{{ product.product_reference }}</td>
+  <td>{{ product.product_name }}</td>
+  <td class="text-right">{{ product.quantity }}</td>
+</tr>
+{% endfor %}

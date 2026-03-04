@@ -124,6 +124,7 @@ module.exports = {
     order_message_form: './js/pages/order_message/form',
     order_preferences: './js/pages/order-preferences',
     order_return_states_form: './js/pages/order-return-states/form',
+    order_shipment: './js/pages/order/shipment',
     order_states: './js/pages/order-states',
     order_states_form: './js/pages/order-states/form',
     order_view: './js/pages/order/view',

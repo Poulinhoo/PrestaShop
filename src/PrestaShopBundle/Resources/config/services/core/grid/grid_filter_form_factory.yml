@@ -41,3 +41,10 @@ services:
       - '@prestashop.core.grid.filter.form_factory'
       - '@router'
       - 'admin_credit_slips_search'
+
+  prestashop.core.grid.filter.shipment_list_form_factory:
+    class: 'PrestaShop\PrestaShop\Core\Grid\Filter\FilterFormFactoryFormActionDecorator'
+    arguments:
+      - '@prestashop.core.grid.filter.form_factory'
+      - '@router'
+      - 'admin_shipments_search'

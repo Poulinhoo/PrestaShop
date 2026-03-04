@@ -9,9 +9,10 @@ namespace PrestaShop\PrestaShop\Core\Grid\Definition\Factory;
 use PrestaShop\PrestaShop\Core\Context\LanguageContext;
 use PrestaShop\PrestaShop\Core\Grid\Action\Row\RowActionCollection;
 use PrestaShop\PrestaShop\Core\Grid\Action\Row\RowActionCollectionInterface;
-use PrestaShop\PrestaShop\Core\Grid\Action\Row\Type\Shipment\AdditionalShipmentRowAction;
+use PrestaShop\PrestaShop\Core\Grid\Action\Row\Type\Shipment\ShipmentListActionsRowAction;
 use PrestaShop\PrestaShop\Core\Grid\Column\ColumnCollection;
 use PrestaShop\PrestaShop\Core\Grid\Column\Type\Common\ActionColumn;
+use PrestaShop\PrestaShop\Core\Grid\Column\Type\Common\BulkActionColumn;
 use PrestaShop\PrestaShop\Core\Grid\Column\Type\Common\DataColumn;
 use PrestaShop\PrestaShop\Core\Grid\Column\Type\Common\DateTimeColumn;
 use PrestaShop\PrestaShop\Core\Grid\Column\Type\Common\IdentifierColumn;
@@ -22,9 +23,9 @@ use PrestaShopBundle\Form\Admin\Type\DateRangeType;
 use PrestaShopBundle\Form\Admin\Type\SearchAndResetType;
 use Symfony\Component\Form\Extension\Core\Type\TextType;
 
-final class ShipmentGridDefinitionFactory extends AbstractFilterableGridDefinitionFactory
+final class ShipmentListGridDefinitionFactory extends AbstractFilterableGridDefinitionFactory
 {
-    public const GRID_ID = 'shipment';
+    public const GRID_ID = 'shipment_list';
 
     public function __construct(
         HookDispatcherInterface $hookDispatcher,
@@ -54,14 +55,20 @@ final class ShipmentGridDefinitionFactory extends AbstractFilterableGridDefiniti
      */
     protected function getColumns()
     {
-        $columns = (new ColumnCollection())
+        return (new ColumnCollection())
+            ->add(
+                (new BulkActionColumn('shipments_bulk'))
+                    ->setOptions([
+                        'bulk_field' => 'shipment_number',
+                    ])
+            )
             ->add((new DateTimeColumn('date'))
                 ->setName($this->trans('Date', [], 'Admin.Global'))
                 ->setOptions([
                     'field' => 'date',
                     'format' => $this->languageContext->getDateTimeFormat(),
                     'clickable' => true,
-                    'sortable' => false,
+                    'sortable' => true,
                     'alignment' => 'left',
                 ])
             )
@@ -120,15 +127,14 @@ final class ShipmentGridDefinitionFactory extends AbstractFilterableGridDefiniti
                         'sortable' => false,
                         'alignment' => 'left',
                     ])
-            )->add(
+            )
+            ->add(
                 (new ActionColumn('actions'))
                     ->setName($this->trans('Actions', [], 'Admin.Global'))
                     ->setOptions([
                         'actions' => $this->getRowActions(),
                     ])
             );
-
-        return $columns;
     }
 
     /**
@@ -187,22 +193,14 @@ final class ShipmentGridDefinitionFactory extends AbstractFilterableGridDefiniti
      */
     private function getRowActions()
     {
-        $rowActions = new RowActionCollection();
-        $rowActions
+        return (new RowActionCollection())
             ->add(
-                (new AdditionalShipmentRowAction('More'))
-                    ->setName($this->trans('More', [], 'Admin.Actions'))
-                    ->setIcon('more_vert')
+                (new ShipmentListActionsRowAction('actions'))
+                    ->setName($this->trans('Actions', [], 'Admin.Global'))
                     ->setOptions([
                         'shipment_id_field' => 'shipment_number',
                         'order_id_field' => 'order_id',
-                        'items' => 'items',
-                        'total_shipments' => 'total_shipments',
-                        'tracking_number' => 'tracking_number',
-                        'carrier' => 'carrier',
                     ])
             );
-
-        return $rowActions;
     }
 }
