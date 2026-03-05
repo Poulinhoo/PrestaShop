@@ -339,6 +339,16 @@ admin_orders_get_shipments_for_product:
   options:
     expose: true
 
+admin_orders_get_carriers_for_product:
+  path: /orders/product/{productId}/carriers
+  methods: [ POST ]
+  defaults:
+    _controller: PrestaShopBundle\Controller\Admin\Sell\Order\OrderController::getCarriersForProduct
+  requirements:
+    productId: \d+
+  options:
+    expose: true
+
 admin_orders_add_product:
   path: /{orderId}/products
   methods: [ POST ]

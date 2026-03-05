@@ -107,6 +107,8 @@ export default {
   productSearchInputAutocompleteOnModale: '#searchProductToAddProduct .dropdown',
   productSearchInputAutocompleteMenuOnModale: '#searchProductToAddProduct .dropdown .dropdown-menu',
   productAddIdInput: '#add_product_row_product_id',
+  productSelectCarriers: '#add_product_row_carrier_for_shipment',
+  productSelectCarriersContainer: '#addProductCarriers',
   productAddTaxRateInput: '#add_product_row_tax_rate',
   productAddCombinationsBlock: '#addProductCombinations',
   productAddCombinationsSelect: '#addProductCombinationId',

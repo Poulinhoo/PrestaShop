@@ -28,11 +28,19 @@ export default class OrderProductAutocomplete {
 
   selectShipment: HTMLSelectElement;
 
+  selectCarriers: HTMLSelectElement;
+
+  addProductBtnAction: HTMLButtonElement;
+
   searchTimeoutId: undefined | number | ReturnType<typeof setTimeout>;
 
   onItemClickedCallback: (product?: Record<string, any> | undefined) => void;
 
   isMultishipmentIsEnabled: boolean;
+
+  private boundHandleShipment: (event: Event) => void;
+
+  private boundToggleSubmitButton: (event: Event) => void;
 
   constructor(input: JQuery) {
     this.activeSearchRequest = null;
@@ -43,6 +51,10 @@ export default class OrderProductAutocomplete {
     this.selectShipment = document.querySelector<HTMLSelectElement>(OrderViewPageMap.selectAddShipment)!;
     // eslint-disable-next-line max-len
     this.isMultishipmentIsEnabled = document.querySelector<HTMLElement>(OrderViewPageMap.productsTable)?.dataset.multishipmentEnabled === '1';
+    this.selectCarriers = document.querySelector<HTMLSelectElement>(OrderViewPageMap.productSelectCarriers)!;
+    this.addProductBtnAction = document.querySelector<HTMLButtonElement>(OrderViewPageMap.productAddActionBtn)!;
+    this.boundHandleShipment = this.handleShipment.bind(this);
+    this.boundToggleSubmitButton = this.toggleSubmitButton.bind(this);
 
     if (this.isMultishipmentIsEnabled) {
       this.dropdownMenu = $(OrderViewPageMap.productSearchInputAutocompleteMenuOnModale);
@@ -61,6 +73,11 @@ export default class OrderProductAutocomplete {
       event.stopImmediatePropagation();
       this.updateResults(this.results);
     });
+
+    if (this.isMultishipmentIsEnabled) {
+      this.selectShipment.addEventListener('change', this.boundHandleShipment);
+      this.selectCarriers.addEventListener('change', this.boundToggleSubmitButton);
+    }
 
     this.input.on('keyup', (event: JQueryEventObject) => this.delaySearch(<HTMLInputElement>event.currentTarget));
     $(document).on('click', () => this.dropdownMenu.hide());
@@ -130,6 +147,8 @@ export default class OrderProductAutocomplete {
 
     if (selectedProduct.length !== 0) {
       this.input.val(selectedProduct[0].name);
+      this.resetShipmentAndCarrierSelects();
+
       if (this.selectShipment) {
         const shipmentSelectorContainer = document.querySelector<HTMLElement>(OrderViewPageMap.selectAddShipmentContainer)!;
         shipmentSelectorContainer.classList.toggle('d-none', selectedProduct[0].virtual === true);
@@ -140,6 +159,81 @@ export default class OrderProductAutocomplete {
       }
       this.onItemClickedCallback(selectedProduct[0]);
     }
+  }
+
+  removeListener(): void {
+    if (this.isMultishipmentIsEnabled) {
+      this.selectShipment.removeEventListener('change', this.boundHandleShipment);
+      this.selectCarriers.removeEventListener('change', this.boundToggleSubmitButton);
+    }
+  }
+
+  private resetShipmentAndCarrierSelects(): void {
+    this.selectShipment.length = 1;
+    this.selectShipment.disabled = true;
+
+    this.selectCarriers.length = 1;
+    this.selectCarriers.disabled = true;
+
+    const carrierContainer = document.querySelector<HTMLElement>(OrderViewPageMap.productSelectCarriersContainer)!;
+    carrierContainer.classList.add('d-none');
+    carrierContainer.classList.remove('d-block');
+
+    this.addProductBtnAction.disabled = true;
+  }
+
+  handleShipment(event: Event): void {
+    const select = event.target as HTMLSelectElement;
+    const container = document.querySelector<HTMLElement>(OrderViewPageMap.productSelectCarriersContainer)!;
+    const {value} = select;
+
+    container.classList.toggle('d-none', value !== '0');
+    container.classList.toggle('d-block', value === '0');
+    this.addProductBtnAction.disabled = !value || value === '0';
+
+    if (value === '0') {
+      const productId = document.querySelector<HTMLInputElement>(OrderViewPageMap.productAddIdInput)?.value;
+      this.fetchCarrierFromProduct(Number(productId));
+    }
+  };
+
+  toggleSubmitButton(event: Event): void {
+    const element = event.target as HTMLSelectElement;
+    this.addProductBtnAction.disabled = !element.value;
+  };
+
+  fetchCarrierFromProduct(productId: number): void {
+    this.selectCarriers.disabled = true;
+
+    fetch(this.router.generate('admin_orders_get_carriers_for_product', {productId}), {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+    })
+      .then((response) => {
+        if (!response.ok) {
+          throw new Error('An error occured while fetching shipments');
+        }
+        return response.json();
+      })
+      .then((data) => {
+        this.selectCarriers.length = 1;
+
+        data.carriers.forEach(
+          ({id, name}: { id: string; name: string }) => {
+            this.selectCarriers.append(
+              new Option(name, id),
+            );
+          },
+        );
+
+        this.selectCarriers.disabled = false;
+        this.addProductBtnAction.disabled = true;
+      })
+      .catch((error) => {
+        console.error('An error occured while fetching carriers ', error);
+      });
   }
 
   populateShipmentSelect(productId: number): void {
@@ -164,7 +258,7 @@ export default class OrderProductAutocomplete {
         return response.json();
       })
       .then((data) => {
-        this.selectShipment.innerHTML = '';
+        this.selectShipment.length = 1;
 
         data.shipments.forEach(
           ({id, name}: { id: string; name: string }) => {
@@ -173,7 +267,7 @@ export default class OrderProductAutocomplete {
             );
           },
         );
-
+        this.addProductBtnAction.disabled = true;
         this.selectShipment.disabled = false;
       })
       .catch((error) => {

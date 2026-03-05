@@ -15,6 +15,7 @@ use PrestaShop\PrestaShop\Adapter\Order\Repository\OrderDetailRepository;
 use PrestaShop\PrestaShop\Adapter\PDF\OrderInvoicePdfGenerator;
 use PrestaShop\PrestaShop\Adapter\Tools;
 use PrestaShop\PrestaShop\Core\Action\ActionsBarButtonsCollection;
+use PrestaShop\PrestaShop\Core\Domain\Carrier\Query\GetCarriersForProduct;
 use PrestaShop\PrestaShop\Core\Domain\Cart\Query\GetCartForOrderCreation;
 use PrestaShop\PrestaShop\Core\Domain\CartRule\Exception\InvalidCartRuleDiscountValueException;
 use PrestaShop\PrestaShop\Core\Domain\CustomerMessage\Command\AddOrderCustomerMessageCommand;
@@ -66,6 +67,7 @@ use PrestaShop\PrestaShop\Core\Domain\Product\Exception\ProductSearchEmptyPhrase
 use PrestaShop\PrestaShop\Core\Domain\Product\Query\SearchProducts;
 use PrestaShop\PrestaShop\Core\Domain\Product\QueryResult\FoundProduct;
 use PrestaShop\PrestaShop\Core\Domain\Shipment\Command\AddProductToShipment;
+use PrestaShop\PrestaShop\Core\Domain\Shipment\Command\CreateShipment;
 use PrestaShop\PrestaShop\Core\Domain\Shipment\Command\EditShipment;
 use PrestaShop\PrestaShop\Core\Domain\Shipment\Command\MergeProductsToShipment;
 use PrestaShop\PrestaShop\Core\Domain\Shipment\Command\SplitShipment;
@@ -885,9 +887,31 @@ class OrderController extends PrestaShopAdminController
         int $productId,
     ): Response {
         $shipments = $this->dispatchCommand(new ListAvailableShipmentsForProduct($orderId, $productId));
+        $shipments[] = [
+            'id' => 0,
+            'name' => $this->trans('Create a shipment', [], 'Admin.Orderscustomers.Feature'),
+        ];
 
         return $this->json(
             ['shipments' => $shipments],
+            Response::HTTP_OK
+        );
+    }
+
+    #[AdminSecurity("is_granted('update', 'AdminOrders')", message: 'You do not have permission to show this.')]
+    public function getCarriersForProduct(
+        int $productId,
+    ): Response {
+        if (empty($productId)) {
+            return $this->json(
+                ['error' => 'missing productId'],
+                Response::HTTP_BAD_REQUEST
+            );
+        }
+        $carriers = $this->dispatchQuery(new GetCarriersForProduct($productId));
+
+        return $this->json(
+            ['carriers' => $carriers],
             Response::HTTP_OK
         );
     }
@@ -1139,6 +1163,10 @@ class OrderController extends PrestaShopAdminController
                 $shipmentId = (int) $request->get('shipment_id');
                 $isVirtual = (bool) $request->get('virtual');
 
+                if ($shipmentId === 0 && !$isVirtual) {
+                    $carrierId = (int) $request->get('carrier_id');
+                    $shipmentId = $this->dispatchCommand(new CreateShipment($orderId, $carrierId, $productId, (int) $request->get('quantity'), $combinationId));
+                }
                 if (!$isVirtual) {
                     $this->dispatchCommand(new AddProductToShipment($shipmentId, $productId, $orderId, $combinationId));
                 }

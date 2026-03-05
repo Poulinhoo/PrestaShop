@@ -63,6 +63,13 @@
         </label>
         {{ form_widget(addProductForm.addShipment) }}
       </div>
+
+      <div class="form-group d-none" id="addProductCarriers">
+        <label class="form-control-label">
+          {{ form_label(addProductForm.carrier_for_shipment) }}
+        </label>
+        {{ form_widget(addProductForm.carrier_for_shipment) }}
+      </div>
     {% endif %}
 
     {% if orderForViewing.hasInvoice() %}

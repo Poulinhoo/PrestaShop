@@ -47,6 +47,8 @@ export default class OrderProductAdd {
 
   productShipmentSelect: JQuery;
 
+  productCarrierSelect: HTMLSelectElement;
+
   available: number | null;
 
   product: Record<string, any>;
@@ -91,6 +93,7 @@ export default class OrderProductAdd {
     this.available = null;
     // eslint-disable-next-line max-len
     this.isMultishipmentIsEnabled = document.querySelector<HTMLElement>(OrderViewPageMap.productsTable)?.dataset.multishipmentEnabled === '1';
+    this.productCarrierSelect = document.querySelector<HTMLSelectElement>(OrderViewPageMap.productSelectCarriers)!;
     this.setupListener();
     this.product = {};
     this.currencyPrecision = $(OrderViewPageMap.productsTable).data(
@@ -117,12 +120,6 @@ export default class OrderProductAdd {
           }
         });
       }
-
-      this.productShipmentSelect.on('change', () => {
-        const shipmentId = this.productShipmentSelect.val();
-        const hasShipmentSelected = Boolean(shipmentId);
-        this.productAddActionBtn.prop('disabled', !hasShipmentSelected);
-      });
     }
     this.combinationsSelect.on('change', (event) => {
       const taxExcluded = window.ps_round(
@@ -331,6 +328,9 @@ export default class OrderProductAdd {
       virtual: Number(this.product.virtual),
       ...(this.isMultishipmentIsEnabled && {
         shipment_id: this.productShipmentSelect.val(),
+      }),
+      ...(this.isMultishipmentIsEnabled && this.productShipmentSelect.val() === '0' && {
+        carrier_id: this.productCarrierSelect.value,
       }),
     };
 

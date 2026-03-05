@@ -29,3 +29,5 @@ services:
   PrestaShop\PrestaShop\Adapter\Shipment\CommandHandler\DeleteShipmentProductFromOrderHandler:
 
   PrestaShop\PrestaShop\Adapter\Shipment\CommandHandler\AddProductToShipmentHandler:
+
+  PrestaShop\PrestaShop\Adapter\Shipment\CommandHandler\CreateShipmentHandler:

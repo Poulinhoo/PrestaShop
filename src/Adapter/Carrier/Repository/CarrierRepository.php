@@ -451,6 +451,9 @@ class CarrierRepository extends AbstractMultiShopObjectModelRepository
             ->fetchAllAssociative();
     }
 
+    /**
+     * @return array<int, array{id_carrier: int|string, name: string}>
+     */
     private function getAllActiveCarriers(): array
     {
         return $this->connection->createQueryBuilder()
@@ -458,6 +461,7 @@ class CarrierRepository extends AbstractMultiShopObjectModelRepository
             ->from($this->prefix . 'carrier')
             ->where('deleted = 0')
             ->andWhere('active = 1')
+            ->orderBy('name', 'ASC')
             ->executeQuery()
             ->fetchAllAssociative();
     }

@@ -419,6 +419,8 @@ export default class OrderViewPage {
 
       orderAddAutocomplete.listenForSearch();
       orderAddAutocomplete.onItemClickedCallback = (p: Record<string, any> | undefined): void => orderAdd.setProduct(p);
+
+      this.modal.addEventListener('hidden.bs.modal', () => orderAddAutocomplete.removeListener(), {once: true});
       this.modal.dataset.state = 'loaded';
     } catch (error) {
       console.error(error);

@@ -65,6 +65,15 @@ class AddProductRowType extends TranslatorAwareType
                 ->add('addShipment', ChoiceType::class, [
                     'label' => $this->trans('Select a shipment', 'Admin.Orderscustomers.Feature'),
                     'disabled' => true,
+                    'placeholder' => $this->trans('Choose a shipment', 'Admin.Orderscustomers.Feature'),
+                    'attr' => [
+                        'class' => 'custom-select',
+                    ],
+                ])
+                ->add('carrier_for_shipment', ChoiceType::class, [
+                    'label' => $this->trans('Select a carrier for the new shipment', 'Admin.Orderscustomers.Feature'),
+                    'disabled' => true,
+                    'placeholder' => $this->trans('Choose a carrier', 'Admin.Orderscustomers.Feature'),
                     'attr' => [
                         'class' => 'custom-select',
                     ],
