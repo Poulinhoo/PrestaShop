@@ -87,7 +87,7 @@
       </thead>
       <tbody>
         {{ include('@PrestaShop/Admin/Sell/Order/Order/Blocks/View/product_list.html.twig') }}
-        {% if isImprovedShipmentFeatureFlagEnabled is defined and isImprovedShipmentFeatureFlagEnabled == false %}
+        {% if isImprovedShipmentFeatureFlagEnabled is defined and isImprovedShipmentFeatureFlagEnabled == false or orderHasShipment == false %}
           {{ include('@PrestaShop/Admin/Sell/Order/Order/Blocks/View/add_product_row.html.twig') }}
           {{ include('@PrestaShop/Admin/Sell/Order/Order/Blocks/View/edit_product_row.html.twig') }}
         {% endif %}
