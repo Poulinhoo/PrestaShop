@@ -372,3 +372,17 @@ services:
     arguments:
       - 'PrestaShopBundle\Form\Admin\Sell\Order\AddProductRowType'
       - '@PrestaShop\PrestaShop\Core\Form\IdentifiableObject\DataProvider\AddProductFormDataProvider'
+
+  prestashop.core.form.identifiable_object.builder.merge_shipment_form_builder:
+    class: 'PrestaShop\PrestaShop\Core\Form\IdentifiableObject\Builder\FormBuilder'
+    factory: [ '@prestashop.core.form.builder.form_builder_factory', 'create' ]
+    arguments:
+      - 'PrestaShopBundle\Form\Admin\Sell\Order\Shipment\MergeShipmentType'
+      - '@PrestaShop\PrestaShop\Core\Form\IdentifiableObject\DataProvider\MergeShipmentFormDataProvider'
+
+  prestashop.core.form.identifiable_object.builder.split_shipment_form_builder:
+    class: 'PrestaShop\PrestaShop\Core\Form\IdentifiableObject\Builder\FormBuilder'
+    factory: [ '@prestashop.core.form.builder.form_builder_factory', 'create' ]
+    arguments:
+      - 'PrestaShopBundle\Form\Admin\Sell\Order\Shipment\SplitShipmentType'
+      - '@PrestaShop\PrestaShop\Core\Form\IdentifiableObject\DataProvider\SplitShipmentFormDataProvider'

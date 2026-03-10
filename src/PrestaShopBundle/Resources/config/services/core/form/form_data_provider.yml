@@ -273,3 +273,11 @@ services:
   PrestaShop\PrestaShop\Core\Form\IdentifiableObject\DataProvider\AddProductFormDataProvider:
     autowire: true
     public: false
+
+  PrestaShop\PrestaShop\Core\Form\IdentifiableObject\DataProvider\MergeShipmentFormDataProvider:
+    autowire: true
+    public: false
+
+  PrestaShop\PrestaShop\Core\Form\IdentifiableObject\DataProvider\SplitShipmentFormDataProvider:
+    autowire: true
+    public: false
