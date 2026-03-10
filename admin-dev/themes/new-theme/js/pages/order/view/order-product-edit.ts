@@ -139,14 +139,12 @@ export default class OrderProductEdit {
   }
 
   setupListener(): void {
-    if (this.isMultishipmentIsEnabled) {
-      if (this.shipmentInputs.length > 0) {
-        this.updateShipmentQtyCounter(<number> this.quantity);
-        this.shipmentInputs.forEach((input) => {
-          input.addEventListener('change', this.boundHandleShipment);
-          input.addEventListener('keyup', this.boundHandleShipment);
-        });
-      }
+    if (this.isMultishipmentIsEnabled && this.shipmentInputs.length > 0) {
+      this.updateShipmentQtyCounter(<number> this.quantity);
+      this.shipmentInputs.forEach((input) => {
+        input.addEventListener('change', this.boundHandleShipment);
+        input.addEventListener('keyup', this.boundHandleShipment);
+      });
     }
 
     this.quantityInput.on('change keyup', (event: JQueryEventObject) => {
