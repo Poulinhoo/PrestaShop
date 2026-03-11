@@ -427,7 +427,7 @@ export default class OrderViewPage {
       if (!response.ok) {
         throw new Error(await response.text());
       }
-      const formContainer = document.querySelector(OrderViewPageMap.addProductModalContainer) as HTMLElement;
+      const formContainer = document.querySelector<HTMLElement>(OrderViewPageMap.addProductModalContainer);
       formContainer!.innerHTML = await response.text();
 
       const orderAddAutocomplete = new OrderProductAutocomplete($(OrderViewPageMap.productSearchInput));
