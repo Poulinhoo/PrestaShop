@@ -82,9 +82,9 @@ export default class OrderProductEdit {
 
   shipmentInputs: HTMLInputElement[];
 
-  shipmentQtyCounter: HTMLElement;
+  shipmentQtyCounter!: HTMLElement | null;
 
-  modalContainer: HTMLElement;
+  modalContainer!: HTMLElement | null;
 
   boundHandleShipment: () => void;
 
@@ -116,8 +116,6 @@ export default class OrderProductEdit {
     this.productEditImage = null;
     this.productEditName = null;
     this.locationText = null;
-    this.modalContainer = null!;
-    this.shipmentQtyCounter = null!;
     this.shipmentInputs = [];
     if (this.isMultishipmentIsEnabled) {
       this.modalContainer = document.querySelector(OrderViewPageMap.editProductModalContainer)!;
