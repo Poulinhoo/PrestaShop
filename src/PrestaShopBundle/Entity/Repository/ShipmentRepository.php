@@ -34,6 +34,39 @@ class ShipmentRepository extends EntityRepository
         return $this->findBy(['orderId' => $orderId]);
     }
 
+    /**
+     * @return array<int, array{
+     *     id_shipment: int,
+     *     quantity: int,
+     * }>
+     */
+    public function findByOrderIdAndOrderDetailId(
+        int $orderId,
+        int $orderDetailId
+    ): array {
+        $conn = $this->getEntityManager()->getConnection();
+        $qb = $conn->createQueryBuilder();
+        $qb
+            ->select(
+                'sp.id_shipment',
+                'sp.quantity AS quantity'
+            )
+            ->from($this->tablePrefix . 'shipment_product', 'sp')
+            ->innerJoin(
+                'sp',
+                $this->tablePrefix . 'shipment',
+                's',
+                's.id_shipment = sp.id_shipment'
+            )
+            ->where('sp.id_order_detail = :orderDetailId')
+            ->andWhere('s.id_order = :orderId')
+            ->groupBy('sp.id_shipment')
+            ->setParameter('orderDetailId', $orderDetailId)
+            ->setParameter('orderId', $orderId);
+
+        return $qb->executeQuery()->fetchAllAssociative();
+    }
+
     public function findByOrderAndShipmentId(int $orderId, int $shipmentId): ?Shipment
     {
         return $this->findOneBy(['orderId' => $orderId, 'id' => $shipmentId]);

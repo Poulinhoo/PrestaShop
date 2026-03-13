@@ -22,7 +22,9 @@ use PrestaShop\PrestaShop\Core\Domain\Shipment\Command\SwitchShipmentCarrierComm
 use PrestaShop\PrestaShop\Core\Domain\Shipment\Query\GetOrderShipments;
 use PrestaShop\PrestaShop\Core\Domain\Shipment\Query\GetShipmentForViewing;
 use PrestaShop\PrestaShop\Core\Domain\Shipment\Query\GetShipmentProducts;
+use PrestaShop\PrestaShop\Core\Domain\Shipment\Query\GetShipmentsForOrderDetail;
 use PrestaShop\PrestaShop\Core\Domain\Shipment\Query\ListAvailableShipments;
+use PrestaShop\PrestaShop\Core\Domain\Shipment\QueryResult\ShipmentForOrderDetail;
 use PrestaShop\PrestaShop\Core\Domain\Shipment\QueryResult\ShipmentForViewing;
 use RuntimeException;
 use Tests\Integration\Behaviour\Features\Context\SharedStorage;
@@ -311,5 +313,65 @@ class ShipmentFeatureContext extends AbstractDomainFeatureContext
         $this->getCommandBus()->handle(
             new DeleteProductFromShipment($shipmentId, $orderReferenceIds)
         );
+    }
+
+    /**
+     * @Then the product :productName in the order :orderReference is linked to shipments:
+     */
+    public function assertProductIsLinkedToShipments(
+        string $productName,
+        string $orderReference,
+        TableNode $table
+    ): void {
+        $expectedShipments = $table->getColumnsHash();
+        $orderId = $this->referenceToId($orderReference);
+
+        $orderDetails = (new Order($orderId))->getOrderDetailList();
+        $orderDetailId = null;
+
+        foreach ($orderDetails as $orderDetail) {
+            if ($orderDetail['product_name'] === $productName) {
+                $orderDetailId = (int) $orderDetail['id_order_detail'];
+                break;
+            }
+        }
+
+        Assert::assertNotNull(
+            $orderDetailId,
+            sprintf('Product "%s" was not found in order "%s"', $productName, $orderReference)
+        );
+
+        /** @var ShipmentForOrderDetail[] $shipments */
+        $shipments = $this->getQueryBus()->handle(
+            new GetShipmentsForOrderDetail($orderId, $orderDetailId)
+        );
+
+        foreach ($expectedShipments as $expected) {
+            $expectedShipmentId = SharedStorage::getStorage()->get($expected['shipment']);
+            $expectedQuantity = (int) $expected['quantity'];
+
+            $matchedShipment = array_filter(
+                $shipments,
+                fn ($shipment) => $shipment->getShipmentId() === $expectedShipmentId
+            );
+
+            Assert::assertNotEmpty(
+                $matchedShipment,
+                sprintf('Shipment "%s" was not found for product "%s"', $expected['shipment'], $productName)
+            );
+
+            $shipment = array_shift($matchedShipment);
+
+            Assert::assertEquals(
+                $expectedQuantity,
+                $shipment->getQuantity(),
+                sprintf(
+                    'Expected quantity %d for shipment "%s", got %d',
+                    $expectedQuantity,
+                    $expected['shipment'],
+                    $shipment->getQuantity()
+                )
+            );
+        }
     }
 }
