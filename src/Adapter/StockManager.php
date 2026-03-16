@@ -143,13 +143,19 @@ class StockManager
             ';
         }
 
+        $stockContext = $this->getStockContext((int) $shopId);
+
+        $orderScopeCondition = $stockContext['shopGroupId'] > 0
+            ? 'o.id_shop_group = :order_shop_group_id'
+            : 'o.id_shop = :shop_id';
+
         $updateReservedQuantityQuery .= '
             SET sa.reserved_quantity = (
                 SELECT SUM(od.product_quantity - od.product_quantity_refunded)
                 FROM {table_prefix}orders o
                 INNER JOIN {table_prefix}order_detail od ON od.id_order = o.id_order
                 INNER JOIN {table_prefix}order_state os ON os.id_order_state = o.current_state
-                WHERE o.id_shop = :shop_id AND
+                WHERE ' . $orderScopeCondition . ' AND
                 os.shipped != 1 AND (
                     o.valid = 1 OR (
                         os.id_order_state != :error_state AND
@@ -164,16 +170,19 @@ class StockManager
                 sa.id_shop_group = :stock_shop_group_id 
         ';
 
-        $stockContext = $this->getStockContext((int) $shopId);
-
         $strParams = [
             '{table_prefix}' => _DB_PREFIX_,
-            ':shop_id' => (int) $shopId,
             ':stock_shop_id' => (int) $stockContext['shopId'],
             ':stock_shop_group_id' => (int) $stockContext['shopGroupId'],
             ':error_state' => (int) $errorState,
             ':cancellation_state' => (int) $cancellationState,
         ];
+
+        if ($stockContext['shopGroupId'] > 0) {
+            $strParams[':order_shop_group_id'] = (int) $stockContext['shopGroupId'];
+        } else {
+            $strParams[':shop_id'] = (int) $shopId;
+        }
 
         if ($idProduct) {
             $updateReservedQuantityQuery .= ' AND sa.id_product = :product_id';
