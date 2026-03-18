@@ -843,26 +843,6 @@ class OrderController extends PrestaShopAdminController
         ]);
     }
 
-    private function getMergeFormData(int $orderId, int $shipmentId): array
-    {
-        /** @var OrderShipmentProduct[] $products */
-        $products = $this->dispatchQuery(new GetShipmentProducts($shipmentId));
-
-        /** @var OrderShipment[] $shipments */
-        $shipments = $this->dispatchQuery(new GetOrderShipments($orderId));
-
-        $shipments = array_filter($shipments, fn (OrderShipment $s) => $s->getId() !== $shipmentId);
-
-        foreach ($products as &$p) {
-            $p = $p->toArray();
-        }
-
-        return [
-            'products' => $products,
-            'shipments' => $shipments,
-        ];
-    }
-
     #[AdminSecurity("is_granted('update', 'AdminOrders')", redirectRoute: 'admin_orders_view', redirectQueryParamsToKeep: ['orderId'], message: 'You do not have permission to edit this.')]
     public function getFulfillShipmentForm(int $orderId, Request $request): Response
     {
@@ -966,27 +946,6 @@ class OrderController extends PrestaShopAdminController
             'formIsValid' => $data['form_is_valid'],
             'isShipped' => $data['is_shipped'],
         ]);
-    }
-
-    /**
-     * @param array<array{
-     *      selected?: bool,
-     *      selected_quantity?: int,
-     *      order_detail_id: int,
-     *      quantity: int,
-     *      product_name: string,
-     *      product_reference: string,
-     *      product_image_path: string
-     *  }> $products
-     *
-     * @return bool
-     */
-    private function checkFormValidity(array $products): bool
-    {
-        $allSelected = array_reduce($products, fn ($carry, $product) => $carry && ($product['selected'] ?? false), true);
-        $allQuantitiesMatch = array_reduce($products, fn ($carry, $product) => $carry && (($product['selected_quantity'] ?? 0) === $product['quantity']), true);
-
-        return !($allSelected && $allQuantitiesMatch);
     }
 
     #[AdminSecurity("is_granted('update', 'AdminOrders')", message: 'You do not have permission to show this.')]
