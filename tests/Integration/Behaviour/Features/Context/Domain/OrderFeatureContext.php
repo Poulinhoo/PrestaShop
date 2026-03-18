@@ -657,6 +657,20 @@ class OrderFeatureContext extends AbstractDomainFeatureContext
                 ->addTaxes($data['price']);
         }
 
+        $shipments = null;
+
+        if (!empty($data['shipment_mapping'])) {
+            $shipments = [];
+
+            foreach (explode(',', $data['shipment_mapping']) as $pair) {
+                list($shipmentId, $qty) = explode(':', trim($pair));
+                $shipments[] = [
+                    'shipment_id' => (int) $shipmentId,
+                    'quantity' => (int) $qty,
+                ];
+            }
+        }
+
         try {
             $this->getCommandBus()->handle(
                 new UpdateProductInOrderCommand(
@@ -665,7 +679,8 @@ class OrderFeatureContext extends AbstractDomainFeatureContext
                     $data['price_tax_incl'],
                     $data['price'],
                     (int) $data['amount'],
-                    $invoiceId
+                    $invoiceId,
+                    $shipments
                 )
             );
         } catch (InvalidProductQuantityException $e) {

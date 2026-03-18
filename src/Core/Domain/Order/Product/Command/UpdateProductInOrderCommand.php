@@ -160,7 +160,7 @@ class UpdateProductInOrderCommand
      */
     private function setShipmentsQuantities(?array $shipmentsQuantities): void
     {
-        if ($shipmentsQuantities !== null) {
+        if (!empty($shipmentsQuantities)) {
             $hasPositiveQuantity = false;
 
             foreach ($shipmentsQuantities as $shipmentQuantity) {

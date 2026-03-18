@@ -85,15 +85,20 @@ final class UpdateProductInOrderHandler extends AbstractOrderCommandHandler impl
                 (int) $orderDetail->id_customization
             );
 
-            // Update invoice, quantity and amounts
-            $order = $this->orderProductQuantityUpdater->update($order, $orderDetail, $command->getQuantity(), $orderInvoice);
+            if ($this->featureflagStateCheckerInterface !== null && $this->featureflagStateCheckerInterface->isEnabled(FeatureFlagSettings::FEATURE_FLAG_IMPROVED_SHIPMENT) && !empty($command->getShipmentsQuantities())) {
+                $totalProductQuantity = array_sum(array_column($command->getShipmentsQuantities(), 'quantity'));
+
+                // Update invoice, quantity and amounts
+                $order = $this->orderProductQuantityUpdater->update($order, $orderDetail, $totalProductQuantity, $orderInvoice);
+
+                $this->shipmentProductQuantityUpdater->updateShipmentQuantity($command->getOrderDetailId(), $command->getShipmentsQuantities());
+            } else {
+                // Update invoice, quantity and amounts
+                $order = $this->orderProductQuantityUpdater->update($order, $orderDetail, $command->getQuantity(), $orderInvoice);
+            }
 
             // Update order_detail_tax table without modifying prices
             $this->orderDetailUpdater->updateOrderDetailTaxTableOnly($order);
-
-            if ($this->featureflagStateCheckerInterface !== null && $this->featureflagStateCheckerInterface->isEnabled(FeatureFlagSettings::FEATURE_FLAG_IMPROVED_SHIPMENT) && $command->getShipmentsQuantities() !== null) {
-                $this->shipmentProductQuantityUpdater->updateShipmentQuantity($command->getOrderDetailId(), $command->getShipmentsQuantities());
-            }
 
             Hook::exec('actionOrderEdited', ['order' => $order]);
         } catch (Exception $e) {
