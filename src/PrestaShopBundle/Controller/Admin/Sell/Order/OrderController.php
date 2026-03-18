@@ -18,7 +18,6 @@ use PrestaShop\PrestaShop\Core\Action\ActionsBarButtonsCollection;
 use PrestaShop\PrestaShop\Core\Domain\Carrier\Query\GetCarriersForProduct;
 use PrestaShop\PrestaShop\Core\Domain\Cart\Query\GetCartForOrderCreation;
 use PrestaShop\PrestaShop\Core\Domain\CartRule\Exception\InvalidCartRuleDiscountValueException;
-use PrestaShop\PrestaShop\Core\Domain\Shipment\Exception\ShipmentNotFoundException;
 use PrestaShop\PrestaShop\Core\Domain\CustomerMessage\Command\AddOrderCustomerMessageCommand;
 use PrestaShop\PrestaShop\Core\Domain\CustomerMessage\Exception\CannotSendEmailException;
 use PrestaShop\PrestaShop\Core\Domain\CustomerMessage\Exception\CustomerMessageConstraintException;
@@ -68,10 +67,11 @@ use PrestaShop\PrestaShop\Core\Domain\Product\Exception\ProductSearchEmptyPhrase
 use PrestaShop\PrestaShop\Core\Domain\Product\Query\SearchProducts;
 use PrestaShop\PrestaShop\Core\Domain\Product\QueryResult\FoundProduct;
 use PrestaShop\PrestaShop\Core\Domain\Shipment\Command\EditShipment;
+use PrestaShop\PrestaShop\Core\Domain\Shipment\Command\FulfillShipmentCommand;
 use PrestaShop\PrestaShop\Core\Domain\Shipment\Command\MergeProductsToShipment;
 use PrestaShop\PrestaShop\Core\Domain\Shipment\Command\SplitShipment;
-use PrestaShop\PrestaShop\Core\Domain\Shipment\Command\FulfillShipmentCommand;
 use PrestaShop\PrestaShop\Core\Domain\Shipment\Exception\CannotEditShipmentShippedException;
+use PrestaShop\PrestaShop\Core\Domain\Shipment\Exception\ShipmentNotFoundException;
 use PrestaShop\PrestaShop\Core\Domain\Shipment\Query\GetOrderShipments;
 use PrestaShop\PrestaShop\Core\Domain\Shipment\Query\GetShipmentsForOrderDetail;
 use PrestaShop\PrestaShop\Core\Domain\Shipment\Query\ListAvailableShipmentsForProduct;
@@ -138,7 +138,9 @@ class OrderController extends PrestaShopAdminController
      */
     public const PRODUCTS_PAGINATION_OPTIONS = [8, 20, 50, 100];
 
-    public function __construct(private readonly FormFactoryInterface $formFactory) {}
+    public function __construct(private readonly FormFactoryInterface $formFactory)
+    {
+    }
 
     /**
      * Shows list of orders
@@ -849,7 +851,7 @@ class OrderController extends PrestaShopAdminController
         /** @var OrderShipment[] $shipments */
         $shipments = $this->dispatchQuery(new GetOrderShipments($orderId));
 
-        $shipments = array_filter($shipments, fn(OrderShipment $s) => $s->getId() !== $shipmentId);
+        $shipments = array_filter($shipments, fn (OrderShipment $s) => $s->getId() !== $shipmentId);
 
         foreach ($products as &$p) {
             $p = $p->toArray();
@@ -981,8 +983,8 @@ class OrderController extends PrestaShopAdminController
      */
     private function checkFormValidity(array $products): bool
     {
-        $allSelected = array_reduce($products, fn($carry, $product) => $carry && ($product['selected'] ?? false), true);
-        $allQuantitiesMatch = array_reduce($products, fn($carry, $product) => $carry && (($product['selected_quantity'] ?? 0) === $product['quantity']), true);
+        $allSelected = array_reduce($products, fn ($carry, $product) => $carry && ($product['selected'] ?? false), true);
+        $allQuantitiesMatch = array_reduce($products, fn ($carry, $product) => $carry && (($product['selected_quantity'] ?? 0) === $product['quantity']), true);
 
         return !($allSelected && $allQuantitiesMatch);
     }

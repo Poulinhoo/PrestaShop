@@ -8,6 +8,7 @@ declare(strict_types=1);
 
 namespace PrestaShop\PrestaShop\Adapter\Shipment\CommandHandler;
 
+use DateTime;
 use PrestaShop\PrestaShop\Core\CommandBus\Attributes\AsCommandHandler;
 use PrestaShop\PrestaShop\Core\Domain\Shipment\Command\FulfillShipmentCommand;
 use PrestaShop\PrestaShop\Core\Domain\Shipment\CommandHandler\FulfillShipmentCommandHandlerInterface;
@@ -27,7 +28,8 @@ class FulfillShipmentCommandHandler implements FulfillShipmentCommandHandlerInte
     public function __construct(
         private readonly ShipmentRepository $shipmentRepository,
         private TranslatorInterface $translator,
-    ) {}
+    ) {
+    }
 
     /**
      * {@inheritdoc}
@@ -50,7 +52,7 @@ class FulfillShipmentCommandHandler implements FulfillShipmentCommandHandlerInte
 
             $shipment->setTrackingNumber($trackingNumber);
 
-            $shipment->setPackedAt($packedAt ?? new \DateTime());
+            $shipment->setPackedAt($packedAt ?? new DateTime());
 
             $this->shipmentRepository->save($shipment);
         } catch (PrestaShopException $e) {

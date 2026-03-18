@@ -9,11 +9,11 @@ namespace PrestaShop\PrestaShop\Core\Grid\Definition\Factory;
 use PrestaShop\PrestaShop\Core\Context\LanguageContext;
 use PrestaShop\PrestaShop\Core\Grid\Action\Row\RowActionCollection;
 use PrestaShop\PrestaShop\Core\Grid\Action\Row\RowActionCollectionInterface;
+use PrestaShop\PrestaShop\Core\Grid\Action\Row\Type\Shipment\DeliverySlipShipmentRowAction;
 use PrestaShop\PrestaShop\Core\Grid\Action\Row\Type\Shipment\EditShipmentRowAction;
+use PrestaShop\PrestaShop\Core\Grid\Action\Row\Type\Shipment\FulfillShipmentRowAction;
 use PrestaShop\PrestaShop\Core\Grid\Action\Row\Type\Shipment\MergeShipmentRowAction;
 use PrestaShop\PrestaShop\Core\Grid\Action\Row\Type\Shipment\SplitShipmentRowAction;
-use PrestaShop\PrestaShop\Core\Grid\Action\Row\Type\Shipment\DeliverySlipShipmentRowAction;
-use PrestaShop\PrestaShop\Core\Grid\Action\Row\Type\Shipment\FulfillShipmentRowAction;
 use PrestaShop\PrestaShop\Core\Grid\Column\ColumnCollection;
 use PrestaShop\PrestaShop\Core\Grid\Column\Type\Common\ActionColumn;
 use PrestaShop\PrestaShop\Core\Grid\Column\Type\Common\DataColumn;
@@ -55,14 +55,14 @@ final class ShipmentGridDefinitionFactory extends AbstractFilterableGridDefiniti
     {
         $columns = (new ColumnCollection())
             ->add((new DateTimeColumn('date'))
-                    ->setName($this->trans('Date', [], 'Admin.Global'))
-                    ->setOptions([
-                        'field' => 'date',
-                        'format' => $this->languageContext->getDateTimeFormat(),
-                        'clickable' => true,
-                        'sortable' => false,
-                        'alignment' => 'left',
-                    ])
+                ->setName($this->trans('Date', [], 'Admin.Global'))
+                ->setOptions([
+                    'field' => 'date',
+                    'format' => $this->languageContext->getDateTimeFormat(),
+                    'clickable' => true,
+                    'sortable' => false,
+                    'alignment' => 'left',
+                ])
             )
             ->add(
                 (new IdentifierColumn('shipment_number'))
