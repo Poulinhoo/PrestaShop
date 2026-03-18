@@ -21,6 +21,7 @@ use Exception;
 use Group;
 use Order;
 use PHPUnit\Framework\TestCase;
+use PrestaShop\PrestaShop\Core\Domain\Carrier\ValueObject\OutOfRangeBehavior;
 use Product;
 use Tax;
 use TaxRule;
@@ -207,7 +208,7 @@ class CartTest extends TestCase
             if (null === $shippingCost) {
                 $carrier->is_free = true;
             } else {
-                $carrier->range_behavior = false; // take highest range
+                $carrier->range_behavior = (bool) OutOfRangeBehavior::USE_HIGHEST_RANGE;
                 $carrier->shipping_method = Carrier::SHIPPING_METHOD_PRICE;
             }
 
