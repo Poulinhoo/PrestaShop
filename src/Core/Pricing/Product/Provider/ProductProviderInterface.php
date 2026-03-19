@@ -8,8 +8,6 @@ declare(strict_types=1);
 
 namespace PrestaShop\PrestaShop\Core\Pricing\Product\Provider;
 
-use PrestaShop\Decimal\DecimalNumber;
-
 /**
  * Data-access layer for product pricing data. Different implementations serve
  * different contexts (catalog for FO, order_detail for BO, mock for tests).
@@ -17,12 +15,8 @@ use PrestaShop\Decimal\DecimalNumber;
 interface ProductProviderInterface
 {
     /**
-     * Returns the base price (tax excluded) for a product.
+     * Returns the pricing data for a product and optionally its combination in a single query.
+     * When combinationId > 0 the returned values already include the combination impacts.
      */
-    public function getBasePrice(int $productId): DecimalNumber;
-
-    /**
-     * Returns the combination price impact.
-     */
-    public function getCombinationPriceImpact(int $productId, int $combinationId): DecimalNumber;
+    public function getProductPriceData(int $productId, int $combinationId): ProductPriceData;
 }

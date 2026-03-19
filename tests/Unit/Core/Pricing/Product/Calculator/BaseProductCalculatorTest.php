@@ -13,43 +13,55 @@ use PrestaShop\Decimal\DecimalNumber;
 use PrestaShop\PrestaShop\Core\Pricing\Product\Calculator\BaseProductCalculator;
 use PrestaShop\PrestaShop\Core\Pricing\Product\ProductPrice;
 use PrestaShop\PrestaShop\Core\Pricing\Product\Provider\MockProductProvider;
+use PrestaShop\PrestaShop\Core\Pricing\Product\Provider\ProductPriceData;
 
 class BaseProductCalculatorTest extends TestCase
 {
-    public function testSetsBasePriceFromProvider(): void
+    public function testSetsBasePricesFromProvider(): void
     {
-        $provider = new MockProductProvider([1 => '29.99']);
+        $provider = new MockProductProvider([
+            '1' => new ProductPriceData(
+                new DecimalNumber('29.99'),
+                new DecimalNumber('5.00'),
+                new DecimalNumber('0'),
+                new DecimalNumber('0'),
+            ),
+        ]);
         $calculator = new BaseProductCalculator($provider);
         $productPrice = ProductPrice::create(1, 0);
 
         $calculator->compute($productPrice);
 
         $this->assertTrue(
-            $productPrice->getUnitPrice()->getTaxExcluded()->equals(new DecimalNumber('29.99'))
+            $productPrice->getOriginalPrice()->getTaxExcluded()->equals(new DecimalNumber('29.99'))
         );
         $this->assertTrue(
-            $productPrice->getOriginalPrice()->getTaxExcluded()->equals(new DecimalNumber('29.99'))
+            $productPrice->getUnitPrice()->getTaxExcluded()->equals(new DecimalNumber('5.00'))
         );
     }
 
-    public function testHandlesCombinations(): void
+    public function testComputesCombinationImpacts(): void
     {
-        $provider = new MockProductProvider(
-            basePrices: [1 => '100'],
-            combinationImpacts: ['1-5' => '15.50']
-        );
+        $provider = new MockProductProvider([
+            '1-5' => new ProductPriceData(
+                new DecimalNumber('100'),
+                new DecimalNumber('5.00'),
+                new DecimalNumber('15.50'),
+                new DecimalNumber('2.50'),
+            ),
+        ]);
         $calculator = new BaseProductCalculator($provider);
         $productPrice = ProductPrice::create(1, 5);
 
         $calculator->compute($productPrice);
 
-        // Unit price = base (100) + combination impact (15.50) = 115.50
+        // originalPrice = 100 + 15.50 = 115.50
         $this->assertTrue(
-            $productPrice->getUnitPrice()->getTaxExcluded()->equals(new DecimalNumber('115.50'))
+            $productPrice->getOriginalPrice()->getTaxExcluded()->equals(new DecimalNumber('115.50'))
         );
-        // Original price = base price only
+        // unitPrice = 5.00 + 2.50 = 7.50
         $this->assertTrue(
-            $productPrice->getOriginalPrice()->getTaxExcluded()->equals(new DecimalNumber('100'))
+            $productPrice->getUnitPrice()->getTaxExcluded()->equals(new DecimalNumber('7.50'))
         );
     }
 
@@ -61,23 +73,30 @@ class BaseProductCalculatorTest extends TestCase
 
         $calculator->compute($productPrice);
 
+        $this->assertTrue($productPrice->getOriginalPrice()->getTaxExcluded()->equalsZero());
         $this->assertTrue($productPrice->getUnitPrice()->getTaxExcluded()->equalsZero());
     }
 
-    public function testCombinationIdZeroSkipsCombinationImpact(): void
+    public function testNoCombinationMeansZeroImpacts(): void
     {
-        $provider = new MockProductProvider(
-            basePrices: [1 => '50'],
-            combinationImpacts: ['1-0' => '10']
-        );
+        $provider = new MockProductProvider([
+            '1' => new ProductPriceData(
+                new DecimalNumber('50'),
+                new DecimalNumber('10'),
+                new DecimalNumber('0'),
+                new DecimalNumber('0'),
+            ),
+        ]);
         $calculator = new BaseProductCalculator($provider);
         $productPrice = ProductPrice::create(1, 0);
 
         $calculator->compute($productPrice);
 
-        // combinationId = 0 should not apply impact
         $this->assertTrue(
-            $productPrice->getUnitPrice()->getTaxExcluded()->equals(new DecimalNumber('50'))
+            $productPrice->getOriginalPrice()->getTaxExcluded()->equals(new DecimalNumber('50'))
+        );
+        $this->assertTrue(
+            $productPrice->getUnitPrice()->getTaxExcluded()->equals(new DecimalNumber('10'))
         );
     }
 }

@@ -11,11 +11,12 @@ namespace Tests\Integration\Core\Pricing\Product\Provider;
 use Doctrine\DBAL\Connection;
 use PrestaShop\Decimal\DecimalNumber;
 use PrestaShop\PrestaShop\Core\Pricing\Product\Provider\CatalogProductProvider;
+use PrestaShop\PrestaShop\Core\Pricing\Product\Provider\ProductPriceData;
 use Symfony\Bundle\FrameworkBundle\Test\KernelTestCase;
 
 class CatalogProductProviderTest extends KernelTestCase
 {
-    private CatalogProductProvider $provider;
+    protected CatalogProductProvider $provider;
 
     protected function setUp(): void
     {
@@ -29,27 +30,30 @@ class CatalogProductProviderTest extends KernelTestCase
         $this->provider = new CatalogProductProvider($connection, $dbPrefix);
     }
 
-    public function testGetBasePriceReturnsDecimalNumber(): void
+    public function testGetProductPriceDataReturnsProductPriceData(): void
     {
         // Product ID 1 should exist in the test database (demo data)
-        $basePrice = $this->provider->getBasePrice(1);
+        $priceData = $this->provider->getProductPriceData(1, 0);
 
-        $this->assertInstanceOf(DecimalNumber::class, $basePrice);
-        // The demo product should have a non-zero price
-        $this->assertFalse($basePrice->isNegative());
+        $this->assertInstanceOf(ProductPriceData::class, $priceData);
+        $this->assertInstanceOf(DecimalNumber::class, $priceData->getPrice());
+        $this->assertInstanceOf(DecimalNumber::class, $priceData->getUnitPrice());
+        $this->assertFalse($priceData->getPrice()->isNegative());
     }
 
-    public function testGetBasePriceForNonExistentProduct(): void
+    public function testGetProductPriceDataForNonExistentProduct(): void
     {
-        $basePrice = $this->provider->getBasePrice(999999);
+        $priceData = $this->provider->getProductPriceData(999999, 0);
 
-        $this->assertTrue($basePrice->equalsZero());
+        $this->assertTrue($priceData->getPrice()->equalsZero());
+        $this->assertTrue($priceData->getUnitPrice()->equalsZero());
     }
 
-    public function testGetCombinationPriceImpactForNonExistentCombination(): void
+    public function testGetProductPriceDataForNonExistentCombination(): void
     {
-        $impact = $this->provider->getCombinationPriceImpact(999999, 999999);
+        $priceData = $this->provider->getProductPriceData(999999, 999999);
 
-        $this->assertTrue($impact->equalsZero());
+        $this->assertTrue($priceData->getPrice()->equalsZero());
+        $this->assertTrue($priceData->getUnitPrice()->equalsZero());
     }
 }

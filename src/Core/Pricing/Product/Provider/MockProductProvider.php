@@ -12,36 +12,27 @@ use PrestaShop\Decimal\DecimalNumber;
 
 /**
  * In-memory product provider for unit tests. Accepts pre-configured arrays of
- * base prices and combination impacts.
+ * ProductPriceData keyed by "productId" or "productId-combinationId".
  */
 class MockProductProvider implements ProductProviderInterface
 {
     /**
-     * @param array<int, string> $basePrices productId => price string
-     * @param array<string, string> $combinationImpacts "productId-combinationId" => price impact string
+     * @param array<string, ProductPriceData> $priceDataMap keyed by "productId" or "productId-combinationId"
      */
     public function __construct(
-        protected readonly array $basePrices = [],
-        protected readonly array $combinationImpacts = [],
+        protected readonly array $priceDataMap = [],
     ) {
     }
 
-    public function getBasePrice(int $productId): DecimalNumber
+    public function getProductPriceData(int $productId, int $combinationId): ProductPriceData
     {
-        if (!isset($this->basePrices[$productId])) {
-            return new DecimalNumber('0');
-        }
+        $key = $combinationId > 0 ? $productId . '-' . $combinationId : (string) $productId;
 
-        return new DecimalNumber($this->basePrices[$productId]);
-    }
-
-    public function getCombinationPriceImpact(int $productId, int $combinationId): DecimalNumber
-    {
-        $key = $productId . '-' . $combinationId;
-        if (!isset($this->combinationImpacts[$key])) {
-            return new DecimalNumber('0');
-        }
-
-        return new DecimalNumber($this->combinationImpacts[$key]);
+        return $this->priceDataMap[$key] ?? new ProductPriceData(
+            new DecimalNumber('0'),
+            new DecimalNumber('0'),
+            new DecimalNumber('0'),
+            new DecimalNumber('0'),
+        );
     }
 }

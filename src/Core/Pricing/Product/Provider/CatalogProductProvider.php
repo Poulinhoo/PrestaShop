@@ -12,8 +12,8 @@ use Doctrine\DBAL\Connection;
 use PrestaShop\Decimal\DecimalNumber;
 
 /**
- * Reads base product prices and combination impacts from the catalog tables
- * (ps_product, ps_product_attribute). Used in FO / cart context.
+ * Reads raw product pricing data from the catalog tables (ps_product, ps_product_attribute)
+ * in a single query. Returns the data as-is with no computation. Used in FO / cart context.
  */
 class CatalogProductProvider implements ProductProviderInterface
 {
@@ -23,31 +23,67 @@ class CatalogProductProvider implements ProductProviderInterface
     ) {
     }
 
-    public function getBasePrice(int $productId): DecimalNumber
+    public function getProductPriceData(int $productId, int $combinationId): ProductPriceData
     {
-        $sql = 'SELECT price FROM ' . $this->dbPrefix . 'product WHERE id_product = :productId';
-        $result = $this->connection->fetchOne($sql, ['productId' => $productId]);
-
-        if ($result === false) {
-            return new DecimalNumber('0');
+        if ($combinationId > 0) {
+            return $this->fetchProductWithCombination($productId, $combinationId);
         }
 
-        return new DecimalNumber((string) $result);
+        return $this->fetchProduct($productId);
     }
 
-    public function getCombinationPriceImpact(int $productId, int $combinationId): DecimalNumber
+    protected function fetchProduct(int $productId): ProductPriceData
     {
-        $sql = 'SELECT price FROM ' . $this->dbPrefix . 'product_attribute'
-            . ' WHERE id_product = :productId AND id_product_attribute = :combinationId';
-        $result = $this->connection->fetchOne($sql, [
+        $sql = 'SELECT p.price, p.unit_price'
+            . ' FROM ' . $this->dbPrefix . 'product p'
+            . ' WHERE p.id_product = :productId';
+
+        $row = $this->connection->fetchAssociative($sql, ['productId' => $productId]);
+
+        if ($row === false) {
+            return $this->emptyPriceData();
+        }
+
+        return new ProductPriceData(
+            new DecimalNumber((string) $row['price']),
+            new DecimalNumber((string) $row['unit_price']),
+            new DecimalNumber('0'),
+            new DecimalNumber('0'),
+        );
+    }
+
+    protected function fetchProductWithCombination(int $productId, int $combinationId): ProductPriceData
+    {
+        $sql = 'SELECT p.price, p.unit_price, pa.price AS combination_impact, pa.unit_price_impact'
+            . ' FROM ' . $this->dbPrefix . 'product p'
+            . ' LEFT JOIN ' . $this->dbPrefix . 'product_attribute pa'
+            . ' ON pa.id_product = p.id_product AND pa.id_product_attribute = :combinationId'
+            . ' WHERE p.id_product = :productId';
+
+        $row = $this->connection->fetchAssociative($sql, [
             'productId' => $productId,
             'combinationId' => $combinationId,
         ]);
 
-        if ($result === false) {
-            return new DecimalNumber('0');
+        if ($row === false) {
+            return $this->emptyPriceData();
         }
 
-        return new DecimalNumber((string) $result);
+        return new ProductPriceData(
+            new DecimalNumber((string) $row['price']),
+            new DecimalNumber((string) $row['unit_price']),
+            new DecimalNumber((string) ($row['combination_impact'] ?? '0')),
+            new DecimalNumber((string) ($row['unit_price_impact'] ?? '0')),
+        );
+    }
+
+    protected function emptyPriceData(): ProductPriceData
+    {
+        return new ProductPriceData(
+            new DecimalNumber('0'),
+            new DecimalNumber('0'),
+            new DecimalNumber('0'),
+            new DecimalNumber('0'),
+        );
     }
 }

@@ -14,8 +14,8 @@ use PrestaShop\PrestaShop\Core\Pricing\ValueObject\TaxablePrice;
 use PrestaShop\PrestaShop\Core\Pricing\ValueObject\TaxRate;
 
 /**
- * First calculator in the pipeline: fetches the base product price from the provider
- * and applies the combination price impact when relevant.
+ * First calculator in the pipeline: fetches raw pricing data from the provider
+ * and computes originalPrice (price + combination impact) and unitPrice (unit_price + combination impact).
  */
 class BaseProductCalculator implements ProductCalculatorInterface
 {
@@ -26,19 +26,21 @@ class BaseProductCalculator implements ProductCalculatorInterface
 
     public function compute(ProductPriceInterface $productPrice): void
     {
-        $basePrice = $this->productProvider->getBasePrice($productPrice->getProductId());
-        $productPrice->setUnitPrice(new TaxablePrice($basePrice, TaxRate::zero()));
-        $productPrice->setOriginalPrice(new TaxablePrice($basePrice, TaxRate::zero()));
+        $priceData = $this->productProvider->getProductPriceData(
+            $productPrice->getProductId(),
+            $productPrice->getCombinationId()
+        );
 
-        if ($productPrice->getCombinationId() > 0) {
-            $impact = $this->productProvider->getCombinationPriceImpact(
-                $productPrice->getProductId(),
-                $productPrice->getCombinationId()
-            );
-            $combinationImpactPrice = new TaxablePrice($impact, TaxRate::zero());
-            $unitPrice = new TaxablePrice($basePrice, TaxRate::zero());
-            $unitPrice->plus($combinationImpactPrice);
-            $productPrice->setUnitPrice($unitPrice);
-        }
+        $originalPrice = new TaxablePrice(
+            $priceData->getPrice()->plus($priceData->getCombinationImpact()),
+            TaxRate::zero()
+        );
+        $unitPrice = new TaxablePrice(
+            $priceData->getUnitPrice()->plus($priceData->getCombinationUnitPriceImpact()),
+            TaxRate::zero()
+        );
+
+        $productPrice->setOriginalPrice($originalPrice);
+        $productPrice->setUnitPrice($unitPrice);
     }
 }
