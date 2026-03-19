@@ -103,8 +103,8 @@ describe('BO - Shop Parameters - General : Enable/Disable Allow iframes on HTML 
 
         await boProductsCreateTabDescriptionPage.setIframeInDescription(page, description);
 
-          const message = await boProductsCreatePage.saveProduct(page);
-          expect(message).to.eq(boProductsCreatePage.successfulUpdateMessage);
+        const message = await boProductsCreatePage.saveProduct(page);
+        expect(message).to.eq(boProductsCreatePage.successfulUpdateMessage);
       });
 
       it('should preview the product', async function () {
