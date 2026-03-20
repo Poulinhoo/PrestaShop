@@ -17,7 +17,7 @@ use PrestaShop\PrestaShop\Core\Pricing\Exception\ProductPriceNotFoundException;
 class MockProductProvider implements ProductProviderInterface
 {
     /**
-     * @param array<string, ProductPriceData> $priceDataMap keyed by "productId" or "productId-combinationId"
+     * @param array<int|string, ProductPriceData> $priceDataMap keyed by productId (int) or "productId-combinationId" (string)
      */
     public function __construct(
         protected readonly array $priceDataMap = [],
