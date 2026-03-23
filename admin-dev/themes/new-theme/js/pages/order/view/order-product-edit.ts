@@ -245,7 +245,7 @@ export default class OrderProductEdit {
       return;
     }
     const availableQuantity = parseInt(this.quantityInput.data('availableQuantity'), 10);
-    this.shipmentQtyCounter.textContent = `(${total} / ${availableQuantity})`;
+    this.shipmentQtyCounter.textContent = `(${total}/${availableQuantity})`;
     this.shipmentQtyCounter.classList.toggle('text-danger', total > availableQuantity);
     this.shipmentQtyCounter.classList.toggle('text-muted', total >= 0 && total <= availableQuantity);
   };

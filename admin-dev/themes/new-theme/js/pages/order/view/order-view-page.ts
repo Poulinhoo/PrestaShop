@@ -118,6 +118,7 @@ export default class OrderViewPage {
       this.orderProductRenderer.moveProductPanelToOriginalPosition();
       // Initialize tooltips
       $(OrderViewPageMap.productEditButtons).pstooltip();
+      this.orderShipmentsRefresher.refresh(event.orderId);
     });
 
     EventEmitter.on(OrderViewEventMap.productAddedToOrder, (event) => {

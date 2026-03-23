@@ -1320,6 +1320,14 @@ class OrderController extends PrestaShopAdminController
         CurrencyDataProvider $currencyDataProvider
     ): Response {
         try {
+            $shipmentProducts = $request->get('shipmentProducts', null);
+            if (!empty($shipmentProducts)) {
+                $shipmentProducts = array_map(fn (array $item) => [
+                    'shipment_id' => (int) $item['shipment_id'],
+                    'quantity' => (int) $item['quantity'],
+                ], $shipmentProducts);
+            }
+
             $this->dispatchCommand(
                 new UpdateProductInOrderCommand(
                     $orderId,
@@ -1327,7 +1335,8 @@ class OrderController extends PrestaShopAdminController
                     $request->get('price_tax_incl'),
                     $request->get('price_tax_excl'),
                     (int) $request->get('quantity'),
-                    (int) $request->get('invoice')
+                    (int) $request->get('invoice'),
+                    $shipmentProducts
                 )
             );
         } catch (Exception $e) {
