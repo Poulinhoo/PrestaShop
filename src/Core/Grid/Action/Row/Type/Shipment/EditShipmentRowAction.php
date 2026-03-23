@@ -35,7 +35,7 @@ final class EditShipmentRowAction extends AbstractRowAction
 
     private function shipmentIsPacked(array $record): bool
     {
-        return isset($record['tracking_number']) || isset($record['packed_at']);
+        return isset($record['tracking_number']) && isset($record['packed_at']);
     }
 
     /**

@@ -360,13 +360,15 @@ class OrderController extends PrestaShopAdminController
 
     /**
      * Generate delivery slip PDF for multiple shipments or all shipments of an order
+     *
+     * @return BinaryFileResponse|RedirectResponse
      */
     #[AdminSecurity("is_granted('read', request.get('_legacy_controller'))", message: 'You do not have permission to view this.', redirectRoute: 'admin_orders_index')]
     public function generateShipmentsDeliverySlipPdfAction(
         Request $request,
         int $orderId,
         #[Autowire(service: 'prestashop.adapter.pdf.shipment_delivery_slip_pdf_generator')] PDFGeneratorInterface $shipmentDeliverySlipPdfGenerator,
-    ): BinaryFileResponse {
+    ) {
         $shipmentIds = $request->isMethod('POST')
             ? $request->request->all('shipmentIds')
             : $request->query->all('shipmentIds');
@@ -386,7 +388,8 @@ class OrderController extends PrestaShopAdminController
         $shipmentIds = array_map('intval', (array) $shipmentIds);
 
         if (empty($shipmentIds)) {
-            throw new ShipmentNotFoundException('No shipments found for this order');
+            $this->addFlash('error', $this->trans('There is no fulfilled shipment to download', [], 'Admin.Notifications.Success'));
+            return $this->redirectToRoute('admin_orders_index');
         }
 
         return new BinaryFileResponse($shipmentDeliverySlipPdfGenerator->generatePDF($shipmentIds));
@@ -826,7 +829,7 @@ class OrderController extends PrestaShopAdminController
         $submittedData = $request->request->all('edit_shipment');
 
         if (!$form->isSubmitted() || !$form->isValid()) {
-            $this->addFlash('error', 'An error occurend while editing shipment');
+            $this->addFlash('error', 'An error occured while editing shipment');
 
             return $this->redirectToRoute('admin_orders_view', ['orderId' => $orderId]);
         }

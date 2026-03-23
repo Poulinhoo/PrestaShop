@@ -191,7 +191,8 @@
   }
 }
 
-/* Skeleton Merge Shipment Modal */
+#editOrderProductModal,
+#fulfillShipmentModal,
 #mergeShipmentModal {
   // Default state
   .modal-body {
@@ -205,49 +206,6 @@
     }
 
     .skeleton-shipment-modal {
-      display: none;
-    }
-  }
-}
-
-/* Skeleton edit Shipment Modal */
-#editShipmentModal {
-  // Default state
-  .modal-body {
-    display: none;
-  }
-
-  // Loaded state: show modal body, hide skeleton
-  &[data-state="loaded"] {
-    .modal-body {
-      display: block;
-    }
-
-    .skeleton-shipment-modal {
-      display: none;
-    }
-  }
-}
-
-#editOrderProductModal,
-#fulfillShipmentModal,
-#addOrderProductModal {
-  // Default state
-  .modal-body {
-    display: none;
-  }
-
-  // Loaded state: show modal body, hide skeleton
-  &[data-state="loaded"] {
-    .modal-body {
-      display: block;
-    }
-
-    .skeleton-add-product-form {
-      display: none;
-    }
-
-    .skeleton-edit-product-form {
       display: none;
     }
   }

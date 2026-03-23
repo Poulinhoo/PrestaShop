@@ -41,7 +41,7 @@ export default class FulfillShipmentManager {
     const {orderId, shipmentId} = link.dataset;
 
     if (!orderId || !shipmentId) {
-      throw new Error('error while gettint orderId or shipmentId');
+      throw new Error('error while getting orderId or shipmentId');
     }
 
     this.orderId = Number(orderId);
@@ -80,6 +80,7 @@ export default class FulfillShipmentManager {
 
       window.prestaShopUiKit.init();
     } catch (error) {
+      modal.dataset.state = 'loaded';
       console.error('Error while loading fulfill shipment form:', error);
     }
   }

@@ -41,7 +41,6 @@ class FulfillShipmentCommandHandler implements FulfillShipmentCommandHandlerInte
     {
         $shipmentId = $command->getShipmentId()->getValue();
         $trackingNumber = $command->getTrackingNumber();
-        $packedAt = $command->getPackedAt();
 
         try {
             $shipment = $this->shipmentRepository->findById($shipmentId);
@@ -51,8 +50,7 @@ class FulfillShipmentCommandHandler implements FulfillShipmentCommandHandlerInte
             }
 
             $shipment->setTrackingNumber($trackingNumber);
-
-            $shipment->setPackedAt($packedAt ?? new DateTime());
+            $shipment->setPackedAt(new DateTime());
 
             $this->shipmentRepository->save($shipment);
         } catch (PrestaShopException $e) {

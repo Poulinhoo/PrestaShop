@@ -55,6 +55,7 @@ admin_orders_generate_shipment_delivery_slip_pdf:
   methods: [ GET ]
   defaults:
     _controller: PrestaShopBundle\Controller\Admin\Sell\Order\OrderController::generateShipmentDeliverySlipPdfAction
+    _legacy_controller: AdminOrders
   options:
     expose: true
   requirements:
@@ -66,6 +67,7 @@ admin_orders_generate_shipments_delivery_slip_pdf:
   methods: [ GET, POST ]
   defaults:
     _controller: PrestaShopBundle\Controller\Admin\Sell\Order\OrderController::generateShipmentsDeliverySlipPdfAction
+    _legacy_controller: AdminOrders
   options:
     expose: true
   requirements:
@@ -275,7 +277,7 @@ admin_orders_shipment_get_fulfill_form:
     expose: true
 
 admin_orders_merge_shipment:
-  path: /{orderId}/shipment/merge
+  path: /{orderId}/shipment/{shipmentId}/merge
   methods: [ POST ]
   defaults:
     _controller: PrestaShopBundle\Controller\Admin\Sell\Order\OrderController::mergeShipmentAction

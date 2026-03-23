@@ -41,7 +41,7 @@ export default class EditShipmentManager {
     const {orderId, shipmentId} = link.dataset;
 
     if (!orderId || !shipmentId) {
-      throw new Error('error while gettint orderId or shipmentId');
+      throw new Error('error while getting orderId or shipmentId');
     }
 
     this.orderId = Number(orderId);

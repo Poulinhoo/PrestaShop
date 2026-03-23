@@ -43,9 +43,9 @@ class HTMLTemplateShipmentDeliverySlipCore extends HTMLTemplate
         $this->smarty = $smarty;
 
         // Use shipment's shipped_at date, fallback to packed_at, then order date
-        $shipmentDate = (string) $this->shipment->getShippedAt() ?? $this->shipment->getPackedAt();
+        $shipmentDate = $this->shipment->getShippedAt() ?? $this->shipment->getPackedAt();
         if ($shipmentDate) {
-            $this->date = Tools::displayDate($shipmentDate);
+            $this->date = Tools::displayDate($shipmentDate->format('Y-m-d'));
         } else {
             $this->date = Tools::displayDate($this->order->date_add);
         }

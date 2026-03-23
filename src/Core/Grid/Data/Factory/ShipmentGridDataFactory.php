@@ -41,7 +41,7 @@ class ShipmentGridDataFactory implements GridDataFactoryInterface
     private function applyModifications(RecordCollectionInterface $records, int $totalRecord): RecordCollectionInterface
     {
         $updated = [];
-        $totalUnfulfilledShipments = array_filter($records->all(), fn ($shipment) => !$shipment['shipped_at'] && !$shipment['tracking_number']);
+        $totalUnfulfilledShipments = array_filter($records->all(), fn ($shipment) => !$shipment['packed_at'] && !$shipment['tracking_number']);
 
         foreach ($records as $record) {
             $record['shipping_cost'] = $this->locale->formatPrice((float) $record['shipping_cost'], $this->currencyContext->getIsoCode());

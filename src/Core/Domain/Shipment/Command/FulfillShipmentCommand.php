@@ -8,7 +8,6 @@ declare(strict_types=1);
 
 namespace PrestaShop\PrestaShop\Core\Domain\Shipment\Command;
 
-use DateTimeInterface;
 use PrestaShop\PrestaShop\Core\Domain\Shipment\ValueObject\ShipmentId;
 
 class FulfillShipmentCommand
@@ -23,16 +22,10 @@ class FulfillShipmentCommand
      */
     private $trackingNumber;
 
-    /**
-     * @var DateTimeInterface|null
-     */
-    private $packedAt;
-
-    public function __construct(int $shipmentId, string $trackingNumber, ?DateTimeInterface $packedAt = null)
+    public function __construct(int $shipmentId, string $trackingNumber)
     {
         $this->shipmentId = new ShipmentId($shipmentId);
         $this->trackingNumber = $trackingNumber;
-        $this->packedAt = $packedAt;
     }
 
     public function getShipmentId(): ShipmentId
@@ -43,10 +36,5 @@ class FulfillShipmentCommand
     public function getTrackingNumber(): string
     {
         return $this->trackingNumber;
-    }
-
-    public function getPackedAt(): ?DateTimeInterface
-    {
-        return $this->packedAt;
     }
 }
