@@ -388,8 +388,8 @@ class OrderController extends PrestaShopAdminController
         $shipmentIds = array_map('intval', (array) $shipmentIds);
 
         if (empty($shipmentIds)) {
-            $this->addFlash('error', $this->trans('There is no fulfilled shipment to download', [], 'Admin.Notifications.Success'));
-            return $this->redirectToRoute('admin_orders_index');
+            $this->addFlash('error', $this->trans('There is no fulfilled shipment to download', [], 'Admin.Notifications.Error'));
+            return $this->redirectToRoute('admin_orders_view');
         }
 
         return new BinaryFileResponse($shipmentDeliverySlipPdfGenerator->generatePDF($shipmentIds));

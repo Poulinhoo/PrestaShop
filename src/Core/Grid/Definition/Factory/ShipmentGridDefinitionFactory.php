@@ -164,7 +164,6 @@ final class ShipmentGridDefinitionFactory extends AbstractFilterableGridDefiniti
                     ->setIcon('package_2')
                     ->setOptions([
                         'shipment_id_field' => 'shipment_number',
-                        'order_id_field' => 'order_id',
                     ])
             )
             ->add(

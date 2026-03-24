@@ -51,7 +51,7 @@ admin_orders_generate_delivery_slip_pdf:
     orderId: \d+
 
 admin_orders_generate_shipment_delivery_slip_pdf:
-  path: /{orderId}/shipment/{shipmentId}/generate-delivery-slip-pdf
+  path: /shipment/{shipmentId}/generate-delivery-slip-pdf
   methods: [ GET ]
   defaults:
     _controller: PrestaShopBundle\Controller\Admin\Sell\Order\OrderController::generateShipmentDeliverySlipPdfAction
@@ -59,7 +59,6 @@ admin_orders_generate_shipment_delivery_slip_pdf:
   options:
     expose: true
   requirements:
-    orderId: \d+
     shipmentId: \d+
 
 admin_orders_generate_shipments_delivery_slip_pdf:

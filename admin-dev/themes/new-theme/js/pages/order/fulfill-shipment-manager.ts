@@ -10,8 +10,6 @@ export default class FulfillShipmentManager {
 
   private shipmentId: number|null = null;
 
-  private orderId: number|null = null;
-
   private router = new Router();
 
   constructor() {
@@ -38,13 +36,12 @@ export default class FulfillShipmentManager {
       return;
     }
 
-    const {orderId, shipmentId} = link.dataset;
+    const {shipmentId} = link.dataset;
 
-    if (!orderId || !shipmentId) {
-      throw new Error('error while getting orderId or shipmentId');
+    if (!shipmentId) {
+      throw new Error('error while getting shipmentId');
     }
 
-    this.orderId = Number(orderId);
     this.shipmentId = Number(shipmentId);
 
     this.refreshFulfillShipmentForm();
@@ -61,7 +58,6 @@ export default class FulfillShipmentManager {
 
     try {
       const response = await fetch(this.router.generate(this.formRoute, {
-        orderId: this.orderId,
         shipmentId: this.shipmentId,
       }), {
         method: 'GET',
