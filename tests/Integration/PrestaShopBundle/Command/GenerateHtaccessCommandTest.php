@@ -26,7 +26,6 @@ class GenerateHtaccessCommandTest extends KernelTestCase
             'command' => $command->getName(),
         ]);
         $display = $tester->getDisplay();
-        fwrite(STDOUT, $display);
 
         // Check exit code
         $this->assertEquals(0, $tester->getStatusCode(), 'Command did not exit successfully');
