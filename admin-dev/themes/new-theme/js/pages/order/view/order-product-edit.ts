@@ -403,11 +403,11 @@ export default class OrderProductEdit {
   }
 
   editProduct(orderId: number, orderDetailId: number): void {
-    const params: Record<string, unknown> = {
-      price_tax_incl: this.priceTaxIncludedInput?.val(),
-      price_tax_excl: this.priceTaxExcludedInput?.val(),
-      quantity: this.quantityInput.val(),
-      invoice: this.productEditInvoiceSelect?.val(),
+    const params: Record<string, string | {shipment_id: number; quantity: number}[]> = {
+      price_tax_incl: String(this.priceTaxIncludedInput?.val()),
+      price_tax_excl: String(this.priceTaxExcludedInput?.val()),
+      quantity: String(this.quantityInput.val()),
+      invoice: String(this.productEditInvoiceSelect?.val()),
     };
 
     if (this.isMultishipmentIsEnabled && this.shipmentInputs.length > 0) {
