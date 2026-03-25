@@ -889,6 +889,8 @@ class OrderController extends PrestaShopAdminController
 
         $this->dispatchCommand($command);
 
+        $this->addFlash('success', $this->trans('The shipment was successfully fulfilled.', [], 'Admin.Orderscustomers.Notification'));
+
         return $this->redirectToRoute('admin_orders_view', [
             'orderId' => $orderId,
         ]);
