@@ -71,7 +71,6 @@ use PrestaShop\PrestaShop\Core\Domain\Shipment\Command\FulfillShipmentCommand;
 use PrestaShop\PrestaShop\Core\Domain\Shipment\Command\MergeProductsToShipment;
 use PrestaShop\PrestaShop\Core\Domain\Shipment\Command\SplitShipment;
 use PrestaShop\PrestaShop\Core\Domain\Shipment\Exception\CannotEditShipmentShippedException;
-use PrestaShop\PrestaShop\Core\Domain\Shipment\Exception\ShipmentNotFoundException;
 use PrestaShop\PrestaShop\Core\Domain\Shipment\Query\GetOrderShipments;
 use PrestaShop\PrestaShop\Core\Domain\Shipment\Query\GetShipmentsForOrderDetail;
 use PrestaShop\PrestaShop\Core\Domain\Shipment\Query\ListAvailableShipmentsForProduct;
@@ -389,6 +388,7 @@ class OrderController extends PrestaShopAdminController
 
         if (empty($shipmentIds)) {
             $this->addFlash('error', $this->trans('There is no fulfilled shipment to download', [], 'Admin.Notifications.Error'));
+
             return $this->redirectToRoute('admin_orders_view');
         }
 
