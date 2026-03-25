@@ -127,6 +127,10 @@ class CheckoutProcessCore implements RenderableInterface
             'steps' => array_map(function (CheckoutStepInterface $step) {
                 return [
                     'identifier' => $step->getIdentifier(),
+                    'title' => $step->getTitle(),
+                    'is_reachable' => $step->isReachable(),
+                    'is_complete' => $step->isComplete(),
+                    'is_current' => $step->isCurrent(),
                     'ui' => new RenderableProxy($step),
                 ];
             }, $this->getSteps()),
