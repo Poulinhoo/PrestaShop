@@ -25,7 +25,7 @@ import {
   utilsPlaywright,
 } from '@prestashop-core/ui-testing';
 
-const baseContext: string = 'functional_BO_catalog_discounts_discountV2_mpaFreeGift';
+const baseContext: string = 'functional_BO_catalog_discounts_discountV2_minimumPurchaseAmountFreeGift';
 
 /*
 Pre-condition:
