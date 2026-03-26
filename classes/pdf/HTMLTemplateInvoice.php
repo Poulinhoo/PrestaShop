@@ -386,11 +386,6 @@ class HTMLTemplateInvoiceCore extends HTMLTemplate
         $tax_exempt = Configuration::get('VATNUMBER_MANAGEMENT')
             && !empty($address->vat_number)
             && $address->id_country != Configuration::get('VATNUMBER_COUNTRY');
-        $carrier = new Carrier($this->order->id_carrier);
-        $shipmentCarrierNames = $this->getCarrierNamesFromShipments($this->order->id);
-        if (!empty($shipmentCarrierNames)) {
-            $carrier->name = $shipmentCarrierNames;
-        }
 
         $data = [
             'tax_exempt' => $tax_exempt,
@@ -403,7 +398,6 @@ class HTMLTemplateInvoiceCore extends HTMLTemplate
             'tax_breakdowns' => $this->getTaxBreakdown(),
             'order' => $this->order,
             'order_invoice' => $this->order_invoice,
-            'carrier' => $carrier,
         ];
 
         $this->smarty->assign($data);
