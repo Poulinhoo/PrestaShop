@@ -14,15 +14,14 @@ use CheckoutSession;
 use Configuration;
 use Hook;
 use Module;
-use PHPUnit\Framework\TestCase;
-use PrestaShop\PrestaShop\Adapter\ContainerBuilder;
 use PrestaShop\PrestaShop\Adapter\Order\Checkout\CheckoutProcessProviderResolver;
 use PrestaShop\PrestaShop\Core\Addon\Module\ModuleManagerBuilder;
 use PrestaShopBundle\Translation\TranslatorComponent;
+use Symfony\Bundle\FrameworkBundle\Test\KernelTestCase;
 use Tests\Integration\Utility\ContextMocker;
 use Tests\Resources\DatabaseDump;
 
-class CheckoutProcessProviderResolverTest extends TestCase
+class CheckoutProcessProviderResolverTest extends KernelTestCase
 {
     private const MODULE_NAME = 'ps_onepagecheckoutprovider';
     private const OUTPUT_MODE_CONFIG_KEY = 'CHECKOUT_PROCESS_PROVIDER_TEST_OUTPUT';
@@ -39,14 +38,17 @@ class CheckoutProcessProviderResolverTest extends TestCase
     ];
 
     private ?ContextMocker $contextMocker = null;
+    private CheckoutProcessProviderResolver $checkoutProcessProviderResolver;
 
     protected function setUp(): void
     {
         parent::setUp();
+        self::bootKernel();
 
         DatabaseDump::restoreTables(self::TABLES_TO_RESTORE);
 
         $this->contextMocker = (new ContextMocker())->mockContext();
+        $this->checkoutProcessProviderResolver = self::getContainer()->get(CheckoutProcessProviderResolver::class);
     }
 
     protected function tearDown(): void
@@ -73,9 +75,7 @@ class CheckoutProcessProviderResolverTest extends TestCase
     {
         Configuration::updateValue(CheckoutProcessProviderResolver::PROVIDER_MODULE_CONFIG_KEY, 'missingcheckoutprovider');
 
-        $resolver = ContainerBuilder::getContainer('front', true)->get(CheckoutProcessProviderResolver::class);
-
-        $resolvedProcess = $resolver->resolve(
+        $resolvedProcess = $this->checkoutProcessProviderResolver->resolve(
             $this->createMock(CheckoutSession::class),
             $this->createMock(TranslatorComponent::class)
         );
@@ -89,9 +89,7 @@ class CheckoutProcessProviderResolverTest extends TestCase
         Configuration::updateValue(CheckoutProcessProviderResolver::PROVIDER_MODULE_CONFIG_KEY, self::MODULE_NAME);
 
         $session = $this->createMock(CheckoutSession::class);
-        $resolver = ContainerBuilder::getContainer('front', true)->get(CheckoutProcessProviderResolver::class);
-
-        $resolvedProcess = $resolver->resolve(
+        $resolvedProcess = $this->checkoutProcessProviderResolver->resolve(
             $session,
             $this->createMock(TranslatorComponent::class)
         );
@@ -106,9 +104,7 @@ class CheckoutProcessProviderResolverTest extends TestCase
         Configuration::updateValue(CheckoutProcessProviderResolver::PROVIDER_MODULE_CONFIG_KEY, self::MODULE_NAME);
         Configuration::updateValue(self::OUTPUT_MODE_CONFIG_KEY, 'invalid');
 
-        $resolver = ContainerBuilder::getContainer('front', true)->get(CheckoutProcessProviderResolver::class);
-
-        $resolvedProcess = $resolver->resolve(
+        $resolvedProcess = $this->checkoutProcessProviderResolver->resolve(
             $this->createMock(CheckoutSession::class),
             $this->createMock(TranslatorComponent::class)
         );
