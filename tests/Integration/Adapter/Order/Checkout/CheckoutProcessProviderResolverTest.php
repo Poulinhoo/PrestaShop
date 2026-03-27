@@ -6,16 +6,17 @@
 
 declare(strict_types=1);
 
-namespace Tests\Integration\Classes\Checkout;
+namespace Tests\Integration\Adapter\Order\Checkout;
 
 use Cache;
 use CheckoutProcess;
-use CheckoutProcessProviderResolver;
 use CheckoutSession;
 use Configuration;
 use Hook;
 use Module;
 use PHPUnit\Framework\TestCase;
+use PrestaShop\PrestaShop\Adapter\ContainerBuilder;
+use PrestaShop\PrestaShop\Adapter\Order\Checkout\CheckoutProcessProviderResolver;
 use PrestaShop\PrestaShop\Core\Addon\Module\ModuleManagerBuilder;
 use PrestaShopBundle\Translation\TranslatorComponent;
 use Tests\Integration\Utility\ContextMocker;
@@ -72,7 +73,7 @@ class CheckoutProcessProviderResolverTest extends TestCase
     {
         Configuration::updateValue(CheckoutProcessProviderResolver::PROVIDER_MODULE_CONFIG_KEY, 'missingcheckoutprovider');
 
-        $resolver = new CheckoutProcessProviderResolver();
+        $resolver = ContainerBuilder::getContainer('front', true)->get(CheckoutProcessProviderResolver::class);
 
         $resolvedProcess = $resolver->resolve(
             $this->createMock(CheckoutSession::class),
@@ -88,7 +89,7 @@ class CheckoutProcessProviderResolverTest extends TestCase
         Configuration::updateValue(CheckoutProcessProviderResolver::PROVIDER_MODULE_CONFIG_KEY, self::MODULE_NAME);
 
         $session = $this->createMock(CheckoutSession::class);
-        $resolver = new CheckoutProcessProviderResolver();
+        $resolver = ContainerBuilder::getContainer('front', true)->get(CheckoutProcessProviderResolver::class);
 
         $resolvedProcess = $resolver->resolve(
             $session,
@@ -105,7 +106,7 @@ class CheckoutProcessProviderResolverTest extends TestCase
         Configuration::updateValue(CheckoutProcessProviderResolver::PROVIDER_MODULE_CONFIG_KEY, self::MODULE_NAME);
         Configuration::updateValue(self::OUTPUT_MODE_CONFIG_KEY, 'invalid');
 
-        $resolver = new CheckoutProcessProviderResolver();
+        $resolver = ContainerBuilder::getContainer('front', true)->get(CheckoutProcessProviderResolver::class);
 
         $resolvedProcess = $resolver->resolve(
             $this->createMock(CheckoutSession::class),

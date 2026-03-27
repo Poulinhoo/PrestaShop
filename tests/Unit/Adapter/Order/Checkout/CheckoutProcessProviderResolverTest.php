@@ -6,11 +6,11 @@
 
 declare(strict_types=1);
 
-namespace Tests\Unit\Classes\Checkout;
+namespace Tests\Unit\Adapter\Order\Checkout;
 
-use CheckoutProcessProviderResolver;
 use CheckoutSession;
 use PHPUnit\Framework\TestCase;
+use PrestaShop\PrestaShop\Adapter\Order\Checkout\CheckoutProcessProviderResolver;
 use PrestaShopBundle\Translation\TranslatorComponent;
 
 class TestableCheckoutProcessProviderResolver extends CheckoutProcessProviderResolver

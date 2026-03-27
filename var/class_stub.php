@@ -64,7 +64,6 @@ class CheckoutShipmentStep extends CheckoutShipmentStepCore {};
 class CheckoutPaymentStep extends CheckoutPaymentStepCore {};
 class CheckoutPersonalInformationStep extends CheckoutPersonalInformationStepCore {};
 class CheckoutProcess extends CheckoutProcessCore {};
-class CheckoutProcessProviderResolver extends CheckoutProcessProviderResolverCore {};
 class CheckoutSession extends CheckoutSessionCore {};
 class CmsCategoryLang extends CmsCategoryLangCore {};
 class Combination extends CombinationCore {};

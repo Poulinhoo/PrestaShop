@@ -4,9 +4,18 @@
  * docs/licenses/LICENSE.txt file that was distributed with this source code.
  */
 
+declare(strict_types=1);
+
+namespace PrestaShop\PrestaShop\Adapter\Order\Checkout;
+
+use CheckoutProcess;
+use CheckoutSession;
+use Configuration;
+use Hook;
+use Module;
 use PrestaShopBundle\Translation\TranslatorComponent;
 
-class CheckoutProcessProviderResolverCore
+class CheckoutProcessProviderResolver
 {
     public const PROVIDER_MODULE_CONFIG_KEY = 'PS_CHECKOUT_PROCESS_PROVIDER_MODULE';
 
@@ -56,9 +65,7 @@ class CheckoutProcessProviderResolverCore
     {
         $providerModuleName = strtolower(trim((string) Configuration::get(self::PROVIDER_MODULE_CONFIG_KEY)));
 
-        return '' !== $providerModuleName
-            ? $providerModuleName
-            : null;
+        return '' !== $providerModuleName ? $providerModuleName : null;
     }
 
     /**
