@@ -12,7 +12,7 @@ use PHPUnit\Framework\TestCase;
 use PrestaShop\Decimal\DecimalNumber;
 use PrestaShop\PrestaShop\Core\Pricing\Cart\Calculator\ProductTotalCalculator;
 use PrestaShop\PrestaShop\Core\Pricing\Cart\CartPrice;
-use PrestaShop\PrestaShop\Core\Pricing\Cart\Provider\CartProductDTO;
+use PrestaShop\PrestaShop\Core\Pricing\Cart\Provider\CartProduct;
 use PrestaShop\PrestaShop\Core\Pricing\Cart\Provider\MockCartProductProvider;
 use PrestaShop\PrestaShop\Core\Pricing\Product\Calculator\BaseProductCalculator;
 use PrestaShop\PrestaShop\Core\Pricing\Product\Calculator\ProductCalculator;
@@ -40,7 +40,7 @@ class ProductTotalCalculatorTest extends TestCase
     {
         $cartProductProvider = new MockCartProductProvider([
             1 => [
-                new CartProductDTO(1, 0, 2),
+                new CartProduct(1, 0, 0, 2),
             ],
         ]);
 
@@ -74,8 +74,8 @@ class ProductTotalCalculatorTest extends TestCase
     {
         $cartProductProvider = new MockCartProductProvider([
             1 => [
-                new CartProductDTO(1, 0, 1),
-                new CartProductDTO(2, 0, 3),
+                new CartProduct(1, 0, 0, 1),
+                new CartProduct(2, 0, 0, 3),
             ],
         ]);
 
@@ -113,7 +113,7 @@ class ProductTotalCalculatorTest extends TestCase
     {
         $cartProductProvider = new MockCartProductProvider([
             1 => [
-                new CartProductDTO(1, 5, 1),
+                new CartProduct(1, 5, 0, 1),
             ],
         ]);
 
@@ -144,7 +144,7 @@ class ProductTotalCalculatorTest extends TestCase
     {
         $cartProductProvider = new MockCartProductProvider([
             1 => [
-                new CartProductDTO(1, 0, 1),
+                new CartProduct(1, 0, 0, 1),
             ],
         ]);
 

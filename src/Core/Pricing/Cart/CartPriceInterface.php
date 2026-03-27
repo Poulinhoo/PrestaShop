@@ -14,6 +14,8 @@ use PrestaShop\PrestaShop\Core\Pricing\ValueObject\TaxablePrice;
 /**
  * Mutable DTO carrying the computed prices for a cart.
  * Calculators receive this and mutate it in place.
+ *
+ * @experimental
  */
 interface CartPriceInterface
 {

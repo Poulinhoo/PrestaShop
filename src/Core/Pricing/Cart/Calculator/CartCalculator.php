@@ -14,6 +14,8 @@ use PrestaShop\PrestaShop\Core\Pricing\Cart\CartPriceInterface;
  * Main entry point for computing a cart price. Implements CartCalculatorInterface
  * like any other calculator step, but internally delegates to a priority-sorted pipeline
  * of sub-calculators. This is an implementation detail — callers simply call compute().
+ *
+ * @experimental
  */
 class CartCalculator implements CartCalculatorInterface
 {

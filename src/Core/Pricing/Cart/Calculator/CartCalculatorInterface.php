@@ -13,6 +13,8 @@ use PrestaShop\PrestaShop\Core\Pricing\Cart\CartPriceInterface;
 /**
  * A single step in the cart pricing pipeline. Each implementation mutates the
  * CartPrice DTO in place and returns early when not relevant.
+ *
+ * @experimental
  */
 interface CartCalculatorInterface
 {

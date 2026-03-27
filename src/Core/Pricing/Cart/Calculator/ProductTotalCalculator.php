@@ -19,6 +19,8 @@ use PrestaShop\PrestaShop\Core\Pricing\ValueObject\TaxRate;
 /**
  * First calculator in the cart pipeline: fetches cart products, computes each product's
  * price via the ProductCalculator, then sums all product totals into productTotal.
+ *
+ * @experimental
  */
 class ProductTotalCalculator implements CartCalculatorInterface
 {

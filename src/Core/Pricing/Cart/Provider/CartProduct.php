@@ -10,12 +10,15 @@ namespace PrestaShop\PrestaShop\Core\Pricing\Cart\Provider;
 
 /**
  * Lightweight DTO representing a product line in a cart, as stored in ps_cart_product.
+ *
+ * @experimental
  */
-class CartProductDTO
+class CartProduct
 {
     public function __construct(
         protected readonly int $productId,
         protected readonly int $combinationId,
+        protected readonly int $customizationId,
         protected readonly int $quantity,
     ) {
     }
@@ -28,6 +31,11 @@ class CartProductDTO
     public function getCombinationId(): int
     {
         return $this->combinationId;
+    }
+
+    public function getCustomizationId(): int
+    {
+        return $this->customizationId;
     }
 
     public function getQuantity(): int

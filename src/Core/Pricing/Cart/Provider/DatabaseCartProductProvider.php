@@ -12,6 +12,8 @@ use Doctrine\DBAL\Connection;
 
 /**
  * Reads cart product lines from the ps_cart_product table.
+ *
+ * @experimental
  */
 class DatabaseCartProductProvider implements CartProductProviderInterface
 {
@@ -22,11 +24,11 @@ class DatabaseCartProductProvider implements CartProductProviderInterface
     }
 
     /**
-     * @return CartProductDTO[]
+     * @return CartProduct[]
      */
     public function getCartProducts(int $cartId): array
     {
-        $sql = 'SELECT cp.id_product, cp.id_product_attribute, cp.quantity'
+        $sql = 'SELECT cp.id_product, cp.id_product_attribute, cp.id_customization, cp.quantity'
             . ' FROM ' . $this->dbPrefix . 'cart_product cp'
             . ' WHERE cp.id_cart = :cartId';
 
@@ -34,9 +36,10 @@ class DatabaseCartProductProvider implements CartProductProviderInterface
 
         $products = [];
         foreach ($rows as $row) {
-            $products[] = new CartProductDTO(
+            $products[] = new CartProduct(
                 (int) $row['id_product'],
                 (int) $row['id_product_attribute'],
+                (int) $row['id_customization'],
                 (int) $row['quantity'],
             );
         }

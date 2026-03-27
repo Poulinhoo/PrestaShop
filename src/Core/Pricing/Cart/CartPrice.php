@@ -13,6 +13,8 @@ use PrestaShop\PrestaShop\Core\Pricing\ValueObject\TaxablePrice;
 
 /**
  * Lightweight CartPrice DTO with no tracking overhead. Setters simply assign values.
+ *
+ * @experimental
  */
 class CartPrice implements CartPriceInterface
 {

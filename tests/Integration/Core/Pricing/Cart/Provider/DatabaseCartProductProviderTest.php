@@ -9,7 +9,7 @@ declare(strict_types=1);
 namespace Tests\Integration\Core\Pricing\Cart\Provider;
 
 use Doctrine\DBAL\Connection;
-use PrestaShop\PrestaShop\Core\Pricing\Cart\Provider\CartProductDTO;
+use PrestaShop\PrestaShop\Core\Pricing\Cart\Provider\CartProduct;
 use PrestaShop\PrestaShop\Core\Pricing\Cart\Provider\DatabaseCartProductProvider;
 use Symfony\Bundle\FrameworkBundle\Test\KernelTestCase;
 
@@ -38,16 +38,16 @@ class DatabaseCartProductProviderTest extends KernelTestCase
         $this->assertSame([], $products);
     }
 
-    public function testReturnsCartProductDTOs(): void
+    public function testReturnsCartProducts(): void
     {
         // Create a temporary cart and cart_product entry for testing
         $this->connection->executeStatement(
-            'INSERT INTO ' . $this->dbPrefix . 'cart (id_currency, id_lang) VALUES (1, 1)'
+            'INSERT INTO ' . $this->dbPrefix . "cart (id_carrier, delivery_option, id_lang, id_address_delivery, id_address_invoice, id_currency, id_customer, id_guest, date_add, date_upd) VALUES (0, '', 1, 0, 0, 1, 0, 0, NOW(), NOW())"
         );
         $cartId = (int) $this->connection->lastInsertId();
 
         $this->connection->executeStatement(
-            'INSERT INTO ' . $this->dbPrefix . 'cart_product (id_cart, id_product, id_product_attribute, quantity, id_address_delivery, id_shop) VALUES (:cartId, 1, 0, 3, 0, 1)',
+            'INSERT INTO ' . $this->dbPrefix . 'cart_product (id_cart, id_product, id_product_attribute, quantity, id_address_delivery, id_shop, date_add) VALUES (:cartId, 1, 0, 3, 0, 1, NOW())',
             ['cartId' => $cartId]
         );
 
@@ -55,7 +55,7 @@ class DatabaseCartProductProviderTest extends KernelTestCase
             $products = $this->provider->getCartProducts($cartId);
 
             $this->assertCount(1, $products);
-            $this->assertInstanceOf(CartProductDTO::class, $products[0]);
+            $this->assertInstanceOf(CartProduct::class, $products[0]);
             $this->assertSame(1, $products[0]->getProductId());
             $this->assertSame(0, $products[0]->getCombinationId());
             $this->assertSame(3, $products[0]->getQuantity());

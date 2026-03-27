@@ -18,6 +18,8 @@ use PrestaShop\PrestaShop\Core\Pricing\ValueObject\TaxablePriceInterface;
  * Debug-aware CartPrice that auto-records every setter call as a PriceModification
  * via debug_backtrace, capturing which calculator made the change. Calculators are
  * completely unaware of the tracking — same interface as CartPrice.
+ *
+ * @experimental
  */
 class TrackedCartPrice implements CartPriceInterface
 {
