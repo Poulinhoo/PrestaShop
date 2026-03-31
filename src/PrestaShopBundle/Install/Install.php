@@ -1233,7 +1233,7 @@ class Install extends AbstractInstall
         // And then, we build url and log this information!
         Context::getContext()->shop = new Shop(1);
         Context::getContext()->link = new Link();
-        $adminUrl = rtrim(Context::getContext()->link->getAdminBaseLink(), '/') . '/' . $adminFolder;
+        $adminUrl = rtrim(Context::getContext()->link->getAdminBaseLink(), '/') . '/' . $adminFolder . '/';
 
         $this->getLogger()->logInfo(sprintf('You can now access your backoffice at %s.', $adminUrl));
 
