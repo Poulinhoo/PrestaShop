@@ -170,7 +170,7 @@ describe('BO - Catalog - Discounts : Minimum purchase amount (FreeGift)', async 
       expect(errorMessage).to.contains(boDiscountsCreatePage.errorMessage);
 
       errorMessage = await boDiscountsCreatePage.getErrorMessageInvalidInput(page, 'amount');
-      expect(errorMessage).to.contains(boDiscountsCreatePage.errorMessageMinPurchaseAmount);
+      expect(errorMessage).to.contains(boDiscountsCreatePage.errorMessageValueLowerThanZero);
     });
 
     it('should create a discount with a minimum purchase value < 0 and check the error', async function () {
@@ -180,7 +180,7 @@ describe('BO - Catalog - Discounts : Minimum purchase amount (FreeGift)', async 
       expect(errorMessage).to.contains(boDiscountsCreatePage.errorMessage);
 
       errorMessage = await boDiscountsCreatePage.getErrorMessageInvalidInput(page, 'amount');
-      expect(errorMessage).to.contains(boDiscountsCreatePage.errorMessageMinPurchaseAmount);
+      expect(errorMessage).to.contains(boDiscountsCreatePage.errorMessageValueLowerThanZero);
     });
 
     it('should create a discount with a minimum purchase value = asefr and check the error', async function () {
