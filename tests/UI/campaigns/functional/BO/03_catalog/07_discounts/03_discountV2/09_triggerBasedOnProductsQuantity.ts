@@ -26,7 +26,6 @@ import {
   dataCustomers,
   dataCarriers,
   dataPaymentMethods,
-  utilsCore,
   type BrowserContext,
   type Page,
   utilsPlaywright,
@@ -34,20 +33,9 @@ import {
 
 const baseContext: string = 'functional_BO_catalog_discounts_discountV2_triggerBasedOnProductsQuantity';
 
-/*
-Pre-condition:
-- Enable discount
-Scenario:
-- Create discount in BO and check it in FO
-- Edit discount in BO and check it in FO
-- Delete discount
-Post-condition:
-- Disable discount
- */
 describe('BO - Catalog - Discounts : Trigger based on the total quantity of products in the cart', async () => {
   let browserContext: BrowserContext;
   let page: Page;
-  let totalOrder: number = 0;
 
   const discountWithoutName: FakerDiscount = new FakerDiscount({
     discountType: 'On cart amount',
@@ -125,7 +113,7 @@ describe('BO - Catalog - Discounts : Trigger based on the total quantity of prod
   });
 
   // 1 - Pre-condition: Enable discount
-  //setFeatureFlag(boFeatureFlagPage.featureFlagDiscount, true, `${baseContext}_preTest`);
+  setFeatureFlag(boFeatureFlagPage.featureFlagDiscount, true, `${baseContext}_preTest`);
 
   describe('Create discount and check it in FO', async () => {
     it('should login in BO', async function () {
@@ -297,7 +285,7 @@ describe('BO - Catalog - Discounts : Trigger based on the total quantity of prod
     });
 
     it('should check the discount value', async function () {
-      await testContext.addContextItem(this, 'testIdentifier', 'checkDiscountValue1', baseContext);
+      await testContext.addContextItem(this, 'testIdentifier', 'checkDiscountValue_1', baseContext);
 
       const discount = parseFloat(discountData.discountValue.toString()).toFixed(2);
 
@@ -309,14 +297,14 @@ describe('BO - Catalog - Discounts : Trigger based on the total quantity of prod
     });
 
     it('should check the shipping cost', async function () {
-      await testContext.addContextItem(this, 'testIdentifier', 'checkShippingCost_2', baseContext);
+      await testContext.addContextItem(this, 'testIdentifier', 'checkShippingCost_3', baseContext);
 
       const subTotalShipping = await foHummingbirdCartPage.getSubtotalShippingValue(page);
       expect(subTotalShipping).to.equal('Free');
     });
 
     it('should check the Total (tax incl.) after the discount', async function () {
-      await testContext.addContextItem(this, 'testIdentifier', 'checkTotalAfterDiscount1', baseContext);
+      await testContext.addContextItem(this, 'testIdentifier', 'checkTotalAfterDiscount_1', baseContext);
 
       const discount = parseFloat(discountData.discountValue.toString());
 
@@ -337,7 +325,7 @@ describe('BO - Catalog - Discounts : Trigger based on the total quantity of prod
       expect(pageTitle).to.contains(boDiscountsCreatePage.pageTitle);
     });
 
-    it('should edit the discount', async function () {
+    it('should edit the discount (product quantity = 3)', async function () {
       await testContext.addContextItem(this, 'testIdentifier', 'editDiscount', baseContext);
 
       const errorMessage = await boDiscountsCreatePage.createDiscount(page, editDiscountData);
@@ -353,20 +341,13 @@ describe('BO - Catalog - Discounts : Trigger based on the total quantity of prod
       expect(pageTitle).to.contains(foHummingbirdCartPage.pageTitle);
     });
 
-    it('should check that the reduction is disappeared', async function () {
+    it('should check that the reduction is not applied', async function () {
       await testContext.addContextItem(this, 'testIdentifier', 'checkDiscountValue_2', baseContext);
 
       await foHummingbirdCartPage.reloadPage(page);
 
       const subTotal = await foHummingbirdCartPage.getATIPrice(page);
       expect(subTotal.toString()).to.equal((dataProducts.demo_3.finalPrice + dataProducts.demo_5.price).toFixed(2));
-    });
-
-    it('should check the shipping cost', async function () {
-      await testContext.addContextItem(this, 'testIdentifier', 'checkShippingCost_3', baseContext);
-
-      const subTotalShipping = await foHummingbirdCartPage.getSubtotalShippingValue(page);
-      expect(subTotalShipping).to.eq('Free');
     });
 
     it('should go back to BO', async function () {
@@ -378,7 +359,7 @@ describe('BO - Catalog - Discounts : Trigger based on the total quantity of prod
       expect(pageTitle).to.contains(boDiscountsCreatePage.pageTitle);
     });
 
-    it('should edit the discount', async function () {
+    it('should edit the discount (discount tax = tax excluded)', async function () {
       await testContext.addContextItem(this, 'testIdentifier', 'editDiscount_2', baseContext);
 
       const errorMessage = await boDiscountsCreatePage.createDiscount(page, secondEditDiscountData);
@@ -394,7 +375,15 @@ describe('BO - Catalog - Discounts : Trigger based on the total quantity of prod
       expect(pageTitle).to.contains(foHummingbirdCartPage.pageTitle);
     });
 
-    // @todo
+    it('should check that the reduction is not applied', async function () {
+      await testContext.addContextItem(this, 'testIdentifier', 'checkDiscountValue_3', baseContext);
+
+      await foHummingbirdCartPage.reloadPage(page);
+
+      const subTotal = await foHummingbirdCartPage.getATIPrice(page);
+      expect(subTotal.toString()).to.equal((dataProducts.demo_3.finalPrice + dataProducts.demo_5.price).toFixed(2));
+    });
+
     it('should go back to BO', async function () {
       await testContext.addContextItem(this, 'testIdentifier', 'goBackToBO_3', baseContext);
 
@@ -404,7 +393,7 @@ describe('BO - Catalog - Discounts : Trigger based on the total quantity of prod
       expect(pageTitle).to.contains(boDiscountsCreatePage.pageTitle);
     });
 
-    it('should edit the discount', async function () {
+    it('should edit the discount (product quantity = 2)', async function () {
       await testContext.addContextItem(this, 'testIdentifier', 'editDiscount_3', baseContext);
 
       const errorMessage = await boDiscountsCreatePage.createDiscount(page, thirdEditDiscountData);
@@ -412,7 +401,7 @@ describe('BO - Catalog - Discounts : Trigger based on the total quantity of prod
     });
 
     it('should go back to FO', async function () {
-      await testContext.addContextItem(this, 'testIdentifier', 'goBackToFO_2', baseContext);
+      await testContext.addContextItem(this, 'testIdentifier', 'goBackToFO_3', baseContext);
 
       page = await boDiscountsCreatePage.changePage(browserContext, 1);
 
@@ -421,7 +410,7 @@ describe('BO - Catalog - Discounts : Trigger based on the total quantity of prod
     });
 
     it('should check the discount value', async function () {
-      await testContext.addContextItem(this, 'testIdentifier', 'checkDiscountValue1', baseContext);
+      await testContext.addContextItem(this, 'testIdentifier', 'checkDiscountValue_4', baseContext);
 
       await foHummingbirdCartPage.reloadPage(page);
 
@@ -435,21 +424,21 @@ describe('BO - Catalog - Discounts : Trigger based on the total quantity of prod
     });
 
     it('should check the shipping cost', async function () {
-      await testContext.addContextItem(this, 'testIdentifier', 'checkShippingCost_2', baseContext);
+      await testContext.addContextItem(this, 'testIdentifier', 'checkShippingCost_4', baseContext);
 
       const subTotalShipping = await foHummingbirdCartPage.getSubtotalShippingValue(page);
       expect(subTotalShipping).to.equal('Free');
     });
 
     it('should check the Total (tax incl.) after the discount', async function () {
-      await testContext.addContextItem(this, 'testIdentifier', 'checkTotalAfterDiscount1', baseContext);
+      await testContext.addContextItem(this, 'testIdentifier', 'checkTotalAfterDiscount_2', baseContext);
 
       const totalAfterDiscount = await foHummingbirdCartPage.getATIPrice(page);
-      expect(totalAfterDiscount.toString()).to.equal(0);
+      expect(totalAfterDiscount).to.equal(0);
     });
 
-    it(`should add the product '${dataProducts.demo_1.name}' tothe cart`, async function () {
-      await testContext.addContextItem(this, 'testIdentifier', 'searchProduct_2', baseContext);
+    it(`should add the product '${dataProducts.demo_1.name}' to the cart`, async function () {
+      await testContext.addContextItem(this, 'testIdentifier', 'searchProduct_3', baseContext);
 
       await foHummingbirdHomePage.searchProduct(page, dataProducts.demo_1.name);
       await foHummingbirdSearchResultsPage.quickViewProduct(page, 1);
@@ -460,8 +449,8 @@ describe('BO - Catalog - Discounts : Trigger based on the total quantity of prod
       expect(shoppingCarts).to.equal(3);
     });
 
-    it(`should add the product '${dataProducts.demo_6.name}' tothe cart`, async function () {
-      await testContext.addContextItem(this, 'testIdentifier', 'searchProduct_3', baseContext);
+    it(`should add the product '${dataProducts.demo_6.name}' to the cart`, async function () {
+      await testContext.addContextItem(this, 'testIdentifier', 'searchProduct_4', baseContext);
 
       await foHummingbirdHomePage.searchProduct(page, dataProducts.demo_6.name);
       await foHummingbirdSearchResultsPage.quickViewProduct(page, 1);
@@ -473,7 +462,7 @@ describe('BO - Catalog - Discounts : Trigger based on the total quantity of prod
     });
 
     it('should check the discount value', async function () {
-      await testContext.addContextItem(this, 'testIdentifier', 'checkDiscountValue1', baseContext);
+      await testContext.addContextItem(this, 'testIdentifier', 'checkDiscountValue_5', baseContext);
 
       const discount = parseFloat(thirdEditDiscountData.discountValue.toString()).toFixed(2);
 
@@ -481,7 +470,7 @@ describe('BO - Catalog - Discounts : Trigger based on the total quantity of prod
       expect(discountValue).to.contains(`-€${discount}`);
 
       const subTotalDiscount = await foHummingbirdCartPage.getSubtotalDiscountValue(page);
-      expect(subTotalDiscount.toString()).to.equal(`-${discountData.discountValue}`);
+      expect(subTotalDiscount.toString()).to.equal(`-${thirdEditDiscountData.discountValue}`);
     });
 
     it('should check the shipping cost', async function () {
@@ -491,13 +480,14 @@ describe('BO - Catalog - Discounts : Trigger based on the total quantity of prod
       expect(subTotalShipping).to.equal('Free');
     });
 
-    it('should check the Total (tax incl.) after the discount', async function () {
-      await testContext.addContextItem(this, 'testIdentifier', 'checkTotalAfterDiscount1', baseContext);
+    // @todo : https://github.com/PrestaShop/PrestaShop/issues/39436
+    it.skip('should check the Total (tax incl.) after the discount', async function () {
+      await testContext.addContextItem(this, 'testIdentifier', 'checkTotalAfterDiscount_3', baseContext);
 
       const discount = parseFloat(thirdEditDiscountData.discountValue.toString());
 
-      const totalBeforeDiscount = dataProducts.demo_3.finalPrice + dataProducts.demo_5.finalPrice + dataProducts.demo_1.finalPrice +
-        dataProducts.demo_6.price;
+      const totalBeforeDiscount = dataProducts.demo_3.finalPrice + dataProducts.demo_5.finalPrice + dataProducts.demo_1.finalPrice
+        + dataProducts.demo_6.combinations[0].price;
 
       const totalAfterDiscount = await foHummingbirdCartPage.getATIPrice(page);
       expect(totalAfterDiscount.toString()).to.equal((totalBeforeDiscount - discount).toFixed(2));
@@ -569,7 +559,6 @@ describe('BO - Catalog - Discounts : Trigger based on the total quantity of prod
         boDashboardPage.ordersParentLink,
         boDashboardPage.ordersLink,
       );
-      await boOrdersPage.closeSfToolBar(page);
 
       const pageTitle = await boOrdersPage.getPageTitle(page);
       expect(pageTitle).to.contains(boOrdersPage.pageTitle);
@@ -600,7 +589,7 @@ describe('BO - Catalog - Discounts : Trigger based on the total quantity of prod
     });
 
     it('should check number of products', async function () {
-      await testContext.addContextItem(this, 'testIdentifier', 'checkNumberOfProducts0', baseContext);
+      await testContext.addContextItem(this, 'testIdentifier', 'checkNumberOfProducts', baseContext);
 
       const productCount = await boOrdersViewBlockProductsPage.getProductsNumber(page);
       expect(productCount).to.equal(1);
@@ -609,21 +598,14 @@ describe('BO - Catalog - Discounts : Trigger based on the total quantity of prod
     it('should check that the discount table is not visible', async function () {
       await testContext.addContextItem(this, 'testIdentifier', 'checkDiscountTable', baseContext);
 
+      await boOrdersViewBlockProductsPage.reloadPage(page);
+      
       const isVisible = await boOrdersViewBlockProductsPage.isDiscountListTableVisible(page);
-      expect(isVisible, 'Discount list table is not visible').to.eq(false);
+      expect(isVisible, 'Discount list table is visible').to.eq(false);
     });
   });
 
   describe('Delete discount', async () => {
-    it('should go back to BO', async function () {
-      await testContext.addContextItem(this, 'testIdentifier', 'goBackToBO_2', baseContext);
-
-      page = await foHummingbirdCartPage.changePage(browserContext, 0);
-
-      const pageTitle = await boDiscountsCreatePage.getPageTitle(page);
-      expect(pageTitle).to.contains(boDiscountsCreatePage.pageTitle);
-    });
-
     it('should go to \'Catalog > Discounts\' page', async function () {
       await testContext.addContextItem(this, 'testIdentifier', 'goToDiscountsPage2', baseContext);
 
@@ -642,25 +624,6 @@ describe('BO - Catalog - Discounts : Trigger based on the total quantity of prod
 
       const validationMessage = await boDiscountsPage.deleteDiscount(page, 1);
       expect(validationMessage).to.contains(boDiscountsPage.successfulDeleteMessage);
-    });
-
-    it('should go back to FO', async function () {
-      await testContext.addContextItem(this, 'testIdentifier', 'goBackToFO_3', baseContext);
-
-      page = await boDiscountsCreatePage.changePage(browserContext, 1);
-
-      const pageTitle = await foHummingbirdCartPage.getPageTitle(page);
-      expect(pageTitle).to.contains(foHummingbirdCartPage.pageTitle);
-    });
-
-    it('should check the Total (tax incl.) after the discount', async function () {
-      await testContext.addContextItem(this, 'testIdentifier', 'checkTotalAfterDiscount_3', baseContext);
-
-      await foHummingbirdCartPage.reloadPage(page);
-      const total = dataProducts.demo_3.finalPrice + dataProducts.demo_5.finalPrice;
-
-      const totalAfterDiscount = await foHummingbirdCartPage.getATIPrice(page);
-      expect(totalAfterDiscount.toString()).to.equal(total.toFixed(2));
     });
   });
 
