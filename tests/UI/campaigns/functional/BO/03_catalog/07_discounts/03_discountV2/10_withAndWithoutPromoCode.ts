@@ -40,48 +40,33 @@ describe('BO - Catalog - Discounts : Create a discount that applies automaticall
     discountTax: 'Tax included',
   });
   const discountAmountZero: FakerDiscount = new FakerDiscount({
-    discountType: 'On cart amount',
+    ...discountWithoutName,
     name: 'Test',
-    noProductCondition: true,
     discountValue: '0',
-    discountReductionType: '€',
-    discountTax: 'Tax included',
   });
   const discountAmountNegative: FakerDiscount = new FakerDiscount({
-    discountType: 'On cart amount',
+    ...discountWithoutName,
     name: 'Test',
-    noProductCondition: true,
     discountValue: -20,
-    discountReductionType: '€',
-    discountTax: 'Tax included',
   });
   const discountData: FakerDiscount = new FakerDiscount({
-    discountType: 'On cart amount',
+    ...discountWithoutName,
     name: 'Test',
-    noProductCondition: true,
     discountValue: 10,
-    discountReductionType: '€',
-    discountTax: 'Tax included',
   });
 
   const editDiscountData: FakerDiscount = new FakerDiscount({
-    discountType: 'On cart amount',
+    ...discountWithoutName,
     name: 'Test',
-    noProductCondition: true,
     discountValue: 10,
-    discountReductionType: '€',
-    discountTax: 'Tax included',
     generateDiscountCode: true,
     discountCode: 'test',
   });
 
   const discountRandomPromoCodeData: FakerDiscount = new FakerDiscount({
-    discountType: 'On cart amount',
+    ...discountWithoutName,
     name: 'Test',
-    noProductCondition: true,
     discountValue: 10,
-    discountReductionType: '€',
-    discountTax: 'Tax included',
     generateDiscountCode: true,
     generateRandomCode: true,
   });
