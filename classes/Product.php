@@ -7210,11 +7210,14 @@ class ProductCore extends ObjectModel
             ' . Shop::addSqlAssociation('product_attribute', 'pa') . '
             LEFT JOIN `' . _DB_PREFIX_ . 'product_attribute_lang` pal
                 ON (pal.`id_product_attribute` = pac.`id_product_attribute` AND pal.`id_lang` = ' . (int) $id_lang . ')
+            LEFT JOIN `' . _DB_PREFIX_ . 'attribute_group` ag
+                ON (a.`id_attribute_group` = ag.`id_attribute_group`)
             LEFT JOIN `' . _DB_PREFIX_ . 'attribute_group_lang` agl
                 ON (a.`id_attribute_group` = agl.`id_attribute_group` AND agl.`id_lang` = ' . (int) $id_lang . ')
             WHERE pa.`id_product` = ' . (int) $id_product . '
                 AND pac.`id_product_attribute` = ' . (int) $id_product_attribute . '
-                AND agl.`id_lang` = ' . (int) $id_lang);
+                AND agl.`id_lang` = ' . (int) $id_lang . '
+            ORDER BY ag.`position` ASC, a.`position` ASC');
             Cache::store($cache_id, $result);
         } else {
             $result = Cache::retrieve($cache_id);
