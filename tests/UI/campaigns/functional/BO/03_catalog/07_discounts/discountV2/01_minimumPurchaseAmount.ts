@@ -42,7 +42,7 @@ describe('BO - Catalog - Discounts : Minimum purchase amount (On cart amount)', 
   let page: Page;
 
   const discountWithoutName: FakerDiscount = new FakerDiscount({
-    discountType: 'On cart amount',
+    discountType: 'cart_level',
     name: ' ',
     noProductCondition: true,
     minimumPurchaseAmount: true,
@@ -53,7 +53,7 @@ describe('BO - Catalog - Discounts : Minimum purchase amount (On cart amount)', 
     discountTax: 'Tax included',
   });
   const discountPurchaseAmountZero: FakerDiscount = new FakerDiscount({
-    discountType: 'On cart amount',
+    discountType: 'cart_level',
     name: 'Test',
     noProductCondition: true,
     minimumPurchaseAmount: true,
@@ -64,7 +64,7 @@ describe('BO - Catalog - Discounts : Minimum purchase amount (On cart amount)', 
     discountTax: 'Tax included',
   });
   const discountPurchaseAmountNegative: FakerDiscount = new FakerDiscount({
-    discountType: 'On cart amount',
+    discountType: 'cart_level',
     name: 'Test',
     noProductCondition: true,
     minimumPurchaseAmount: true,
@@ -75,7 +75,7 @@ describe('BO - Catalog - Discounts : Minimum purchase amount (On cart amount)', 
     discountTax: 'Tax included',
   });
   const discountPurchaseAmountText: FakerDiscount = new FakerDiscount({
-    discountType: 'On cart amount',
+    discountType: 'cart_level',
     name: 'Test',
     noProductCondition: true,
     minimumPurchaseAmount: true,
@@ -86,7 +86,7 @@ describe('BO - Catalog - Discounts : Minimum purchase amount (On cart amount)', 
     discountTax: 'Tax included',
   });
   const discountValueNegative: FakerDiscount = new FakerDiscount({
-    discountType: 'On cart amount',
+    discountType: 'cart_level',
     name: 'Test',
     noProductCondition: true,
     minimumPurchaseAmount: true,
@@ -97,7 +97,7 @@ describe('BO - Catalog - Discounts : Minimum purchase amount (On cart amount)', 
     discountTax: 'Tax included',
   });
   const discountValueZero: FakerDiscount = new FakerDiscount({
-    discountType: 'On cart amount',
+    discountType: 'cart_level',
     name: 'Test',
     noProductCondition: true,
     minimumPurchaseAmount: true,
@@ -109,7 +109,7 @@ describe('BO - Catalog - Discounts : Minimum purchase amount (On cart amount)', 
   });
 
   const discountData: FakerDiscount = new FakerDiscount({
-    discountType: 'On cart amount',
+    discountType: 'cart_level',
     name: 'Test',
     noProductCondition: true,
     minimumPurchaseAmount: true,
@@ -118,11 +118,10 @@ describe('BO - Catalog - Discounts : Minimum purchase amount (On cart amount)', 
     discountValue: 10,
     discountReductionType: '€',
     discountTax: 'Tax included',
-    generateDiscountCode: true,
     discountCode: 'test',
   });
   const editDiscountData: FakerDiscount = new FakerDiscount({
-    discountType: 'On cart amount',
+    discountType: 'cart_level',
     name: 'Test',
     noProductCondition: true,
     minimumPurchaseAmount: true,
@@ -131,7 +130,6 @@ describe('BO - Catalog - Discounts : Minimum purchase amount (On cart amount)', 
     discountValue: 10,
     discountReductionType: '€',
     discountTax: 'Tax excluded',
-    generateDiscountCode: false,
   });
 
   before(async function () {
@@ -191,14 +189,14 @@ describe('BO - Catalog - Discounts : Minimum purchase amount (On cart amount)', 
       await testContext.addContextItem(this, 'testIdentifier', 'createDiscount_2', baseContext);
 
       const errorMessage = await boDiscountsCreatePage.createDiscount(page, discountPurchaseAmountZero);
-      expect(errorMessage).to.contains(boDiscountsCreatePage.errorMessageMinPurchaseAmount);
+      expect(errorMessage).to.contains(boDiscountsCreatePage.errorMessageValueLowerThanZero);
     });
 
     it('should create a discount with a minimum purchase value < 0 and check the error', async function () {
       await testContext.addContextItem(this, 'testIdentifier', 'createDiscount_3', baseContext);
 
       const errorMessage = await boDiscountsCreatePage.createDiscount(page, discountPurchaseAmountNegative);
-      expect(errorMessage).to.contains(boDiscountsCreatePage.errorMessageMinPurchaseAmount);
+      expect(errorMessage).to.contains(boDiscountsCreatePage.errorMessageValueLowerThanZero);
     });
 
     it('should create a discount with a minimum purchase value = asefr and check the error', async function () {
