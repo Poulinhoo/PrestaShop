@@ -70,7 +70,6 @@ describe('BO - Design - Pages : Sort pages table', async () => {
     expect(pageTitle).to.contains(boCMSPagesPage.pageTitle);
   });
 
-
   // Sort pages table
   describe('Sort pages table', async () => {
     const sortTests: {
