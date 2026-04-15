@@ -13,6 +13,8 @@ import {
 const baseContext: string = 'functional_API_checkEndpoints';
 
 // @todo : https://github.com/PrestaShop/PrestaShop/issues/41109
+// Dear developers, the CI is broken when you update the module ps_apiresources on the Core.
+// It's normal : it's time to add them UI Tests.
 describe('API : Check endpoints', async () => {
   const subsetEndpoints: string[] = [
     // @todo: add tests
@@ -37,29 +39,29 @@ describe('API : Check endpoints', async () => {
     '/addresses/{addressId}: DELETE',
     // @todo: add tests
     '/addresses: GET',
-    // tests/UI/campaigns/functional/API/02_endpoints/apiClient/01_getApiClientInfos.ts
+    // tests/UI/campaigns/functional/API/02_endpoints/01_apiClient/01_getApiClientInfos.ts
     '/api-clients/infos: GET',
-    // tests/UI/campaigns/functional/API/02_endpoints/apiClient/02_deleteApiClientId.ts
+    // tests/UI/campaigns/functional/API/02_endpoints/01_apiClient/02_deleteApiClientId.ts
     '/api-clients/{apiClientId}: DELETE',
-    // tests/UI/campaigns/functional/API/02_endpoints/apiClient/03_getApiClientId.ts
+    // tests/UI/campaigns/functional/API/02_endpoints/01_apiClient/03_getApiClientId.ts
     '/api-clients/{apiClientId}: GET',
-    // tests/UI/campaigns/functional/API/02_endpoints/apiClient/04_patchApiClientId.ts
+    // tests/UI/campaigns/functional/API/02_endpoints/01_apiClient/04_patchApiClientId.ts
     '/api-clients/{apiClientId}: PATCH',
-    // tests/UI/campaigns/functional/API/02_endpoints/apiClient/06_getApiClients.ts
+    // tests/UI/campaigns/functional/API/02_endpoints/01_apiClient/06_getApiClients.ts
     '/api-clients: GET',
-    // tests/UI/campaigns/functional/API/02_endpoints/apiClient/05_postApiClient.ts
+    // tests/UI/campaigns/functional/API/02_endpoints/01_apiClient/05_postApiClient.ts
     '/api-clients: POST',
     // @todo: add tests
     '/attributes/attributes/bulk-delete: DELETE',
-    // tests/UI/campaigns/functional/API/02_endpoints/attribute/01_deleteAttributesAttributeId.ts
+    // tests/UI/campaigns/functional/API/02_endpoints/02_attribute/01_deleteAttributesAttributeId.ts
     '/attributes/attributes/{attributeId}: DELETE',
-    // tests/UI/campaigns/functional/API/02_endpoints/attribute/02_getAttributesAttributeId.ts
+    // tests/UI/campaigns/functional/API/02_endpoints/02_attribute/02_getAttributesAttributeId.ts
     '/attributes/attributes/{attributeId}: GET',
     // @todo: add tests
     '/attributes/attributes/{attributeId}: PATCH',
-    // tests/UI/campaigns/functional/API/02_endpoints/attributes/04_postAttributesAttribute.ts
+    // tests/UI/campaigns/functional/API/02_endpoints/02_attributes/04_postAttributesAttribute.ts
     '/attributes/attributes: POST',
-    // tests/UI/campaigns/functional/API/02_endpoints/attribute/11_deleteAttributesGroupsBulkDelete.ts
+    // tests/UI/campaigns/functional/API/02_endpoints/02_attribute/11_deleteAttributesGroupsBulkDelete.ts
     '/attributes/groups/bulk-delete: DELETE',
     // @todo: add tests
     '/attributes/groups/positions: PATCH',
@@ -67,33 +69,33 @@ describe('API : Check endpoints', async () => {
     '/attributes/groups/{attributeGroupId}/attributes/positions: PATCH',
     // @todo: add tests
     '/attributes/groups/{attributeGroupId}/attributes: GET',
-    // tests/UI/campaigns/functional/API/02_endpoints/attribute/07_deleteAttributesGroupId.ts
+    // tests/UI/campaigns/functional/API/02_endpoints/02_attribute/07_deleteAttributesGroupId.ts
     '/attributes/groups/{attributeGroupId}: DELETE',
-    // tests/UI/campaigns/functional/API/02_endpoints/attribute/08_getAttributesGroupId.ts
+    // tests/UI/campaigns/functional/API/02_endpoints/02_attribute/08_getAttributesGroupId.ts
     '/attributes/groups/{attributeGroupId}: GET',
-    // tests/UI/campaigns/functional/API/02_endpoints/attribute/09_patchAttributesGroupId.ts
+    // tests/UI/campaigns/functional/API/02_endpoints/02_attribute/09_patchAttributesGroupId.ts
     '/attributes/groups/{attributeGroupId}: PATCH',
-    // tests/UI/campaigns/functional/API/02_endpoints/attribute/12_getAttributesGroups.ts
+    // tests/UI/campaigns/functional/API/02_endpoints/02_attribute/12_getAttributesGroups.ts
     '/attributes/groups: GET',
-    // tests/UI/campaigns/functional/API/02_endpoints/attribute/10_postAttributesGroup.ts
+    // tests/UI/campaigns/functional/API/02_endpoints/02_attribute/10_postAttributesGroup.ts
     '/attributes/groups: POST',
     // @todo: add tests
     '/categories/bulk-delete/{deleteMode}: DELETE',
     // @todo: add tests
     '/categories/bulk-update-status: PUT',
-    // tests/UI/campaigns/functional/API/02_endpoints/category/04_deleteCategoryIdCover.ts
+    // tests/UI/campaigns/functional/API/02_endpoints/03_category/04_deleteCategoryIdCover.ts
     '/categories/{categoryId}/cover: DELETE',
     // @todo: add tests
     '/categories/{categoryId}/status: PATCH',
     // @todo: add tests
     '/categories/{categoryId}/thumbnail: DELETE',
-    // tests/UI/campaigns/functional/API/02_endpoints/category/07_deleteCategoryIdMode.ts
+    // tests/UI/campaigns/functional/API/02_endpoints/03_category/07_deleteCategoryIdMode.ts
     '/categories/{categoryId}/{mode}: DELETE',
     // @todo: add tests
     '/categories/{categoryId}: GET',
     // @todo: add tests
     '/categories/{categoryId}: PATCH',
-    // tests/UI/campaigns/functional/API/02_endpoints/category/03_getCategories.ts
+    // tests/UI/campaigns/functional/API/02_endpoints/03_category/03_getCategories.ts
     '/categories: GET',
     // @todo: add tests
     '/categories: POST',
@@ -106,20 +108,22 @@ describe('API : Check endpoints', async () => {
     // @todo: add tests
     '/contacts: POST',
     // @todo: add tests
+    '/countries/{countryId}: GET',
+    // @todo: add tests
     '/customers/bulk-delete: DELETE',
     // @todo: add tests
     '/customers/bulk-disable: PUT',
     // @todo: add tests
     '/customers/bulk-enable: PUT',
-    // tests/UI/campaigns/functional/API/02_endpoints/customerGroup/01_deleteCustomerGroupsId.ts
+    // tests/UI/campaigns/functional/API/02_endpoints/04_customerGroup/01_deleteCustomerGroupsId.ts
     '/customers/groups/{customerGroupId}: DELETE',
-    // tests/UI/campaigns/functional/API/02_endpoints/customerGroup/02_getCustomerGroupsId.ts
+    // tests/UI/campaigns/functional/API/02_endpoints/04_customerGroup/02_getCustomerGroupsId.ts
     '/customers/groups/{customerGroupId}: GET',
-    // tests/UI/campaigns/functional/API/02_endpoints/customerGroup/03_putCustomerGroupsId.ts
+    // tests/UI/campaigns/functional/API/02_endpoints/04_customerGroup/03_putCustomerGroupsId.ts
     '/customers/groups/{customerGroupId}: PUT',
-    // tests/UI/campaigns/functional/API/02_endpoints/customerGroup/05_getCustomersGroups.ts
+    // tests/UI/campaigns/functional/API/02_endpoints/04_customerGroup/05_getCustomersGroups.ts
     '/customers/groups: GET',
-    // tests/UI/campaigns/functional/API/02_endpoints/customerGroup/04_postCustomersGroup.ts
+    // tests/UI/campaigns/functional/API/02_endpoints/04_customerGroup/04_postCustomersGroup.ts
     '/customers/groups: POST',
     // @todo: add tests
     '/customers/search: GET',
@@ -133,13 +137,12 @@ describe('API : Check endpoints', async () => {
     '/customers/{customerId}: PATCH',
     // @todo: add tests
     '/customers: POST',
-    // @todo : https://github.com/PrestaShop/PrestaShop/issues/40285
-    // tests/UI/campaigns/functional/API/02_endpoints/discount/01_getDiscountTypes.ts
-    '/discount-types: GET',
     // @todo: add tests
     '/discounts/bulk-delete: DELETE',
     // @todo: add tests
     '/discounts/bulk-update-status: PATCH',
+    // tests/UI/campaigns/functional/API/02_endpoints/10_discount/01_getDiscountTypes.ts
+    '/discounts/types: GET',
     // @todo: add tests
     '/discounts/{discountId}/duplicate: POST',
     // @todo : https://github.com/PrestaShop/PrestaShop/issues/38784
@@ -150,7 +153,7 @@ describe('API : Check endpoints', async () => {
     '/discounts/{discountId}: PATCH',
     // @todo : https://github.com/PrestaShop/PrestaShop/issues/38784
     '/discounts: GET',
-    // @todo : https://github.com/PrestaShop/PrestaShop/issues/38784
+    // tests/UI/campaigns/functional/API/02_endpoints/10_discount/02_postDiscounts.ts
     '/discounts: POST',
     // @todo: add tests
     '/features/bulk-delete: DELETE',
@@ -178,45 +181,45 @@ describe('API : Check endpoints', async () => {
     '/features: POST',
     // @todo: add tests
     '/hooks/{hookId}/status: GET',
-    // tests/UI/campaigns/functional/API/02_endpoints/hook/01_putHookIdStatus.ts
+    // tests/UI/campaigns/functional/API/02_endpoints/05_hook/01_putHookIdStatus.ts
     '/hooks/{hookId}/status: PUT',
-    // tests/UI/campaigns/functional/API/02_endpoints/hook/02_getHookId.ts
+    // tests/UI/campaigns/functional/API/02_endpoints/05_hook/02_getHookId.ts
     '/hooks/{hookId}: GET',
-    // tests/UI/campaigns/functional/API/02_endpoints/hook/03_getHooks.ts
+    // tests/UI/campaigns/functional/API/02_endpoints/05_hook/03_getHooks.ts
     '/hooks: GET',
-    // tests/UI/campaigns/functional/API/02_endpoints/language/01_getLanguages.ts
+    // tests/UI/campaigns/functional/API/02_endpoints/06_language/01_getLanguages.ts
     '/languages: GET',
-    // tests/UI/campaigns/functional/API/02_endpoints/module/10_putModulesBulkUninstall.ts
+    // tests/UI/campaigns/functional/API/02_endpoints/07_module/10_putModulesBulkUninstall.ts
     '/modules/bulk-uninstall: PUT',
-    // tests/UI/campaigns/functional/API/02_endpoints/module/09_putModulesBulkUpdateStatus.ts
+    // tests/UI/campaigns/functional/API/02_endpoints/07_module/09_putModulesBulkUpdateStatus.ts
     '/modules/bulk-update-status: PUT',
-    // tests/UI/campaigns/functional/API/02_endpoints/module/01_postModuleUploadArchive.ts
+    // tests/UI/campaigns/functional/API/02_endpoints/07_module/01_postModuleUploadArchive.ts
     '/modules/upload-archive: POST',
-    // tests/UI/campaigns/functional/API/02_endpoints/module/02_postModuleUploadSource.ts
+    // tests/UI/campaigns/functional/API/02_endpoints/07_module/02_postModuleUploadSource.ts
     '/modules/upload-source: POST',
-    // tests/UI/campaigns/functional/API/02_endpoints/module/03_putModuleTechnicalNameInstall.ts
+    // tests/UI/campaigns/functional/API/02_endpoints/07_module/03_putModuleTechnicalNameInstall.ts
     '/modules/{technicalName}/install: PUT',
-    // tests/UI/campaigns/functional/API/02_endpoints/module/04_patchModuleTechnicalNameReset.ts
+    // tests/UI/campaigns/functional/API/02_endpoints/07_module/04_patchModuleTechnicalNameReset.ts
     '/modules/{technicalName}/reset: PATCH',
-    // tests/UI/campaigns/functional/API/02_endpoints/module/05_putModuleTechnicalNameStatus.ts
+    // tests/UI/campaigns/functional/API/02_endpoints/07_module/05_putModuleTechnicalNameStatus.ts
     '/modules/{technicalName}/status: PUT',
-    // tests/UI/campaigns/functional/API/02_endpoints/module/06_putModuleTechnicalNameUninstall.ts
+    // tests/UI/campaigns/functional/API/02_endpoints/07_module/06_putModuleTechnicalNameUninstall.ts
     '/modules/{technicalName}/uninstall: PUT',
-    // tests/UI/campaigns/functional/API/02_endpoints/module/07_putModuleTechnicalNameUpgrade.ts
+    // tests/UI/campaigns/functional/API/02_endpoints/07_module/07_putModuleTechnicalNameUpgrade.ts
     '/modules/{technicalName}/upgrade: PUT',
-    // tests/UI/campaigns/functional/API/02_endpoints/module/08_getModuleTechnicalName.ts
+    // tests/UI/campaigns/functional/API/02_endpoints/07_module/08_getModuleTechnicalName.ts
     '/modules/{technicalName}: GET',
-    // tests/UI/campaigns/functional/API/02_endpoints/module/11_getModules.ts
+    // tests/UI/campaigns/functional/API/02_endpoints/07_module/11_getModules.ts
     '/modules: GET',
     // @todo: add tests
     '/products/combinations/{combinationId}: GET',
-    // tests/UI/campaigns/functional/API/02_endpoints/product/01_deleteProductImageId.ts
+    // tests/UI/campaigns/functional/API/02_endpoints/08_product/01_deleteProductImageId.ts
     '/products/images/{imageId}: DELETE',
-    // tests/UI/campaigns/functional/API/02_endpoints/product/02_getProductImageId.ts
+    // tests/UI/campaigns/functional/API/02_endpoints/08_product/02_getProductImageId.ts
     '/products/images/{imageId}: GET',
-    // tests/UI/campaigns/functional/API/02_endpoints/product/03_postProductImageId.ts
+    // tests/UI/campaigns/functional/API/02_endpoints/08_product/03_postProductImageId.ts
     '/products/images/{imageId}: POST',
-    // tests/UI/campaigns/functional/API/02_endpoints/product/11_getProductsSearch.ts
+    // tests/UI/campaigns/functional/API/02_endpoints/08_product/11_getProductsSearch.ts
     '/products/search: GET',
     // @todo: add tests
     '/products/{productId}/combination-ids: GET',
@@ -224,26 +227,36 @@ describe('API : Check endpoints', async () => {
     '/products/{productId}/combinations: GET',
     // @todo: add tests
     '/products/{productId}/generate-combinations: POST',
-    // tests/UI/campaigns/functional/API/02_endpoints/product/05_getProductIdImages.ts
+    // tests/UI/campaigns/functional/API/02_endpoints/08_product/05_getProductIdImages.ts
     '/products/{productId}/images: GET',
-    // tests/UI/campaigns/functional/API/02_endpoints/product/04_postProductIdImage.ts
+    // tests/UI/campaigns/functional/API/02_endpoints/08_product/04_postProductIdImage.ts
     '/products/{productId}/images: POST',
-    // tests/UI/campaigns/functional/API/02_endpoints/product/06_patchProductIdShops.ts
+    // tests/UI/campaigns/functional/API/02_endpoints/08_product/06_patchProductIdShops.ts
     '/products/{productId}/shops: PATCH',
-    // tests/UI/campaigns/functional/API/02_endpoints/product/07_deleteProductId.ts
+    // tests/UI/campaigns/functional/API/02_endpoints/08_product/07_deleteProductId.ts
     '/products/{productId}: DELETE',
-    // tests/UI/campaigns/functional/API/02_endpoints/product/08_getProductId.ts
+    // tests/UI/campaigns/functional/API/02_endpoints/08_product/08_getProductId.ts
     '/products/{productId}: GET',
-    // tests/UI/campaigns/functional/API/02_endpoints/product/09_patchProductId.ts
+    // tests/UI/campaigns/functional/API/02_endpoints/08_product/09_patchProductId.ts
     '/products/{productId}: PATCH',
-    // tests/UI/campaigns/functional/API/02_endpoints/product/12_getProducts.ts
+    // tests/UI/campaigns/functional/API/02_endpoints/08_product/12_getProducts.ts
     '/products: GET',
-    // tests/UI/campaigns/functional/API/02_endpoints/product/10_postProduct.ts
+    // tests/UI/campaigns/functional/API/02_endpoints/08_product/10_postProduct.ts
     '/products: POST',
+    // @todo: add tests
+    '/search-aliases/bulk-delete: DELETE',
+    // @todo: add tests
+    '/search-aliases/{searchTerm}: GET',
+    // @todo: add tests
+    '/search-aliases/{searchTerm}: PUT',
+    // @todo: add tests
+    '/search-aliases: POST',
     // @todo: add tests
     '/showcase-cards/{showcaseCardName}/{employeeId}/close: PUT',
     // @todo: add tests
     '/showcase-cards/{showcaseCardName}/{employeeId}: GET',
+    // tests/UI/campaigns/functional/API/02_endpoints/09_searchAlias/01_deleteSearch.ts
+    // '/search-aliases: DELETE',
     // @todo: add tests
     '/stores/bulk-delete: DELETE',
     // @todo: add tests
@@ -336,7 +349,7 @@ describe('API : Check endpoints', async () => {
     '/zones/{zoneId}: GET',
     // @todo: add tests
     '/zones/{zoneId}: PUT',
-    // tests/UI/campaigns/functional/API/02_endpoints/zone/08_getZones.ts
+    // tests/UI/campaigns/functional/API/02_endpoints/16_zone/08_getZones.ts
     '/zones: GET',
     // @todo: add tests
     '/zones: POST',

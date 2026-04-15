@@ -18,7 +18,7 @@ import {
 
 const baseContext: string = 'functional_API_endpoints_discount_getDiscountTypes';
 
-describe('API : GET /admin-api/discount-types', async () => {
+describe('API : GET /admin-api/discounts/types', async () => {
   let apiContext: APIRequestContext;
   let browserContext: BrowserContext;
   let page: Page;
@@ -47,10 +47,10 @@ describe('API : GET /admin-api/discount-types', async () => {
   });
 
   describe('API : Fetch Data', async () => {
-    it('should request the endpoint /discount-types', async function () {
+    it('should request the endpoint /discounts/types', async function () {
       await testContext.addContextItem(this, 'testIdentifier', 'requestEndpoint', baseContext);
 
-      const apiResponse = await apiContext.get('discount-types', {
+      const apiResponse = await apiContext.get('discounts/types', {
         headers: {
           Authorization: `Bearer ${accessToken}`,
         },

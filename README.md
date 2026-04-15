@@ -62,9 +62,9 @@ make docker-start
 
 **Default Admin Credentials:**
 - Email: `demo@prestashop.com`
-- Password: `Correct Horse Battery Staple`
+- Password: `Pr3st4Sh0P`
 
-Or the backoffice on this URL: http://localhost:8001/admin-dev (default access credentials: demo@prestashop.com / Correct Horse Battery Staple)
+Or the backoffice on this URL: http://localhost:8001/admin-dev (default access credentials: demo@prestashop.com / Pr3st4Sh0P)
 
 You can customize the admin credentials by setting the following environment variables before running docker compose:
 ```
