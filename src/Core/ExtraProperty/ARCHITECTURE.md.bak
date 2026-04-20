@@ -201,21 +201,32 @@ src/Core/ExtraProperty/
 │   └── ExtraPropertyRegistry.php           ← Core implementation (write + cache invalidation)
 ├── Repository/
 │   ├── ExtraPropertyDefinitionRepositoryInterface.php  ← read-only
-│   ├── ExtraPropertyDefinitionWriterInterface.php      ← write-side (used by ExtraPropertyRegistry)
-│   ├── ExtraPropertyDefinitionRepository.php           ← DBAL implementation (read + write)
-│   └── CachedExtraPropertyDefinitionRepository.php    ← read-only cache decorator
+│   └── ExtraPropertyDefinitionWriterInterface.php      ← write-side (used by ExtraPropertyRegistry)
 ├── Schema/
 │   ├── ExtraPropertySchemaManagerInterface.php
-│   ├── ColumnDefinitionMapper.php
-│   ├── ExtraPropertySchemaManager.php                 ← raw DDL via DBAL
-│   └── CacheInvalidatingSchemaManager.php             ← cache-invalidating decorator
+│   └── ColumnDefinitionMapper.php
+└── Storage/
+    ├── ExtraPropertyReaderInterface.php
+    ├── ExtraPropertyWriterInterface.php
+    ├── ExtraPropertyValueProviderInterface.php
+    └── ExtraPropertyValueValidator.php
+
+src/Adapter/ExtraProperty/
+├── CommandHandler/
+│   └── UpdateExtraPropertyValuesCommandHandler.php
+├── QueryHandler/
+│   └── GetExtraPropertyValuesHandler.php
+├── Repository/
+│   ├── ExtraPropertyDefinitionRepository.php
+│   └── CachedExtraPropertyDefinitionRepository.php  ← read-only cache decorator
+├── Schema/
+│   ├── ExtraPropertySchemaManager.php
+│   └── CacheInvalidatingSchemaManager.php
 ├── Storage/
-│   ├── ExtraPropertyReaderInterface.php               ← read values + findCustomFieldDefinition
-│   ├── ExtraPropertyWriterInterface.php
 │   ├── ExtraPropertyReader.php
 │   ├── ExtraPropertyWriter.php
-│   └── ExtraPropertyValueValidator.php
-├── Form/
+│   └── ExtraPropertyValueProvider.php
+├── BackOffice/
 │   ├── ExtraPropertiesFormBuilderModifier.php
 │   ├── ExtraPropertiesFormDataLoader.php
 │   ├── ExtraPropertiesFormDataPersister.php
@@ -224,12 +235,6 @@ src/Core/ExtraProperty/
     ├── ExtraPropertiesGridDefinitionModifier.php
     ├── ExtraPropertiesGridDefinitionProvider.php
     └── ExtraPropertiesGridQueryBuilderModifier.php
-
-src/Adapter/ExtraProperty/
-├── CommandHandler/
-│   └── UpdateExtraPropertyValuesCommandHandler.php
-└── QueryHandler/
-    └── GetExtraPropertyValuesHandler.php
 
 src/Adapter/Presenter/
 ├── AbstractLazyArray.php                ← adds getExtraProperties() + $extraPropertiesLazyArray
@@ -406,7 +411,6 @@ $this->registerExtraProperty(
 > - `getByEntityName(string $entityName, string $fieldScope): list<ExtraPropertyDefinitionInfo>`
 > - `getByEntityAndPropertyName(...): ?ExtraPropertyDefinitionInfo`
 > - `getDefinitionById(int $id): ?ExtraPropertyDefinitionInfo`
-> - `findDefinitionByModuleAndField(string $entityName, ?string $moduleName, string $fieldName, string $fieldScope): ?ExtraPropertyDefinitionInfo`
 > - `getDefinitionCollection(string $entityName): ExtraPropertyDefinitionCollection`
 >
 > All read methods return typed `ExtraPropertyDefinitionInfo` value objects (not raw associative arrays).
@@ -414,12 +418,13 @@ $this->registerExtraProperty(
 > **Write side** — `ExtraPropertyRegistryInterface` (Core, write-only):
 > - `register(string $entityName, string $propertyName, ExtraPropertyOptions $options): bool`
 > - `unregister(string $entityName, string $propertyName, ?string $moduleName, ExtraPropertyScope $fieldScope, bool $dropColumn): bool`
+> - `unregisterById(int $idExtraPropertyDefinition, bool $dropColumn): bool`
 >
-**`ExtraPropertyRegistry`** (Core `Core\ExtraProperty\Registry\`): orchestrates register/unregister — validates input, calls `ExtraPropertySchemaManager` to create tables/columns, calls `ExtraPropertyDefinitionWriterInterface` to persist, then invalidates the definition cache. Injects two repository handles: `$readRepository` (cached, for pre-flight checks) and `$writeRepository` (uncached DBAL, for mutations).
+**`ExtraPropertyRegistry`** (Core `Core\ExtraProperty\Registry\`): orchestrates register/unregister — validates input, calls `ExtraPropertySchemaManager` to create tables/columns, calls `ExtraPropertyDefinitionWriterInterface` to persist, then invalidates the definition cache.
 
-**`CachedExtraPropertyDefinitionRepository`** (Core `Core\ExtraProperty\Repository\`): read-only cache decorator wrapping `ExtraPropertyDefinitionRepository`. Uses Symfony `cache.app` (optional, `@?cache.app`) + `FilesystemAdapter` fallback under `%ps_cache_dir%/extra_property_definition`. Cache is invalidated by `ExtraPropertyRegistry` after writes. The cache key is computed by the public static method `CachedExtraPropertyDefinitionRepository::buildCacheKey(string $entityName)` — the single authoritative source used by both the registry and the schema manager decorator.
+**`CachedExtraPropertyDefinitionRepository`** (Adapter): read-only cache decorator wrapping `ExtraPropertyDefinitionRepository`. Uses Symfony `cache.app` (optional, `@?cache.app`) + `FilesystemAdapter` fallback under `%ps_cache_dir%/extra_property_definition`. Cache is invalidated by `ExtraPropertyRegistry` after writes (using the same cache key prefix).
 
-**`CacheInvalidatingSchemaManager`** (Core `Core\ExtraProperty\Schema\`): wraps `ExtraPropertySchemaManager`. Also invalidates both cache pools after each DDL operation (`ensureExtraTableAndColumn`, `dropExtraColumnIfExists`). `ExtraPropertyRegistry` invalidates again after the full register/unregister sequence — the double-invalidation is intentional and harmless.
+**`CacheInvalidatingSchemaManager`** (decorator): wraps `ExtraPropertySchemaManager`. Also invalidates both cache pools after each DDL operation (`ensureExtraTableAndColumn`, `dropExtraColumnIfExists`). `ExtraPropertyRegistry` invalidates again after the full register/unregister sequence — the double-invalidation is intentional and harmless.
 
 ### 3.8. ExtraPropertyValueValidator
 
@@ -441,7 +446,7 @@ Maps `ExtraPropertyType` string values to SQL column definitions. Handles `Extra
 
 Reads extra property values from `_extra` tables. Uses `Doctrine\DBAL\Connection`.
 
-**Interface**: `ExtraPropertyReaderInterface` (merges former `ExtraPropertyValueProviderInterface`)
+**Interface**: `ExtraPropertyReaderInterface`
 
 Key methods:
 
@@ -465,20 +470,32 @@ public function getExtraProperties(
  * @return list<ExtraPropertyDefinitionInfo>
  */
 public function getDefinitionsByModule(string $entityName, ?string $moduleName, ?string $fieldScope = null): array;
-
-/**
- * Finds one definition by field name. Returns null when ambiguous (multiple scopes match).
- */
-public function findCustomFieldDefinition(string $entityName, string $fieldName, ?string $fieldScope = null): ?ExtraPropertyDefinitionInfo;
 ```
 
 > **[impl]** The original proposal returned a flat `['column_name' => value]` map. The actual implementation returns values **grouped by module**: `['_core' => ['field' => value], 'mymodule' => ['field' => value]]`. The method also accepts `primaryKeyName` (not assumed from entity name), `isLangMultishop`, and `preloadedDefinitions` (typed `ExtraPropertyDefinitionCollection`, to avoid double DB reads when definitions are already loaded by ObjectModel). `displayFrontOnly` was removed: front-office display is a template concern left to module developers, not a registry flag.
->
-> `findCustomFieldDefinition()` was formerly on the now-deleted `ExtraPropertyValueProviderInterface`. It was merged into `ExtraPropertyReaderInterface` to eliminate the need for a separate value provider service — `ExtraPropertiesLazyArray` only depends on `ExtraPropertyReaderInterface`.
 
 **Performance**: reads definitions from the repository (cached); if no definitions exist for the entity, returns an empty array immediately without DB query.
 
-### 3.11. ExtraPropertyWriter
+### 3.11. ExtraPropertyValueProvider
+
+Aggregates extra property values for FO presenters. Delegates to `ExtraPropertyReaderInterface` and applies scope-aware reads. Used by `ExtraPropertiesLazyArray`.
+
+**Interface**: `ExtraPropertyValueProviderInterface`
+
+```php
+/**
+ * Finds one definition for an entity and field name (used by legacy lookup paths).
+ * Returns null when ambiguous (multiple scopes match).
+ */
+public function findCustomFieldDefinition(string $entityName, string $fieldName, ?string $fieldScope = null): ?ExtraPropertyDefinitionInfo;
+
+/**
+ * Returns extra properties grouped by module: ['_core' => [...], 'mymodule' => [...]]
+ */
+public function getExtraProperties(string $entityName, string $primaryKeyName, int $entityId, ?int $langId = null, ?int $shopId = null, bool $isLangMultishop = false): array;
+```
+
+### 3.12. ExtraPropertyWriter
 
 Writes extra property values to `_extra` tables. Uses `INSERT ... ON DUPLICATE KEY UPDATE` for upsert behavior.
 
@@ -524,7 +541,7 @@ public function deleteAll(string $entityName, string $primaryKeyName, int $entit
 
 > **[impl]** The original proposal named the methods `saveExtraProperties()` / `deleteExtraProperties()`. The actual implementation uses `writeAll()` (bulk, scope-separated), `writeValue()` (single field), and `deleteAll()` (cleans up all three `*_extra*` tables when an entity is deleted). `ObjectModel::delete()` calls `deleteAll()` via `ServiceLocator`, mirroring the pattern used in `persistExtraProperties()`.
 
-### 3.12. ExtraPropertyDefinitionRepository
+### 3.13. ExtraPropertyDefinitionRepository
 
 CRUD operations for the `ps_extra_property_definition` table. Uses `Doctrine\DBAL\Connection`. Implements both `ExtraPropertyDefinitionRepositoryInterface` (read) and `ExtraPropertyDefinitionWriterInterface` (write).
 
@@ -540,7 +557,7 @@ Key methods:
 
 > **[impl]** All read methods return typed `ExtraPropertyDefinitionInfo` value objects (not raw arrays). `save()` takes typed parameters (not an `array $data` map); the data array is assembled internally. The storage column name is never stored in the registry row — it is always computed by `ExtraPropertyNaming::storageColumnName()`.
 
-### 3.13. Service Configuration
+### 3.14. Service Configuration
 
 Located at `src/PrestaShopBundle/Resources/config/services/adapter/extra_property.yml` (for most services) and `src/PrestaShopBundle/Resources/config/services/core/grid/grid_extra_properties.yml` (for grid services):
 
@@ -548,9 +565,7 @@ Located at `src/PrestaShopBundle/Resources/config/services/adapter/extra_propert
 > - `ExtraPropertyDefinitionRepositoryInterface` → `CachedExtraPropertyDefinitionRepository` (read, cached)
 > - `ExtraPropertyRegistryInterface` → `ExtraPropertyRegistry` (write, Core class)
 >
-> All implementations live in `Core\ExtraProperty\*`. Only `CommandHandler` and `QueryHandler` remain in `Adapter\ExtraProperty\*`.
->
-> Cache key is computed by `CachedExtraPropertyDefinitionRepository::buildCacheKey()` (public static) — the single source of truth used by registry, schema manager decorator, and any future caller.
+> `ExtraPropertyRegistry` lives in Core but receives the cache key prefix via injection (`$cacheKeyPrefix`) so it has no compile-time dependency on the Adapter `CachedExtraPropertyDefinitionRepository`.
 
 ```yaml
 services:
@@ -562,71 +577,77 @@ services:
     class: Symfony\Component\Cache\Adapter\FilesystemAdapter
     arguments: ['', 0, '%ps_cache_dir%/extra_property_definition']
 
-  # Repository (uncached, Core)
-  PrestaShop\PrestaShop\Core\ExtraProperty\Repository\ExtraPropertyDefinitionRepository:
+  # Repository (uncached, Adapter)
+  PrestaShop\PrestaShop\Adapter\ExtraProperty\Repository\ExtraPropertyDefinitionRepository:
     arguments:
       $connection: '@doctrine.dbal.default_connection'
       $prefix: '%database_prefix%'
 
-  PrestaShop\PrestaShop\Core\ExtraProperty\Repository\ExtraPropertyDefinitionWriterInterface:
-    alias: 'PrestaShop\PrestaShop\Core\ExtraProperty\Repository\ExtraPropertyDefinitionRepository'
-
-  # Cached read-only repository decorator (Core)
-  PrestaShop\PrestaShop\Core\ExtraProperty\Repository\CachedExtraPropertyDefinitionRepository:
+  # Cached read-only repository decorator (Adapter)
+  PrestaShop\PrestaShop\Adapter\ExtraProperty\Repository\CachedExtraPropertyDefinitionRepository:
     arguments:
-      $repository: '@PrestaShop\PrestaShop\Core\ExtraProperty\Repository\ExtraPropertyDefinitionRepository'
+      $repository: '@PrestaShop\PrestaShop\Adapter\ExtraProperty\Repository\ExtraPropertyDefinitionRepository'
       $cacheApp: '@?cache.app'
       $filesystemDefinitionCache: '@prestashop.extra_property.definition.filesystem_cache'
 
   PrestaShop\PrestaShop\Core\ExtraProperty\Repository\ExtraPropertyDefinitionRepositoryInterface:
-    alias: 'PrestaShop\PrestaShop\Core\ExtraProperty\Repository\CachedExtraPropertyDefinitionRepository'
+    alias: 'PrestaShop\PrestaShop\Adapter\ExtraProperty\Repository\CachedExtraPropertyDefinitionRepository'
 
-  # Schema manager: base + cache-invalidating decorator (Core)
-  PrestaShop\PrestaShop\Core\ExtraProperty\Schema\ExtraPropertySchemaManager:
+  # Schema manager: base + cache-invalidating decorator
+  PrestaShop\PrestaShop\Adapter\ExtraProperty\Schema\ExtraPropertySchemaManager:
     arguments:
       $connection: '@doctrine.dbal.default_connection'
       $prefix: '%database_prefix%'
       $logger: '@?logger'
 
-  PrestaShop\PrestaShop\Core\ExtraProperty\Schema\CacheInvalidatingSchemaManager:
+  PrestaShop\PrestaShop\Adapter\ExtraProperty\Schema\CacheInvalidatingSchemaManager:
     arguments:
-      $inner: '@PrestaShop\PrestaShop\Core\ExtraProperty\Schema\ExtraPropertySchemaManager'
+      $inner: '@PrestaShop\PrestaShop\Adapter\ExtraProperty\Schema\ExtraPropertySchemaManager'
       $cacheApp: '@?cache.app'
       $filesystemDefinitionCache: '@prestashop.extra_property.definition.filesystem_cache'
 
   PrestaShop\PrestaShop\Core\ExtraProperty\Schema\ExtraPropertySchemaManagerInterface:
-    alias: 'PrestaShop\PrestaShop\Core\ExtraProperty\Schema\CacheInvalidatingSchemaManager'
+    alias: 'PrestaShop\PrestaShop\Adapter\ExtraProperty\Schema\CacheInvalidatingSchemaManager'
 
   # Registry (write-only, Core)
   PrestaShop\PrestaShop\Core\ExtraProperty\Registry\ExtraPropertyRegistry:
     arguments:
-      $readRepository: '@PrestaShop\PrestaShop\Core\ExtraProperty\Repository\ExtraPropertyDefinitionRepositoryInterface'
-      $writeRepository: '@PrestaShop\PrestaShop\Core\ExtraProperty\Repository\ExtraPropertyDefinitionRepository'
+      $repository: '@PrestaShop\PrestaShop\Adapter\ExtraProperty\Repository\ExtraPropertyDefinitionRepository'
       $schemaManager: '@PrestaShop\PrestaShop\Core\ExtraProperty\Schema\ExtraPropertySchemaManagerInterface'
       $cacheApp: '@?cache.app'
       $filesystemDefinitionCache: '@prestashop.extra_property.definition.filesystem_cache'
+      $cacheKeyPrefix: !php/const 'PrestaShop\PrestaShop\Adapter\ExtraProperty\Repository\CachedExtraPropertyDefinitionRepository::CACHE_KEY_PREFIX'
       $logger: '@?logger'
 
   PrestaShop\PrestaShop\Core\ExtraProperty\Registry\ExtraPropertyRegistryInterface:
     alias: 'PrestaShop\PrestaShop\Core\ExtraProperty\Registry\ExtraPropertyRegistry'
 
-  # Reader / Writer (Core)
-  PrestaShop\PrestaShop\Core\ExtraProperty\Storage\ExtraPropertyReader:
+  # Reader / Writer
+  PrestaShop\PrestaShop\Adapter\ExtraProperty\Storage\ExtraPropertyReader:
     arguments:
       $repository: '@PrestaShop\PrestaShop\Core\ExtraProperty\Repository\ExtraPropertyDefinitionRepositoryInterface'
       $connection: '@doctrine.dbal.default_connection'
       $prefix: '%database_prefix%'
 
   PrestaShop\PrestaShop\Core\ExtraProperty\Storage\ExtraPropertyReaderInterface:
-    alias: 'PrestaShop\PrestaShop\Core\ExtraProperty\Storage\ExtraPropertyReader'
+    alias: 'PrestaShop\PrestaShop\Adapter\ExtraProperty\Storage\ExtraPropertyReader'
 
-  PrestaShop\PrestaShop\Core\ExtraProperty\Storage\ExtraPropertyWriter:
+  PrestaShop\PrestaShop\Adapter\ExtraProperty\Storage\ExtraPropertyWriter:
     arguments:
       $connection: '@doctrine.dbal.default_connection'
       $prefix: '%database_prefix%'
 
   PrestaShop\PrestaShop\Core\ExtraProperty\Storage\ExtraPropertyWriterInterface:
-    alias: 'PrestaShop\PrestaShop\Core\ExtraProperty\Storage\ExtraPropertyWriter'
+    alias: 'PrestaShop\PrestaShop\Adapter\ExtraProperty\Storage\ExtraPropertyWriter'
+
+  # Value provider (FO presenters)
+  PrestaShop\PrestaShop\Adapter\ExtraProperty\Storage\ExtraPropertyValueProvider:
+    arguments:
+      $repository: '@PrestaShop\PrestaShop\Core\ExtraProperty\Repository\ExtraPropertyDefinitionRepositoryInterface'
+      $reader: '@PrestaShop\PrestaShop\Core\ExtraProperty\Storage\ExtraPropertyReaderInterface'
+
+  PrestaShop\PrestaShop\Core\ExtraProperty\Storage\ExtraPropertyValueProviderInterface:
+    alias: 'PrestaShop\PrestaShop\Adapter\ExtraProperty\Storage\ExtraPropertyValueProvider'
 ```
 
 ---
@@ -729,7 +750,7 @@ public function unregisterExtraProperty(
 
 > **[impl]** Automatic cleanup on uninstall is **not yet implemented**. `Module::uninstall()` does not call any extra property cleanup. Modules are responsible for calling `unregisterExtraProperty()` explicitly in their `uninstall()` method if they want to clean up their definitions and/or columns.
 >
-> `unregisterAllExtraProperties()` is **not** exposed on `Module`. If needed, modules can iterate their definitions via `ExtraPropertyDefinitionRepositoryInterface` and call `ExtraPropertyRegistryInterface::unregister()` directly.
+> `unregisterExtraPropertyById()` and `unregisterAllExtraProperties()` are **not** exposed on `Module`. If needed, modules can call `ExtraPropertyRegistryInterface::unregisterById()` directly via `$this->get(ExtraPropertyRegistryInterface::class)->unregisterById($id, true)`.
 
 ### 5.3. Module Usage Example
 
@@ -800,7 +821,7 @@ class ExtraPropertiesLazyArray
 }
 ```
 
-`getValues()` delegates to `ExtraPropertyReaderInterface::getExtraProperties()`. The `isLangMultishop` flag is derived from the entity's ObjectModel definition (`$def['multilang'] && $def['multilang_shop']`), not hardcoded — entities that are not lang-multishop pass `false`. All registered extra properties are returned — front-office filtering is left to the module template.
+`getValues()` delegates to `ExtraPropertyValueProviderInterface::getExtraProperties()`. The `isLangMultishop` flag is derived from the entity's ObjectModel definition (`$def['multilang'] && $def['multilang_shop']`), not hardcoded — entities that are not lang-multishop pass `false`. All registered extra properties are returned — front-office filtering is left to the module template.
 
 **LazyArrays that expose `extraProperties`** (via `$this->extraPropertiesLazyArray` assignment before `parent::__construct()`):
 
@@ -1024,7 +1045,7 @@ ORDER BY extra_common_mymodule_custom_size ASC
 |------|----------|---------------------|-------------|
 | Boolean | `Bool` | `ObjectModel::TYPE_BOOL` | true/false, stored as `tinyint(1)` |
 | Integer | `Int` | `ObjectModel::TYPE_INT` | Whole numbers |
-| String | `String` | `ObjectModel::TYPE_STRING` | Text up to `size` characters |
+| String | `String` | `ObjectModel::TYPE_STRING` | Text up to `size` characters |       |
 
 ### Phase 7 (Additional types)
 

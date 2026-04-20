@@ -14,28 +14,32 @@ services:
 
   # ─── Repository ──────────────────────────────────────────────────────────────
 
-  PrestaShop\PrestaShop\Adapter\ExtraProperty\Repository\ExtraPropertyDefinitionRepository:
+  PrestaShop\PrestaShop\Core\ExtraProperty\Repository\ExtraPropertyDefinitionRepository:
     public: false
     arguments:
       $connection: '@doctrine.dbal.default_connection'
       $prefix: '%database_prefix%'
 
+  PrestaShop\PrestaShop\Core\ExtraProperty\Repository\ExtraPropertyDefinitionWriterInterface:
+    alias: 'PrestaShop\PrestaShop\Core\ExtraProperty\Repository\ExtraPropertyDefinitionRepository'
+    public: false
+
   # ─── Cached repository decorator (read-only, production use) ─────────────────
 
-  PrestaShop\PrestaShop\Adapter\ExtraProperty\Repository\CachedExtraPropertyDefinitionRepository:
+  PrestaShop\PrestaShop\Core\ExtraProperty\Repository\CachedExtraPropertyDefinitionRepository:
     public: false
     arguments:
-      $repository: '@PrestaShop\PrestaShop\Adapter\ExtraProperty\Repository\ExtraPropertyDefinitionRepository'
+      $repository: '@PrestaShop\PrestaShop\Core\ExtraProperty\Repository\ExtraPropertyDefinitionRepository'
       $cacheApp: '@?cache.app'
       $filesystemDefinitionCache: '@prestashop.extra_property.definition.filesystem_cache'
 
   PrestaShop\PrestaShop\Core\ExtraProperty\Repository\ExtraPropertyDefinitionRepositoryInterface:
-    alias: 'PrestaShop\PrestaShop\Adapter\ExtraProperty\Repository\CachedExtraPropertyDefinitionRepository'
+    alias: 'PrestaShop\PrestaShop\Core\ExtraProperty\Repository\CachedExtraPropertyDefinitionRepository'
     public: true
 
   # ─── Schema manager (raw DDL, no cache) ──────────────────────────────────────
 
-  PrestaShop\PrestaShop\Adapter\ExtraProperty\Schema\ExtraPropertySchemaManager:
+  PrestaShop\PrestaShop\Core\ExtraProperty\Schema\ExtraPropertySchemaManager:
     public: false
     arguments:
       $connection: '@doctrine.dbal.default_connection'
@@ -44,27 +48,27 @@ services:
 
   # ─── Cache-invalidating schema manager decorator ──────────────────────────────
 
-  PrestaShop\PrestaShop\Adapter\ExtraProperty\Schema\CacheInvalidatingSchemaManager:
+  PrestaShop\PrestaShop\Core\ExtraProperty\Schema\CacheInvalidatingSchemaManager:
     public: false
     arguments:
-      $inner: '@PrestaShop\PrestaShop\Adapter\ExtraProperty\Schema\ExtraPropertySchemaManager'
+      $inner: '@PrestaShop\PrestaShop\Core\ExtraProperty\Schema\ExtraPropertySchemaManager'
       $cacheApp: '@?cache.app'
       $filesystemDefinitionCache: '@prestashop.extra_property.definition.filesystem_cache'
 
   PrestaShop\PrestaShop\Core\ExtraProperty\Schema\ExtraPropertySchemaManagerInterface:
-    alias: 'PrestaShop\PrestaShop\Adapter\ExtraProperty\Schema\CacheInvalidatingSchemaManager'
+    alias: 'PrestaShop\PrestaShop\Core\ExtraProperty\Schema\CacheInvalidatingSchemaManager'
     public: false
 
-  # ─── Registry (write-only, invalidates cache directly) ───────────────────────
+  # ─── Registry (write-only, invalidates cache) ────────────────────────────────
 
   PrestaShop\PrestaShop\Core\ExtraProperty\Registry\ExtraPropertyRegistry:
     public: false
     arguments:
-      $repository: '@PrestaShop\PrestaShop\Adapter\ExtraProperty\Repository\ExtraPropertyDefinitionRepository'
+      $readRepository: '@PrestaShop\PrestaShop\Core\ExtraProperty\Repository\ExtraPropertyDefinitionRepositoryInterface'
+      $writeRepository: '@PrestaShop\PrestaShop\Core\ExtraProperty\Repository\ExtraPropertyDefinitionRepository'
       $schemaManager: '@PrestaShop\PrestaShop\Core\ExtraProperty\Schema\ExtraPropertySchemaManagerInterface'
       $cacheApp: '@?cache.app'
       $filesystemDefinitionCache: '@prestashop.extra_property.definition.filesystem_cache'
-      $cacheKeyPrefix: !php/const 'PrestaShop\PrestaShop\Adapter\ExtraProperty\Repository\CachedExtraPropertyDefinitionRepository::CACHE_KEY_PREFIX'
       $logger: '@?logger'
 
   PrestaShop\PrestaShop\Core\ExtraProperty\Registry\ExtraPropertyRegistryInterface:
@@ -75,7 +79,7 @@ services:
   # Lightweight service: only depends on the repository and DBAL.
   # Suitable for the common.yml (FO) container as well as the BO/API containers.
 
-  PrestaShop\PrestaShop\Adapter\ExtraProperty\Storage\ExtraPropertyReader:
+  PrestaShop\PrestaShop\Core\ExtraProperty\Storage\ExtraPropertyReader:
     public: false
     arguments:
       $repository: '@PrestaShop\PrestaShop\Core\ExtraProperty\Repository\ExtraPropertyDefinitionRepositoryInterface'
@@ -83,19 +87,19 @@ services:
       $prefix: '%database_prefix%'
 
   PrestaShop\PrestaShop\Core\ExtraProperty\Storage\ExtraPropertyReaderInterface:
-    alias: 'PrestaShop\PrestaShop\Adapter\ExtraProperty\Storage\ExtraPropertyReader'
+    alias: 'PrestaShop\PrestaShop\Core\ExtraProperty\Storage\ExtraPropertyReader'
     public: true
 
   # ─── Writer ──────────────────────────────────────────────────────────────────
 
-  PrestaShop\PrestaShop\Adapter\ExtraProperty\Storage\ExtraPropertyWriter:
+  PrestaShop\PrestaShop\Core\ExtraProperty\Storage\ExtraPropertyWriter:
     public: false
     arguments:
       $connection: '@doctrine.dbal.default_connection'
       $prefix: '%database_prefix%'
 
   PrestaShop\PrestaShop\Core\ExtraProperty\Storage\ExtraPropertyWriterInterface:
-    alias: 'PrestaShop\PrestaShop\Adapter\ExtraProperty\Storage\ExtraPropertyWriter'
+    alias: 'PrestaShop\PrestaShop\Core\ExtraProperty\Storage\ExtraPropertyWriter'
     public: true
 
   # ─── Value validator ─────────────────────────────────────────────────────────
@@ -105,40 +109,30 @@ services:
     arguments:
       $translator: '@?translator'
 
-  PrestaShop\PrestaShop\Adapter\ExtraProperty\Storage\ExtraPropertyValueProvider:
-    public: false
-    arguments:
-      $repository: '@PrestaShop\PrestaShop\Core\ExtraProperty\Repository\ExtraPropertyDefinitionRepositoryInterface'
-      $reader: '@PrestaShop\PrestaShop\Core\ExtraProperty\Storage\ExtraPropertyReaderInterface'
+  # ─── Back-office form services ────────────────────────────────────────────────
 
-  PrestaShop\PrestaShop\Core\ExtraProperty\Storage\ExtraPropertyValueProviderInterface:
-    alias: 'PrestaShop\PrestaShop\Adapter\ExtraProperty\Storage\ExtraPropertyValueProvider'
-    public: true
-
-  # ─── Back-office form / grid services ────────────────────────────────────────
-
-  PrestaShop\PrestaShop\Adapter\ExtraProperty\BackOffice\ExtraPropertiesFormDefinitionProvider:
+  PrestaShop\PrestaShop\Core\ExtraProperty\Form\ExtraPropertiesFormDefinitionProvider:
     public: false
     arguments:
       $repository: '@PrestaShop\PrestaShop\Core\ExtraProperty\Repository\ExtraPropertyDefinitionRepositoryInterface'
 
-  PrestaShop\PrestaShop\Adapter\ExtraProperty\BackOffice\ExtraPropertiesFormDataLoader:
+  PrestaShop\PrestaShop\Core\ExtraProperty\Form\ExtraPropertiesFormDataLoader:
     public: false
     arguments:
       $connection: '@doctrine.dbal.default_connection'
       $prefix: '%database_prefix%'
 
-  PrestaShop\PrestaShop\Adapter\ExtraProperty\BackOffice\ExtraPropertiesFormBuilderModifier:
+  PrestaShop\PrestaShop\Core\ExtraProperty\Form\ExtraPropertiesFormBuilderModifier:
     public: false
     arguments:
-      $definitionProvider: '@PrestaShop\PrestaShop\Adapter\ExtraProperty\BackOffice\ExtraPropertiesFormDefinitionProvider'
-      $dataLoader: '@PrestaShop\PrestaShop\Adapter\ExtraProperty\BackOffice\ExtraPropertiesFormDataLoader'
+      $definitionProvider: '@PrestaShop\PrestaShop\Core\ExtraProperty\Form\ExtraPropertiesFormDefinitionProvider'
+      $dataLoader: '@PrestaShop\PrestaShop\Core\ExtraProperty\Form\ExtraPropertiesFormDataLoader'
       $translator: '@translator'
 
-  PrestaShop\PrestaShop\Adapter\ExtraProperty\BackOffice\ExtraPropertiesFormDataPersister:
+  PrestaShop\PrestaShop\Core\ExtraProperty\Form\ExtraPropertiesFormDataPersister:
     public: false
     arguments:
-      $definitionProvider: '@PrestaShop\PrestaShop\Adapter\ExtraProperty\BackOffice\ExtraPropertiesFormDefinitionProvider'
+      $definitionProvider: '@PrestaShop\PrestaShop\Core\ExtraProperty\Form\ExtraPropertiesFormDefinitionProvider'
       $commandBus: '@prestashop.core.command_bus'
 
   # ─── CQRS command handler ─────────────────────────────────────────────────────

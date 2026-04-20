@@ -6,7 +6,7 @@
 
 declare(strict_types=1);
 
-namespace PrestaShop\PrestaShop\Adapter\ExtraProperty\Storage;
+namespace PrestaShop\PrestaShop\Core\ExtraProperty\Storage;
 
 use Doctrine\DBAL\Connection;
 use PrestaShop\PrestaShop\Core\Domain\ExtraProperty\QueryResult\ExtraPropertyDefinitionInfo;
@@ -15,14 +15,16 @@ use PrestaShop\PrestaShop\Core\ExtraProperty\ExtraPropertyNaming;
 use PrestaShop\PrestaShop\Core\ExtraProperty\ExtraPropertyScope;
 use PrestaShop\PrestaShop\Core\ExtraProperty\ExtraPropertyScopeGrouper;
 use PrestaShop\PrestaShop\Core\ExtraProperty\Repository\ExtraPropertyDefinitionRepositoryInterface;
-use PrestaShop\PrestaShop\Core\ExtraProperty\Storage\ExtraPropertyReaderInterface;
 use Throwable;
 
 /**
  * Reads extra property values from the *_extra / *_extra_lang / *_extra_shop tables.
  *
- * Used by ObjectModel (via ServiceLocator) and front-office LazyArray contexts.
+ * Used by ObjectModel (via ServiceLocator) and front-office LazyArray / presenter contexts.
  * Values are grouped by module technical name then by field name.
+ *
+ * Also provides findCustomFieldDefinition() (formerly on ExtraPropertyValueProvider) to look
+ * up a single definition by field name across all scopes.
  */
 class ExtraPropertyReader implements ExtraPropertyReaderInterface
 {
@@ -99,6 +101,44 @@ class ExtraPropertyReader implements ExtraPropertyReaderInterface
                 return true;
             }
         ));
+    }
+
+    /**
+     * {@inheritdoc}
+     *
+     * When $fieldScope is null, returns the single matching definition or null when ambiguous.
+     */
+    public function findCustomFieldDefinition(string $entityName, string $fieldName, ?string $fieldScope = null): ?ExtraPropertyDefinitionInfo
+    {
+        if (null !== $fieldScope && !in_array($fieldScope, ExtraPropertyScope::values(), true)) {
+            return null;
+        }
+
+        $matchingDefinitions = [];
+        foreach ($this->repository->getByEntityNameAllScopes($entityName) as $definition) {
+            if ($definition->getPropertyName() !== $fieldName) {
+                continue;
+            }
+
+            $definitionScope = $definition->getFieldScope();
+            if (!in_array($definitionScope, ExtraPropertyScope::values(), true)) {
+                continue;
+            }
+            if (null !== $fieldScope && $definitionScope !== $fieldScope) {
+                continue;
+            }
+
+            $matchingDefinitions[] = $definition;
+        }
+
+        if (null !== $fieldScope) {
+            return $matchingDefinitions[0] ?? null;
+        }
+        if (count($matchingDefinitions) !== 1) {
+            return null;
+        }
+
+        return $matchingDefinitions[0];
     }
 
     /**

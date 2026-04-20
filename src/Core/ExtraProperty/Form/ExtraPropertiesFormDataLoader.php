@@ -6,10 +6,9 @@
 
 declare(strict_types=1);
 
-namespace PrestaShop\PrestaShop\Adapter\ExtraProperty\BackOffice;
+namespace PrestaShop\PrestaShop\Core\ExtraProperty\Form;
 
 use Doctrine\DBAL\Connection;
-use PrestaShop\PrestaShop\Core\Domain\ExtraProperty\QueryResult\ExtraPropertyDefinitionInfo;
 use PrestaShop\PrestaShop\Core\ExtraProperty\ExtraPropertyDefinitionCollection;
 use PrestaShop\PrestaShop\Core\ExtraProperty\ExtraPropertyNaming;
 use Throwable;

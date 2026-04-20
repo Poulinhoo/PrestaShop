@@ -6,10 +6,10 @@
 
 declare(strict_types=1);
 
-namespace PrestaShop\PrestaShop\Adapter\ExtraProperty\Schema;
+namespace PrestaShop\PrestaShop\Core\ExtraProperty\Schema;
 
 use PrestaShop\PrestaShop\Core\ExtraProperty\ExtraPropertySqlIndex;
-use PrestaShop\PrestaShop\Core\ExtraProperty\Schema\ExtraPropertySchemaManagerInterface;
+use PrestaShop\PrestaShop\Core\ExtraProperty\Repository\CachedExtraPropertyDefinitionRepository;
 use Symfony\Contracts\Cache\CacheInterface;
 
 /**
@@ -18,11 +18,12 @@ use Symfony\Contracts\Cache\CacheInterface;
  * Wraps ExtraPropertySchemaManager and removes the cache entry for the affected entity after
  * any table/column creation or drop. Invalidates both cache.app (when defined) and the
  * filesystem definition cache so front-office and back-office definitions stay aligned.
+ *
+ * Cache key computation is delegated to CachedExtraPropertyDefinitionRepository::buildCacheKey()
+ * to avoid duplication.
  */
 class CacheInvalidatingSchemaManager implements ExtraPropertySchemaManagerInterface
 {
-    private const CACHE_KEY_PREFIX = 'extra_property_definition_';
-
     public function __construct(
         protected readonly ExtraPropertySchemaManagerInterface $inner,
         protected readonly ?CacheInterface $cacheApp,
@@ -48,18 +49,20 @@ class CacheInvalidatingSchemaManager implements ExtraPropertySchemaManagerInterf
         $this->invalidateEntityCache($entityName);
     }
 
-    protected function buildCacheKey(string $entityName): string
-    {
-        return self::CACHE_KEY_PREFIX . preg_replace('/[^a-zA-Z0-9_]/', '_', $entityName);
-    }
-
+    /**
+     * Removes the entity definition entry from both cache pools.
+     *
+     * Delegates key computation to CachedExtraPropertyDefinitionRepository to avoid duplication.
+     *
+     * @param string $entityName
+     */
     protected function invalidateEntityCache(string $entityName): void
     {
         if ('' === $entityName) {
             return;
         }
 
-        $cacheKey = $this->buildCacheKey($entityName);
+        $cacheKey = CachedExtraPropertyDefinitionRepository::buildCacheKey($entityName);
         $this->filesystemDefinitionCache->delete($cacheKey);
 
         if (null !== $this->cacheApp) {

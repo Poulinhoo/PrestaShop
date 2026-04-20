@@ -54,15 +54,4 @@ interface ExtraPropertyRegistryInterface
      * @return bool
      */
     public function unregister(string $entityName, string $propertyName, ?string $moduleName, ExtraPropertyScope $fieldScope = ExtraPropertyScope::Common, bool $dropColumn = false): bool;
-
-    /**
-     * Unregister an extra property definition by its primary key.
-     * When $dropColumn is true, the physical SQL column is also dropped.
-     *
-     * @param int $idExtraPropertyDefinition
-     * @param bool $dropColumn
-     *
-     * @return bool
-     */
-    public function unregisterById(int $idExtraPropertyDefinition, bool $dropColumn = false): bool;
 }

@@ -6,11 +6,10 @@
 
 declare(strict_types=1);
 
-namespace PrestaShop\PrestaShop\Adapter\ExtraProperty\Repository;
+namespace PrestaShop\PrestaShop\Core\ExtraProperty\Repository;
 
 use PrestaShop\PrestaShop\Core\Domain\ExtraProperty\QueryResult\ExtraPropertyDefinitionInfo;
 use PrestaShop\PrestaShop\Core\ExtraProperty\ExtraPropertyDefinitionCollection;
-use PrestaShop\PrestaShop\Core\ExtraProperty\Repository\ExtraPropertyDefinitionRepositoryInterface;
 use Symfony\Component\Cache\Exception\LogicException;
 use Symfony\Contracts\Cache\CacheInterface;
 use Symfony\Contracts\Cache\ItemInterface;
@@ -52,7 +51,7 @@ class CachedExtraPropertyDefinitionRepository implements ExtraPropertyDefinition
      */
     public function getByEntityNameAllScopes(string $entityName): array
     {
-        $cacheKey = $this->buildCacheKey($entityName);
+        $cacheKey = self::buildCacheKey($entityName);
 
         return $this->getEffectiveCache()->get($cacheKey, function (ItemInterface $item) use ($entityName): array {
             try {
@@ -111,7 +110,28 @@ class CachedExtraPropertyDefinitionRepository implements ExtraPropertyDefinition
         return $this->repository->getDefinitionById($id);
     }
 
-    public function buildCacheKey(string $entityName): string
+    /**
+     * {@inheritdoc}
+     *
+     * Not cached: by-module+field lookups are targeted reads used by the write path (registry),
+     * and must always reflect current DB state.
+     */
+    public function findDefinitionByModuleAndField(string $entityName, ?string $moduleName, string $fieldName, string $fieldScope): ?ExtraPropertyDefinitionInfo
+    {
+        return $this->repository->findDefinitionByModuleAndField($entityName, $moduleName, $fieldName, $fieldScope);
+    }
+
+    /**
+     * Builds the cache key for an entity's definition list.
+     *
+     * Declared public static so that CacheInvalidatingSchemaManager and ExtraPropertyRegistry
+     * can compute the same key without duplicating the logic.
+     *
+     * @param string $entityName
+     *
+     * @return string
+     */
+    public static function buildCacheKey(string $entityName): string
     {
         return self::CACHE_KEY_PREFIX . preg_replace('/[^a-zA-Z0-9_]/', '_', $entityName);
     }

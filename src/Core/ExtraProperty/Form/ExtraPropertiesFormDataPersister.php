@@ -6,7 +6,7 @@
 
 declare(strict_types=1);
 
-namespace PrestaShop\PrestaShop\Adapter\ExtraProperty\BackOffice;
+namespace PrestaShop\PrestaShop\Core\ExtraProperty\Form;
 
 use DateTimeInterface;
 use PrestaShop\PrestaShop\Core\CommandBus\CommandBusInterface;

@@ -11,6 +11,8 @@ namespace PrestaShop\PrestaShop\Core\ExtraProperty\Registry;
 use PrestaShop\PrestaShop\Core\ExtraProperty\ExtraPropertyNaming;
 use PrestaShop\PrestaShop\Core\ExtraProperty\ExtraPropertyOptions;
 use PrestaShop\PrestaShop\Core\ExtraProperty\ExtraPropertyScope;
+use PrestaShop\PrestaShop\Core\ExtraProperty\Repository\CachedExtraPropertyDefinitionRepository;
+use PrestaShop\PrestaShop\Core\ExtraProperty\Repository\ExtraPropertyDefinitionRepositoryInterface;
 use PrestaShop\PrestaShop\Core\ExtraProperty\Repository\ExtraPropertyDefinitionWriterInterface;
 use PrestaShop\PrestaShop\Core\ExtraProperty\Schema\ColumnDefinitionMapper;
 use PrestaShop\PrestaShop\Core\ExtraProperty\Schema\ExtraPropertySchemaManagerInterface;
@@ -24,23 +26,21 @@ use Validate;
  * Write-only registry implementation: register/unregister extra property definitions.
  *
  * Orchestrates:
- *   - ExtraPropertyDefinitionWriterInterface for definition persistence and existence checks
+ *   - ExtraPropertyDefinitionRepositoryInterface (read) for pre-flight existence checks
+ *   - ExtraPropertyDefinitionWriterInterface for definition persistence (save/delete/normalize)
  *   - ExtraPropertySchemaManagerInterface for DDL on *_extra / *_extra_lang / *_extra_shop tables
- *   - Cache pools for invalidation after successful writes (same pools as CachedExtraPropertyDefinitionRepository)
- *
- * The cache key prefix used for invalidation is injected via $cacheKeyPrefix so this class
- * has no dependency on the Adapter-layer CachedExtraPropertyDefinitionRepository.
+ *   - Cache pools for invalidation after successful writes (same key as CachedExtraPropertyDefinitionRepository)
  */
 class ExtraPropertyRegistry implements ExtraPropertyRegistryInterface
 {
     protected readonly LoggerInterface $logger;
 
     public function __construct(
-        protected readonly ExtraPropertyDefinitionWriterInterface $repository,
+        protected readonly ExtraPropertyDefinitionRepositoryInterface $readRepository,
+        protected readonly ExtraPropertyDefinitionWriterInterface $writeRepository,
         protected readonly ExtraPropertySchemaManagerInterface $schemaManager,
         protected readonly ?CacheInterface $cacheApp,
         protected readonly CacheInterface $filesystemDefinitionCache,
-        protected readonly string $cacheKeyPrefix,
         ?LoggerInterface $logger = null,
     ) {
         $this->logger = $logger ?? new NullLogger();
@@ -64,7 +64,7 @@ class ExtraPropertyRegistry implements ExtraPropertyRegistryInterface
 
         // Normalize entity name and scope against DB-backed list of known entities.
         $fieldScope = $options->scope->value;
-        [$normalizedEntityName, $normalizedFieldScope] = $this->repository->normalizeEntityNameAndFieldScope($entityName, $fieldScope);
+        [$normalizedEntityName, $normalizedFieldScope] = $this->writeRepository->normalizeEntityNameAndFieldScope($entityName, $fieldScope);
         if (null === $normalizedEntityName || null === $normalizedFieldScope) {
             return false;
         }
@@ -95,14 +95,14 @@ class ExtraPropertyRegistry implements ExtraPropertyRegistryInterface
         }
 
         // 2. Insert or update the registry row.
-        $existingDefinition = $this->repository->findDefinitionByModuleAndField(
+        $existingDefinition = $this->readRepository->findDefinitionByModuleAndField(
             $normalizedEntityName,
             $moduleName,
             $propertyName,
             $normalizedFieldScope
         );
 
-        $savedId = $this->repository->save(
+        $savedId = $this->writeRepository->save(
             $options,
             $normalizedEntityName,
             $propertyName,
@@ -129,12 +129,12 @@ class ExtraPropertyRegistry implements ExtraPropertyRegistryInterface
             return false;
         }
 
-        [$normalizedEntityName, $normalizedFieldScope] = $this->repository->normalizeEntityNameAndFieldScope($entityName, $fieldScope->value);
+        [$normalizedEntityName, $normalizedFieldScope] = $this->writeRepository->normalizeEntityNameAndFieldScope($entityName, $fieldScope->value);
         if (null === $normalizedEntityName || null === $normalizedFieldScope) {
             return false;
         }
 
-        $existingDefinition = $this->repository->findDefinitionByModuleAndField(
+        $existingDefinition = $this->readRepository->findDefinitionByModuleAndField(
             $normalizedEntityName,
             $moduleName,
             $propertyName,
@@ -157,13 +157,13 @@ class ExtraPropertyRegistry implements ExtraPropertyRegistryInterface
         }
 
         // Load row to get entity/scope/column before deletion.
-        $definition = $this->repository->getDefinitionById($idExtraPropertyDefinition);
+        $definition = $this->readRepository->getDefinitionById($idExtraPropertyDefinition);
         if (null === $definition) {
             return true;
         }
 
         if ($dropColumn) {
-            [$normalizedEntityName, $normalizedFieldScope] = $this->repository->normalizeEntityNameAndFieldScope(
+            [$normalizedEntityName, $normalizedFieldScope] = $this->writeRepository->normalizeEntityNameAndFieldScope(
                 $definition->getEntityName(),
                 $definition->getFieldScope()
             );
@@ -188,7 +188,7 @@ class ExtraPropertyRegistry implements ExtraPropertyRegistryInterface
             }
         }
 
-        $deleted = $this->repository->delete($idExtraPropertyDefinition);
+        $deleted = $this->writeRepository->delete($idExtraPropertyDefinition);
         if ($deleted) {
             $this->invalidateEntityCache($definition->getEntityName());
         }
@@ -198,7 +198,9 @@ class ExtraPropertyRegistry implements ExtraPropertyRegistryInterface
 
     /**
      * Removes the entity key from both cache pools so the next read reloads from DB.
-     * Uses the same key scheme as CachedExtraPropertyDefinitionRepository (injected prefix).
+     * Delegates key computation to CachedExtraPropertyDefinitionRepository to avoid duplication.
+     *
+     * @param string $entityName
      */
     protected function invalidateEntityCache(string $entityName): void
     {
@@ -206,7 +208,7 @@ class ExtraPropertyRegistry implements ExtraPropertyRegistryInterface
             return;
         }
 
-        $cacheKey = $this->cacheKeyPrefix . preg_replace('/[^a-zA-Z0-9_]/', '_', $entityName);
+        $cacheKey = CachedExtraPropertyDefinitionRepository::buildCacheKey($entityName);
 
         $this->filesystemDefinitionCache->delete($cacheKey);
 

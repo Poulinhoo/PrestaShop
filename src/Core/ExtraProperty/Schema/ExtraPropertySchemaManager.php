@@ -6,13 +6,12 @@
 
 declare(strict_types=1);
 
-namespace PrestaShop\PrestaShop\Adapter\ExtraProperty\Schema;
+namespace PrestaShop\PrestaShop\Core\ExtraProperty\Schema;
 
 use Doctrine\DBAL\Connection;
 use Doctrine\DBAL\Schema\Table;
 use PrestaShop\PrestaShop\Core\ExtraProperty\ExtraPropertyNaming;
 use PrestaShop\PrestaShop\Core\ExtraProperty\ExtraPropertySqlIndex;
-use PrestaShop\PrestaShop\Core\ExtraProperty\Schema\ExtraPropertySchemaManagerInterface;
 use Psr\Log\LoggerInterface;
 use Psr\Log\NullLogger;
 use RuntimeException;

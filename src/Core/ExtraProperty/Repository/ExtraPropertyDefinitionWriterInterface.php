@@ -8,7 +8,6 @@ declare(strict_types=1);
 
 namespace PrestaShop\PrestaShop\Core\ExtraProperty\Repository;
 
-use PrestaShop\PrestaShop\Core\Domain\ExtraProperty\QueryResult\ExtraPropertyDefinitionInfo;
 use PrestaShop\PrestaShop\Core\ExtraProperty\ExtraPropertyOptions;
 
 /**
@@ -34,34 +33,6 @@ interface ExtraPropertyDefinitionWriterInterface
      * @return array{0: string|null, 1: string|null}
      */
     public function normalizeEntityNameAndFieldScope(string $entityName, string $fieldScope): array;
-
-    /**
-     * Finds one registry definition matching entity, module, property name, and scope.
-     * Returns null when not found.
-     *
-     * @param string $entityName Normalized entity name
-     * @param string|null $moduleName Module technical name, or null for core fields
-     * @param string $fieldName Property name
-     * @param string $fieldScope Normalized scope ('common', 'lang', 'shop')
-     *
-     * @return ExtraPropertyDefinitionInfo|null
-     */
-    public function findDefinitionByModuleAndField(
-        string $entityName,
-        ?string $moduleName,
-        string $fieldName,
-        string $fieldScope
-    ): ?ExtraPropertyDefinitionInfo;
-
-    /**
-     * Loads one definition by primary key.
-     * Returns null when not found.
-     *
-     * @param int $id
-     *
-     * @return ExtraPropertyDefinitionInfo|null
-     */
-    public function getDefinitionById(int $id): ?ExtraPropertyDefinitionInfo;
 
     /**
      * Saves (insert or update) one definition row from typed parameters.

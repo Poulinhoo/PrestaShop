@@ -5,7 +5,7 @@
  */
 declare(strict_types=1);
 
-namespace PrestaShop\PrestaShop\Adapter\ExtraProperty\Grid;
+namespace PrestaShop\PrestaShop\Core\ExtraProperty\Grid;
 
 use Doctrine\DBAL\Query\QueryBuilder;
 use PrestaShop\PrestaShop\Core\Domain\ExtraProperty\QueryResult\ExtraPropertyDefinitionInfo;

@@ -5,7 +5,7 @@ services:
   _instanceof:
     PrestaShop\PrestaShop\Core\Grid\Data\Factory\DoctrineGridDataFactory:
       bind:
-        $extraPropertiesGridQueryBuilderModifier: '@PrestaShop\PrestaShop\Adapter\ExtraProperty\Grid\ExtraPropertiesGridQueryBuilderModifier'
+        $extraPropertiesGridQueryBuilderModifier: '@PrestaShop\PrestaShop\Core\ExtraProperty\Grid\ExtraPropertiesGridQueryBuilderModifier'
 
   prestashop.core.grid.data_factory.log:
     class: '%prestashop.core.grid.data.factory.doctrine_grid_data_factory%'

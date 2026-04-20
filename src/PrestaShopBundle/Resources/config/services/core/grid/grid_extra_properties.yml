@@ -2,21 +2,21 @@ services:
   _defaults:
     public: true
 
-  PrestaShop\PrestaShop\Adapter\ExtraProperty\Grid\ExtraPropertiesGridDefinitionProvider:
+  PrestaShop\PrestaShop\Core\ExtraProperty\Grid\ExtraPropertiesGridDefinitionProvider:
     public: false
     arguments:
       $repository: '@PrestaShop\PrestaShop\Core\ExtraProperty\Repository\ExtraPropertyDefinitionRepositoryInterface'
 
-  PrestaShop\PrestaShop\Adapter\ExtraProperty\Grid\ExtraPropertiesGridDefinitionModifier:
+  PrestaShop\PrestaShop\Core\ExtraProperty\Grid\ExtraPropertiesGridDefinitionModifier:
     public: false
     arguments:
-      $definitionProvider: '@PrestaShop\PrestaShop\Adapter\ExtraProperty\Grid\ExtraPropertiesGridDefinitionProvider'
+      $definitionProvider: '@PrestaShop\PrestaShop\Core\ExtraProperty\Grid\ExtraPropertiesGridDefinitionProvider'
       $translator: '@translator'
 
-  PrestaShop\PrestaShop\Adapter\ExtraProperty\Grid\ExtraPropertiesGridQueryBuilderModifier:
+  PrestaShop\PrestaShop\Core\ExtraProperty\Grid\ExtraPropertiesGridQueryBuilderModifier:
     public: false
     arguments:
-      $definitionProvider: '@PrestaShop\PrestaShop\Adapter\ExtraProperty\Grid\ExtraPropertiesGridDefinitionProvider'
+      $definitionProvider: '@PrestaShop\PrestaShop\Core\ExtraProperty\Grid\ExtraPropertiesGridDefinitionProvider'
       $dbPrefix: '%database_prefix%'
       $contextLangId: '@=service("prestashop.adapter.legacy.context").getContext().language.id'
 
@@ -24,4 +24,4 @@ services:
     PrestaShop\PrestaShop\Core\Grid\Definition\Factory\AbstractGridDefinitionFactory:
       calls:
         - setExtraPropertiesGridDefinitionModifier:
-            - '@PrestaShop\PrestaShop\Adapter\ExtraProperty\Grid\ExtraPropertiesGridDefinitionModifier'
+            - '@PrestaShop\PrestaShop\Core\ExtraProperty\Grid\ExtraPropertiesGridDefinitionModifier'

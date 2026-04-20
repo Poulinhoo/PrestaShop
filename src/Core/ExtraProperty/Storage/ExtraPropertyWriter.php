@@ -6,11 +6,10 @@
 
 declare(strict_types=1);
 
-namespace PrestaShop\PrestaShop\Adapter\ExtraProperty\Storage;
+namespace PrestaShop\PrestaShop\Core\ExtraProperty\Storage;
 
 use Doctrine\DBAL\Connection;
 use PrestaShop\PrestaShop\Core\ExtraProperty\ExtraPropertyNaming;
-use PrestaShop\PrestaShop\Core\ExtraProperty\Storage\ExtraPropertyWriterInterface;
 use Throwable;
 
 /**

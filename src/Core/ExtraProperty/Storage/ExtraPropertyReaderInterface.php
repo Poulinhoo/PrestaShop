@@ -12,10 +12,12 @@ use PrestaShop\PrestaShop\Core\Domain\ExtraProperty\QueryResult\ExtraPropertyDef
 use PrestaShop\PrestaShop\Core\ExtraProperty\ExtraPropertyDefinitionCollection;
 
 /**
- * Reads extra property values for a given entity instance.
+ * Reads extra property values and definitions for a given entity instance.
  *
- * Used by ObjectModel (via ServiceLocator) and front-office LazyArray contexts.
- * Returns values grouped by module name and then by field name.
+ * Used by ObjectModel (via ServiceLocator) and front-office LazyArray / presenter contexts.
+ * Values are grouped by module name and then by field name.
+ *
+ * Replaces the former ExtraPropertyValueProviderInterface (merged here to avoid duplication).
  */
 interface ExtraPropertyReaderInterface
 {
@@ -63,4 +65,19 @@ interface ExtraPropertyReaderInterface
      * @return list<ExtraPropertyDefinitionInfo>
      */
     public function getDefinitionsByModule(string $entityName, ?string $moduleName, ?string $fieldScope = null): array;
+
+    /**
+     * Finds one extra field definition for an entity and field name.
+     *
+     * When $fieldScope is null:
+     * - if a single definition exists, it is returned;
+     * - if multiple scoped definitions exist, returns null (ambiguous).
+     *
+     * @param string $entityName
+     * @param string $fieldName
+     * @param string|null $fieldScope Allowed values: common, lang, shop or null
+     *
+     * @return ExtraPropertyDefinitionInfo|null
+     */
+    public function findCustomFieldDefinition(string $entityName, string $fieldName, ?string $fieldScope = null): ?ExtraPropertyDefinitionInfo;
 }

@@ -15,7 +15,7 @@ services:
       - '@prestashop.core.hook.dispatcher'
     calls:
       - [ setTranslator, [ '@translator' ] ]
-      - [ setExtraPropertiesGridDefinitionModifier, [ '@PrestaShop\PrestaShop\Adapter\ExtraProperty\Grid\ExtraPropertiesGridDefinitionModifier' ] ]
+      - [ setExtraPropertiesGridDefinitionModifier, [ '@PrestaShop\PrestaShop\Core\ExtraProperty\Grid\ExtraPropertiesGridDefinitionModifier' ] ]
 
   prestashop.core.grid.definition.factory.logs:
     class: 'PrestaShop\PrestaShop\Core\Grid\Definition\Factory\LogGridDefinitionFactory'

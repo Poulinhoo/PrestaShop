@@ -79,4 +79,22 @@ interface ExtraPropertyDefinitionRepositoryInterface
      * @return ExtraPropertyDefinitionInfo|null
      */
     public function getDefinitionById(int $id): ?ExtraPropertyDefinitionInfo;
+
+    /**
+     * Finds one registry definition matching entity, module, property name, and scope.
+     * Returns null when not found.
+     *
+     * @param string $entityName Normalized entity name
+     * @param string|null $moduleName Module technical name, or null for core fields
+     * @param string $fieldName Property name
+     * @param string $fieldScope Normalized scope ('common', 'lang', 'shop')
+     *
+     * @return ExtraPropertyDefinitionInfo|null
+     */
+    public function findDefinitionByModuleAndField(
+        string $entityName,
+        ?string $moduleName,
+        string $fieldName,
+        string $fieldScope
+    ): ?ExtraPropertyDefinitionInfo;
 }
