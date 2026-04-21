@@ -128,18 +128,18 @@ class ConnectionCore extends ObjectModel
                 // SEO tools crawlers
                 . '|AhrefsBot'     // Ahrefs: https://ahrefs.com/robot
                 . '|SemrushBot'    // Semrush: https://www.semrush.com/bot/
-                . '|DotBot'        // Moz: https://moz.com/help/moz-procedures/crawling/dotbot
-                . '|MJ12bot'       // Majestic: https://majestic.com/support/what-is-mj12bot
-                . '|PetalBot'      // Huawei Petal Search: https://webmaster.petalsearch.com/site/petalbot
+                . '|DotBot'        // Moz
+                . '|MJ12bot'       // Majestic
+                . '|PetalBot'      // Huawei Petal Search
                 . '|DataForSeoBot' // DataForSEO: https://dataforseo.com/dataforseo-bot
                 // AI crawlers
                 . '|GPTBot'        // OpenAI: https://platform.openai.com/docs/gptbot
                 . '|ClaudeBot'     // Anthropic: https://support.anthropic.com/en/articles/8896518
                 . '|CCBot'         // Common Crawl: https://commoncrawl.org/ccbot
-                . '|Bytespider'    // ByteDance/TikTok: https://www.bytedance.com/en/crawlers/
+                . '|Bytespider'    // ByteDance/TikTok
                 // Other major crawlers
                 . '|DuckDuckBot'   // DuckDuckGo: https://duckduckgo.com/duckduckbot
-                . '|ia_archiver'   // Internet Archive Wayback Machine: https://archive.org/details/faqs#23
+                . '|ia_archiver'   // Internet Archive Wayback Machine
                 . '/i',
                 $_SERVER['HTTP_USER_AGENT']
             )) {
