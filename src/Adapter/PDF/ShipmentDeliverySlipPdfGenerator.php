@@ -56,10 +56,17 @@ final class ShipmentDeliverySlipPdfGenerator implements PDFGeneratorInterface
 
         $shipmentData = [];
 
-        foreach ($shipmentIds as $shipmentId) {
-            $shipment = $this->shipmentRepository->findById((int) $shipmentId);
+        $intShipmentIds = array_map('intval', $shipmentIds);
+        $shipments = $this->shipmentRepository->findByIds($intShipmentIds);
 
-            if (!$shipment) {
+        // Index fetched shipments by their ID for quick lookup
+        $shipmentsById = [];
+        foreach ($shipments as $shipment) {
+            $shipmentsById[$shipment->getId()] = $shipment;
+        }
+
+        foreach ($intShipmentIds as $shipmentId) {
+            if (!isset($shipmentsById[$shipmentId])) {
                 throw new RuntimeException($this->translator->trans(
                     'The shipment with ID %id% cannot be found within your database.',
                     ['%id%' => $shipmentId],
@@ -67,6 +74,7 @@ final class ShipmentDeliverySlipPdfGenerator implements PDFGeneratorInterface
                 ));
             }
 
+            $shipment = $shipmentsById[$shipmentId];
             $order = new Order($shipment->getOrderId());
 
             if (!Validate::isLoadedObject($order)) {
