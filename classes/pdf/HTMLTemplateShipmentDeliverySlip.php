@@ -96,7 +96,7 @@ class HTMLTemplateShipmentDeliverySlipCore extends HTMLTemplate
 
         // Get carrier from shipment
         $carrier = new Carrier($this->shipment->getCarrierId());
-        $carrier->name = ($carrier->name == '0' ? Configuration::get('PS_SHOP_NAME') : $carrier->name);
+        $carrier->name = (empty($carrier->name) ? Configuration::get('PS_SHOP_NAME') : $carrier->name);
 
         // Get products from shipment
         $products = $this->getShipmentProducts();
