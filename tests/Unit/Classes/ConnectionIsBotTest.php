@@ -58,10 +58,23 @@ class ConnectionIsBotTest extends TestCase
         yield 'ClaudeBot' => ['Mozilla/5.0 AppleWebKit/537.36 (KHTML, like Gecko; compatible; ClaudeBot/1.0; +claudebot@anthropic.com)'];
         yield 'CCBot' => ['CCBot/2.0 (https://commoncrawl.org/faq/)'];
         yield 'Bytespider' => ['Mozilla/5.0 (Linux; Android 5.0) AppleWebKit/537.36 (KHTML, like Gecko) Mobile Safari/537.36 (compatible; Bytespider; spider-feedback@bytedance.com)'];
+        yield 'PerplexityBot' => ['Mozilla/5.0 AppleWebKit/537.36 (KHTML, like Gecko; compatible; PerplexityBot/1.0; +https://perplexity.ai/perplexitybot)'];
 
         // Other major crawlers
         yield 'DuckDuckBot' => ['DuckDuckBot/1.0; (+http://duckduckgo.com/duckduckbot.html)'];
         yield 'ia_archiver' => ['ia_archiver (+http://www.alexa.com/site/help/webmaster; crawler@alexa.com)'];
+
+        // Social media crawlers
+        yield 'facebookexternalhit' => ['facebookexternalhit/1.1 (+http://www.facebook.com/externalhit_uatext.php)'];
+        yield 'Twitterbot' => ['Twitterbot/1.0'];
+        yield 'LinkedInBot' => ['LinkedInBot/1.0 (compatible; Mozilla/5.0; Apache-HttpClient +http://www.linkedin.com)'];
+        yield 'Slackbot' => ['Slackbot-LinkExpanding 1.0 (+https://api.slack.com/robots)'];
+        yield 'Discordbot' => ['Mozilla/5.0 (compatible; Discordbot/2.0; +https://discordapp.com)'];
+        yield 'TelegramBot' => ['TelegramBot (like TwitterBot)'];
+
+        // Performance & audit tools
+        yield 'lighthouse' => ['Mozilla/5.0 (Linux; Android 11; moto g power (2022)) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/119.0.0.0 Mobile Safari/537.36 Chrome-Lighthouse'];
+        yield 'PageSpeed' => ['Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/119.0.6045.105 Safari/537.36 PageSpeed'];
     }
 
     public static function providesHumanUserAgents(): iterable

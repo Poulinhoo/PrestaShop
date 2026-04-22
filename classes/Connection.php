@@ -143,9 +143,20 @@ class ConnectionCore extends ObjectModel
                 . '|ClaudeBot'     // Anthropic: https://support.anthropic.com/en/articles/8896518
                 . '|CCBot'         // Common Crawl: https://commoncrawl.org/ccbot
                 . '|Bytespider'    // ByteDance/TikTok
+                . '|PerplexityBot' // Perplexity AI: https://docs.perplexity.ai/docs/resources/perplexity-crawlers
                 // Other major crawlers
                 . '|DuckDuckBot'   // DuckDuckGo: https://duckduckgo.com/duckduckbot
                 . '|ia_archiver'   // Internet Archive Wayback Machine
+                // Social media crawlers
+                . '|facebookexternalhit' // Meta: https://developers.facebook.com/docs/sharing/webmasters/crawler/
+                . '|Twitterbot'    // X/Twitter
+                . '|LinkedInBot'   // LinkedIn
+                . '|Slackbot'      // Slack: https://api.slack.com/robots
+                . '|Discordbot'    // Discord
+                . '|TelegramBot'   // Telegram
+                // Performance & audit tools
+                . '|lighthouse'    // Google Lighthouse
+                . '|PageSpeed'     // Google PageSpeed Insights
                 . '/i',
                 $userAgent
             )) {
