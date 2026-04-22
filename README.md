@@ -113,6 +113,8 @@ Don't know where to start? Check the [good first issue](https://github.com/Prest
 
 If you want to help translate PrestaShop in your language, [join us on Crowdin][crowdin]!
 
+If using AI tools to write code, make sure your agent has read the [.ai/CONTEXT.md](.ai/CONTEXT.md) file. You can find more details in our dev doc regarding [AI assisted development](https://devdocs.prestashop-project.org/9/development/ai-assisted-development/).
+
 
 Reporting Issues
 --------
