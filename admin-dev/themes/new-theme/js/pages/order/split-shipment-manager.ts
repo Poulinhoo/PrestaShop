@@ -143,9 +143,7 @@ export default class SplitShipmentManager {
   }
 
   private get submitButton(): HTMLButtonElement {
-    const btn = document.querySelector<HTMLButtonElement>(
-      OrderViewPageMap.splitShipmentFormSubmitButton
-    );
+    const btn = document.querySelector<HTMLButtonElement>(OrderViewPageMap.splitShipmentFormSubmitButton);
 
     if (!btn) {
       throw new Error('Submit button not found');
@@ -159,9 +157,7 @@ export default class SplitShipmentManager {
     this.form.removeEventListener('change', this.handleFormChange);
     this.form.addEventListener('change', this.handleFormChange);
 
-    const carrierSelect = this.form.querySelector<HTMLSelectElement>(
-      OrderViewPageMap.splitShipmentCarrierSelector
-    );
+    const carrierSelect = this.form.querySelector<HTMLSelectElement>(OrderViewPageMap.splitShipmentCarrierSelector);
     const formIsValid = this.form.dataset.isValid;
 
     this.toggleSubmitButton(!!carrierSelect?.value && !!formIsValid);
