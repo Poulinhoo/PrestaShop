@@ -134,7 +134,7 @@ export default class SplitShipmentManager {
   }
 
   private get form(): HTMLFormElement {
-    const form = document.forms.namedItem<HTMLFormElement>(OrderViewPageMap.splitShipmentFormName);
+    const form = document.forms.namedItem(OrderViewPageMap.splitShipmentFormName);
 
     if (!form) {
       throw new Error('Split shipment form not found');

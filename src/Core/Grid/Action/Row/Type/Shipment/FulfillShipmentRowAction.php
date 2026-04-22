@@ -35,7 +35,7 @@ final class FulfillShipmentRowAction extends AbstractRowAction
 
     private function shipmentIsPacked(array $record): bool
     {
-        return empty($record['tracking_number']) && empty($record['packed_at']);
+        return !empty($record['tracking_number']) && !empty($record['packed_at']);
     }
 
     /**

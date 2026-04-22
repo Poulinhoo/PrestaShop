@@ -26,13 +26,16 @@ final class DeliverySlipShipmentRowAction extends AbstractRowAction
      */
     public function isApplicable(array $record): bool
     {
-        // if shipment if not fulfill (tracking number is set and has a packed data)
-        // the merchant cannot download the delivery slip of the given shipment
-        if (!empty($record['tracking_number']) || !empty($record['packed_at'])) {
+        if (!$this->shipmentIsPacked($record)) {
             return false;
         }
 
         return true;
+    }
+
+    private function shipmentIsPacked(array $record): bool
+    {
+        return !empty($record['tracking_number']) && !empty($record['packed_at']);
     }
 
     /**

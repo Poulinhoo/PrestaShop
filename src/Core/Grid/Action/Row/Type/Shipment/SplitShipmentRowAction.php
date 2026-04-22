@@ -29,14 +29,17 @@ final class SplitShipmentRowAction extends AbstractRowAction
         $options = $this->getOptions();
         $itemsField = $options['items'];
 
-        // if shipment if fulfill (tracking number is set and has a packed data)
-        // the merchant cannot anymore proceed to a merge
-        if (empty($record['tracking_number']) || empty($record['packed_at'])) {
+        if ($this->shipmentIsPacked($record)) {
             return false;
         }
 
         // Show split action only if items > 1
-        return empty($record[$itemsField]) && $record[$itemsField] > 1;
+        return !empty($record[$itemsField]) && (int) $record[$itemsField] > 1;
+    }
+
+    private function shipmentIsPacked(array $record): bool
+    {
+        return !empty($record['tracking_number']) && !empty($record['packed_at']);
     }
 
     /**

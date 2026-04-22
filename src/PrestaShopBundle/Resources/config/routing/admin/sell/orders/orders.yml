@@ -226,7 +226,7 @@ admin_orders_split_shipment:
     shipmentId: \d+
 
 admin_orders_shipment_get_split_form:
-  path: /{orderId}/shipment/split-form
+  path: /{orderId}/shipment/{shipmentId}/split-form
   methods: [ GET ]
   defaults:
     _controller: PrestaShopBundle\Controller\Admin\Sell\Order\OrderController::getSplitShipmentForm
@@ -246,7 +246,7 @@ admin_orders_generate_invoice:
     orderId: \d+
 
 admin_orders_shipment_get_merge_form:
-  path: /{orderId}/shipment/merge-form
+  path: /{orderId}/shipment/{shipmentId}/merge-form
   methods: [ GET ]
   defaults:
     _controller: PrestaShopBundle\Controller\Admin\Sell\Order\OrderController::getMergeShipmentForm

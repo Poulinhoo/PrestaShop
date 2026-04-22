@@ -104,7 +104,6 @@ use PrestaShopBundle\Form\Admin\Sell\Order\InternalNoteType;
 use PrestaShopBundle\Form\Admin\Sell\Order\OrderMessageType;
 use PrestaShopBundle\Form\Admin\Sell\Order\OrderPaymentType;
 use PrestaShopBundle\Form\Admin\Sell\Order\Shipment\EditShipmentType;
-use PrestaShopBundle\Form\Admin\Sell\Order\Shipment\FulfillShipmentType;
 use PrestaShopBundle\Form\Admin\Sell\Order\UpdateOrderShippingType;
 use PrestaShopBundle\Form\Admin\Sell\Order\UpdateOrderStatusType;
 use PrestaShopBundle\Security\Attribute\AdminSecurity;
@@ -681,9 +680,8 @@ class OrderController extends PrestaShopAdminController
     }
 
     #[AdminSecurity("is_granted('update', 'AdminOrders')", redirectRoute: 'admin_orders_view', redirectQueryParamsToKeep: ['orderId'], message: 'You do not have permission to edit this.')]
-    public function getMergeShipmentForm(int $orderId, Request $request, #[Autowire(service: 'prestashop.core.form.identifiable_object.builder.merge_shipment_form_builder')] FormBuilderInterface $formBuilder): Response
+    public function getMergeShipmentForm(int $orderId, int $shipmentId, Request $request, #[Autowire(service: 'prestashop.core.form.identifiable_object.builder.merge_shipment_form_builder')] FormBuilderInterface $formBuilder): Response
     {
-        $shipmentId = (int) $request->query->get('shipmentId');
         $form = $formBuilder->getFormFor($orderId);
         $data = $form->getData();
 
@@ -760,7 +758,7 @@ class OrderController extends PrestaShopAdminController
     public function mergeShipmentAction(int $orderId, Request $request, #[Autowire(service: 'prestashop.core.form.identifiable_object.builder.merge_shipment_form_builder')] FormBuilderInterface $formBuilder): RedirectResponse
     {
         try {
-            $shipmentId = (int) $request->query->get('shipmentId');
+            $shipmentId = (int) $request->attributes->get('shipmentId');
             $form = $formBuilder->getFormFor($orderId);
             $form->handleRequest($request);
 
@@ -847,11 +845,12 @@ class OrderController extends PrestaShopAdminController
     }
 
     #[AdminSecurity("is_granted('update', 'AdminOrders')", redirectRoute: 'admin_orders_view', redirectQueryParamsToKeep: ['orderId'], message: 'You do not have permission to edit this.')]
-    public function getFulfillShipmentForm(int $orderId, int $shipmentId): Response
-    {
-        $formData = $this->dispatchQuery(new GetShipmentForEditing($orderId, $shipmentId))->toArray();
-        $formData['shipment_id'] = $shipmentId;
-        $form = $this->createForm(FulfillShipmentType::class, $formData, ['order_id' => $orderId, 'shipment_id' => $shipmentId]);
+    public function getFulfillShipmentForm(
+        int $orderId,
+        int $shipmentId,
+        #[Autowire(service: 'prestashop.core.form.identifiable_object.builder.fulfill_shipment_form_builder')] FormBuilderInterface $formBuilder,
+    ): Response {
+        $form = $formBuilder->getFormFor($orderId);
 
         return $this->render('@PrestaShop/Admin/Sell/Order/Order/Blocks/View/fulfill_shipment_form.html.twig', [
             'fulfillShipmentForm' => $form->createView(),
@@ -868,11 +867,9 @@ class OrderController extends PrestaShopAdminController
      * @return RedirectResponse
      */
     #[AdminSecurity("is_granted('update', 'AdminOrders')", redirectRoute: 'admin_orders_view', redirectQueryParamsToKeep: ['orderId'], message: 'You do not have permission to edit this.')]
-    public function fulfillShipmentAction(int $orderId, int $shipmentId, Request $request): RedirectResponse
+    public function fulfillShipmentAction(int $orderId, int $shipmentId, Request $request, #[Autowire(service: 'prestashop.core.form.identifiable_object.builder.fulfill_shipment_form_builder')] FormBuilderInterface $formBuilder): RedirectResponse
     {
-        $formData = $this->dispatchQuery(new GetShipmentForEditing($orderId, $shipmentId))->toArray();
-        $formData['shipment_id'] = $shipmentId;
-        $form = $this->createForm(FulfillShipmentType::class, $formData, ['order_id' => $orderId, 'shipment_id' => $shipmentId]);
+        $form = $formBuilder->getFormFor($orderId);
         $form->handleRequest($request);
         $submittedData = $request->request->all('fulfill_shipment');
 
@@ -937,6 +934,7 @@ class OrderController extends PrestaShopAdminController
     #[AdminSecurity("is_granted('update', 'AdminOrders')", message: 'You do not have permission to show this.')]
     public function getSplitShipmentForm(
         int $orderId,
+        int $shipmentId,
         #[Autowire(service: 'prestashop.core.form.identifiable_object.builder.split_shipment_form_builder')] FormBuilderInterface $formBuilder,
     ): Response {
         $form = $formBuilder->getFormFor($orderId);
@@ -945,7 +943,7 @@ class OrderController extends PrestaShopAdminController
         return $this->render('@PrestaShop/Admin/Sell/Order/Order/Blocks/View/split_shipment_form.html.twig', [
             'splitShipmentForm' => $form->createView(),
             'orderId' => $orderId,
-            'shipmentId' => $data['shipment_id'],
+            'shipmentId' => $shipmentId,
             'formIsValid' => $data['form_is_valid'],
             'isShipped' => $data['is_shipped'],
         ]);

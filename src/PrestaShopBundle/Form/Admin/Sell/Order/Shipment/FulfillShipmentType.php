@@ -10,7 +10,6 @@ use Symfony\Component\Form\AbstractType;
 use Symfony\Component\Form\Extension\Core\Type\HiddenType;
 use Symfony\Component\Form\Extension\Core\Type\TextType;
 use Symfony\Component\Form\FormBuilderInterface;
-use Symfony\Component\OptionsResolver\OptionsResolver;
 
 class FulfillShipmentType extends AbstractType
 {
@@ -21,15 +20,5 @@ class FulfillShipmentType extends AbstractType
             ->add('tracking_number', TextType::class, [
                 'required' => true,
             ]);
-    }
-
-    public function configureOptions(OptionsResolver $resolver): void
-    {
-        $resolver->setRequired([
-            'order_id',
-            'shipment_id',
-        ])
-            ->setAllowedTypes('order_id', 'int')
-            ->setAllowedTypes('shipment_id', 'int');
     }
 }

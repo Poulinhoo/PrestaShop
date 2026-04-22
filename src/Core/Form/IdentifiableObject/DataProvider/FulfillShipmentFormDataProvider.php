@@ -13,7 +13,7 @@ use PrestaShop\PrestaShop\Core\Domain\Shipment\Query\GetShipmentForEditing;
 use PrestaShop\PrestaShop\Core\Domain\Shipment\QueryResult\ShipmentForEditing;
 use Symfony\Component\HttpFoundation\RequestStack;
 
-class EditShipmentFormDataProvider implements FormDataProviderInterface
+class FulfillShipmentFormDataProvider implements FormDataProviderInterface
 {
     public function __construct(
         private CommandBusInterface $queryBus,
@@ -23,7 +23,7 @@ class EditShipmentFormDataProvider implements FormDataProviderInterface
 
     public function getData($orderId)
     {
-        $shipmentId = (int) $this->requestStack->getCurrentRequest()->attributes->getInt('shipmentId');
+        $shipmentId = (int) $this->requestStack->getCurrentRequest()->attributes->get('shipmentId');
 
         /** @var ShipmentForEditing $shipment */
         $shipment = $this->queryBus->handle(new GetShipmentForEditing($orderId, $shipmentId));
