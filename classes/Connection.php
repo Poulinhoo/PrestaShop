@@ -119,6 +119,7 @@ class ConnectionCore extends ObjectModel
      */
     public static function isBot($userAgent = null)
     {
+        // Last updated : 2026-04
         $userAgent = $userAgent ?? ($_SERVER['HTTP_USER_AGENT'] ?? null);
         if ($userAgent !== null
             && preg_match(
