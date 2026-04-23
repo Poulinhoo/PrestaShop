@@ -23,7 +23,7 @@ class FulfillShipmentFormDataProvider implements FormDataProviderInterface
 
     public function getData($orderId)
     {
-        $shipmentId = (int) $this->requestStack->getCurrentRequest()->attributes->get('shipmentId');
+        $shipmentId = $this->requestStack->getCurrentRequest()->attributes->getInt('shipmentId');
 
         /** @var ShipmentForEditing $shipment */
         $shipment = $this->queryBus->handle(new GetShipmentForEditing($orderId, $shipmentId));
