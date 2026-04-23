@@ -22,6 +22,18 @@ Back-office templating infrastructure: Twig extensions that expose PrestaShop-sp
 - `src/PrestaShopBundle/Twig/Extension/GridExtension.php`
 - `src/PrestaShopBundle/Twig/LayoutExtension.php`
 
+## Admin template conventions
+
+- **Base layout:** all admin page templates extend `@PrestaShop/Admin/layout.html.twig` — never copy HTML structure
+- **Template location:** `src/PrestaShopBundle/Resources/views/Admin/{Section}/{Domain}/` (e.g. `Tax/`, `Manufacturer/`)
+- **Flash messages:** include `@PrestaShop/Admin/Common/flash_messages.html.twig` before main content. Types: `success`, `error`, `warning`, `info`. Always use translatable strings with PS domains (`Admin.Notifications.Success`, etc.)
+- **Grid rendering:** use `{% include '@PrestaShop/Admin/Common/Grid/grid_panel.html.twig' with {grid: grid} %}` — custom column rendering only needed for non-standard columns
+- **Form rendering:** always use a single `{{ form_widget(form) }}` to render the entire form — never split into multiple `form_widget` calls for individual fields. This is critical because modules hook into the form builder to add extra fields, and a single `form_widget(form)` ensures those fields are rendered automatically. When specific parts need custom display, create a dedicated `FormType` and customize its rendering via the global PS UI kit form theme (for shared generic types) or a dedicated form theme (for very specific types)
+- **Routes in templates:** always use `path('admin_{domain}s_create')` — never hardcode URLs
+- **Page titles:** must be translatable via `trans()` filter or function
+- **Form themes:** scoped via `{% form_theme form 'path/to/_widgets.html.twig' %}` — no global side effects. Use only when a field needs custom rendering beyond Symfony defaults (e.g. image preview next to upload field)
+- **JS assets:** enqueue via `{% block javascripts %}{{ parent() }}{{ encore_entry_script_tags('...') }}{% endblock %}` or equivalent webpack asset helper
+
 ## Related
 
 - [Hook Component](../Hook/CONTEXT.md) — `HookExtension` delegates to `HookDispatcherInterface`

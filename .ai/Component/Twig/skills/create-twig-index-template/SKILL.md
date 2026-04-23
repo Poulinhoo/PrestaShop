@@ -1,25 +1,53 @@
 ---
 name: create-twig-index-template
 description: >
-  Create the Twig template for the entity listing (grid) page. Extends the PS
-  admin layout and renders the grid, header buttons, and filters form.
-needs: [create-grid-definition, create-symfony-admin-controller, create-admin-routing]
-produces: "index.html.twig — back-office listing page template extending the PS admin layout"
+  Create the Twig template for the entity listing (grid) page. Includes grid panel,
+  toolbar buttons, flash messages, and optional custom column rendering. Read
+  Component/Twig/CONTEXT.md for template conventions. Trigger: "create index template
+  for {Domain}".
+needs: [create-grid-definition, create-controller-listing, create-admin-routing]
+produces: "index.html.twig — back-office listing page template"
 ---
 
 # create-twig-index-template
 
-## Instructions
+Read `@.ai/Component/Twig/CONTEXT.md` for template conventions (layout, flash messages, routes, form themes).
 
-1. `{% extends '@PrestaShop/Admin/layout.html.twig' %}`.
-2. `{% block content_title %}` — page title using `trans()`.
-3. `{% block page_header_toolbar %}` — "Add new {Domain}" button linking to `admin_{domain}s_create` route.
-4. `{% block content %}` — render `{% include '@PrestaShop/Admin/Common/Grid/grid_panel.html.twig' with {grid: grid} %}`.
-5. Pass the `grid` variable rendered by the grid presenter (passed from H1 controller).
-6. Include the filters form inside the grid panel block.
+## 1. Index template
+
+Create `src/PrestaShopBundle/Resources/views/Admin/{Section}/{Domain}/index.html.twig`:
+
+```twig
+{% extends '@PrestaShop/Admin/layout.html.twig' %}
+
+{% block content %}
+  {% include '@PrestaShop/Admin/Common/Grid/grid_panel.html.twig' with {grid: grid} %}
+{% endblock %}
+
+{% block page_header_toolbar %}
+  <div class="toolbar-icons">
+    <a href="{{ path('admin_{domain}s_create') }}" class="btn btn-primary">
+      {{ 'Add new'|trans({}, 'Admin.Actions') }}
+    </a>
+  </div>
+{% endblock %}
+```
+
+The `grid` variable is passed from the controller's `indexAction` via the grid presenter.
+
+**Reference:** `src/PrestaShopBundle/Resources/views/Admin/Improve/International/Tax/index.html.twig` (simple), `src/PrestaShopBundle/Resources/views/Admin/Sell/Catalog/Manufacturer/index.html.twig` (two grids)
+
+## 2. Custom grid column rendering (only if needed)
+
+Most grids work with default column rendering. Only add custom blocks when a column needs domain-specific HTML:
+
+- Override via `{% block column_{column_id}_content %}` in the grid panel include
+- Common case: image thumbnail, custom badge, formatted compound value
+- Leave default columns alone — only override what's necessary
 
 ## Rules
 
-- Always extend `@PrestaShop/Admin/layout.html.twig` — never copy HTML structure
-- Use `path('admin_{domain}s_create')` for the "Add" button — never hardcode URLs
-- The `grid` variable must match what the H1 controller passes to `render()`
+- Always extend `@PrestaShop/Admin/layout.html.twig`
+- Use `path()` for all route references — never hardcode URLs
+- Flash messages are handled by the layout — no need to include them manually in most cases
+- The `grid` variable name must match what the controller passes to `render()`
