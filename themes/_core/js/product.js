@@ -156,6 +156,8 @@ function updateProduct(event, eventType, updateUrl) {
       return;
     }
 
+    const isQuickView = !!$('.modal.quickview.in, .modal.quickview.show').length;
+
     currentRequest = $.ajax({
       url:
         updateUrl
@@ -164,7 +166,7 @@ function updateProduct(event, eventType, updateUrl) {
         + preview,
       method: 'POST',
       data: {
-        quickview: $('.modal.quickview.in, .modal.quickview.show').length,
+        quickview: isQuickView ? 1 : 0,
         ajax: 1,
         action: 'refresh',
         quantity_wanted:
@@ -230,12 +232,7 @@ function updateProduct(event, eventType, updateUrl) {
         $(prestashop.selectors.product.additionalInfos)
           .first()
           .replaceWith(data.product_additional_info);
-        const $quickview = $('.modal.quickview.in, .modal.quickview.show');
-        if ($quickview.length) {
-          $quickview.find(prestashop.selectors.product.details).replaceWith(
-            data.product_details,
-          );
-        } else {
+        if (!isQuickView) {
           $(prestashop.selectors.product.details).replaceWith(
             data.product_details,
           );
