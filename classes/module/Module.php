@@ -3281,34 +3281,64 @@ abstract class ModuleCore implements ModuleInterface
                     continue;
                 }
 
-                // Replace the declaration line by #--remove--#
+                // Replace all declaration lines by #--remove--#, tracking bracket depth
+                // to handle multi-line property values (e.g. arrays spanning multiple lines)
+                $inside_property = false;
+                $bracket_depth = 0;
                 foreach ($override_file as $line_number => &$line_content) {
-                    if (preg_match('/(public|private|protected)\s+(static\s+)?\s*(\w+\s+)?(\$)?' . $property->getName() . '/i', $line_content)) {
-                        if (preg_match('/\* module: (' . $this->name . ')/ism', $override_file[$line_number - 4])) {
-                            $override_file[$line_number - 5] = $override_file[$line_number - 4] = $override_file[$line_number - 3] = $override_file[$line_number - 2] = $override_file[$line_number - 1] = '#--remove--#';
+                    if (!$inside_property) {
+                        if (preg_match('/(public|private|protected)\s+(static\s+)?\s*(\w+\s+)?(\$)?' . $property->getName() . '/i', $line_content)) {
+                            if (preg_match('/\* module: (' . $this->name . ')/ism', $override_file[$line_number - 4])) {
+                                $override_file[$line_number - 5] = $override_file[$line_number - 4] = $override_file[$line_number - 3] = $override_file[$line_number - 2] = $override_file[$line_number - 1] = '#--remove--#';
+                            }
+                            $inside_property = true;
+                            $bracket_depth = 0;
                         }
+                    }
+
+                    if ($inside_property) {
+                        $bracket_depth += substr_count($line_content, '(') - substr_count($line_content, ')');
+                        $bracket_depth += substr_count($line_content, '[') - substr_count($line_content, ']');
+                        $is_end = ($bracket_depth <= 0 && false !== strpos($line_content, ';'));
                         $line_content = '#--remove--#';
 
-                        break;
+                        if ($is_end) {
+                            break;
+                        }
                     }
                 }
             }
 
-            // Remove properties from override file
+            // Remove constants from override file
             foreach ($module_class->getConstants() as $constant => $value) {
                 if (!$override_class->hasConstant($constant)) {
                     continue;
                 }
 
-                // Replace the declaration line by #--remove--#
+                // Replace all declaration lines by #--remove--#, tracking bracket depth
+                // to handle multi-line constant values (e.g. arrays spanning multiple lines)
+                $inside_constant = false;
+                $bracket_depth = 0;
                 foreach ($override_file as $line_number => &$line_content) {
-                    if (preg_match('/(const)\s+(static\s+)?(\$)?' . $constant . '/i', $line_content)) {
-                        if (preg_match('/\* module: (' . $this->name . ')/ism', $override_file[$line_number - 4])) {
-                            $override_file[$line_number - 5] = $override_file[$line_number - 4] = $override_file[$line_number - 3] = $override_file[$line_number - 2] = $override_file[$line_number - 1] = '#--remove--#';
+                    if (!$inside_constant) {
+                        if (preg_match('/(const)\s+(static\s+)?(\$)?' . $constant . '/i', $line_content)) {
+                            if (preg_match('/\* module: (' . $this->name . ')/ism', $override_file[$line_number - 4])) {
+                                $override_file[$line_number - 5] = $override_file[$line_number - 4] = $override_file[$line_number - 3] = $override_file[$line_number - 2] = $override_file[$line_number - 1] = '#--remove--#';
+                            }
+                            $inside_constant = true;
+                            $bracket_depth = 0;
                         }
+                    }
+
+                    if ($inside_constant) {
+                        $bracket_depth += substr_count($line_content, '(') - substr_count($line_content, ')');
+                        $bracket_depth += substr_count($line_content, '[') - substr_count($line_content, ']');
+                        $is_end = ($bracket_depth <= 0 && false !== strpos($line_content, ';'));
                         $line_content = '#--remove--#';
 
-                        break;
+                        if ($is_end) {
+                            break;
+                        }
                     }
                 }
             }
