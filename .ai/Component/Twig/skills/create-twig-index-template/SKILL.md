@@ -47,7 +47,6 @@ Most grids work with default column rendering. Only add custom blocks when a col
 
 ## Rules
 
-- Always extend `@PrestaShop/Admin/layout.html.twig`
-- Use `path()` for all route references — never hardcode URLs
-- Flash messages are handled by the layout — no need to include them manually in most cases
+Conventions (layout extension, `path()` for routes, flash messages auto-handling, toolbar buttons) are in [Twig/CONTEXT.md](../../CONTEXT.md). Skill-specific reminder:
+
 - The `grid` variable name must match what the controller passes to `render()`

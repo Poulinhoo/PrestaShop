@@ -30,7 +30,7 @@ produces: "YAML routing file with all admin routes carrying _legacy_feature_flag
 
 ## Rules
 
-- H1 + H2 + H3 MUST be committed together — routes referencing an unregistered flag cause a 500
-- _legacy_feature_flag value is case-sensitive and must match H3 exactly
+Conventions (atomic commit, case-sensitive flag matching, toggle returning JSON) are in [Controller/CONTEXT.md](../../CONTEXT.md). Skill-specific reminders:
+
 - Edit and delete routes must include `{id}` path parameter
-- Toggle status route must allow POST method and return JSON
+- Toggle status route must allow POST method

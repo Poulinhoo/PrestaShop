@@ -39,8 +39,27 @@ All fully migrated unless noted:
 - `NavigationTabType` for multi-tab forms — not standard Symfony tabs (exception, not default)
 - File uploaders are a domain interface (in `src/Core/Domain/`), implemented in Adapter
 - Listing and form migrations can be separate milestones, often months or years apart
-- `stability="beta"` to `"stable"` is a formal step requiring its own PR
+- `stability="beta"` to `"stable"` is a formal step requiring its own PR — never merge all migration work in one PR (3+ PRs minimum)
 - Vue components are only needed when a form field is too dynamic for standard JS components — most pages use `initComponents()`
+
+## Lifecycle rules
+
+### GA (promote to stable)
+
+- Upgrade SQL must be **idempotent** — safe to run multiple times (use `INSERT ... ON DUPLICATE KEY UPDATE` for feature flag rows)
+- Changelog entry documents the new page as stable
+
+### Deprecation (6-12 months after GA)
+
+- Deprecation banner goes in `$this->warnings[]` (yellow) — **not** `$this->errors[]` (red)
+- The banner checks availability via a private `isNewPageAvailable()` method using `Configuration::get('PS_FEATURE_FLAG_{DOMAIN}')` or `FeatureFlagRepository`
+- **No `@trigger_error()` warnings** — these are forbidden to avoid merchant log noise
+- Changelog entry targets removal in the **next major version**: "will be removed in PrestaShop X.0"
+
+### Removal (next major version)
+
+- Requires a **2+ minor release** deprecation period before the removal PR
+- Removal issue must reference both the deprecation PR and the GA PR by number
 
 ## Dependency graph
 

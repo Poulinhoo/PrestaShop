@@ -120,10 +120,8 @@ Import and reuse these instead of duplicating setup/teardown logic.
 
 ## Rules
 
-- Every `it()` must call `testContext.addContextItem(this, 'testIdentifier', 'uniqueId', baseContext)` — identifiers must be globally unique
-- Use `function()` not arrow functions in `describe()` blocks (Mocha needs `this`)
+Conventions (testIdentifier, `function()` not arrow, feature flag setup, toggle AJAX, drag-and-drop, per-tab campaigns, campaign numbering) are in [Playwright/CONTEXT.md](../../CONTEXT.md). Skill-specific reminders:
+
 - Assert success flash after every create/edit/delete — never assume success
-- Clean up in `after()` — tests must leave the system in pre-test state
-- For beta pages, enable feature flag in `before()` — removed at GA
 - Use page object methods for interactions — never write raw selectors in campaigns
 - Campaigns import from `@prestashop-core/ui-testing` — page objects and data are in the external library

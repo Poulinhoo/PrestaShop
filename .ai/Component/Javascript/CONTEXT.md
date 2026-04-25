@@ -58,6 +58,12 @@ window.prestashop.component.initComponents([
 
 Components activate automatically based on `data-*` attributes in the DOM. Only initialize the ones the page actually needs.
 
+**Initialization pattern:** wrap in jQuery document ready — `$(() => { ... })` — to ensure DOM is available.
+
+**Direct instantiation:** for manual control over specific instances, components can also be instantiated directly: `new window.prestashop.component.ChoiceTree(selector)`. Use `enableAutoCheckChildren()` on ChoiceTree for auto-selecting child nodes.
+
+**Module registration:** modules can register custom components by listening to the `PSComponentsInitiated` event via `EventEmitter`.
+
 **Available components:**
 
 | Component | Purpose |
@@ -88,7 +94,12 @@ Components activate automatically based on `data-*` attributes in the DOM. Only 
 
 Vue is used for **individual page sections** with complex UX requirements (e.g. combination listing in Product page). It is NOT the default — most pages use `initComponents` with standard components.
 
-Vue apps are mounted to specific DOM selectors and communicate with the rest of the page via `EventEmitter`. They are initialized from TypeScript entry points, not as SPAs.
+Vue apps are mounted to specific DOM selectors and communicate with the rest of the page via `EventEmitter` (passed as a prop). They are initialized from TypeScript entry points, not as SPAs.
+
+- **Composition API required:** use `<script setup>` in all Vue SFCs
+- **i18n:** set up `vue-i18n` with locale and messages passed via `data-*` attributes on the mount element
+- **Form sync:** sync Vue component state back to the Symfony form via hidden `<input>` fields for submission — the Vue component is a UI layer, not the form itself
+- **Multiple Grid instances:** when a page has multiple grids, create separate `new Grid()` instances per grid with their own extension chains
 
 ## Canonical examples
 
@@ -98,8 +109,3 @@ Vue apps are mounted to specific DOM selectors and communicate with the rest of 
 - `admin-dev/themes/new-theme/js/pages/attribute/form/index.ts` — simple form entry point
 - `admin-dev/themes/new-theme/js/pages/product/edit/index.ts` — complex form with Vue components
 
-## Related
-
-- [Grid Component](../Grid/CONTEXT.md) — grid definitions determine which JS extensions to enable
-- [Twig Component](../Twig/CONTEXT.md) — templates include the compiled JS bundles
-- [Controller Component](../Controller/CONTEXT.md) — routes referenced in grid actions

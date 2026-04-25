@@ -54,7 +54,8 @@ For campaign-specific data that doesn't fit in the library, create `tests/UI/dat
 
 ## Rules
 
+Conventions (no random data in assertions, deterministic Faker values) are in [Playwright/CONTEXT.md](../../CONTEXT.md). Skill-specific reminders:
+
 - Faker classes and predefined data live in the ui-testing-library, not the core repo
-- Faker defaults should produce valid entities — a bare `new Faker{Domain}()` must create something that passes validation
+- Faker defaults should produce valid entities — a bare `new Faker{Domain}()` must pass validation
 - Predefined data references demo install fixtures — don't assume entities exist that aren't in the standard install
-- All fixture values used in assertions must be deterministic — avoid `Math.random()` in assertion-critical fields

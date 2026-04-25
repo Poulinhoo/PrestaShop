@@ -42,13 +42,12 @@ Infrastructure for building, populating, and handling back-office forms tied to 
   - The controller never calls DataProvider or DataHandler directly — it goes through FormBuilder and FormHandler
 - **DataProvider contract:** `getData($id): array` dispatches the Get query and maps DTO to form array structure. `getDefaultData(): array` returns defaults for create form — must match the same structure as `getData()`
 - **DataHandler contract:** `create(array $data): mixed` builds Add command from form data and dispatches via command bus, returns new ID. `update($id, array $data): void` builds Edit command with setters for non-null fields. Sub-resource commands are dispatched separately after the main command
-- **Multilingual fields:** use `TranslatableType` wrapping the inner field type. Data is an array keyed by language ID
+- **Multilingual fields:** use `TranslatableType` wrapping the inner field type (including `TextareaType` and `FormattedTextareaType` for multilingual textareas). Data is an array keyed by language ID
+- **File uploads:** use `FileType` with `'mapped' => false, 'required' => false`. Actual file saving happens in the DataHandler, not the form type. The edit template renders the existing file via a custom Twig block
+- **Money / decimal fields:** PrestaShop stores prices with 6 decimal places. Always set explicit decimal scale. Use `DecimalNumber` in commands — never native `float`
 - **Choice providers:** dynamic select options use `ChoiceProviderInterface` services injected into form types. Keys are labels, values are DB IDs
-- **Service registration:** form types tagged with `form.type`, DataProvider/DataHandler registered with `autowire: true` and `autoconfigure: true`. Service IDs follow `prestashop.core.form.identifiable_object.{domain}.*`
+- **Service registration:** form types tagged with `form.type`, DataProvider/DataHandler registered with `autowire: true` and `autoconfigure: true`. Service IDs follow `prestashop.core.form.identifiable_object.data_provider.{domain}_form_data_provider` (and `data_handler` equivalently)
+- **Sub-resource dispatch order:** in `DataHandler::create()`/`update()`, dispatch the main entity command first, then sub-resource commands separately
+- **Tab anchor IDs:** when using `NavigationTabType`, tab anchor IDs are derived from tab names and used by JS for error-driven tab navigation
 - **Error handling:** server-side validation via Symfony constraints is the source of truth. JS tab error navigation is enhancement only
 
-## Related
-
-- [CQRS Component](../CQRS/CONTEXT.md) — `FormDataHandler` implementations dispatch commands via `CommandBus`
-- [Grid Component](../Grid/CONTEXT.md) — filter forms for grids use `FormChoiceProviderInterface`
-- [Product Domain](../../Domain/Product/CONTEXT.md) — heaviest consumer; 16 CommandBuilders + dedicated DataHandler/DataProvider/OptionsProvider

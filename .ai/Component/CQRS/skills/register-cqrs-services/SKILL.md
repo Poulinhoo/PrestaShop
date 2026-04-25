@@ -20,7 +20,7 @@ produces: "DI YAML service registrations for repository and handler interface bi
 
 ## Rules
 
-- Use `autoconfigure: true` so `#[AsCommandHandler]` / `#[AsQueryHandler]` attributes are picked up automatically
-- No manual bus tags — the attributes handle routing to Symfony Messenger
+Handler auto-registration via attributes is documented in [CQRS/CONTEXT.md](../../CONTEXT.md#handlers). Skill-specific reminders:
+
 - Register handler interface → concrete class bindings so DI can resolve them
 - Each handler must have exactly one attribute — duplicate registration causes errors

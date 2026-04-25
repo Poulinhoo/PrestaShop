@@ -10,15 +10,11 @@ produces: "{Domain}Repository.php — the single persistence entry point for the
 
 # create-doctrine-repository
 
+See [CQRS/CONTEXT.md](../../CONTEXT.md#repository) for conventions (stateless, no Context dependency, multistore tier model, typed exceptions).
+
 ## 1. Choose the base class
 
-Create `src/Adapter/{Domain}/{Domain}Repository.php`. Choose the base class based on the entity's multistore tier:
-
-| Multistore tier | Base class | When to use |
-|---|---|---|
-| Tier 1 — no shop relation | `AbstractObjectModelRepository` | Entity has no shop association at all |
-| Tier 2 — simple shop association | `AbstractObjectModelRepository` or `AbstractMultiShopObjectModelRepository` | Content is the same across shops, just linked to a list of shops. AbstractMultiShop provides useful helpers even if per-shop content isn't needed |
-| Tier 3 — per-shop content | `AbstractMultiShopObjectModelRepository` | Fields change by shop (e.g. Product, Category) |
+Create `src/Adapter/{Domain}/{Domain}Repository.php`. Choose the base class based on the multistore tier table in CONTEXT.md.
 
 ## 2. Core methods
 
@@ -53,8 +49,7 @@ For entities with has-many sub-resources, two strategies:
 
 ## Rules
 
-- **Repositories must be stateless** — no instance state between calls
-- **Never depend on Context services** — receive all contextual values (shop, language, etc.) as method parameters. The caller consults the Context and passes values to the repository
+Conventions (stateless, no Context, typed exceptions) are in [CQRS/CONTEXT.md](../../CONTEXT.md#repository). Skill-specific reminders:
+
 - Never use `Db::getInstance()` — use Doctrine DBAL or ObjectModel methods
-- Throw typed domain exceptions (`{Domain}NotFoundException`, `CannotAdd{Domain}Exception`), not generic exceptions
-- Never hard-code `Context::getContext()->shop->id` in repositories
+- Never hard-code `Context::getContext()->shop->id` — receive shop as parameter

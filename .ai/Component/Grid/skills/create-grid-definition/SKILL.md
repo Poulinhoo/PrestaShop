@@ -41,7 +41,7 @@ Create `src/Core/Grid/Definition/Factory/{Domain}GridDefinitionFactory.php` exte
 | `PositionColumn` | Drag handle for reordering | See `create-position-column` skill |
 | `ActionColumn` | Row actions dropdown | Always last column |
 
-Column IDs must be `snake_case` and exactly match the SQL column aliases in the query builder.
+See [Grid/CONTEXT.md](../../CONTEXT.md#column-definitions) for column ordering and naming conventions.
 
 ## 3. Row actions and bulk actions
 
@@ -64,12 +64,9 @@ Route names in actions must exactly match the routing YAML.
 
 ## 4. Filters
 
-Filters are defined in the grid definition via `getFilters(): FilterCollection`. Each filter specifies:
+Filters are defined in the grid definition via `getFilters(): FilterCollection` (see [Grid/CONTEXT.md](../../CONTEXT.md#filters) for conventions). Each filter specifies:
 - Filter ID (must match a column ID)
 - The form type to render (e.g. `TextType`, `ChoiceType`, `DateRangeType`)
-- All filter fields are optional (`required: false`)
-
-These filter definitions are used by the grid rendering to build the filter bar. They are NOT a separate form type class.
 
 ## 5. {Domain}Filters class (SearchCriteria)
 
@@ -112,8 +109,6 @@ Register in DI YAML:
 
 ## Rules
 
-- Column IDs must match query builder SELECT aliases exactly
-- ToggleColumn requires a dedicated AJAX toggle route
-- BulkActionColumn always first, ActionColumn always last
+Conventions (column ordering, toggle route, Filters as SearchCriteria) are in [Grid/CONTEXT.md](../../CONTEXT.md). Skill-specific reminder:
+
 - Route names in actions must match routing YAML exactly — typos cause silent 404s
-- `{Domain}Filters` is SearchCriteria, not a form type

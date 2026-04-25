@@ -86,6 +86,25 @@ The key principle: each step must independently load its data from the database.
 - `$this->getQueryBus()->handle(...)` for read/verification operations
 - Never instantiate handlers directly — always go through the bus
 
+### Multilingual data in steps
+
+- Use `$this->localizeByRows($table)` to convert a Gherkin `TableNode` into an array keyed by language ID — this is the standard helper for multilingual step definitions
+
+### Error scenarios
+
+- Error steps catch **typed domain exceptions**, not generic `\Exception`
+- Pattern: `When I add a tax with invalid data` / `Then I should get an error "{ExceptionType}"`
+- The context stores the caught exception and a subsequent Then step asserts its type
+
+### Bulk action steps
+
+- Pass multiple references as a comma-separated string: `When I bulk delete taxes "ref_1,ref_2,ref_3"`
+- Use `$this->referencesToIds($references)` to resolve the list
+
+### Deterministic steps
+
+- Step definitions must be **deterministic** — no random data, no timing dependencies. Use fixed values or references
+
 ### Available tags (from CommonFeatureContext)
 
 These tags trigger hooks defined in `CommonFeatureContext`. Add them to your `Feature:` or `Scenario:` line to activate.
@@ -140,7 +159,3 @@ The most commonly used tag is `@restore-all-tables-before-feature` — use it on
 - `tests/Integration/Behaviour/Features/Scenario/Tax/` — simple CRUD scenarios
 - `tests/Integration/Behaviour/Features/Context/Domain/Manufacturer/ManufacturerFeatureContext.php` — with sub-resources
 
-## Related
-
-- [CQRS Component](../CQRS/CONTEXT.md) — commands and queries exercised by Behat steps
-- [PlaywrightTesting Component](../PlaywrightTesting/CONTEXT.md) — UI-level E2E tests (complementary)

@@ -63,7 +63,7 @@ tests/UI/campaigns/
 └── modules/
 ```
 
-**Naming convention:** directories use `XX_descriptiveName` numbering. Files use `XX_descriptiveName.ts`.
+**Naming convention:** directories use `XX_descriptiveName` numbering. Files use `XX_descriptiveName.ts`. Typical file numbering: `01_filterXxx.ts` (filter), `02_CRUDXxxInBO.ts` (CRUD), `03_bulkActions.ts` (bulk), `04_sortXxx.ts` (sort), `05_tabName.ts`+ (per-tab campaigns).
 
 ## Page Object Model (POM) pattern
 
@@ -71,6 +71,7 @@ Page objects encapsulate page interactions. They:
 - **Never assert** — they return values (strings, booleans, numbers) for the test to assert
 - **Follow naming:** `bo{Feature}Page` for listing, `bo{Feature}CreatePage` for form
 - **Use selector naming:** `{name}{Type}` camelCase (e.g. `submitMainFormButton`, `nameInput`, `activeToggle`)
+- **Extend the appropriate BO base page** — check existing page objects for the exact inheritance pattern
 - **Live in the ui-testing-library**, not in the core repo
 
 ## Test file structure
@@ -116,13 +117,12 @@ describe('BO - International - Taxes : CRUD Tax', async () => {
 - **Feature flag:** for pages still in beta, enable the flag in `before()` and it will be removed at GA
 - **Common tests:** reusable setup/teardown functions live in `tests/UI/commonTests/`. Import and call them to avoid duplication (e.g. `createProductTest`, `deleteProductTest`)
 - **No random data in assertions:** use deterministic Faker values or predefined data for assertions
+- **Toggle switches (quick-edit):** toggle status changes happen via AJAX without page reload — assert the new status directly on the grid row
+- **Drag-and-drop (position):** use `page.dragAndDrop()` for position reordering campaigns
+- **Per-tab campaigns:** for multi-tab forms, create a dedicated campaign per tab (`05_tabName.ts`) verifying field-by-field behavior including multilingual fields
 
 ## Canonical examples
 
 - `tests/UI/campaigns/functional/BO/11_international/03_taxes/01_taxes/02_CRUDTaxesInBO.ts` — simple CRUD campaign
 - `tests/UI/campaigns/functional/BO/11_international/03_taxes/01_taxes/01_filterTaxes.ts` — filter campaign
 
-## Related
-
-- [Grid Component](../Grid/CONTEXT.md) — grid definition determines filter/sort test coverage
-- [Controller Component](../Controller/CONTEXT.md) — routes tested by campaigns

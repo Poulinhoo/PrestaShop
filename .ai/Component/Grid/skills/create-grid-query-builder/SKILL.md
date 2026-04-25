@@ -73,8 +73,4 @@ class {Domain}GridDataFactory implements GridDataFactoryInterface
 
 ## Rules
 
-- Column aliases in SELECT must exactly match column IDs in the Grid Definition
-- NEVER use raw string concatenation for filter values — always use parameterized queries
-- Always alias the primary key as `id_{domain}` for row action routing
-- The count query must NOT include LIMIT/OFFSET — it counts all matching rows
-- Prefer GridDataFactory decoration over modifying the query builder for post-processing
+Conventions (column alias matching, parameterized queries, PK aliasing, count query rules, decoration preference) are in [Grid/CONTEXT.md](../../CONTEXT.md#query-builders).

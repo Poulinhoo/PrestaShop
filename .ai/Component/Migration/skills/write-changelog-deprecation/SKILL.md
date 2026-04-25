@@ -26,6 +26,7 @@ produces: "CHANGELOG.md entry announcing Admin{Domain}sController deprecation"
 
 ## Rules
 
-- Specify the target removal version (next major, e.g., PS 10.0)
+Conventions (changelog targets next major version) are in [Migration/CONTEXT.md](../../CONTEXT.md#deprecation-6-12-months-after-ga). Skill-specific reminders:
+
 - Link to migration guide or new route names so developers can self-serve
 - Deprecation notice in changelog is for MODULE DEVELOPERS, not end users

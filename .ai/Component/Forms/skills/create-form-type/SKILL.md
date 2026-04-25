@@ -53,12 +53,10 @@ For translatable textareas: wrap `TextareaType` or `FormattedTextareaType`.
 
 ## 4. Money / price fields
 
-For monetary fields:
+For monetary fields (see [Forms/CONTEXT.md](../../CONTEXT.md) for decimal scale convention):
 
 - Static currency: `MoneyType::class` with `'currency' => $defaultCurrencyIsoCode`
 - Multi-currency: PS-specific `AmountType` if available
-- Always set explicit decimal scale — PS stores prices with 6 decimal places
-- Use `DecimalNumber` in commands (never native `float` — see CQRS conventions)
 - Use appropriate transformers to convert between form display and storage
 
 ## 5. Choice providers
@@ -74,16 +72,15 @@ For select fields with dynamic options from DB:
 
 ## 6. File upload fields
 
-For image/logo uploads:
+For image/logo uploads (see [Forms/CONTEXT.md](../../CONTEXT.md) for file upload conventions):
 
 - Add `FileType::class` with `'mapped' => false, 'required' => false`
 - Add `File` constraint with allowed MIME types
-- Actual file saving happens in the DataHandler, not the form type
 - Display existing image in the edit template via custom Twig block
 
 ## Rules
 
-- Form types define structure only — no commands, no queries, no persistence
+Conventions (base classes, file uploads, choice providers, NavigationTabType) are in [Forms/CONTEXT.md](../../CONTEXT.md). Skill-specific reminders:
+
 - Add Symfony validation constraints directly on form fields (`NotBlank`, `Length`, `Regex`)
-- `NavigationTabType` is for complex multi-tab forms only — see `create-form-tab-layout` for that pattern
-- Choice provider keys are display labels, values are DB IDs
+- For multi-tab layout, use the `create-form-tab-layout` skill instead

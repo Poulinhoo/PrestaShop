@@ -85,7 +85,8 @@ Each grid instance gets its own set of extensions.
 
 ## Rules
 
+Conventions (multiple Grid instances pattern) are in [Javascript/CONTEXT.md](../../CONTEXT.md). Skill-specific reminders:
+
 - Grid ID must match the PHP `GRID_ID` constant — mismatch means extensions don't bind
 - Only add extensions that match the grid definition — don't add PositionExtension without a PositionColumn
 - AsyncToggleColumnExtension requires a matching AJAX toggle route in the controller
-- Check existing listing entry points for the standard set of extensions to include

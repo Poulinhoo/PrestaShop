@@ -66,11 +66,11 @@ Common pattern for all bulk actions:
 - Extract selected IDs from request
 - If empty selection, return early with info flash
 - Dispatch the appropriate bulk command
-- Catch bulk exceptions (implementing `BulkCommandExceptionInterface`), flash with failed IDs
+- Catch bulk exceptions, flash with failed IDs (see [Controller/CONTEXT.md](../../CONTEXT.md))
 - Redirect to index
 
 ## Rules
 
-- See `@.ai/Component/Controller/CONTEXT.md` for all controller conventions
-- Index action always uses the `Filter` class argument, never manual SearchCriteria
+See [Controller/CONTEXT.md](../../CONTEXT.md) for all conventions (Filters argument, bulk exception handling, toggle JSON). Skill-specific reminder:
+
 - Bulk actions match the grid definition — don't assume delete/enable/disable are always present

@@ -1,4 +1,4 @@
-# Routes Index (generated 2026-04-23)
+# Routes Index (generated 2026-04-25)
 # ~812 routes across admin / admin-api / api
 #
 # Paths are relative to the routing file's prefix (see parent _*.yml for full prefix).

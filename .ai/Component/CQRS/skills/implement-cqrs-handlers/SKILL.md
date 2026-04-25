@@ -11,18 +11,7 @@ produces: "src/Adapter/{Domain}/CommandHandler/ and QueryHandler/ — all handle
 
 # implement-cqrs-handlers
 
-Handlers live in `src/Adapter/{Domain}/CommandHandler/` and `QueryHandler/`. They implement
-the interfaces defined in `src/Core/Domain/{Domain}/`. Each handler uses the
-`#[AsCommandHandler]` or `#[AsQueryHandler]` attribute for automatic registration via
-Symfony Messenger — no manual service tagging needed.
-
-```php
-#[AsCommandHandler]
-class Add{Domain}Handler implements Add{Domain}HandlerInterface
-{
-    // ...
-}
-```
+Handlers live in `src/Adapter/{Domain}/CommandHandler/` and `QueryHandler/`. See [CQRS/CONTEXT.md](../../CONTEXT.md#handlers) for conventions (`#[AsCommandHandler]`/`#[AsQueryHandler]` attributes, no cross-handler calls, return types).
 
 ## 1. Add handler
 
@@ -114,10 +103,7 @@ uses an explicit `Get{Domain}sForListing` query class.
 
 ## Rules
 
-- Use `#[AsCommandHandler]` / `#[AsQueryHandler]` attributes — no manual service tags
-- Handlers contain business orchestration only — no direct SQL, no raw `Db::getInstance()`
-- All DB access goes through the repository
-- Never call another handler from within a handler — compose at controller level
-- Add handler returns `{Domain}Id`; all others return `void`
+Conventions (attributes, no SQL, no cross-handler calls, return types) are in [CQRS/CONTEXT.md](../../CONTEXT.md#handlers). Skill-specific reminders:
+
 - Check null before every field update in Edit handler (partial-update pattern)
 - Always verify existence before deletion — never delete blindly

@@ -51,16 +51,10 @@ Create `bo{Domain}CreatePage` (extends BO base page):
 
 ## 3. Conventions
 
-- Page methods **never assert** — they return values for the campaign to check with `expect()`
+See [Playwright/CONTEXT.md](../../CONTEXT.md) for POM conventions (never assert, selector naming, inheritance, library location). Skill-specific reminders:
+
 - One page object per distinct BO page (listing page, create/edit page)
 - Prefer `data-test` attribute selectors when available over CSS classes
-- Selector constants are defined as class properties, methods use them
+- Check if page objects already exist before creating new ones
 
 **Reference:** check existing page objects in the ui-testing-library for the exact inheritance pattern and method signatures.
-
-## Rules
-
-- Page objects live in the ui-testing-library repo, not the core repo
-- Methods return values — never call `expect()` inside a page object
-- Selector naming: `{descriptiveName}{ElementType}` (e.g. `submitFormButton`, `nameInput`)
-- Check if page objects already exist before creating new ones — some may have been created for other tests

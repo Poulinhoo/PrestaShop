@@ -1,4 +1,4 @@
-# Doctrine Entities Index (generated 2026-04-23)
+# Doctrine Entities Index (generated 2026-04-25)
 # 24 entities in src/PrestaShopBundle/Entity/
 #
 # Columns: scalar DB-mapped fields. Relations: association targets.

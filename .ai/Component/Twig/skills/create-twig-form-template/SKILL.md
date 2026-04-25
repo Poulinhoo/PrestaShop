@@ -30,9 +30,9 @@ Create `src/PrestaShopBundle/Resources/views/Admin/{Section}/{Domain}/form.html.
 {% endblock %}
 ```
 
-- **Always use a single `form_widget(form)`** to render the entire form — never split into multiple `form_widget` calls. Modules hook into the form builder to add fields, and a single call ensures they are rendered automatically
+- **Always use a single `form_widget(form)`** — see [Twig/CONTEXT.md](../../CONTEXT.md) for why (module hook compatibility)
 - The same template typically serves both create and edit — the controller passes different form data
-- For file uploads, add `enctype="multipart/form-data"` to the form start or use `form_start(form, {attr: {enctype: 'multipart/form-data'}})` 
+- For file uploads, add `enctype="multipart/form-data"` (see CONTEXT.md)
 
 **Reference:** `src/PrestaShopBundle/Resources/views/Admin/Improve/International/Tax/` (simple), `src/PrestaShopBundle/Resources/views/Admin/Sell/Catalog/Manufacturer/` (with image)
 
@@ -61,9 +61,7 @@ The asset path must match the webpack entry name.
 
 ## Rules
 
-- Always extend `@PrestaShop/Admin/layout.html.twig`
-- Use `path()` for all route references
-- `form_widget(form)` handles tabs automatically when `NavigationTabType` is used — no manual tab HTML needed
-- **Never split form rendering** into multiple `form_widget` calls — module-added fields would be invisible
+Conventions (layout, `path()`, single `form_widget(form)`, NavigationTabType auto-rendering, file upload enctype, form theme block naming, JS asset inclusion) are in [Twig/CONTEXT.md](../../CONTEXT.md). Skill-specific reminders:
+
 - Form theme overrides should be minimal — Symfony's default rendering handles most cases
 - CSRF token is included automatically by `form_end(form)`

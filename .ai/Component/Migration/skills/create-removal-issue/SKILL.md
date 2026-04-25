@@ -39,6 +39,7 @@ produces: "GitHub issue tracking the actual removal of Admin{Domain}sController 
 
 ## Rules
 
+Conventions (2+ minor release prerequisite, reference both PRs) are in [Migration/CONTEXT.md](../../CONTEXT.md#removal-next-major-version). Skill-specific reminder:
+
 - Issue must be opened BEFORE the deprecation period ends — it tracks readiness
 - Never create a PR for removal until all prerequisites in the issue are checked
-- The issue must reference the deprecation PR and the GA PR by number

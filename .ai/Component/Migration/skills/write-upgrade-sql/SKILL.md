@@ -21,6 +21,7 @@ conditional: "only if PS upgrade scripts do not auto-sync feature_flag.xml with 
 
 ## Rules
 
+Conventions (SQL idempotency) are in [Migration/CONTEXT.md](../../CONTEXT.md#ga-promote-to-stable). Skill-specific reminders:
+
 - Only create this file if the upgrade process does NOT auto-sync XML with DB
-- SQL must be idempotent — safe to run multiple times
-- Use the exact flag name from H3
+- Use the exact flag name from the feature_flag.xml entry

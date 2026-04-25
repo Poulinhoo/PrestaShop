@@ -11,10 +11,7 @@ conditional: "only if the grid has bulk actions (most entities do)"
 
 # create-cqrs-bulk-commands
 
-All bulk handlers follow the same pattern: extend `AbstractBulkCommandHandler`, iterate over
-IDs, catch errors per item, continue processing, and report all failures together via
-`BulkCommandExceptionInterface`. This applies to bulk delete, bulk status toggle, and any
-other bulk action.
+See [CQRS/CONTEXT.md](../../CONTEXT.md#bulk-handlers) for the bulk handler pattern (`AbstractBulkCommandHandler`, `BulkCommandExceptionInterface`, continue after failure).
 
 ## 1. Bulk delete command
 
@@ -34,16 +31,6 @@ Create `src/Core/Domain/{Domain}/Command/BulkToggle{Domain}StatusCommand.php`:
 ## 3. Bulk handlers
 
 All bulk handlers follow the same structure. Create in `src/Adapter/{Domain}/CommandHandler/`:
-
-### Common pattern (applies to ALL bulk handlers):
-
-- Extend `AbstractBulkCommandHandler`
-- Implement `BulkCommandExceptionInterface` for error reporting
-- Iterate `$command->getIds()`
-- For each ID, perform the action in a try/catch
-- **Continue after individual failure** — never abort mid-batch
-- Collect all exceptions
-- If any failures, throw a bulk exception listing all failed IDs with their individual errors
 
 ### Bulk delete handler
 
@@ -69,9 +56,7 @@ Both return `void`. The bulk exception is thrown, not returned.
 
 ## Rules
 
-- **All bulk handlers extend `AbstractBulkCommandHandler`** — this is not optional
-- Always continue after individual failure — never abort mid-batch
-- Report ALL failed IDs in the bulk exception, not just the first one
-- `BulkCommandExceptionInterface` encapsulates individual errors per item
+Conventions (AbstractBulkCommandHandler, continue after failure, BulkCommandExceptionInterface) are in [CQRS/CONTEXT.md](../../CONTEXT.md#bulk-handlers). Skill-specific reminders:
+
 - Be consistent with the single-entity commands on ID typing
 - Skip this skill entirely if the entity has no bulk grid actions

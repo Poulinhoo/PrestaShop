@@ -1,4 +1,4 @@
-# Hook Names Index (generated 2026-04-23)
+# Hook Names Index (generated 2026-04-25)
 # 128 unique hook names discovered via static source analysis
 #
 # Source: dispatchWithParameters / Hook::exec calls in src/ and classes/

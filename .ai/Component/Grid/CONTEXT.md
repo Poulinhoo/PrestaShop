@@ -51,8 +51,28 @@ When grid data needs post-processing (e.g. resolving image URLs from IDs, format
 - Injected into the controller's index action via argument resolver: `indexAction({Domain}Filters $filters)`
 - Filter values come from the grid filter bar (saved in session by `CommonController::searchGridAction`)
 
+## Conventions
+
+### Column definitions
+
+- Column IDs must be `snake_case` and **exactly match** the SQL column aliases in the query builder
+- **Column ordering:** `BulkActionColumn` is always first, `ActionColumn` is always last. `PositionColumn` (if present) goes second after BulkActionColumn
+- `ToggleColumn` requires a dedicated AJAX toggle route — it cannot work without one
+- Grid definition must declare a `GRID_ID` const shared between the definition factory, the `{Domain}Filters` class, and the JS Grid constructor
+
+### Query builders
+
+- Always alias the primary key as `id_{domain}` (e.g. `id_tax`) — row actions use this alias for routing
+- **Parameterized queries only** — never use raw string concatenation for filter values
+- The count query must NOT include `LIMIT`/`OFFSET` — it returns the total before pagination
+- When grid data needs post-processing (resolving image URLs, formatting computed columns), decorate the `GridDataFactory` instead of modifying the query builder
+
+### Filters
+
+- Filter fields are all **optional** — the grid works without any filter applied
+- Filters are defined in the grid definition with specific form types (`TextType`, `ChoiceType`, `DateRangeType`, etc.)
+- Filter values are saved in session by `CommonController::searchGridAction` and restored automatically
+
 ## Related
 
-- [Forms Component](../Forms/CONTEXT.md) — filter forms use `FormChoiceProviderInterface`
-- [Hook Component](../Hook/CONTEXT.md) — `action{GridId}GridDefinitionModifier` hook for module extensibility
-- [PositionUpdater Component](../PositionUpdater/CONTEXT.md) — drag-and-drop reordering sub-layer
+- [PositionUpdater Component](../PositionUpdater/CONTEXT.md) — drag-and-drop reordering sub-layer (lives inside Grid source tree)

@@ -15,24 +15,7 @@ produces: "Complete src/Core/Domain/{Domain}/ layer: ValueObject/, Command/, Com
 This skill creates the entire domain layer for an entity. It covers the Core side only
 (interfaces and data objects) — handler implementations live in `implement-cqrs-handlers`.
 
-## Critical rule: scalar inputs, VO getters
-
-**Command and Query constructor parameters must always be scalar types** (`int`, `string`, `bool`, `array`)
-to facilitate serialization. However, getters can (and should) return Value Objects built from those scalars.
-
-Accepted exceptions to the scalar-only input rule:
-- `ShopConstraint` — for multistore scoping
-- `DecimalNumber` — ALWAYS use instead of native `float` (which carries imprecision)
-- `DateTimeInterface` / `DateTimeImmutable` — for date/time values
-
-```php
-// Correct: scalar input, VO getter
-public function __construct(private int $taxId) {}
-public function getTaxId(): TaxId { return new TaxId($this->taxId); }
-
-// Wrong: VO as input
-public function __construct(private TaxId $taxId) {}
-```
+Read [CQRS/CONTEXT.md](../../CONTEXT.md) for conventions (scalar inputs/VO getters, exception hierarchy, handler rules).
 
 ## 1. Identity Value Object
 
@@ -58,20 +41,13 @@ For has-many relations, create typed collections implementing `\Countable` and `
 
 ## 3. Exception Hierarchy
 
-Create in `src/Core/Domain/{Domain}/Exception/`:
-
-- **Base:** `{Domain}Exception extends \RuntimeException` with integer constants per error code
-- **Not found:** `{Domain}NotFoundException extends {Domain}Exception`
-- **Per-action:** `CannotAdd{Domain}Exception`, `CannotUpdate{Domain}Exception`, `CannotDelete{Domain}Exception`
-- **Constraints:** `{Domain}ConstraintException` with `const INVALID_NAME = 1`, `const INVALID_ID = 2`, etc.
-
-Error code constants must be unique integers within the class. Never throw generic `\Exception` from domain code.
+Create in `src/Core/Domain/{Domain}/Exception/` following the hierarchy documented in [CQRS/CONTEXT.md](../../CONTEXT.md#exception-hierarchy): base, not-found, per-action, and constraint classes.
 
 **Reference:** `src/Core/Domain/Tax/Exception/` (simple), `src/Core/Domain/Carrier/Exception/` (many constraint codes)
 
 ## 4. Commands
 
-All commands live in `src/Core/Domain/{Domain}/Command/`. They are data objects with `declare(strict_types=1)`, carrying no business logic and making no DB calls.
+All commands live in `src/Core/Domain/{Domain}/Command/`.
 
 ### 4.1 Add command
 
@@ -88,15 +64,12 @@ All commands live in `src/Core/Domain/{Domain}/Command/`. They are data objects 
 
 ### 4.2 Edit command (partial-update pattern)
 
-`Edit{Domain}Command.php`:
+`Edit{Domain}Command.php` — follows the partial-update pattern from [CQRS/CONTEXT.md](../../CONTEXT.md#commands):
 
-- Constructor takes **only** the entity ID (as `int`) — never field values
-- **Favor nullable fields** for all editable properties to support partial update and PATCH API
+- Constructor takes **only** the entity ID (as `int`)
 - Every editable field: `private ?Type $field = null`
 - Fluent setter: `public function setName(string $name): self { $this->name = $name; return $this; }`
 - Nullable getter: `public function getName(): ?string { return $this->name; }`
-- In the handler, `if ($command->getName() !== null)` before updating — this is the partial-update pattern
-- Null means "not set in this request", not "set to null in DB"
 - Do NOT include fields that are immutable after creation
 
 **Reference:** `src/Core/Domain/Tax/Command/EditTaxCommand.php` (simple), `src/Core/Domain/Manufacturer/Command/EditManufacturerCommand.php` (with image)
@@ -151,10 +124,7 @@ For abstractions that cross the Core/Adapter boundary beyond the repository:
 
 ## Rules
 
-- **Scalar inputs, VO getters** — constructor params are always scalar (with exceptions noted above), getters return VOs
-- Commands carry data only — no business logic, no DB calls
+All conventions (scalar inputs/VO getters, exception hierarchy, handler rules) are in [CQRS/CONTEXT.md](../../CONTEXT.md). Skill-specific reminders:
+
 - All validation failures throw domain exceptions from the constructor
-- Sub-resource fields get their own command, never merged into Edit
 - One handler interface per command — never combine multiple commands
-- Never call another handler from within a handler — compose at controller level
-- `declare(strict_types=1)` on every class

@@ -86,9 +86,7 @@ Verify: `php vendor/bin/behat --dry-run` to confirm all steps are matched.
 
 ## Rules
 
-- **Stateless steps** — assertion steps must independently load data, never depend on hidden state from previous steps
-- Use `referenceToId` / `referencesToIds` for reference resolution — not `getSharedStorage()->get()` directly
-- Never hardcode integer IDs in step definitions — always use string references
-- Step definitions must be deterministic — no random data, no timing dependencies
-- Catch typed domain exceptions in error scenarios — not generic `\Exception`
+Conventions (stateless steps, referenceToId, deterministic steps, typed exceptions, error scenarios) are in [Behat/CONTEXT.md](../../CONTEXT.md). Skill-specific reminders:
+
+- Use `referenceToId` / `referencesToIds` — not `getSharedStorage()->get()` directly
 - Check existing contexts for reusable steps before creating new ones

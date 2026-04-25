@@ -108,8 +108,7 @@ A dedicated `FormType` can bridge PHP form data to the Vue component via hidden 
 
 ## Rules
 
+Conventions (Composition API required, `vue-i18n` setup, hidden form field sync, EventEmitter as prop) are in [Javascript/CONTEXT.md](../../CONTEXT.md). Skill-specific reminders:
+
 - Vue is the exception, not the default — justify its use
 - Mount on a specific DOM selector, not the entire page
-- Use `EventEmitter` for cross-boundary communication, not custom events
-- Translations are passed via `data-*` attributes and `vue-i18n`, not hardcoded
-- Hidden form fields sync Vue state to the Symfony form on submit

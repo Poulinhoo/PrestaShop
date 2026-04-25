@@ -11,8 +11,7 @@ produces: "src/Core/Domain/{Domain}/Query/, QueryResult/, QueryHandler/ — read
 
 # create-cqrs-queries
 
-Same scalar input rule as commands: query constructor parameters are always scalar types.
-See `create-cqrs-commands` for the full rule and exceptions (ShopConstraint, DecimalNumber, DateTime).
+Read [CQRS/CONTEXT.md](../../CONTEXT.md) for conventions (scalar inputs/VO getters, QueryResult scalar-only rule).
 
 ## 1. Get-for-editing query
 
@@ -26,12 +25,9 @@ Create `src/Core/Domain/{Domain}/Query/Get{Domain}ForEditing.php`:
 
 Create `src/Core/Domain/{Domain}/QueryResult/Editable{Domain}.php`:
 
-- Constructor parameters: all fields the edit form needs to pre-fill
-- **All types must be scalar** — `int`, `string`, `bool`, `array` (for multilingual, keyed by lang ID), `?int` for nullable FKs
-- No Value Objects in QueryResult — the data is already validated, no need for VO wrappers
+- Constructor parameters: all fields the edit form needs to pre-fill (scalar types only — see CONTEXT.md)
 - Public getter for every field
 - Immutable: no setters, all values set at construction
-- No ObjectModel instances inside — only scalars and arrays
 
 **Reference:** `src/Core/Domain/Tax/QueryResult/EditableTax.php` (simple), `src/Core/Domain/Manufacturer/QueryResult/EditableManufacturer.php` (with associations)
 
@@ -55,8 +51,7 @@ Create in `src/Core/Domain/{Domain}/QueryHandler/`:
 
 ## Rules
 
-- Queries never trigger side effects — read only
-- **QueryResult DTOs use only scalar types** — no VOs, the data is already consistent
-- Return types should be typed DTOs, not ObjectModel instances
+Conventions (scalar-only DTOs, read-only queries) are in [CQRS/CONTEXT.md](../../CONTEXT.md). Skill-specific reminders:
+
 - Map ALL editable fields in the DTO — missing fields cause empty form fields on edit
-- Most list queries are handled by the grid QueryBuilder — don't create unnecessary query classes
+- Return typed DTOs, not ObjectModel instances

@@ -36,8 +36,8 @@ produces: "Deprecation warning banner in AdminXxxController::init() visible when
 
 ## Rules
 
+Conventions (warnings[] not errors[], no trigger_error(), deprecation timeline) are in [Migration/CONTEXT.md](../../CONTEXT.md#deprecation-6-12-months-after-ga). Skill-specific reminders:
+
 - NEVER delete the legacy controller — only add the notice
-- Notice goes in `$this->warnings[]` (yellow banner), not `$this->errors[]` (blocking red)
 - Notice only shows when the feature flag is ON — never always-on
-- Do NOT add `@trigger_error()` PHP deprecation warnings — causes noise in merchant logs
 - Do NOT disable or break the legacy controller — it must remain fully functional

@@ -120,9 +120,8 @@ Note: grid filtering is often tested at Playwright level instead of Behat.
 
 ## Rules
 
-- **Never use numeric IDs in Gherkin** — always use string references
-- **Stateless assertions** — each Then step independently loads data, never relies on hidden state
+Conventions (stateless steps, string references, typed exceptions, deterministic steps) are in [Behat/CONTEXT.md](../../CONTEXT.md). Skill-specific reminders:
+
 - Scenario names must be unique within the feature
 - Background section should be minimal — only universally shared setup
 - Reuse existing step definitions from other contexts when possible
-- Error scenarios must assert the specific exception type, not generic failure

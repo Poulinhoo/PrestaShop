@@ -35,7 +35,7 @@ conditional: "only for complex entities with many fields requiring tab organizat
 
 ## Rules
 
-- `NavigationTabType` is PS-specific — do not use Symfony's standard tab components
+Conventions (NavigationTabType is PS-specific, tab anchor IDs for JS error nav) are in [Forms/CONTEXT.md](../../CONTEXT.md). Skill-specific reminders:
+
 - Each tab gets its own form type class for maintainability
 - Tab titles must use `$this->trans()` for translation
-- JS tab error navigation (switching to first tab with errors) is handled separately in the frontend entry point

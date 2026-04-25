@@ -21,6 +21,7 @@ conditional: "only for entities with position/sort support"
 
 ## Rules
 
+Column ordering conventions (PositionColumn as second column) are in [Grid/CONTEXT.md](../../CONTEXT.md#column-definitions). Skill-specific reminders:
+
 - Position updates are always AJAX — return JSON response, not redirect
-- The position column should reflect the actual DB `position` field
 - Position values start at 0 or 1 — be consistent with existing PS convention

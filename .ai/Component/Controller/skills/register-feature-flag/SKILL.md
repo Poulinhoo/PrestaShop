@@ -31,6 +31,6 @@ produces: "feature_flag.xml entry with stability=beta and state=0"
 
 ## Rules
 
-- H1 + H2 + H3 commit together — never ship routes referencing an unregistered flag
-- stability starts as 'beta' always — promoted to 'stable' in step 12 only
+Conventions (atomic commit, beta→stable lifecycle) are in [Controller/CONTEXT.md](../../CONTEXT.md). Skill-specific reminder:
+
 - state starts as 0 — contributors enable manually; merchants never see it until GA

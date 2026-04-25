@@ -27,6 +27,50 @@ After writing the file:
    ```
 ---
 
+## CONTEXT.md vs SKILL.md — no duplication rule
+
+CONTEXT.md owns conventions (rules, patterns, constraints — the "why" and "what"). SKILL.md owns procedures (steps, code templates, checklists — the "how"). Content must live in exactly one place.
+
+| | CONTEXT.md | SKILL.md |
+|---|---|---|
+| **Contains** | Conventions, rules, patterns | Procedures, step-by-step instructions, code templates |
+| **Audience** | Any AI tool or human | An AI agent executing a specific task |
+| **Duplication** | Authoritative source — never restated elsewhere | **References** CONTEXT.md conventions, never **restates** them |
+
+### When creating or modifying a skill
+
+For every rule or convention you're about to write in a skill, apply this decision:
+
+1. **Read the parent CONTEXT.md first** — before writing any content in a skill, read the component (or domain) CONTEXT.md to know what's already documented there
+2. **Ask: "Does this apply to all skills in this component?"** — if yes, it belongs in CONTEXT.md, not the skill. Example: "all handlers use `#[AsCommandHandler]`" → CONTEXT.md
+3. **Ask: "Is this specific to this one task?"** — if yes, it stays in the skill. Example: "the edit handler checks null before each field" → skill
+4. **If a convention is missing from CONTEXT.md and should be there** — add it to CONTEXT.md first, then reference it from the skill. Never write it only in the skill
+5. **Reference, don't restate** — when a skill needs to remind the reader of a convention, write: `See [Component/CONTEXT.md](../../CONTEXT.md#section) for X convention.` Do not copy the rule text into the skill
+
+### When reviewing an existing skill
+
+Check the skill's `## Rules` section and any inline convention statements:
+
+1. For each rule in the skill, check if the same rule exists in the parent CONTEXT.md
+2. If it does → **delete it from the skill** and replace with a reference
+3. If it doesn't but should → **move it to CONTEXT.md** and replace with a reference
+4. If it's genuinely task-specific → keep it in the skill
+
+### What NOT to put in CONTEXT.md
+
+Not everything belongs in CONTEXT.md either. Skip:
+- Class inventories, file listings — anything `grep` or `glob` can answer
+- Code templates and step-by-step procedures — those are the skill's job
+- Content already in the root `.ai/CONTEXT.md` (project-wide coding standards, testing framework)
+
+### Cross-references and cascade risk
+
+The `## Related` section in CONTEXT.md files links to other contexts. Use it sparingly — every link is a potential cascade where an AI agent follows A → B → C and ends up loading all contexts, which defeats the purpose of splitting them.
+
+Only link when the relationship is **non-obvious** (architectural surprise, coexistence gotcha). Do not link for obvious usage relationships ("Controller uses CQRS") or just to mention a class name that's greppable. When in doubt, omit the link.
+
+---
+
 ## SKILL.md format reference
 
 ### Frontmatter (YAML between `---` markers)
