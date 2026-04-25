@@ -89,6 +89,21 @@ Only link when the relationship is **non-obvious** (architectural surprise, coex
 | `agent` | No | Subagent type when `context: fork` — `Explore`, `Plan`, `general-purpose` |
 | `model` | No | Override model for this skill |
 
+### Project-specific frontmatter (custom metadata)
+
+These fields are ignored by Claude Code but provide valuable documentation for skill dependency graphs and orchestrator workflows:
+
+| Field | Description |
+|-------|-------------|
+| `needs` | List of skill names this skill depends on (prerequisites). Use **skill names**, not opaque IDs. Example: `[create-cqrs-commands, create-cqrs-queries]`. Empty list `[]` = no dependencies |
+| `produces` | What this skill creates — a short string describing the output artifacts. Example: `"{Domain}Repository.php — the single persistence entry point"` |
+| `conditional` | When to skip this skill entirely. Example: `"only if the grid has bulk actions"` |
+
+**Rules for `needs`:**
+- Always reference skills by their actual name (the `name` frontmatter field or directory name) — never use opaque IDs, brick codes, or step numbers
+- Dependencies are **top-down only**: a skill declares what it needs, it never declares what needs it. This keeps skills standalone — they don't know who calls them
+- A skill must be usable independently from any workflow. `needs` documents the logical prerequisite ("you should have a repository before implementing handlers"), not a hard runtime dependency
+
 **Arguments:** If a skill requires arguments that the user must provide, describe them in the `description` field. At runtime, if a required argument is missing, use `AskUserQuestion` to prompt the user.
 
 ### Body

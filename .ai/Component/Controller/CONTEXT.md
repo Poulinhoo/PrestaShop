@@ -33,3 +33,12 @@ Symfony admin controllers for the back-office. Controllers are the thinnest laye
 - `src/PrestaShopBundle/Controller/Admin/Sell/Catalog/ManufacturerController.php` — medium complexity (sub-resource addresses, two grids, export)
 - `src/PrestaShopBundle/Controller/Admin/Sell/Catalog/CategoryController.php` — position management, tree hierarchy
 
+## Skills
+
+| Skill | Trigger |
+|-------|---------|
+| [`create-controller-listing`](skills/create-controller-listing/SKILL.md) | "create listing for {Domain}" |
+| [`create-controller-form-actions`](skills/create-controller-form-actions/SKILL.md) | "create form actions for {Domain}" |
+| [`create-admin-routing`](skills/create-admin-routing/SKILL.md) | "create routing for {Domain}" |
+| [`register-feature-flag`](skills/register-feature-flag/SKILL.md) | "register feature flag for {Domain}" |
+

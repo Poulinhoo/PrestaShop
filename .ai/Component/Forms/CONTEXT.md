@@ -51,3 +51,11 @@ Infrastructure for building, populating, and handling back-office forms tied to 
 - **Tab anchor IDs:** when using `NavigationTabType`, tab anchor IDs are derived from tab names and used by JS for error-driven tab navigation
 - **Error handling:** server-side validation via Symfony constraints is the source of truth. JS tab error navigation is enhancement only
 
+## Skills
+
+| Skill | Trigger |
+|-------|---------|
+| [`create-form-type`](skills/create-form-type/SKILL.md) | "create form type for {Domain}" |
+| [`create-form-tab-layout`](skills/create-form-tab-layout/SKILL.md) | "create tab layout for {Domain} form" |
+| [`create-form-data-handling`](skills/create-form-data-handling/SKILL.md) | "create form data handling for {Domain}" |
+

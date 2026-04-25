@@ -159,3 +159,10 @@ The most commonly used tag is `@restore-all-tables-before-feature` — use it on
 - `tests/Integration/Behaviour/Features/Scenario/Tax/` — simple CRUD scenarios
 - `tests/Integration/Behaviour/Features/Context/Domain/Manufacturer/ManufacturerFeatureContext.php` — with sub-resources
 
+## Skills
+
+| Skill | Trigger |
+|-------|---------|
+| [`create-behat-context`](skills/create-behat-context/SKILL.md) | "create behat context for {Domain}" |
+| [`write-behat-scenarios`](skills/write-behat-scenarios/SKILL.md) | "write behat scenarios for {Domain}" |
+

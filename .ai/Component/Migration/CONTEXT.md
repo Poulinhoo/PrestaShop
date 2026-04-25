@@ -146,6 +146,20 @@ Key artifacts that cross skill boundaries:
 | 12 - GA | #37638 | Feature flag to stable | 2025-02 | `stability="stable"`, full Playwright migration |
 | 13 - Deprecation | #39050 | Migration banner | 2025-07 | Legacy controller deprecation notice |
 
+## Skills
+
+| Skill | Trigger |
+|-------|---------|
+| [`legacy-to-symfony-migration`](skills/legacy-to-symfony-migration/SKILL.md) | "migrate the Xxx admin page" |
+| [`audit-legacy-controller`](skills/audit-legacy-controller/SKILL.md) | "audit AdminXxxController" |
+| [`audit-object-model`](skills/audit-object-model/SKILL.md) | "audit Xxx ObjectModel" |
+| [`generate-migration-manifest`](skills/generate-migration-manifest/SKILL.md) | "generate migration manifest" |
+| [`promote-feature-flag-to-stable`](skills/promote-feature-flag-to-stable/SKILL.md) | "promote {Domain} to GA" |
+| [`write-upgrade-sql`](skills/write-upgrade-sql/SKILL.md) | "write upgrade SQL for {Domain}" |
+| [`add-legacy-deprecation-notice`](skills/add-legacy-deprecation-notice/SKILL.md) | "add deprecation notice to AdminXxx" |
+| [`write-changelog-deprecation`](skills/write-changelog-deprecation/SKILL.md) | "write changelog deprecation for {Domain}" |
+| [`create-removal-issue`](skills/create-removal-issue/SKILL.md) | "create removal issue for AdminXxx" |
+
 ## Related
 
 - [CQRS Component](../CQRS/CONTEXT.md) — commands, queries, handlers

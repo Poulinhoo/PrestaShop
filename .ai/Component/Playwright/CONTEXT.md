@@ -126,3 +126,11 @@ describe('BO - International - Taxes : CRUD Tax', async () => {
 - `tests/UI/campaigns/functional/BO/11_international/03_taxes/01_taxes/02_CRUDTaxesInBO.ts` — simple CRUD campaign
 - `tests/UI/campaigns/functional/BO/11_international/03_taxes/01_taxes/01_filterTaxes.ts` — filter campaign
 
+## Skills
+
+| Skill | Trigger |
+|-------|---------|
+| [`create-playwright-page-objects`](skills/create-playwright-page-objects/SKILL.md) | "create page objects for {Domain}" |
+| [`create-playwright-test-data`](skills/create-playwright-test-data/SKILL.md) | "create test data for {Domain}" |
+| [`write-playwright-campaigns`](skills/write-playwright-campaigns/SKILL.md) | "write Playwright tests for {Domain}" |
+

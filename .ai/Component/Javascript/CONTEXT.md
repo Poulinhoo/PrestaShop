@@ -109,3 +109,12 @@ Vue apps are mounted to specific DOM selectors and communicate with the rest of 
 - `admin-dev/themes/new-theme/js/pages/attribute/form/index.ts` — simple form entry point
 - `admin-dev/themes/new-theme/js/pages/product/edit/index.ts` — complex form with Vue components
 
+## Skills
+
+| Skill | Trigger |
+|-------|---------|
+| [`create-ts-entry-point`](skills/create-ts-entry-point/SKILL.md) | "create JS entry point for {Domain}" |
+| [`init-js-components`](skills/init-js-components/SKILL.md) | "initialize components for {Domain}" |
+| [`init-grid-extensions`](skills/init-grid-extensions/SKILL.md) | "add grid extensions for {Domain}" |
+| [`create-vue-component`](skills/create-vue-component/SKILL.md) | "add Vue component for {Domain}" |
+

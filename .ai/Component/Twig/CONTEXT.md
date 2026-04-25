@@ -36,6 +36,13 @@ Back-office templating infrastructure: Twig extensions that expose PrestaShop-sp
 - **Form themes:** scoped via `{% form_theme form 'path/to/_widgets.html.twig' %}` — no global side effects. Use only when a field needs custom rendering beyond Symfony defaults (e.g. image preview next to upload field). Block naming: `{% block _{field_id}_widget %}` for field-level overrides
 - **JS assets:** enqueue via `{% block javascripts %}{{ parent() }}{{ encore_entry_script_tags('entry_name') }}{% endblock %}` — the entry name must match the webpack config key
 
+## Skills
+
+| Skill | Trigger |
+|-------|---------|
+| [`create-twig-index-template`](skills/create-twig-index-template/SKILL.md) | "create index template for {Domain}" |
+| [`create-twig-form-template`](skills/create-twig-form-template/SKILL.md) | "create form template for {Domain}" |
+
 ## Related
 
 - [Locale Component](../Locale/CONTEXT.md) — `LocalizationExtension` uses `LocaleRepository`

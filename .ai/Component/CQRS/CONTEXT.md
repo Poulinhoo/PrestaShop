@@ -98,3 +98,14 @@ Error code constants must be unique integers within the class. Never throw gener
 - `src/Core/Domain/Tax/` — simple domain (few commands, one VO, simple exceptions)
 - `src/Core/Domain/Carrier/` — complex domain (many commands, sub-resources, multistore)
 
+## Skills
+
+| Skill | Trigger |
+|-------|---------|
+| [`create-cqrs-commands`](skills/create-cqrs-commands/SKILL.md) | "create CQRS commands for {Domain}" |
+| [`create-cqrs-queries`](skills/create-cqrs-queries/SKILL.md) | "create queries for {Domain}" |
+| [`create-cqrs-bulk-commands`](skills/create-cqrs-bulk-commands/SKILL.md) | "create bulk commands for {Domain}" |
+| [`implement-cqrs-handlers`](skills/implement-cqrs-handlers/SKILL.md) | "implement handlers for {Domain}" |
+| [`create-doctrine-repository`](skills/create-doctrine-repository/SKILL.md) | "create repository for {Domain}" |
+| [`register-cqrs-services`](skills/register-cqrs-services/SKILL.md) | "register CQRS services for {Domain}" |
+

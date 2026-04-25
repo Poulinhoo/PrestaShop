@@ -73,6 +73,14 @@ When grid data needs post-processing (e.g. resolving image URLs from IDs, format
 - Filters are defined in the grid definition with specific form types (`TextType`, `ChoiceType`, `DateRangeType`, etc.)
 - Filter values are saved in session by `CommonController::searchGridAction` and restored automatically
 
+## Skills
+
+| Skill | Trigger |
+|-------|---------|
+| [`create-grid-definition`](skills/create-grid-definition/SKILL.md) | "create grid definition for {Domain}" |
+| [`create-grid-query-builder`](skills/create-grid-query-builder/SKILL.md) | "create grid query builder for {Domain}" |
+| [`create-position-column`](skills/create-position-column/SKILL.md) | "add position column for {Domain}" |
+
 ## Related
 
 - [PositionUpdater Component](../PositionUpdater/CONTEXT.md) — drag-and-drop reordering sub-layer (lives inside Grid source tree)
