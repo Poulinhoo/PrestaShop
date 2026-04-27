@@ -4,15 +4,19 @@ description: >
   Promote the domain's feature flag from beta to stable (GA) and update Playwright
   tests to no longer require the flag. This is done in a dedicated GA PR with minimal
   changes. Trigger: "promote {Domain} to GA", "make {Domain} stable".
-needs: [register-feature-flag, write-playwright-campaigns]
+needs: [write-playwright-campaigns]
 produces: "feature_flag.xml updated to stable/state=1 + Playwright tests updated"
 ---
 
 # promote-feature-flag-to-stable
 
+## Prerequisite
+
+The feature flag must already exist (registered earlier as `beta`). This skill only promotes it; it does not create it.
+
 ## 1. Promote the feature flag
 
-1. Verify GA prerequisites (see step-12-general-availability.md checklist)
+1. Verify GA prerequisites: page is stable, no P1 regressions in the last release.
 2. Open `install-dev/data/xml/feature_flag.xml`
 3. Find the `{domain}` entry
 4. Change `<stability>beta</stability>` to `<stability>stable</stability>`

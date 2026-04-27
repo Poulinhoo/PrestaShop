@@ -17,7 +17,7 @@ produces: "DB schema map, relation list, multilingual field list, validation rul
 4. Identify multilingual fields (`'lang' => true`) — these need `TranslatableType` in the form and multilingual handling in handlers.
 5. Identify shop-scoped fields (`'shop' => true`) — these require multistore-aware repository methods.
 6. If `classes/lang/{Domain}Lang.php` exists, read it and confirm the lang table structure.
-7. Note any `hasMany` or `hasManyToMany` relations defined — these become sub-resources (trigger D14/P10).
+7. Note any `hasMany` or `hasManyToMany` relations defined — these become sub-resources (handled by dedicated commands and repositories when the domain is non-trivial).
 8. Record every `$validateFields()` rule — these inform ValueObject validation.
 9. Output: structured schema map (table, columns, lang columns, shop columns, relations, validation rules).
 

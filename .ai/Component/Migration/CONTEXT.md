@@ -10,7 +10,7 @@ Infrastructure and skills for migrating PrestaShop legacy admin pages (ObjectMod
 |-------|------|
 | Migration orchestrator skill | `.ai/Component/Migration/skills/legacy-to-symfony-migration/` |
 | Audit skills | `audit-legacy-controller`, `audit-object-model`, `generate-migration-manifest` |
-| Lifecycle skills | `promote-feature-flag-to-stable`, `write-upgrade-sql`, `add-legacy-deprecation-notice`, `write-changelog-deprecation`, `create-removal-issue` |
+| Lifecycle skills | `promote-feature-flag-to-stable`, `write-upgrade-sql-script`, `create-removal-issue` |
 
 ## Reference pages by complexity
 
@@ -25,41 +25,37 @@ All fully migrated unless noted:
 | Medium | Employee | 12 | 1 | Yes | `initComponents()` | Profile-based permissions, password policy |
 | Complex | Customer | 20+ | 7 | Yes | Vue | Multiple related grids, B2B fields |
 | Complex | Order | view-only | 5+ | Yes | Vue | 48 actions, sub-resources (shipments, payments) |
-| Complex | Carrier | many | 1 | Yes | Vue | Multi-tab form (still has `_legacy_feature_flag`) |
+| Complex | Carrier | many | 1 | Yes | Vue | Multi-tab form, sub-resource ranges |
 
 > **Note:** Vue.js is the exception, not the default. Most pages use `initComponents()` with standard PS JS components. Only use Vue for complex UX synchronization.
 
 ## Key PS-specific rules (always apply during migration)
 
 - Multistore has three tiers: (1) no shop relation, (2) simple shop association, (3) per-shop content. `AbstractMultiShopObjectModelRepository` is required for tier 3, useful for tier 2, not needed for tier 1
-- Sub-resources get their own Command, never merged into `EditXxxCommand`
-- Feature flag is the routing mechanism, not a cosmetic toggle — every route must carry `_legacy_feature_flag`
-- Legacy controller is **never deleted**, only gets a deprecation banner
+- Sub-resources with their own table get their own Command when the domain is non-trivial; for simple cases editing them inside `EditXxxCommand` is acceptable
+- Feature flag is the routing mechanism that toggles between legacy and Symfony pages: routes under migration carry `_legacy_feature_flag`. Once the page is GA and the legacy controller is removed (next major), the flag attribute is no longer needed
+- Legacy controller stays during a deprecation period (typically 1–2 minor releases once the migrated page is GA and stable), then is removed in the next major version. A deprecation banner inside the legacy page is an exceptional pattern, not a default step
 - `IdentifiableObject` DataProvider + DataHandler pattern replaces Symfony form events
-- `NavigationTabType` for multi-tab forms — not standard Symfony tabs (exception, not default)
+- `NavigationTabType` for multi-tab forms — not standard Symfony tabs (exception, not default — most pages do not use tabs)
 - File uploaders are a domain interface (in `src/Core/Domain/`), implemented in Adapter
 - Listing and form migrations can be separate milestones, often months or years apart
-- `stability="beta"` to `"stable"` is a formal step requiring its own PR — never merge all migration work in one PR (3+ PRs minimum)
+- `stability="beta"` to `"stable"` is a formal step requiring its own PR
 - Vue components are only needed when a form field is too dynamic for standard JS components — most pages use `initComponents()`
 
 ## Lifecycle rules
 
 ### GA (promote to stable)
 
-- Upgrade SQL must be **idempotent** — safe to run multiple times (use `INSERT ... ON DUPLICATE KEY UPDATE` for feature flag rows)
-- Changelog entry documents the new page as stable
-
-### Deprecation (6-12 months after GA)
-
-- Deprecation banner goes in `$this->warnings[]` (yellow) — **not** `$this->errors[]` (red)
-- The banner checks availability via a private `isNewPageAvailable()` method using `Configuration::get('PS_FEATURE_FLAG_{DOMAIN}')` or `FeatureFlagRepository`
-- **No `@trigger_error()` warnings** — these are forbidden to avoid merchant log noise
-- Changelog entry targets removal in the **next major version**: "will be removed in PrestaShop X.0"
+- Triggered when the migrated page has been stable for at least one minor release with no P1 regressions — timing is per-page judgment, not a fixed duration
+- Upgrade SQL (in the `autoupgrade` module) must be **idempotent** when needed — safe to run multiple times
+- Release notes for the version document the new page as stable
 
 ### Removal (next major version)
 
-- Requires a **2+ minor release** deprecation period before the removal PR
-- Removal issue must reference both the deprecation PR and the GA PR by number
+- Typically waits 1–2 minor releases after GA so module developers can adapt — exact horizon is per-release planning
+- Removal issue must reference the GA PR by number
+- A deprecation banner inside the legacy controller (`$this->warnings[]`) is an exceptional pattern that has rarely been applied; do not add one as a default step
+- Never use `@trigger_error()` from the legacy controller — it causes log noise merchants cannot fix
 
 ## Dependency graph
 
@@ -67,34 +63,45 @@ All fully migrated unless noted:
 Audit (audit-legacy-controller, audit-object-model, generate-migration-manifest)
                                     |
                                     v
-                          Domain layer (create-cqrs-commands, create-cqrs-queries)
+Feature Flag (register-feature-flag)
+  must exist before any conditional CQRS code; latest acceptable: controller wiring
                                     |
                                     v
-                          Adapter layer (implement-cqrs-handlers, create-doctrine-repository)
+Domain layer (create-cqrs-commands, create-cqrs-queries)
                                     |
                                     v
-                          Behat tests (create-behat-context, write-behat-scenarios) — GATE: all green
-                                ╔════════════════════════════╗
-                                ║      PARALLEL BAND A       ║
-                         Grid (create-grid-definition,    Form (create-form-type,
-                          create-grid-query-builder)     create-form-data-handling)
-                                ╚════════════════════════════╝
+Adapter layer (create-doctrine-repository, implement-cqrs-handlers, register-cqrs-services)
                                     |
-                          Controller + Routing + Feature Flag (commit together)
-                                ╔════════════════════════════╗
-                                ║      PARALLEL BAND B       ║
-                         JS (create-ts-entry-point,    Twig (create-twig-index-template,
-                          init-grid-extensions,          create-twig-form-template)
-                          init-js-components)
-                                ╚════════════════════════════╝
+                                    v
+Behat tests (create-behat-context, write-behat-scenarios) — GATE: all green
                                     |
-                          Playwright tests (create-playwright-page-objects,
-                           create-playwright-test-data, write-playwright-campaigns)
+                                    v
+╔══════════════════════════════════════════════════════════════════════════╗
+║   VERTICAL SLICES — order interchangeable; listing-first is typical       ║
+║   First slice creates controller class + routing file. Second extends.    ║
+╠══════════════════════════════════════════════════════════════════════════╣
+║   Listing slice                       Form slice                           ║
+║   ─────────────                       ──────────                           ║
+║   create-grid-definition              create-form-type                     ║
+║   create-grid-query-builder           create-form-tab-layout (cond.)       ║
+║   create-position-column (cond.)      create-form-data-handling            ║
+║   create-controller-listing           create-controller-form-actions       ║
+║   create-admin-routing (listing)      create-admin-routing (form)          ║
+║   create-twig-index-template          create-twig-form-template            ║
+║   create-ts-entry-point (listing)     create-ts-entry-point (form)         ║
+║   init-grid-extensions                init-js-components                   ║
+║                                       create-vue-component (exception)     ║
+╚══════════════════════════════════════════════════════════════════════════╝
                                     |
-                          GA (promote-feature-flag-to-stable, write-upgrade-sql)
+                                    v
+Playwright tests (create-playwright-page-objects, create-playwright-test-data,
+                  write-playwright-campaigns)
                                     |
-                          Deprecation (~6-12 months later: add-legacy-deprecation-notice,
-                           write-changelog-deprecation, create-removal-issue)
+                                    v
+GA (promote-feature-flag-to-stable, write-upgrade-sql-script — conditional)
+                                    |
+                                    v
+Removal (next major: create-removal-issue)
 ```
 
 ## Conditional activation
@@ -128,23 +135,9 @@ Key artifacts that cross skill boundaries:
 | Feature flag name | Playwright tests + routing | Flag matching between XML, routing YAML, and test setup |
 | Webpack bundle name | Twig template | `<script>` asset reference |
 
-## Carrier migration PR timeline (historical reference)
+## Migration timing in practice
 
-| Phase | PR | Title | Date | Focus |
-|---|---|---|---|---|
-| 1 - Listing | #20737 | Migrate carriers listing | 2021-03 | Grid + 5 CQRS commands + routing + Twig + JS |
-| 2 - CQRS | #36063 | Add/Get/Update/UploadLogo | 2024-05 | Commands, adapters, Behat |
-| 3 - First form | #36271 | Basic general form | 2024-06 | Controller, CarrierType, DataProvider/Handler, routing, Twig, TS |
-| 4 - Fields | #36246, #36300 | More fields + shipping costs CQRS | 2024-06 | Dimensional constraints, zone/cost fields |
-| 5 - Tabs | #36381 | Size/weight tab + group access | 2024-06 | Tab form types, customer group field |
-| 6 - Ranges | #36380, #36387 | Ranges CQRS + multistore | 2024-06 | Sub-resource commands, multistore behat |
-| 7 - Polish | #36434, #36706 | Edit optimization + feature flag | 2024-07 | Skip unchanged fields, beta flag registration |
-| 8 - Complex UI | #36534, #36537, #36655 | Ranges Vue component | 2024-07 | Vue SFC, form manager, form theme |
-| 9 - UI tests | #36112-#36954 | Playwright suites | 2024-05-09 | 7 campaigns (CRUD, bulk, position, tabs) |
-| 10 - Refactor | #36818 | Dissociate zones from ranges | 2024-09 | Architectural fix in CQRS + Vue |
-| 11 - Fixes | #36876-#37297 | Various bug fixes | 2024-09-11 | Logo upload, tab redirect, validation |
-| 12 - GA | #37638 | Feature flag to stable | 2025-02 | `stability="stable"`, full Playwright migration |
-| 13 - Deprecation | #39050 | Migration banner | 2025-07 | Legacy controller deprecation notice |
+Migrations can span multiple PRs over months or years (listing first, form later, sub-resources later still). Decide milestone strategy explicitly during the audit (`generate-migration-manifest`). Carrier is **not** the reference example — it accumulated several exceptions (tab navigation, Vue ranges, deprecation banner) that should not be promoted as defaults.
 
 ## Skills
 
@@ -155,9 +148,7 @@ Key artifacts that cross skill boundaries:
 | [`audit-object-model`](skills/audit-object-model/SKILL.md) | "audit Xxx ObjectModel" |
 | [`generate-migration-manifest`](skills/generate-migration-manifest/SKILL.md) | "generate migration manifest" |
 | [`promote-feature-flag-to-stable`](skills/promote-feature-flag-to-stable/SKILL.md) | "promote {Domain} to GA" |
-| [`write-upgrade-sql`](skills/write-upgrade-sql/SKILL.md) | "write upgrade SQL for {Domain}" |
-| [`add-legacy-deprecation-notice`](skills/add-legacy-deprecation-notice/SKILL.md) | "add deprecation notice to AdminXxx" |
-| [`write-changelog-deprecation`](skills/write-changelog-deprecation/SKILL.md) | "write changelog deprecation for {Domain}" |
+| [`write-upgrade-sql-script`](skills/write-upgrade-sql-script/SKILL.md) | "write upgrade SQL script" (autoupgrade module) |
 | [`create-removal-issue`](skills/create-removal-issue/SKILL.md) | "create removal issue for AdminXxx" |
 
 ## Related
