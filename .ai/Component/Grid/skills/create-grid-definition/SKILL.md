@@ -3,9 +3,8 @@ name: create-grid-definition
 description: >
   Create the grid definition for an entity listing: columns, row actions, bulk actions,
   filters class, and service registration. Covers everything needed to define the grid
-  structure. The query builder is a separate skill (create-grid-query-builder). Read
-  Component/Grid/CONTEXT.md for the factory architecture. Trigger: "create grid definition
-  for {Domain}".
+  structure. The query builder is a separate skill (create-grid-query-builder).
+  Trigger: "create grid definition for {Domain}".
 needs: [create-cqrs-commands, create-admin-routing]
 produces: "{Domain}GridDefinitionFactory + {Domain}Filters + DI registration"
 ---
@@ -49,7 +48,26 @@ See [Grid/CONTEXT.md](../../CONTEXT.md#column-definitions) for column ordering a
 
 Add in `getRowActions()`:
 - `LinkRowAction` for edit — links to `admin_{domain}s_edit` route with `{id}` parameter
-- `LinkRowAction` for delete — links to `admin_{domain}s_delete` with `confirm_message` option for JS confirmation
+- For delete, **use the `DeleteActionTrait::buildDeleteAction()` helper** — it returns a `SubmitRowAction` pre-wired with the standard delete confirmation modal (translatable title, confirm/cancel buttons, danger styling). Prefer it over building the action manually:
+  ```php
+  use PrestaShop\PrestaShop\Core\Grid\Definition\Factory\DeleteActionTrait;
+
+  class {Domain}GridDefinitionFactory extends AbstractGridDefinitionFactory
+  {
+      use DeleteActionTrait;
+
+      protected function getRowActions(): RowActionCollection
+      {
+          return (new RowActionCollection())
+              ->add(/* edit LinkRowAction */)
+              ->add($this->buildDeleteAction(
+                  'admin_{domain}s_delete',  // route
+                  '{domain}Id',              // route param name
+                  '{domain}Id',              // row field providing the value
+              ));
+      }
+  }
+  ```
 - Order: edit first, delete last
 
 ### Bulk actions

@@ -2,7 +2,7 @@
 
 ## Purpose
 
-Browser-based UI acceptance tests for the back-office and front-office. Tests simulate real user interactions (navigation, form filling, clicking) and validate the DOM. Complements Behat (which tests the CQRS layer without a browser).
+Browser-based UI acceptance tests for the back-office and front-office. Tests simulate real user interactions (navigation, form filling, clicking) and validate the DOM.
 
 ## Stack
 

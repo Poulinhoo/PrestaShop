@@ -2,9 +2,8 @@
 name: create-twig-form-template
 description: >
   Create the Twig template for the add/edit form page. Renders the Symfony form,
-  save buttons, and optional form theme overrides for custom field rendering. Read
-  Component/Twig/CONTEXT.md for template conventions. Trigger: "create form template
-  for {Domain}".
+  save buttons, and optional form theme overrides for custom field rendering.
+  Trigger: "create form template for {Domain}".
 needs: [create-form-type, create-controller-form-actions, create-admin-routing]
 produces: "form.html.twig — add/edit form page template"
 ---
@@ -40,7 +39,9 @@ Create `src/PrestaShopBundle/Resources/views/Admin/{Section}/{Domain}/form.html.
 
 When specific fields need custom rendering beyond Symfony defaults:
 
-- Scope the override: `{% form_theme form 'Admin/{Section}/{Domain}/_form_widgets.html.twig' %}`
+- **Preferred:** set the `form_theme` option directly on the form (PrestaShop custom option) — usually in the controller when building the form, or in the form type's `configureOptions()`. Symfony picks up the theme automatically; no `{% form_theme %}` directive needed in the Twig file.
+- **Fallback:** use the Twig directive when the override is template-specific:
+  `{% form_theme form 'Admin/{Section}/{Domain}/{domain}_theme.html.twig' %}`
 - Override the field block: `{% block _{field_id}_widget %}...{% endblock %}`
 - Common case: image preview next to upload field with a "Remove" checkbox
 

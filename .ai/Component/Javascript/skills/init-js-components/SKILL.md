@@ -58,6 +58,34 @@ For multistore-scoped configuration fields. Shows per-shop override controls.
 ### FormFieldToggler / DisablingSwitch
 For conditional field visibility — shows/hides fields based on another field's value.
 
+## Full component catalogue
+
+| Component | Purpose |
+|---|---|
+| `TranslatableField` / `TranslatableInput` | Multilingual input with language tabs |
+| `TinyMCEEditor` | Rich text editor |
+| `TaggableField` | Tag input with autocomplete |
+| `ChoiceTable` / `MultipleChoiceTable` | Checkbox/radio table selection |
+| `ChoiceTree` | Hierarchical tree selector (categories, groups) |
+| `EntitySearchInput` | Autocomplete entity search |
+| `GeneratableInput` | Auto-generate from another field (e.g. slug from name) |
+| `ColorPicker` | Color selection input |
+| `DateRange` | Date range picker |
+| `DeltaQuantityInput` | Quantity change input (stock) |
+| `DisablingSwitch` | Toggle that disables related fields |
+| `FormFieldToggler` | Show/hide fields based on another field's value |
+| `TextWithLengthCounter` / `TextWithRecommendedLengthCounter` | Character count display |
+| `CountryStateSelectionToggler` / `CountryDniRequiredToggler` | Country-dependent field logic |
+| `MultistoreConfigField` | Multistore-scoped config field |
+| `ModifyAllShopsCheckbox` | "Apply to all shops" checkbox |
+| `PreviewOpener` | Preview popup |
+| `Grid` | Grid component (see grid extensions) |
+| `Router` | FOS JS router integration |
+| `EventEmitter` | Cross-component event communication |
+| `IframeClient` | Iframe communication |
+
+Pass only the names the page actually needs to `initComponents([...])` — don't load the whole catalogue.
+
 ## Using components directly (without initComponents)
 
 Some components can be instantiated directly for more control:

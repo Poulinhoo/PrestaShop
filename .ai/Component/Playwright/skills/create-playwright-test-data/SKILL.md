@@ -3,9 +3,8 @@ name: create-playwright-test-data
 description: >
   Create Faker data classes and predefined data objects for a new entity in the
   ui-testing-library. These are imported by campaigns for consistent test data
-  generation. Read Component/Playwright/CONTEXT.md for conventions. Trigger:
-  "create test data for {Domain}".
-needs: [create-cqrs-commands]
+  generation. Trigger: "create test data for {Domain}".
+needs: []
 produces: "Faker{Domain} class + data{Domain} predefined data in ui-testing-library"
 ---
 

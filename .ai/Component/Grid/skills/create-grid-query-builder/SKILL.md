@@ -3,8 +3,8 @@ name: create-grid-query-builder
 description: >
   Create the Doctrine DBAL QueryBuilder that fetches grid rows, and optionally a
   GridDataFactory decorator for post-processing. The column aliases must exactly
-  match the column IDs in the Grid Definition. Read Component/Grid/CONTEXT.md for
-  the factory trilogy. Trigger: "create grid query builder for {Domain}".
+  match the column IDs in the Grid Definition. Trigger:
+  "create grid query builder for {Domain}".
 needs: [create-grid-definition]
 produces: "{Domain}QueryBuilder.php + optional GridDataFactory decorator"
 ---

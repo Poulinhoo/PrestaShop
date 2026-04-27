@@ -3,9 +3,8 @@ name: write-playwright-campaigns
 description: >
   Write Playwright test campaigns for a migrated entity: CRUD lifecycle, bulk actions,
   filter/sort, position reorder, and per-tab field verification. Campaigns live in
-  the core repo and import page objects from ui-testing-library. Read
-  Component/Playwright/CONTEXT.md for conventions. Trigger: "write Playwright tests
-  for {Domain}".
+  the core repo and import page objects from ui-testing-library. Trigger:
+  "write Playwright tests for {Domain}".
 needs: [create-playwright-page-objects, create-playwright-test-data, create-admin-routing]
 produces: "Test campaign files in tests/UI/campaigns/functional/BO/{section}/{subsection}/"
 ---

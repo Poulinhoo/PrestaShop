@@ -118,6 +118,15 @@ Scenario: Filter {domain}s by name
 
 Note: grid filtering is often tested at Playwright level instead of Behat.
 
+## 8. Splitting the feature file
+
+A single `.feature` file is the typical case, but split into multiple smaller files when:
+
+- the domain has many concerns (CRUD vs bulk vs filters vs constraints) and the file grows past a few hundred lines
+- you want to launch a focused subset (e.g. `behat ... bulk_actions.feature`) for debugging without running the rest
+
+Suggested split: `{domain}_management.feature` (CRUD), `{domain}_bulk_actions.feature`, `{domain}_filters.feature`, `{domain}_constraints.feature`. Keep them in the same `Scenario/{Domain}/` folder.
+
 ## Rules
 
 Conventions (stateless steps, string references, typed exceptions, deterministic steps) are in [Behat/CONTEXT.md](../../CONTEXT.md). Skill-specific reminders:

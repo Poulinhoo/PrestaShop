@@ -2,9 +2,8 @@
 name: create-twig-index-template
 description: >
   Create the Twig template for the entity listing (grid) page. Includes grid panel,
-  toolbar buttons, flash messages, and optional custom column rendering. Read
-  Component/Twig/CONTEXT.md for template conventions. Trigger: "create index template
-  for {Domain}".
+  toolbar buttons, flash messages, and optional custom column rendering. Trigger:
+  "create index template for {Domain}".
 needs: [create-grid-definition, create-controller-listing, create-admin-routing]
 produces: "index.html.twig — back-office listing page template"
 ---

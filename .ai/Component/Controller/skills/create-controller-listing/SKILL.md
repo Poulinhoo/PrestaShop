@@ -2,9 +2,8 @@
 name: create-controller-listing
 description: >
   Create the listing page actions in the admin controller: index (grid with filters),
-  delete, toggle status, and any bulk actions the entity requires. Read
-  Component/Controller/CONTEXT.md for controller conventions. Trigger: "create listing
-  for {Domain}", "create index action for {Domain}".
+  delete, toggle status, and any bulk actions the entity requires. Trigger:
+  "create listing for {Domain}", "create index action for {Domain}".
 needs: [create-cqrs-commands, create-grid]
 produces: "indexAction, deleteAction, toggleStatusAction, bulk action methods in {Domain}Controller.php"
 ---

@@ -3,8 +3,7 @@ name: create-playwright-page-objects
 description: >
   Create BO page object classes in the ui-testing-library for a new migrated page.
   Follows the Page Object Model pattern: encapsulate selectors and interactions,
-  never assert. Read Component/Playwright/CONTEXT.md for conventions. Trigger:
-  "create page objects for {Domain}".
+  never assert. Trigger: "create page objects for {Domain}".
 needs: [create-controller-listing, create-controller-form-actions, create-admin-routing]
 produces: "Page object classes in ui-testing-library: bo{Domain}Page + bo{Domain}CreatePage"
 ---

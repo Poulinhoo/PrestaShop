@@ -3,8 +3,7 @@ name: create-behat-context
 description: >
   Create the PHP feature context class that implements step definitions for a domain,
   and register it in behat.yml. Covers the PHP implementation side of Behat tests.
-  Read Component/Behat/CONTEXT.md for conventions. Trigger: "create behat context
-  for {Domain}".
+  Trigger: "create behat context for {Domain}".
 needs: [create-cqrs-commands, create-cqrs-queries]
 produces: "{Domain}FeatureContext.php + behat.yml registration"
 ---
@@ -62,15 +61,41 @@ public function domainShouldHaveProperties(string $reference, TableNode $table):
 
 The assertion loads the entity fresh from the database — it does NOT rely on state from a previous step.
 
-### Error steps
+### Error steps (capture-then-assert pattern)
+
+Errors are tested in two paired steps: the `@When` step **catches** the domain exception and stores it via `$this->setLastException(...)`; the next `@Then` step **asserts** the stored exception via `$this->assertLastErrorIs(...)`.
 
 ```php
 /**
- * @Then I should get an error :errorType
+ * @When I add a {domain} :reference with invalid name
  */
+public function addWithInvalidName(string $reference): void
+{
+    try {
+        $this->getCommandBus()->handle(new Add{Domain}Command(''));
+    } catch ({Domain}ConstraintException $e) {
+        $this->setLastException($e);
+    }
+}
+
+/**
+ * @Then I should get error that {domain} name is invalid
+ */
+public function assertLastErrorIsInvalidName(): void
+{
+    $this->assertLastErrorIs(
+        {Domain}ConstraintException::class,
+        {Domain}ConstraintException::INVALID_NAME, // optional error code
+    );
+}
 ```
 
-Use exception handling to catch and assert specific domain exception types.
+Two safety nets enforced by `CommonFeatureContext`:
+
+- A captured exception **must** be asserted by a following step. If the next step ends without calling `assertLastErrorIs`, the `checkExpectedExceptionAfterStep` `@AfterStep` hook re-throws it as a `RuntimeException` — preventing a domain exception from being silently swallowed.
+- `cleanStoredExceptionsBeforeScenario` (`@BeforeScenario`) clears any leftover exception so scenarios don't leak state into each other.
+
+So: **never `try/catch` and ignore** — always pair the capture with an assertion in the very next step.
 
 ## 3. Registration in behat.yml
 

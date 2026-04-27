@@ -4,7 +4,7 @@ description: >
   Create the Symfony form type for an entity's add/edit form. Covers standard field
   types, translatable fields, money fields, file uploads, and choice providers.
   For multi-tab layout with NavigationTabType, see create-form-tab-layout.
-  Read Component/Forms/CONTEXT.md for conventions. Trigger: "create form type for {Domain}".
+  Trigger: "create form type for {Domain}".
 needs: [create-cqrs-commands, create-cqrs-queries]
 produces: "{Domain}Type.php + choice providers — Symfony form structure for add/edit"
 ---

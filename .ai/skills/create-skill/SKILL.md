@@ -78,7 +78,7 @@ Only link when the relationship is **non-obvious** (architectural surprise, coex
 | Field | Required | Description |
 |-------|----------|-------------|
 | `name` | No (defaults to dir name) | Lowercase, hyphens, max 64 chars |
-| `description` | **Required** | What it does + trigger phrases. Max ~250 chars before truncation — front-load the key use case. If the skill requires arguments, describe them here. |
+| `description` | **Required** | What it does + trigger phrases. Max ~250 chars before truncation — front-load the key use case. If the skill requires arguments, describe them here. **Do not** include "Read Component/X/CONTEXT.md for conventions" in the description — that pointer belongs in the skill body, not the description. See [STRUCTURE.md → SKILL.md project conventions](../../STRUCTURE.md#skillmd-project-conventions). |
 | `argument-hint` | No | Shown in autocomplete, e.g. `[domain-name]` |
 | `allowed-tools` | No | Tools usable without permission prompt, e.g. `Read, Grep, Glob` |
 | `disable-model-invocation` | No | `true` = I cannot auto-invoke; only explicit `/name` call works |
@@ -91,18 +91,9 @@ Only link when the relationship is **non-obvious** (architectural surprise, coex
 
 ### Project-specific frontmatter (custom metadata)
 
-These fields are ignored by Claude Code but provide valuable documentation for skill dependency graphs and orchestrator workflows:
+This project uses three custom frontmatter fields on top of the standard ones: `needs`, `produces`, `conditional`. They are not interpreted by Claude Code but document the skill's place in larger workflows and serve as machine-readable hints for orchestrators.
 
-| Field | Description |
-|-------|-------------|
-| `needs` | List of skill names this skill depends on (prerequisites). Use **skill names**, not opaque IDs. Example: `[create-cqrs-commands, create-cqrs-queries]`. Empty list `[]` = no dependencies |
-| `produces` | What this skill creates — a short string describing the output artifacts. Example: `"{Domain}Repository.php — the single persistence entry point"` |
-| `conditional` | When to skip this skill entirely. Example: `"only if the grid has bulk actions"` |
-
-**Rules for `needs`:**
-- Always reference skills by their actual name (the `name` frontmatter field or directory name) — never use opaque IDs, brick codes, or step numbers
-- Dependencies are **top-down only**: a skill declares what it needs, it never declares what needs it. This keeps skills standalone — they don't know who calls them
-- A skill must be usable independently from any workflow. `needs` documents the logical prerequisite ("you should have a repository before implementing handlers"), not a hard runtime dependency
+See [`STRUCTURE.md` → SKILL.md project conventions](../../STRUCTURE.md#skillmd-project-conventions) for the full definition of these fields, the top-down dependency rule, and the standalone rule. Do not duplicate that documentation here.
 
 **Arguments:** If a skill requires arguments that the user must provide, describe them in the `description` field. At runtime, if a required argument is missing, use `AskUserQuestion` to prompt the user.
 
@@ -164,5 +155,8 @@ placement rules above before applying them.
 
 - [ ] Directory and `SKILL.md` created at the correct scoped path (component, domain, or cross-cutting)
 - [ ] `description` front-loads the use case and lists trigger phrases
+- [ ] `description` does **not** restate "Read Component/X/CONTEXT.md…" — that line belongs in the body only
+- [ ] If the skill needs the parent CONTEXT.md, the body opens with a single `Read @.ai/Component/{Component}/CONTEXT.md for ...` reference
+- [ ] Custom frontmatter fields (`needs`, `produces`, `conditional`) follow [STRUCTURE.md conventions](../../STRUCTURE.md#skillmd-project-conventions) — top-down dependencies, standalone-usable
 - [ ] Corresponding `CONTEXT.md` updated with a `## Skills` entry (agnostic discovery)
 - [ ] Symlink created in `.claude/skills/` pointing to the skill directory (Claude Code discovery)

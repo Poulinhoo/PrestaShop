@@ -27,7 +27,7 @@ There are two distinct context layers:
 All domain contexts:
 - Extend `AbstractDomainFeatureContext` (which provides command bus, query bus, shared storage)
 - Implement step definitions as PHP methods with `@Given`, `@When`, `@Then` annotations and regex patterns
-- One context class per domain (e.g. `TaxFeatureContext`, `ManufacturerFeatureContext`)
+- One context class per domain is the typical case (e.g. `TaxFeatureContext`, `ManufacturerFeatureContext`). Complex domains with many commands (e.g. Product, Order) can be split into sub-contexts under `Context/Domain/{Domain}/` — register each in `behat.yml`
 - Contexts are NOT Symfony services — they are registered in `behat.yml`, not via DI
 
 ### Context registration
