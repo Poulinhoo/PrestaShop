@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "b948a50b8fb50c7f805caabaf23f38c9",
+    "content-hash": "3d5436e0c59cd6e48a06f0690430267e",
     "packages": [
         {
             "name": "api-platform/core",
@@ -6383,16 +6383,16 @@
         },
         {
             "name": "prestashop/ps_newproducts",
-            "version": "v1.0.5",
+            "version": "v2.0.0",
             "source": {
                 "type": "git",
                 "url": "https://github.com/PrestaShop/ps_newproducts.git",
-                "reference": "acad8d2f785ffb60143fc74d2be2b8ab7ae04ecc"
+                "reference": "001719211d2cb6847c33458ad64bef056017f0ba"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/PrestaShop/ps_newproducts/zipball/acad8d2f785ffb60143fc74d2be2b8ab7ae04ecc",
-                "reference": "acad8d2f785ffb60143fc74d2be2b8ab7ae04ecc",
+                "url": "https://api.github.com/repos/PrestaShop/ps_newproducts/zipball/001719211d2cb6847c33458ad64bef056017f0ba",
+                "reference": "001719211d2cb6847c33458ad64bef056017f0ba",
                 "shasum": ""
             },
             "require": {
@@ -6415,9 +6415,10 @@
             "description": "PrestaShop - New products",
             "homepage": "https://github.com/PrestaShop/ps_newproducts",
             "support": {
-                "source": "https://github.com/PrestaShop/ps_newproducts/tree/v1.0.5"
+                "issues": "https://github.com/PrestaShop/ps_newproducts/issues",
+                "source": "https://github.com/PrestaShop/ps_newproducts/tree/v2.0.0"
             },
-            "time": "2025-07-18T10:38:42+00:00"
+            "time": "2026-04-16T13:22:45+00:00"
         },
         {
             "name": "prestashop/ps_searchbar",
@@ -18429,9 +18430,9 @@
         "ext-simplexml": "*",
         "ext-zip": "*"
     },
-    "platform-dev": {},
+    "platform-dev": [],
     "platform-overrides": {
         "php": "8.1.0"
     },
-    "plugin-api-version": "2.9.0"
+    "plugin-api-version": "2.2.0"
 }
