@@ -199,12 +199,12 @@ class Cart extends CartCore
         'key1' => 'value1',
         'key2' => 'value2',
     ];
-    public /*
+    /*
     * module: testmultilinepropertyoverride
     * date: 2018-12-26 14:14:06
     * version: 1
     */
-    const TEST_MULTILINE_CONSTANT = [
+    public const TEST_MULTILINE_CONSTANT = [
         'const_key1' => 'const_value1',
         'const_key2' => 'const_value2',
     ];
