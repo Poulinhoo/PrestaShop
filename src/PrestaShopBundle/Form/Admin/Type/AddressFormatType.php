@@ -8,9 +8,7 @@ declare(strict_types=1);
 
 namespace PrestaShopBundle\Form\Admin\Type;
 
-use PrestaShop\PrestaShop\Core\CommandBus\CommandBusInterface;
 use PrestaShop\PrestaShop\Core\ConstraintValidator\Constraints\ValidAddressFormat;
-use PrestaShop\PrestaShop\Core\Domain\Address\Query\GetRequiredFieldsForAddress;
 use PrestaShop\PrestaShop\Core\Domain\Country\AddressFormat\AddressFormatFieldsProviderInterface;
 use Symfony\Component\Form\AbstractType;
 use Symfony\Component\Form\FormBuilderInterface;
@@ -18,6 +16,7 @@ use Symfony\Component\Form\FormView;
 use Symfony\Component\OptionsResolver\OptionsResolver;
 use Symfony\Component\Routing\Generator\UrlGeneratorInterface;
 use Symfony\Component\Routing\RouterInterface;
+use Symfony\Component\Validator\Constraints\NotBlank;
 use Symfony\Contracts\Translation\TranslatorInterface;
 
 /**
@@ -42,12 +41,11 @@ class AddressFormatType extends AbstractType
     public const DEFAULT_LAYOUT = "firstname lastname\ncompany\nvat_number\naddress1\naddress2\npostcode city\nCountry:name\nphone";
 
     /** @var string[] Objects the picker exposes, in display order. */
-    private const PICKER_OBJECTS = ['Customer', 'Warehouse', 'Country', 'State', 'Address'];
+    private const PICKER_OBJECTS = ['Address', 'Country', 'State', 'Customer', 'Warehouse'];
 
     public function __construct(
         private readonly TranslatorInterface $translator,
         private readonly RouterInterface $router,
-        private readonly CommandBusInterface $queryBus,
         private readonly AddressFormatFieldsProviderInterface $fieldsProvider,
     ) {
     }
@@ -83,6 +81,7 @@ class AddressFormatType extends AbstractType
                 'required_fields_url' => null,
                 'translations' => null,
                 'constraints' => [
+                    new NotBlank(),
                     new ValidAddressFormat(),
                 ],
             ])
@@ -127,7 +126,7 @@ class AddressFormatType extends AbstractType
      */
     private function fetchRequiredFields(): array
     {
-        return $this->queryBus->handle(new GetRequiredFieldsForAddress());
+        return $this->fieldsProvider->getRequiredFields();
     }
 
     /**
@@ -156,13 +155,19 @@ class AddressFormatType extends AbstractType
             'Country' => ['name' => 'France', 'iso_code' => 'FR', 'call_prefix' => '33'],
             'State' => ['name' => '', 'iso_code' => ''],
             'Address' => [
+                // Address has firstname/lastname/company/vat_number as public properties
+                // (the legacy Address ObjectModel exposes them) — bare tokens like
+                // `firstname` resolve to Address:firstname, so the preview reads them here.
+                'firstname' => 'John',
+                'lastname' => 'DOE',
+                'company' => 'Acme Ltd.',
+                'vat_number' => 'FR12345678901',
                 'address1' => '16 Main street',
                 'address2' => '2nd floor',
                 'postcode' => '75002',
                 'city' => 'Paris',
                 'phone' => '0102030405',
                 'phone_mobile' => '+33 6 12 34 56 78',
-                'vat_number' => 'FR12345678901',
                 'dni' => '',
                 'other' => '',
             ],
@@ -191,7 +196,7 @@ class AddressFormatType extends AbstractType
             'reset.clear' => $t('Clear format', [], 'Admin.International.Feature'),
             'reset.confirm' => $t('Are you sure you want to clear this address format?', [], 'Admin.International.Notification'),
             'banner.missingOne' => $t('1 required field missing:', [], 'Admin.International.Feature'),
-            'banner.missingMany' => $t('%count% required fields missing:', [], 'Admin.International.Feature'),
+            'banner.missingMany' => $t('{count} required fields missing:', [], 'Admin.International.Feature'),
             'banner.allPresent' => $t('All required fields are present.', [], 'Admin.International.Feature'),
             'banner.insertAll' => $t('Insert all missing', [], 'Admin.International.Feature'),
             'lines.empty' => $t('Drop fields here, or click + below', [], 'Admin.International.Feature'),

@@ -40,7 +40,7 @@
       <div class="dropdown">
         <button
           type="button"
-          class="btn btn-outline-secondary dropdown-toggle"
+          class="btn btn-sm btn-outline-secondary dropdown-toggle"
           data-toggle="dropdown"
           aria-haspopup="true"
           aria-expanded="false"
@@ -94,13 +94,17 @@
               :key="field"
               type="button"
               class="btn btn-sm address-format-builder__missing-chip"
-              @click.prevent="insertField(field)"
-            >{{ field }}</button>
+              :title="$t('picker.required')"
+              @click.stop.prevent="insertField(field)"
+            >
+              <i class="material-icons">add</i>
+              {{ field }}
+            </button>
           </span>
           <button
             type="button"
-            class="btn btn-link btn-sm"
-            @click.prevent="insertAllMissing"
+            class="btn btn-link btn-sm address-format-builder__insert-all-action"
+            @click.stop.prevent="insertAllMissing"
           >
             {{ $t('banner.insertAll') }} →
           </button>
@@ -292,7 +296,7 @@
                   :disabled="isPlaced(group.object, field)"
                   :draggable="!isPlaced(group.object, field)"
                   :title="isPlaced(group.object, field) ? $t('picker.alreadyAdded') : ''"
-                  @click.prevent="addPickerField(group.object, field)"
+                  @click.stop.prevent="addPickerField(group.object, field)"
                   @dragstart="onPickerDragStart(group.object, field, $event)"
                 >
                   <i
@@ -305,7 +309,7 @@
                   >add</i>
                   {{ field }}
                   <span
-                    v-if="isRequired(field) && !isPlaced(group.object, field)"
+                    v-if="isRequired(group.object, field)"
                     class="address-format-builder__required-asterisk"
                     :title="$t('picker.required')"
                   >*</span>
@@ -370,7 +374,7 @@
     lineDropTarget: LineDropTarget | null;
   }
 
-  const PICKER_OBJECTS = ['Customer', 'Warehouse', 'Country', 'State', 'Address'];
+  const PICKER_OBJECTS = ['Address', 'Country', 'State', 'Customer', 'Warehouse'];
 
   export default defineComponent({
     name: 'AddressFormatBuilder',
@@ -407,9 +411,9 @@
     data(): State {
       return {
         mode: 'visual',
-        lines: parseFormat(this.initialValue, this.objects),
+        lines: parseFormat(this.initialValue),
         rawText: this.initialValue,
-        activeTab: 'Customer',
+        activeTab: 'Address',
         searchQuery: '',
         selectedLine: -1,
         dragSource: null,
@@ -484,13 +488,22 @@
       isPlaced(object: string, field: string): boolean {
         return this.placedKeys.has(`${object}:${field}`);
       },
-      isRequired(field: string): boolean {
-        return this.requiredFields.includes(field);
+      /**
+       * A pill (object, field) is required when the corresponding required entry
+       * resolves to the same (object, field) pair. Bare entries (e.g. `firstname`)
+       * resolve to `Address:firstname`, so the asterisk lights up only on the
+       * Address tab — not on Customer's `firstname` pill, which would need an
+       * explicit `Customer:firstname` entry in the required list.
+       */
+      isRequired(object: string, field: string): boolean {
+        return this.requiredFields.some((req) => {
+          const resolved = resolveToken(req);
+
+          return resolved.object === object && resolved.field === field;
+        });
       },
       objectHasMissing(object: string): boolean {
-        const fields = this.objects[object] ?? [];
-
-        return fields.some((f) => this.isRequired(f) && this.missingFields.includes(f));
+        return this.missingFields.some((req) => resolveToken(req).object === object);
       },
       selectTab(obj: string): void {
         this.searchQuery = '';
@@ -503,11 +516,12 @@
         this.appendToken({
           object,
           field,
-          raw: preferredRaw(object, field, this.objects),
+          raw: preferredRaw(object, field),
         });
       },
-      insertField(field: string): void {
-        this.appendToken(resolveToken(field, this.objects));
+      insertField(req: string): void {
+        // `req` is a required-field entry (bare → Address, or explicit Object:field).
+        this.appendToken(resolveToken(req));
       },
       /**
        * Append a token to the currently-selected row when the user has selected one,
@@ -531,15 +545,27 @@
       },
       /**
        * Document-level click listener: clear the selection whenever the click
-       * lands outside any line row (whether outside the component entirely or
-       * inside it but on something else like the picker, banner, mode tabs).
-       * The row's own @click toggles selection first; document then sees the
-       * click bubble up and skips when the target is inside a row.
+       * lands outside any line row. Two kinds of in-component clicks are
+       * exempt:
+       *   - the row itself → its own @click handler toggles selection
+       *   - field-adding actions (picker pills, missing-banner per-field
+       *     chips, "Insert all missing") → preserve selection so the merchant
+       *     can chain multiple inserts onto the same selected row
        */
       handleDocumentClick(ev: MouseEvent): void {
         const target = ev.target as HTMLElement | null;
 
-        if (target?.closest('.address-format-builder__line')) {
+        if (!target) {
+          return;
+        }
+        const exempt = [
+          '.address-format-builder__line',
+          '.address-format-builder__pill',
+          '.address-format-builder__missing-chip',
+          '.address-format-builder__insert-all-action',
+        ];
+
+        if (exempt.some((sel) => target.closest(sel))) {
           return;
         }
         if (this.selectedLine !== -1) {
@@ -585,7 +611,7 @@
         this.lines[toLine].push(token);
       },
       resetTo(format: string): void {
-        this.lines = parseFormat(format, this.objects);
+        this.lines = parseFormat(format);
         this.rawText = format;
       },
       confirmClear(): void {
@@ -598,7 +624,7 @@
         }
       },
       commitRaw(): void {
-        this.lines = parseFormat(this.rawText, this.objects);
+        this.lines = parseFormat(this.rawText);
       },
       onPickerDragStart(object: string, field: string, ev: DragEvent): void {
         if (this.isPlaced(object, field)) {
@@ -696,7 +722,7 @@
             this.lines[lineIndex].push({
               object,
               field,
-              raw: preferredRaw(object, field, this.objects),
+              raw: preferredRaw(object, field),
             });
           }
         } else if (chipData) {
@@ -746,6 +772,12 @@
         font-size: 1rem;
         vertical-align: -3px;
         margin-right: 0.25rem;
+      }
+
+      // Lift the reset dropdown trigger away from the header's border-bottom
+      // so the button doesn't visually stick to the line under it.
+      .dropdown {
+        margin-bottom: 0.375rem;
       }
     }
 
@@ -989,12 +1021,19 @@
     }
 
     &__missing-chip {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.125rem;
       background: #ffffff;
       border: 1px solid #ffa000;
       padding: 0.125rem 0.375rem;
       font-family: monospace;
       font-size: 0.75rem;
       cursor: pointer;
+
+      i {
+        font-size: 0.875rem;
+      }
     }
 
     &__raw {

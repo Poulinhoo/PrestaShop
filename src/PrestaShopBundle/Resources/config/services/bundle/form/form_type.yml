@@ -72,10 +72,6 @@ services:
     arguments:
       - '@prestashop.bundle.form.data_transformer.idn_converter'
 
-  PrestaShopBundle\Form\Admin\Type\AddressFormatType:
-    arguments:
-      $queryBus: '@prestashop.core.query_bus'
-
   PrestaShopBundle\Form\Admin\Type\GeoCoordinatesType:
 
   PrestaShopBundle\Form\Admin\Type\LocaleChoiceType:

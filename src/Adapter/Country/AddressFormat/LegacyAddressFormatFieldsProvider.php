@@ -21,4 +21,9 @@ final class LegacyAddressFormatFieldsProvider implements AddressFormatFieldsProv
     {
         return AddressFormat::getValidateFields($className);
     }
+
+    public function getRequiredFields(): array
+    {
+        return array_values(AddressFormat::getFieldsRequired());
+    }
 }

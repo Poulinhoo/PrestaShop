@@ -21,4 +21,18 @@ interface AddressFormatFieldsProviderInterface
      * @return list<string>
      */
     public function getFieldsForClass(string $className): array;
+
+    /**
+     * Returns the merged list of required fields the address format must include:
+     * the static defaults (firstname, lastname, address1, city, Country:name) plus
+     * any field the merchant flagged as required in BO > Customers > Addresses.
+     *
+     * This is broader than the dedicated GetRequiredFieldsForAddress CQRS query,
+     * which intentionally returns only the DB-managed list and is consumed by the
+     * customer-facing address form. The address-format builder needs both layers
+     * because the legacy validator does too (see AddressFormat::getFieldsRequired).
+     *
+     * @return list<string>
+     */
+    public function getRequiredFields(): array;
 }

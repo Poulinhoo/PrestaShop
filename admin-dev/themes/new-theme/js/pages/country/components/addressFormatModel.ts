@@ -7,12 +7,16 @@
  * Pure helpers for the country address-format builder.
  *
  * The component round-trips a multi-line, space-separated token format
- * (`Object:field` or bare `field`). Bare tokens resolve implicitly to the
- * first object that owns them in the picker order: Address first, then
- * Customer for the four legacy whitelist fields, then any object.
+ * (`Object:field` or bare `field`). Bare tokens always resolve to the
+ * Address object — that's what the legacy parser does (see
+ * `AddressFormat::_checkLiableAssociation` in classes/AddressFormat.php,
+ * which validates bare tokens exclusively against the Address class).
  *
- * Mirrors classes/AddressFormat.php parser semantics so the FE never re-prefixes
- * a user-authored bare token on save (minimizes diff vs legacy data).
+ * Address has firstname, lastname, company, vat_number as public properties
+ * via reflection on the ObjectModel, so a bare `firstname` token in a stored
+ * format is equivalent to `Address:firstname`. To place a Customer's first
+ * name instead, the user must pick from the Customer tab, which emits the
+ * explicit `Customer:firstname`.
  */
 
 export type ObjectKey = string;
@@ -33,20 +37,13 @@ export interface SampleData {
   [object: string]: { [field: string]: string };
 }
 
-const PICKER_ORDER: ObjectKey[] = ['Customer', 'Warehouse', 'Country', 'State', 'Address'];
-
-const BARE_CUSTOMER_FIELDS = new Set(['firstname', 'lastname', 'company', 'vat_number']);
-
 /**
  * Resolve a raw token string to its (object, field) pair.
- * Implicit resolution order matches PrestaShop's legacy parser:
- *   1. explicit "Object:field"
- *   2. Address has the field → Address
- *   3. Customer has it AND it is in the bare-customer whitelist → Customer
- *   4. first object in picker order that owns it
- *   5. fallback: Address (the legacy default tab)
+ *   - explicit `Object:field` → as authored
+ *   - bare `field` → Address (matches the legacy parser; invalid bare tokens
+ *     still render as Address-scoped chips and are caught by the validator)
  */
-export function resolveToken(raw: string, available: AvailableObjects): Token {
+export function resolveToken(raw: string): Token {
   const trimmed = raw.trim();
 
   if (trimmed.includes(':')) {
@@ -54,35 +51,18 @@ export function resolveToken(raw: string, available: AvailableObjects): Token {
 
     return {object, field, raw: trimmed};
   }
-  const addressFields = available.Address ?? [];
-
-  if (addressFields.includes(trimmed)) {
-    return {object: 'Address', field: trimmed, raw: trimmed};
-  }
-  const customerFields = available.Customer ?? [];
-
-  if (BARE_CUSTOMER_FIELDS.has(trimmed) && customerFields.includes(trimmed)) {
-    return {object: 'Customer', field: trimmed, raw: trimmed};
-  }
-  const matched = PICKER_ORDER.find((obj) => (available[obj] ?? []).includes(trimmed));
-
-  if (matched) {
-    return {object: matched, field: trimmed, raw: trimmed};
-  }
 
   return {object: 'Address', field: trimmed, raw: trimmed};
 }
 
 /**
- * Choose the wire form for a (object, field) pair.
- * Emits the bare form when its implicit resolution would land on the same
- * object — otherwise emits the prefixed form. Keeps user-authored bare tokens
- * stable on round-trip.
+ * Choose the wire form for a (object, field) pair. Bare = Address, so picking
+ * an Address-tab field emits its bare form; everything else gets the explicit
+ * `Object:field` prefix to disambiguate (e.g. `Customer:firstname` is needed
+ * because a bare `firstname` would mean Address:firstname).
  */
-export function preferredRaw(object: ObjectKey, field: string, available: AvailableObjects): string {
-  const resolved = resolveToken(field, available);
-
-  if (resolved.object === object) {
+export function preferredRaw(object: ObjectKey, field: string): string {
+  if (object === 'Address') {
     return field;
   }
   return `${object}:${field}`;
@@ -93,14 +73,14 @@ export function preferredRaw(object: ObjectKey, field: string, available: Availa
  * Empty lines are preserved as empty arrays (so the visual editor can keep
  * a deliberately blank row the user added).
  */
-export function parseFormat(text: string, available: AvailableObjects): Line[] {
+export function parseFormat(text: string): Line[] {
   if (text === '') {
     return [];
   }
   return text.split('\n').map((line) => {
     const tokens = line.split(/\s+/).filter(Boolean);
 
-    return tokens.map((t) => resolveToken(t, available));
+    return tokens.map((t) => resolveToken(t));
   });
 }
 
@@ -128,20 +108,19 @@ export function renderPreview(lines: Line[], sample: SampleData): string[] {
 
 /**
  * Required field names that are not yet placed anywhere in `lines`.
- * A required-fields entry like `Country:name` matches a placed `Country:name` token,
- * a bare `name` won't satisfy it (but the legacy required list always uses bare
- * fields except `Country:name`).
+ *
+ * A bare required entry (e.g. `firstname`) is satisfied only by an Address-scoped
+ * placement (chip with object='Address') — placing `Customer:firstname` does NOT
+ * satisfy bare `firstname`, matching the legacy validator. Prefixed entries like
+ * `Country:name` require an exact `Country:name` chip.
  */
 export function missingRequired(lines: Line[], requiredFields: string[]): string[] {
-  const flatTokens = lines.flat();
-  const placedRaw = new Set(flatTokens.map((t) => `${t.object}:${t.field}`));
-  const placedFieldOnly = new Set(flatTokens.map((t) => t.field));
+  const placedRaw = new Set(lines.flat().map((t) => `${t.object}:${t.field}`));
 
   return requiredFields.filter((req) => {
-    if (req.includes(':')) {
-      return !placedRaw.has(req);
-    }
-    return !placedFieldOnly.has(req);
+    const resolved = resolveToken(req);
+
+    return !placedRaw.has(`${resolved.object}:${resolved.field}`);
   });
 }
 
