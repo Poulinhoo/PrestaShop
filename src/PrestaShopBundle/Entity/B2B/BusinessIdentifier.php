@@ -42,9 +42,9 @@ class BusinessIdentifier
     private bool $unremovable = false;
 
     /**
-     * @ORM\Column(name="id_zone", type="integer", options={"unsigned"=true})
+     * @ORM\Column(name="id_zone", type="integer", nullable=true, options={"unsigned"=true})
      */
-    private int $idZone;
+    private ?int $idZone = null;
 
     /**
      * @ORM\Column(name="deleted", type="boolean", options={"default"=false})
@@ -93,12 +93,12 @@ class BusinessIdentifier
         return $this;
     }
 
-    public function getIdZone(): int
+    public function getIdZone(): ?int
     {
         return $this->idZone;
     }
 
-    public function setIdZone(int $idZone): self
+    public function setIdZone(?int $idZone): self
     {
         $this->idZone = $idZone;
 
