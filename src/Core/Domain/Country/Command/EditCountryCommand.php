@@ -98,9 +98,9 @@ class EditCountryCommand
     }
 
     /**
-     * @return string[]
+     * @return string[]|null
      */
-    public function getLocalizedNames(): array
+    public function getLocalizedNames(): ?array
     {
         return $this->localizedNames;
     }

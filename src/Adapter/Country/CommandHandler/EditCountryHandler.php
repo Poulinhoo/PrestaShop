@@ -9,6 +9,7 @@ declare(strict_types=1);
 namespace PrestaShop\PrestaShop\Adapter\Country\CommandHandler;
 
 use AddressFormat;
+use Cache;
 use PrestaShop\PrestaShop\Adapter\Country\Repository\CountryRepository;
 use PrestaShop\PrestaShop\Core\CommandBus\Attributes\AsCommandHandler;
 use PrestaShop\PrestaShop\Core\Domain\Country\AddressFormat\AddressFormatCheckerInterface;
@@ -117,5 +118,10 @@ class EditCountryHandler implements EditCountryHandlerInterface
         if (!$addressFormatModel->save()) {
             throw new CannotEditCountryException(sprintf('Failed to save address format for country %d', $countryId));
         }
+
+        // The legacy AddressFormat::getFormatDB caches per-country reads in a static
+        // process cache that save() does not invalidate. Clear it so subsequent reads
+        // (e.g. GetCountryForEditing immediately after this command) return the new value.
+        Cache::clean('AddressFormat::getFormatDB' . $countryId);
     }
 }

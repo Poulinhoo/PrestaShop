@@ -9,6 +9,7 @@ declare(strict_types=1);
 namespace PrestaShop\PrestaShop\Adapter\Country\CommandHandler;
 
 use AddressFormat;
+use Cache;
 use Country;
 use PrestaShop\PrestaShop\Adapter\Country\Repository\CountryRepository;
 use PrestaShop\PrestaShop\Core\CommandBus\Attributes\AsCommandHandler;
@@ -90,5 +91,10 @@ class AddCountryHandler implements AddCountryHandlerInterface
         if (!$addressFormatModel->save()) {
             throw new CannotAddCountryException(sprintf('Failed to save address format for country %d', $countryId));
         }
+
+        // The legacy AddressFormat::getFormatDB caches per-country reads in a static
+        // process cache that save() does not invalidate. Clear it so subsequent reads
+        // (e.g. GetCountryForEditing immediately after this command) return the new value.
+        Cache::clean('AddressFormat::getFormatDB' . $countryId);
     }
 }
