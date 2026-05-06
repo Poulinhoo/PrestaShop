@@ -6,11 +6,7 @@
 {% block address_format_builder_widget %}
   {% set options = address_format_options %}
   <div class="js-address-format-wrapper address-format-wrapper">
-    <input type="hidden"
-           class="js-address-format-input"
-           id="{{ id }}"
-           name="{{ full_name }}"
-           value="{{ value|default('') }}" />
+    {{- block('hidden_widget') -}}
     <div class="js-address-format-builder"
          data-value="{{ value|default('') }}"
          data-objects="{{ options.available_objects|json_encode }}"

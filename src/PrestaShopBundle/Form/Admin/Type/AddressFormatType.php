@@ -11,6 +11,7 @@ namespace PrestaShopBundle\Form\Admin\Type;
 use PrestaShop\PrestaShop\Core\ConstraintValidator\Constraints\ValidAddressFormat;
 use PrestaShop\PrestaShop\Core\Domain\Country\AddressFormat\AddressFormatFieldsProviderInterface;
 use Symfony\Component\Form\AbstractType;
+use Symfony\Component\Form\Extension\Core\Type\HiddenType;
 use Symfony\Component\Form\FormBuilderInterface;
 use Symfony\Component\Form\FormView;
 use Symfony\Component\OptionsResolver\OptionsResolver;
@@ -75,9 +76,16 @@ class AddressFormatType extends AbstractType
     {
         $resolver
             ->setDefaults([
-                'compound' => false,
+                // HiddenType bubbles errors to the parent form by default; this field
+                // has a visible UI surface (the Vue builder), so violations must render
+                // inline on the field itself.
+                'error_bubbling' => false,
                 'empty_data' => '',
-                'attr' => [],
+                // The Vue mount script (initAddressFormatBuilder.ts) locates the hidden
+                // input by the `js-address-format-input` selector to keep it in sync with
+                // the visual editor — propagated to the input via the form theme's
+                // {{ block('hidden_widget') }} call.
+                'attr' => ['class' => 'js-address-format-input'],
                 'form_theme' => self::FORM_THEME,
                 'available_objects' => null,
                 'required_fields' => null,
@@ -110,7 +118,7 @@ class AddressFormatType extends AbstractType
 
     public function getParent(): string
     {
-        return \Symfony\Component\Form\Extension\Core\Type\TextType::class;
+        return HiddenType::class;
     }
 
     /**
