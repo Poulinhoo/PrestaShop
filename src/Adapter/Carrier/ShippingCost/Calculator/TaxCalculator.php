@@ -55,10 +55,10 @@ class TaxCalculator implements ShippingCostCalculatorInterface
         }
 
         $context->setTaxExcluded(
-            new DecimalNumber((string) $this->tools->round($cost->__toString(), $precision))
+            new DecimalNumber((string) $this->tools->round((float) (string) $cost, $precision))
         );
         $context->setTaxIncluded(
-            new DecimalNumber((string) $this->tools->round($taxIncluded->__toString(), $precision))
+            new DecimalNumber((string) $this->tools->round((float) (string) $taxIncluded, $precision))
         );
     }
 }
