@@ -8,9 +8,11 @@ $(() => {
   // which corrupts email template HTML structure.
   window.prestashop.component.EventEmitter.on(
     'initTinyMCE',
-    (event: {config: Record<string, unknown>}) => {
-      event.config.forced_root_block = false;
-      event.config.verify_html = false;
+    ({config}: {config: Record<string, unknown>}) => {
+      Object.assign(config, {
+        forced_root_block: false,
+        verify_html: false,
+      });
     },
   );
 
