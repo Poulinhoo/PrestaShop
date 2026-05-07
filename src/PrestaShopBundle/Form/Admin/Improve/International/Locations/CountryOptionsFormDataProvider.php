@@ -16,14 +16,8 @@ use PrestaShop\PrestaShop\Core\Form\FormDataProviderInterface;
  */
 class CountryOptionsFormDataProvider implements FormDataProviderInterface
 {
-    /**
-     * @var DataConfigurationInterface
-     */
-    private $dataConfiguration;
-
-    public function __construct(DataConfigurationInterface $dataConfiguration)
+    public function __construct(private readonly DataConfigurationInterface $dataConfiguration)
     {
-        $this->dataConfiguration = $dataConfiguration;
     }
 
     /**
