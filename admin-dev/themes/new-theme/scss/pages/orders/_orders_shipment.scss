@@ -191,7 +191,29 @@
   }
 }
 
-#editOrderProductModal,
+#addOrderProductModal,
+#editOrderProductModal {
+  // Default state
+  .modal-body {
+    display: none;
+  }
+
+  // Loaded state: show modal body, hide skeleton
+  &[data-state="loaded"] {
+    .modal-body {
+      display: block;
+    }
+
+    .skeleton-add-product-form {
+      display: none;
+    }
+
+    .skeleton-edit-product-form {
+      display: none;
+    }
+  }
+}
+
 #editShipmentModal,
 #fulfillShipmentModal,
 #mergeShipmentModal {
