@@ -53,7 +53,12 @@ class TaxCalculator implements ShippingCostCalculatorInterface
             $taxIncluded = $cost->times(new DecimalNumber((string) (1 + ($taxRate / 100))));
         }
 
-        $context->setTaxExcluded(new DecimalNumber($cost->round($precision, Rounding::ROUND_HALF_UP)));
-        $context->setTaxIncluded(new DecimalNumber($taxIncluded->round($precision, Rounding::ROUND_HALF_UP)));
+        $context->setTaxExcluded($this->roundAmount($cost, $precision));
+        $context->setTaxIncluded($this->roundAmount($taxIncluded, $precision));
+    }
+
+    private function roundAmount(DecimalNumber $amount, int $precision): DecimalNumber
+    {
+        return new DecimalNumber($amount->round($precision, Rounding::ROUND_HALF_UP));
     }
 }
