@@ -11,9 +11,10 @@ use PrestaShop\PrestaShop\Adapter\Configuration;
 use PrestaShop\PrestaShop\Adapter\LegacyContext;
 use PrestaShop\PrestaShop\Adapter\Module\AdminModuleDataProvider;
 use PrestaShop\PrestaShop\Adapter\Module\Configuration\ModuleSelfConfigurator;
-use PrestaShop\PrestaShop\Adapter\Module\ModuleDataProvider;
+use PrestaShop\PrestaShop\Adapter\Module\Module;
 use PrestaShop\PrestaShop\Core\Context\ContextBuilderPreparer;
 use PrestaShop\PrestaShop\Core\Module\ModuleManager;
+use PrestaShop\PrestaShop\Core\Module\ModuleRepository;
 use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Helper\FormatterHelper;
 use Symfony\Component\Console\Helper\Table;
@@ -21,7 +22,6 @@ use Symfony\Component\Console\Input\InputArgument;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Input\InputOption;
 use Symfony\Component\Console\Output\OutputInterface;
-use Symfony\Component\Finder\Finder;
 use Symfony\Contracts\Translation\TranslatorInterface;
 
 class ModuleCommand extends Command
@@ -55,7 +55,7 @@ class ModuleCommand extends Command
         protected readonly ModuleManager $moduleManager,
         protected readonly ContextBuilderPreparer $contextBuilderPreparer,
         protected readonly Configuration $configuration,
-        protected readonly ModuleDataProvider $moduleDataProvider,
+        protected readonly ModuleRepository $moduleRepository,
     ) {
         parent::__construct();
     }
@@ -171,55 +171,44 @@ class ModuleCommand extends Command
 
     protected function executeListAction(OutputInterface $output, string $filter): void
     {
-        $installed = $this->moduleDataProvider->getInstalled();
+        $modules = match ($filter) {
+            'all' => $this->moduleRepository->getList(),
+            'not-installed' => $this->moduleRepository->getList()->filter(
+                static fn (Module $module) => !$module->isInstalled()
+            ),
+            'active' => $this->moduleRepository->getInstalledModules()->filter(
+                static fn (Module $module) => $module->isActive()
+            ),
+            'disabled' => $this->moduleRepository->getInstalledModules()->filter(
+                static fn (Module $module) => !$module->isActive()
+            ),
+            default => $this->moduleRepository->getInstalledModules(),
+        };
+
         $rows = [];
-
-        if ($filter !== 'not-installed') {
-            foreach ($installed as $module) {
-                $isActive = !empty($module['active']);
-                if ($filter === 'active' && !$isActive) {
-                    continue;
-                }
-                if ($filter === 'disabled' && $isActive) {
-                    continue;
-                }
-                $rows[$module['name']] = [
-                    $module['name'],
-                    (string) $module['version'],
-                    $isActive ? 'Enabled' : 'Disabled',
-                ];
-            }
+        foreach ($modules as $module) {
+            $rows[] = [
+                (string) $module->get('name'),
+                $module->isInstalled() ? (string) $module->get('version') : '-',
+                $this->describeModuleStatus($module),
+            ];
         }
 
-        if (in_array($filter, ['all', 'not-installed'], true)) {
-            $moduleDir = $this->configuration->get('_PS_MODULE_DIR_');
-            if (is_string($moduleDir) && is_dir($moduleDir)) {
-                $directories = (new Finder())->directories()
-                    ->in($moduleDir)
-                    ->depth('== 0')
-                    ->exclude(['__MACOSX'])
-                    ->ignoreVCS(true);
-                foreach ($directories as $dir) {
-                    $name = $dir->getFilename();
-                    if (isset($rows[$name]) || isset($installed[$name])) {
-                        continue;
-                    }
-                    // A directory only counts as a module if it contains a {name}/{name}.php class file.
-                    if (!is_file($dir->getPathname() . '/' . $name . '.php')) {
-                        continue;
-                    }
-                    $rows[$name] = [$name, '-', 'Not installed'];
-                }
-            }
-        }
-
-        $rows = array_values($rows);
         usort($rows, static fn (array $a, array $b) => strcasecmp($a[0], $b[0]));
 
         $table = new Table($output);
         $table->setHeaders(['Name', 'Version', 'Status']);
         $table->setRows($rows);
         $table->render();
+    }
+
+    private function describeModuleStatus(Module $module): string
+    {
+        if (!$module->isInstalled()) {
+            return 'Not installed';
+        }
+
+        return $module->isActive() ? 'Enabled' : 'Disabled';
     }
 
     protected function executeConfigureModuleAction($moduleName, $file = null)
