@@ -25,7 +25,6 @@ final class ShippingCostContext
     private DecimalNumber $cost;
     private ?DecimalNumber $taxExcluded = null;
     private ?DecimalNumber $taxIncluded = null;
-    private ?int $selectedCarrierId = null;
     private ?int $precision = null;
 
     private function __construct(
@@ -48,7 +47,7 @@ final class ShippingCostContext
 
         $ctx = new self(
             $physicalProducts,
-            $request->getCarrierId() ?? 0,
+            $request->getCarrierId(),
             $request->getAddressId(),
             $request->getCurrencyId(),
             new DecimalNumber((string) $request->getOrderTotal()),
@@ -60,11 +59,6 @@ final class ShippingCostContext
         }
 
         return $ctx;
-    }
-
-    public function isEmpty(): bool
-    {
-        return empty($this->physicalProducts);
     }
 
     public function getPhysicalProducts(): array
@@ -165,16 +159,6 @@ final class ShippingCostContext
     public function setTaxIncluded(DecimalNumber $taxIncluded): void
     {
         $this->taxIncluded = $taxIncluded;
-    }
-
-    public function getSelectedCarrierId(): ?int
-    {
-        return $this->selectedCarrierId;
-    }
-
-    public function setSelectedCarrierId(int $selectedCarrierId): void
-    {
-        $this->selectedCarrierId = $selectedCarrierId;
     }
 
     public function getPrecision(): ?int

@@ -44,7 +44,7 @@ class CreateShipmentHandler implements CreateShipmentHandlerInterface
             $shippingCostTaxExcluded = 0.00;
             $shippingCostTaxIncluded = 0.00;
 
-            if (!$this->configuration->get('PS_ORDER_RECALCULATE_SHIPPING')) {
+            if ($this->configuration->get('PS_ORDER_RECALCULATE_SHIPPING')) {
                 $product = $this->findOrderProduct($order->getProductsDetail(), $productId);
                 if ($product !== null) {
                     $request = new ShippingCalculationRequest(
@@ -91,7 +91,7 @@ class CreateShipmentHandler implements CreateShipmentHandlerInterface
 
             $shipmentId = $this->shipmentRepository->save($shipment);
 
-            if (!$this->configuration->get('PS_ORDER_RECALCULATE_SHIPPING')) {
+            if ($this->configuration->get('PS_ORDER_RECALCULATE_SHIPPING')) {
                 $this->updateOrderShippingTotal((int) $order->id);
             }
 

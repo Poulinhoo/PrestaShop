@@ -144,14 +144,45 @@ src/
 
 ---
 
-## Usage in CreateShipmentHandler
+## Usage in handlers — `PS_ORDER_RECALCULATE_SHIPPING`
 
-`CreateShipmentHandler` uses `ShippingCostCalculator` to compute the shipping cost when creating a new shipment. The behavior is gated by `PS_ORDER_RECALCULATE_SHIPPING`:
+The `PS_ORDER_RECALCULATE_SHIPPING` configuration flag controls whether shipping costs are (re)calculated at all. It applies globally to all shipment-related handlers.
 
 | `PS_ORDER_RECALCULATE_SHIPPING` | Behavior |
 |---|---|
-| `1` (active) | Skip calculation — set `0.00` on shipment, leave order totals untouched |
-| `0` (inactive) | Calculate shipment cost → save shipment → recompute order total by **summing all shipments** (`findByOrderId`) → `$order->update()` |
+| `1` (active) | **Calculate** shipment cost → save shipment → recompute order total by **summing all shipments** |
+| `0` (inactive) | **Skip all calculation** — shipment cost stays at `0.00` (creation) or unchanged (update), order totals untouched |
+
+### `CreateShipmentHandler` (creation)
+
+When `PS_ORDER_RECALCULATE_SHIPPING = 1`:
+1. Builds a `ShippingCalculationRequest` for the newly added product + chosen carrier
+2. Runs the pipeline (`ShippingCostCalculatorInterface::compute`)
+3. Sets `shippingCostTaxExcluded` / `shippingCostTaxIncluded` on the new `Shipment` entity
+4. After saving the shipment: sums all shipment costs from `findByOrderId()` → updates `order.total_shipping_*`
+
+When `PS_ORDER_RECALCULATE_SHIPPING = 0`: shipment is saved with `0.00` costs, order totals are not updated.
+
+> **Note:** `CreateShipmentHandler` keeps its own private `updateOrderShippingTotal()` instead of delegating to `ShipmentShippingCostUpdater`. Reason: `ShipmentProduct` entities are not assigned at creation time — `ShipmentShippingCostUpdater::recalculateShipment` iterates `$shipment->getProducts()`, which would be empty for a newly created shipment.
+
+### `UpdateProductInOrderHandler` (quantity change)
+
+When `PS_ORDER_RECALCULATE_SHIPPING = 1` and the `improved_shipment` feature flag is active and a `shipment_mapping` is provided:
+1. Updates product quantities across shipments via `ShipmentProductQuantityUpdater`
+2. Calls `ShipmentShippingCostUpdater::recalculateForOrder(orderId)` which:
+   - Re-runs the full pipeline for each existing shipment (using its current products + quantities)
+   - Saves updated costs on each shipment
+   - Sums all shipment costs and updates `order.total_shipping_*`
+
+When `PS_ORDER_RECALCULATE_SHIPPING = 0`: shipment quantities are updated but no cost recalculation occurs.
+
+### `ShipmentShippingCostUpdater`
+
+Reusable service (`src/Adapter/Shipment/ShipmentShippingCostUpdater.php`) for recalculating shipping costs of all existing shipments of an order and updating the order totals. Used by `UpdateProductInOrderHandler`. Not used by `CreateShipmentHandler` (empty products constraint — see note above).
+
+---
+
+## `ShippingCalculationRequest` — input data
 
 The `ShippingCalculationRequest` is built from:
 - `product_weight` from `ps_order_detail` (weight recorded at order time, includes attribute delta)

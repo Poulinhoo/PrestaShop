@@ -29,7 +29,6 @@ class CarrierDataCalculator implements ShippingCostCalculatorInterface
         }
 
         $context->setCarrierData($carrierData);
-        $context->setSelectedCarrierId($carrierData->getCarrierId());
 
         if ($carrierData->isFreeShippingMethod()) {
             $context->setFreeShipping(true);

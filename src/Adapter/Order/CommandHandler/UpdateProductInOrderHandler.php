@@ -14,10 +14,12 @@ use Hook;
 use Order;
 use OrderDetail;
 use OrderInvoice;
+use PrestaShop\PrestaShop\Adapter\Configuration as AdapterConfiguration;
 use PrestaShop\PrestaShop\Adapter\ContextStateManager;
 use PrestaShop\PrestaShop\Adapter\Order\OrderDetailUpdater;
 use PrestaShop\PrestaShop\Adapter\Order\OrderProductQuantityUpdater;
 use PrestaShop\PrestaShop\Adapter\Shipment\ShipmentProductQuantityUpdater;
+use PrestaShop\PrestaShop\Adapter\Shipment\ShipmentShippingCostUpdater;
 use PrestaShop\PrestaShop\Core\CommandBus\Attributes\AsCommandHandler;
 use PrestaShop\PrestaShop\Core\Domain\Order\Exception\CannotEditDeliveredOrderProductException;
 use PrestaShop\PrestaShop\Core\Domain\Order\Exception\CannotFindProductInOrderException;
@@ -44,6 +46,8 @@ final class UpdateProductInOrderHandler extends AbstractOrderCommandHandler impl
         private ContextStateManager $contextStateManager,
         private ?ShipmentProductQuantityUpdater $shipmentProductQuantityUpdater = null,
         private ?FeatureFlagStateCheckerInterface $featureflagStateCheckerInterface = null,
+        private ?ShipmentShippingCostUpdater $shipmentShippingCostUpdater = null,
+        private ?AdapterConfiguration $configuration = null,
     ) {
     }
 
@@ -92,6 +96,10 @@ final class UpdateProductInOrderHandler extends AbstractOrderCommandHandler impl
                 $order = $this->orderProductQuantityUpdater->update($order, $orderDetail, $totalProductQuantity, $orderInvoice);
 
                 $this->shipmentProductQuantityUpdater->updateShipmentQuantity($command->getOrderDetailId(), $command->getShipmentsQuantities());
+
+                if ($this->shipmentShippingCostUpdater !== null && $this->configuration !== null && !$this->configuration->get('PS_ORDER_RECALCULATE_SHIPPING')) {
+                    $this->shipmentShippingCostUpdater->recalculateForOrder((int) $order->id);
+                }
             } else {
                 // Update invoice, quantity and amounts
                 $order = $this->orderProductQuantityUpdater->update($order, $orderDetail, $command->getQuantity(), $orderInvoice);

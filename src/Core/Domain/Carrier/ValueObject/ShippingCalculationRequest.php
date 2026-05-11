@@ -84,7 +84,7 @@ final class ShippingCalculationRequest
         return $this->products;
     }
 
-    public function getCarrierId(): ?int
+    public function getCarrierId(): int
     {
         return $this->carrierId;
     }

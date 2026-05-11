@@ -74,6 +74,10 @@ class CarrierDataProvider implements CarrierDataProviderInterface
             ? $carrier->getDeliveryPriceByWeight($weightFloat, $zoneId)
             : $carrier->getDeliveryPriceByPrice($orderTotalFloat, $zoneId, $currencyId);
 
+        if ($cost === false) {
+            return new DecimalNumber('0');
+        }
+
         return new DecimalNumber((string) $cost);
     }
 }

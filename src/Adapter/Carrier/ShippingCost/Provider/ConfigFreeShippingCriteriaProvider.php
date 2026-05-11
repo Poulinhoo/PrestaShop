@@ -26,8 +26,8 @@ class ConfigFreeShippingCriteriaProvider implements FreeShippingCriteriaProvider
         $freeWeight = $this->configuration->get('PS_SHIPPING_FREE_WEIGHT');
 
         return new FreeShippingCriteria(
-            isset($freePrice) ? new DecimalNumber((string) $freePrice) : null,
-            isset($freeWeight) ? new DecimalNumber((string) $freeWeight) : null,
+            $freePrice !== false && $freePrice > 0 ? new DecimalNumber((string) $freePrice) : null,
+            $freeWeight !== false && $freeWeight > 0 ? new DecimalNumber((string) $freeWeight) : null,
         );
     }
 }

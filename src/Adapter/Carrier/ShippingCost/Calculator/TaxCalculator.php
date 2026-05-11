@@ -11,23 +11,25 @@ namespace PrestaShop\PrestaShop\Adapter\Carrier\ShippingCost\Calculator;
 use PrestaShop\Decimal\DecimalNumber;
 use PrestaShop\Decimal\Operation\Rounding;
 use PrestaShop\PrestaShop\Adapter\Configuration as AdapterConfiguration;
-use PrestaShop\PrestaShop\Core\Context\CurrencyContext;
+use PrestaShop\PrestaShop\Adapter\Currency\Repository\CurrencyRepository;
 use PrestaShop\PrestaShop\Core\Domain\Carrier\ShippingCost\Calculator\ShippingCostCalculatorInterface;
 use PrestaShop\PrestaShop\Core\Domain\Carrier\ShippingCost\Provider\ShippingTaxRateProviderInterface;
 use PrestaShop\PrestaShop\Core\Domain\Carrier\ShippingCost\ShippingCostContext;
+use PrestaShop\PrestaShop\Core\Domain\Currency\ValueObject\CurrencyId;
 
 class TaxCalculator implements ShippingCostCalculatorInterface
 {
     public function __construct(
         private readonly AdapterConfiguration $configuration,
         private readonly ShippingTaxRateProviderInterface $taxRateProvider,
-        private readonly CurrencyContext $currencyContext,
+        private readonly CurrencyRepository $currencyRepository,
     ) {
     }
 
     public function compute(ShippingCostContext $context): void
     {
-        $precision = $this->currencyContext->getPrecision();
+        $currency = $this->currencyRepository->get(new CurrencyId($context->getCurrencyId()));
+        $precision = (int) $currency->precision;
         $context->setPrecision($precision);
 
         if ($context->isFreeShipping()) {
@@ -41,7 +43,7 @@ class TaxCalculator implements ShippingCostCalculatorInterface
         $cost = $context->getCost();
 
         $addressId = $context->getAddressId();
-        $carrierId = $context->getSelectedCarrierId() ?? $context->getCarrierId();
+        $carrierId = $context->getCarrierId();
         $taxIncluded = $cost;
 
         if (
