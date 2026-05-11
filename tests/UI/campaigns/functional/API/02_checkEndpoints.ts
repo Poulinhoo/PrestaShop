@@ -176,7 +176,11 @@ describe('API : Check endpoints', async () => {
         // @todo: add tests
         '/contacts: POST',
         // @todo: add tests
+        '/countries/{countryId}: DELETE',
+        // @todo: add tests
         '/countries/{countryId}: GET',
+        // @todo: add tests
+        '/countries: POST',
         // @todo: add tests
         '/customers/bulk-delete: DELETE',
         // @todo: add tests
@@ -257,6 +261,18 @@ describe('API : Check endpoints', async () => {
         '/hooks: GET',
         // tests/UI/campaigns/functional/API/02_endpoints/06_language/01_getLanguages.ts
         '/languages: GET',
+        // @todo: add tests
+        '/manufacturers/bulk-delete: PUT',
+        // @todo: add tests
+        '/manufacturers/{manufacturerId}: DELETE',
+        // @todo: add tests
+        '/manufacturers/{manufacturerId}: GET',
+        // @todo: add tests
+        '/manufacturers/{manufacturerId}: PATCH',
+        // @todo: add tests
+        '/manufacturers: GET',
+        // @todo: add tests
+        '/manufacturers: POST',
         // tests/UI/campaigns/functional/API/02_endpoints/07_module/10_putModulesBulkUninstall.ts
         '/modules/bulk-uninstall: PUT',
         // tests/UI/campaigns/functional/API/02_endpoints/07_module/09_putModulesBulkUpdateStatus.ts
@@ -290,6 +306,12 @@ describe('API : Check endpoints', async () => {
         // tests/UI/campaigns/functional/API/02_endpoints/08_product/11_getProductsSearch.ts
         '/products/search: GET',
         // @todo: add tests
+        '/products/{productId}/assign-to-categories: POST',
+        // @todo: add tests
+        '/products/{productId}/categories: DELETE',
+        // @todo: add tests
+        '/products/{productId}/categories: POST',
+        // @todo: add tests
         '/products/{productId}/combination-ids: GET',
         // @todo: add tests
         '/products/{productId}/combinations: GET',
@@ -312,6 +334,12 @@ describe('API : Check endpoints', async () => {
         // tests/UI/campaigns/functional/API/02_endpoints/08_product/10_postProduct.ts
         '/products: POST',
         // @todo: add tests
+        '/profiles/{profileId}: DELETE',
+        // @todo: add tests
+        '/profiles/{profileId}: GET',
+        // @todo: add tests
+        '/profiles: POST',
+        // @todo: add tests
         '/search-aliases/bulk-delete: DELETE',
         // @todo: add tests
         '/search-aliases/{searchTerm}: GET',
@@ -319,6 +347,18 @@ describe('API : Check endpoints', async () => {
         '/search-aliases/{searchTerm}: PUT',
         // @todo: add tests
         '/search-aliases: POST',
+        // @todo: add tests
+        '/search-engines/bulk-delete: DELETE',
+        // @todo: add tests
+        '/search-engines/{searchEngineId}: DELETE',
+        // @todo: add tests
+        '/search-engines/{searchEngineId}: GET',
+        // @todo: add tests
+        '/search-engines/{searchEngineId}: PATCH',
+        // @todo: add tests
+        '/search-engines: GET',
+        // @todo: add tests
+        '/search-engines: POST',
         // @todo: add tests
         '/showcase-cards/{showcaseCardName}/{employeeId}/close: PUT',
         // @todo: add tests
@@ -361,6 +401,8 @@ describe('API : Check endpoints', async () => {
         '/tax-rules-groups/bulk-delete: DELETE',
         // @todo: add tests
         '/tax-rules-groups/bulk-update-status: PUT',
+        // @todo: add tests
+        '/tax-rules-groups/{taxRulesGroupId}/set-status: PATCH',
         // @todo: add tests
         '/tax-rules-groups/{taxRulesGroupId}: DELETE',
         // @todo: add tests
