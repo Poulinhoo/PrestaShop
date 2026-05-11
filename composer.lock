@@ -4666,12 +4666,12 @@
             "source": {
                 "type": "git",
                 "url": "https://github.com/PrestaShop/classic-theme.git",
-                "reference": "003b07c6d2aa9076eebd6314520b431876b7d511"
+                "reference": "b296487cdef20d6427c65b67363d4ad1ec8e5d5b"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/PrestaShop/classic-theme/zipball/003b07c6d2aa9076eebd6314520b431876b7d511",
-                "reference": "003b07c6d2aa9076eebd6314520b431876b7d511",
+                "url": "https://api.github.com/repos/PrestaShop/classic-theme/zipball/b296487cdef20d6427c65b67363d4ad1ec8e5d5b",
+                "reference": "b296487cdef20d6427c65b67363d4ad1ec8e5d5b",
                 "shasum": ""
             },
             "require-dev": {
@@ -4698,7 +4698,7 @@
                 "issues": "https://github.com/PrestaShop/classic-theme/issues",
                 "source": "https://github.com/PrestaShop/classic-theme/tree/3.1.2"
             },
-            "time": "2026-03-25T14:45:03+00:00"
+            "time": "2026-05-11T09:08:00+00:00"
         },
         {
             "name": "prestashop/contactform",
@@ -18436,5 +18436,5 @@
     "platform-overrides": {
         "php": "8.1.0"
     },
-    "plugin-api-version": "2.9.0"
+    "plugin-api-version": "2.6.0"
 }
