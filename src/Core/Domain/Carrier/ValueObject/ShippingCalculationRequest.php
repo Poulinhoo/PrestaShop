@@ -13,27 +13,6 @@ use InvalidArgumentException;
 final class ShippingCalculationRequest
 {
     /**
-     * @var array<array{
-     *     id_product: int,
-     *     id_product_attribute: int,
-     *     quantity: int,
-     *     weight: float,
-     *     weight_attribute: float|null,
-     *     is_virtual: bool,
-     *     additional_shipping_cost: float,
-     *     price_wt: float
-     * }>
-     */
-    private array $products;
-    private ?int $carrierId;
-    private ?int $zoneId;
-    private ?int $addressId;
-    private int $countryZoneId;
-    private int $currencyId;
-    private ?int $customerId;
-    private float $orderTotal;
-
-    /**
      * @param array<array{
      *     id_product: int,
      *     id_product_attribute: int,
@@ -55,27 +34,18 @@ final class ShippingCalculationRequest
      * @throws InvalidArgumentException If products array is invalid or missing required fields
      */
     public function __construct(
-        array $products,
-        int $carrierId,
-        ?int $zoneId,
-        ?int $addressId,
-        int $countryZoneId,
-        int $currencyId,
-        ?int $customerId,
-        float $orderTotal
+        private readonly array $products,
+        private readonly int $carrierId,
+        private readonly ?int $zoneId,
+        private readonly ?int $addressId,
+        private readonly int $countryZoneId,
+        private readonly int $currencyId,
+        private readonly ?int $customerId,
+        private readonly float $orderTotal,
     ) {
         foreach ($products as $product) {
             $this->validateProduct($product);
         }
-
-        $this->products = $products;
-        $this->carrierId = $carrierId;
-        $this->zoneId = $zoneId;
-        $this->addressId = $addressId;
-        $this->countryZoneId = $countryZoneId;
-        $this->currencyId = $currencyId;
-        $this->customerId = $customerId;
-        $this->orderTotal = $orderTotal;
     }
 
     /**

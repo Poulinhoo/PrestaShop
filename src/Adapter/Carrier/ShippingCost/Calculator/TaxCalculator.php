@@ -9,8 +9,8 @@ declare(strict_types=1);
 namespace PrestaShop\PrestaShop\Adapter\Carrier\ShippingCost\Calculator;
 
 use PrestaShop\Decimal\DecimalNumber;
+use PrestaShop\Decimal\Operation\Rounding;
 use PrestaShop\PrestaShop\Adapter\Configuration as AdapterConfiguration;
-use PrestaShop\PrestaShop\Adapter\Tools;
 use PrestaShop\PrestaShop\Core\Context\CurrencyContext;
 use PrestaShop\PrestaShop\Core\Domain\Carrier\ShippingCost\Calculator\ShippingCostCalculatorInterface;
 use PrestaShop\PrestaShop\Core\Domain\Carrier\ShippingCost\Provider\ShippingTaxRateProviderInterface;
@@ -21,7 +21,6 @@ class TaxCalculator implements ShippingCostCalculatorInterface
     public function __construct(
         private readonly AdapterConfiguration $configuration,
         private readonly ShippingTaxRateProviderInterface $taxRateProvider,
-        private readonly Tools $tools,
         private readonly CurrencyContext $currencyContext,
     ) {
     }
@@ -54,11 +53,7 @@ class TaxCalculator implements ShippingCostCalculatorInterface
             $taxIncluded = $cost->times(new DecimalNumber((string) (1 + ($taxRate / 100))));
         }
 
-        $context->setTaxExcluded(
-            new DecimalNumber((string) $this->tools->round((float) (string) $cost, $precision))
-        );
-        $context->setTaxIncluded(
-            new DecimalNumber((string) $this->tools->round((float) (string) $taxIncluded, $precision))
-        );
+        $context->setTaxExcluded(new DecimalNumber($cost->round($precision, Rounding::ROUND_HALF_UP)));
+        $context->setTaxIncluded(new DecimalNumber($taxIncluded->round($precision, Rounding::ROUND_HALF_UP)));
     }
 }
