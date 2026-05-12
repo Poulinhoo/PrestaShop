@@ -16,7 +16,7 @@ subagent: optional
 
 > **Scope:** this skill is for **CRUD (identifiable) forms** — entity add/edit pages backed by CQRS commands. Settings forms do NOT have a DataHandler — they use a single `FormDataProvider` over a `DataConfiguration`. Use [`create-settings-form`](../create-settings-form/SKILL.md) for that pattern.
 
-Read `@.ai/Component/Forms/CONTEXT.md` for form conventions (IdentifiableObject pattern, service registration, settings-vs-CRUD decision tree).
+Read `@.ai/Component/Forms/CONTEXT.md` (decision tree, shared concerns) and `@.ai/Component/Forms/CRUD.md` (IdentifiableObject pattern, service folders, hooks) for the conventions this skill builds on.
 
 ## 1. DataProvider
 

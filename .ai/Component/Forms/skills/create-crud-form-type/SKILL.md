@@ -15,7 +15,7 @@ subagent: optional
 
 > **Scope:** this skill builds the FormType for a **CRUD (identifiable) form** — an entity with an ID, a grid listing, and an `Add`/`Edit` CQRS command. For a **settings form** (options block, `ps_configuration` rows), use [`create-settings-form`](../create-settings-form/SKILL.md) instead. Settings FormTypes are flat, have no `getParent()`, no `_id` field, and no entity binding.
 
-Read `@.ai/Component/Forms/CONTEXT.md` for form conventions (base classes, data flow, service registration, settings-vs-CRUD decision tree).
+Read `@.ai/Component/Forms/CONTEXT.md` (decision tree, shared concerns) and `@.ai/Component/Forms/CRUD.md` (base FormBuilder/FormHandler factories, hooks, anti-pattern) for the conventions this skill builds on.
 
 ## 1. Root form type
 

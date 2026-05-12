@@ -13,7 +13,7 @@ subagent: optional
 
 # create-settings-form
 
-Read `@.ai/Component/Forms/CONTEXT.md` first — especially the settings-vs-CRUD decision section, the hooks dispatched by the base `Handler`, the two named anti-patterns, and the allowed-extension exception. This skill assumes those conventions; it does not restate them.
+Read `@.ai/Component/Forms/CONTEXT.md` (decision tree, shared concerns) and `@.ai/Component/Forms/SETTINGS.md` (base `Handler`, hooks, anti-patterns, allowed exception) first. This skill assumes those conventions; it does not restate them.
 
 If the page is not a settings form per CONTEXT.md's decision section, stop and use [`create-crud-form-type`](../create-crud-form-type/SKILL.md) + [`create-crud-form-data-handling`](../create-crud-form-data-handling/SKILL.md) instead.
 
@@ -61,7 +61,7 @@ Create `src/PrestaShopBundle/Form/Admin/{Section}/{Name}Type.php`. Standard `Abs
 
 ## 4. Service definitions (4 YAML entries)
 
-Add one entry to each of these YAML files. See [Forms/CONTEXT.md](../../CONTEXT.md) for the `bundle/form/` vs `core/form/` folder rule — settings services go under `bundle/form/`.
+Add one entry to each of these YAML files. See [Forms/SETTINGS.md](../../SETTINGS.md) for the service-definitions table and the `bundle/form/` vs `core/form/` folder rule — settings services go under `bundle/form/`.
 
 `src/PrestaShopBundle/Resources/config/services/adapter/data_configuration.yml`:
 ```yaml
@@ -94,7 +94,7 @@ prestashop.admin.{domain}.{name}.form_handler:
     - '{form-name}'         # kebab-case form name, e.g. country-options
 ```
 
-The `class` line **must** be `PrestaShop\PrestaShop\Core\Form\Handler` — the base class. See [Forms/CONTEXT.md](../../CONTEXT.md) for why custom handler classes break the hook contract.
+The `class` line **must** be `PrestaShop\PrestaShop\Core\Form\Handler` — the base class. See [Forms/SETTINGS.md](../../SETTINGS.md) for why custom handler classes break the hook contract.
 
 `src/PrestaShopBundle/Resources/config/services/bundle/form/form_type.yml` — empty entry for auto-discovery:
 ```yaml

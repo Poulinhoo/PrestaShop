@@ -13,7 +13,9 @@ subagent: optional
 
 # create-twig-form-template
 
-Read `@.ai/Component/Twig/CONTEXT.md` for template conventions (layout, flash messages, routes, form themes).
+Read `@.ai/Component/Twig/CONTEXT.md` for template conventions (layout, flash messages, routes, form themes). When the template renders a specific form pattern, load only the relevant Forms sub-context:
+- CRUD template → `@.ai/Component/Forms/CRUD.md`
+- Settings block → `@.ai/Component/Forms/SETTINGS.md`
 
 > **Two patterns:** CRUD forms render one form per page on a dedicated `form.html.twig`. Settings forms render one or more option blocks on the listing page (or a dedicated config page) — each block is its own `form_start`/`form_end` with an explicit `action` URL. See section 4 below for the settings differences.
 

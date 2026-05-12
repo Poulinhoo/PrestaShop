@@ -13,7 +13,9 @@ produces: "createAction, editAction, and entity-specific actions in {Domain}Cont
 # create-controller-form-actions
 
 Read `@.ai/Component/Controller/CONTEXT.md` for controller conventions (base class, DI, security attributes, error mapping).
-Read `@.ai/Component/Forms/CONTEXT.md` for form patterns (FormBuilder, FormHandler, FormDataProvider, FormDataHandler) and the settings-vs-CRUD decision tree.
+Read `@.ai/Component/Forms/CONTEXT.md` for the settings-vs-CRUD decision tree. Then, depending on which branch this controller serves, load only the relevant pattern detail:
+- CRUD action → `@.ai/Component/Forms/CRUD.md` (FormBuilder + FormHandler pair, IdentifiableObject base classes)
+- Settings action → `@.ai/Component/Forms/SETTINGS.md` (base `Handler`, hooks, allowed exception)
 
 > **Two patterns:** CRUD entity forms inject the `FormBuilder` + IdentifiableObject `FormHandler` pair (sections 1–3 below). Settings forms inject the base `Handler` once (section 4 below). For the full settings-form stack (DataConfiguration + FormDataProvider + FormType + 4 YAML entries), the umbrella [`create-settings-form`](../../../Forms/skills/create-settings-form/SKILL.md) skill covers everything.
 
