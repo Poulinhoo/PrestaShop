@@ -56,6 +56,7 @@ Create `src/PrestaShopBundle/Form/Admin/{Section}/{Name}Type.php`. Standard `Abs
 - **The FormType IS the root form.** No `getParent()`, no nested `add('xxx', ChildType::class)` wrapper to host the real fields. Add fields directly in `buildForm()`.
 - Field keys must match the array keys returned by `DataConfiguration::getConfiguration()`.
 - For multi-store fields, set `'multistore_configuration_key' => 'PS_FOO_BAR'` on the field options — PrestaShop's form extension renders the per-shop override checkbox automatically.
+- Before picking a Symfony native type, **scan `PrestaShopBundle\Form\Admin\Type\` for a PrestaShop-specific equivalent** (`SwitchType`, `IpAddressType`, `ColorPickerType`, `CountryChoiceType`, etc. — 80+ types). Before inventing a new field option, **scan `PrestaShopBundle\Form\Extension\`** for an existing extension (`help`, `hint`, `external_link`, `modify_all_shops`, `autocomplete`, …).
 
 **Reference:** `src/PrestaShopBundle/Form/Admin/Improve/International/Locations/CountryOptionsType.php`, `src/PrestaShopBundle/Form/Admin/Configure/ShopParameters/General/MaintenanceType.php`.
 

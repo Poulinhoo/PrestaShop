@@ -30,6 +30,8 @@ Create `src/PrestaShopBundle/Form/Admin/{Section}/{Domain}/{Domain}Type.php`:
 
 ## 2. Standard field types
 
+> The table below is a starter, not the full catalogue. Before picking a Symfony native type, **scan `PrestaShopBundle\Form\Admin\Type\` for a PrestaShop-specific equivalent** — there are 80+ purpose-built types (`SwitchType`, `IpAddressType`, `ColorPickerType`, `CountryChoiceType`, `CurrencyMoneyType`, `EmailType`, `MaterialChoiceTreeType`, etc.). And before inventing a new option on a field, **scan `PrestaShopBundle\Form\Extension\`** for an existing extension that already provides it (`help`, `hint`, `external_link`, `modify_all_shops`, `autocomplete`, `disabling_switch`, …).
+
 | PS field concept | Symfony/PS type | Notes |
 |---|---|---|
 | Text | `TextType` | Standard input |

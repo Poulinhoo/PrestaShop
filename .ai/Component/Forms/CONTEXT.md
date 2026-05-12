@@ -36,11 +36,12 @@ Easy to mix up. Wrong folder won't raise a hard error — the service simply isn
 
 | Topic | Note |
 |---|---|
-| Translatable fields | `TranslatableType` wrapping the inner type. Data is an array keyed by language ID. Multilingual textareas wrap `TextareaType` / `FormattedTextareaType`. |
+| Reusable form types | **`PrestaShopBundle\Form\Admin\Type\`** holds 80+ generic, PrestaShop-specific form types (`SwitchType`, `TranslatableType`, `MoneyType`, `CountryChoiceType`, `CurrencyChoiceType`, `ColorPickerType`, `IpAddressType`, `EmailType`, `MaterialChoiceTreeType`, etc., plus the `Common/` and `Material/` sub-namespaces). **Check this namespace before reinventing a field** — there is almost always a ready-made type. |
+| Form extensions | **`PrestaShopBundle\Form\Extension\`** holds 24+ Symfony `AbstractTypeExtension` classes that add custom options to all form types globally: `help`, `hint`, `external_link`, `modify_all_shops`, `autocomplete`, `multistore_configuration_key`, `download_file`, `disabling_switch`, etc. **Check this namespace before inventing a new field option** — the option you want probably already exists. |
+| Translatable fields | `TranslatableType` (in `Form\Admin\Type\`) wrapping the inner type. Data is an array keyed by language ID. Multilingual textareas wrap `TextareaType` / `FormattedTextareaType`. |
 | Money / decimal | `MoneyType` for static currency, `AmountType` for multi-currency. PrestaShop stores prices with 6 decimal places — always set explicit decimal scale, never round to float. Commands carry `DecimalNumber`, never native `float`. |
 | File uploads | `FileType` with `'mapped' => false, 'required' => false`. Actual file saving happens in the DataHandler (CRUD) or DataConfiguration (settings), not the form type. |
 | Choice providers | `ChoiceProviderInterface` services injected into form types for dynamic select options. `FormOptionsProviderInterface` for options evaluated at render time (e.g. carrier lists). Located under `src/Core/Form/ChoiceProvider/` (61+) + `src/Adapter/Form/ChoiceProvider/` (26). |
-| Form extensions | `src/PrestaShopBundle/Form/Extension/` adds custom options (e.g. `external_link`, `modify_all_shops`) to all form types globally. Check existing extensions before adding new options. |
 | Tab layout | `NavigationTabType` is a generic Symfony composition pattern — applicable in either pattern but used today almost exclusively by complex CRUD forms (Carrier, Product). See [`create-form-tab-layout`](skills/create-form-tab-layout/SKILL.md). |
 | Form utilities | `FormBuilderModifier`, `FormCloner`, `FormHelper` under `src/PrestaShopBundle/Form/` — tools for mutating form builders at runtime (mostly module use). |
 
