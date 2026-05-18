@@ -10,7 +10,6 @@ namespace Tests\Unit\Adapter\Carrier\ShippingCost\Calculator;
 
 use PHPUnit\Framework\TestCase;
 use PrestaShop\PrestaShop\Adapter\Carrier\ShippingCost\Calculator\CarrierDataCalculator;
-use PrestaShop\PrestaShop\Core\Domain\Carrier\Exception\CarrierNotFoundException;
 use PrestaShop\PrestaShop\Core\Domain\Carrier\ShippingCost\Provider\CarrierDataProviderInterface;
 use PrestaShop\PrestaShop\Core\Domain\Carrier\ShippingCost\Provider\CarrierShippingData;
 use PrestaShop\PrestaShop\Core\Domain\Carrier\ShippingCost\ShippingCostPrice;
@@ -31,13 +30,24 @@ class CarrierDataCalculatorTest extends TestCase
         $this->calculator = new CarrierDataCalculator($this->carrierDataProvider);
     }
 
-    public function testItThrowsExceptionIfCarrierNotFound(): void
+    public function testItReturnsEarlyIfAlreadyUnavailable(): void
+    {
+        $context = $this->createContext(1);
+        $context->setAvailable(false);
+
+        $this->carrierDataProvider->expects($this->never())->method('getCarrierShippingData');
+
+        $this->calculator->compute($context);
+    }
+
+    public function testItSetsUnavailableIfCarrierNotFound(): void
     {
         $context = $this->createContext(1);
         $this->carrierDataProvider->method('getCarrierShippingData')->willReturn(null);
 
-        $this->expectException(CarrierNotFoundException::class);
         $this->calculator->compute($context);
+
+        $this->assertFalse($context->isAvailable());
     }
 
     public function testItSetsCarrierDataInContext(): void

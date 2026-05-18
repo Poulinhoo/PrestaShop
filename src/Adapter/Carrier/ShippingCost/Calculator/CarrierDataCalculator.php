@@ -8,7 +8,6 @@ declare(strict_types=1);
 
 namespace PrestaShop\PrestaShop\Adapter\Carrier\ShippingCost\Calculator;
 
-use PrestaShop\PrestaShop\Core\Domain\Carrier\Exception\CarrierNotFoundException;
 use PrestaShop\PrestaShop\Core\Domain\Carrier\ShippingCost\Calculator\ShippingCostCalculatorInterface;
 use PrestaShop\PrestaShop\Core\Domain\Carrier\ShippingCost\Provider\CarrierDataProviderInterface;
 use PrestaShop\PrestaShop\Core\Domain\Carrier\ShippingCost\ShippingCostPriceInterface;
@@ -22,10 +21,16 @@ class CarrierDataCalculator implements ShippingCostCalculatorInterface
 
     public function compute(ShippingCostPriceInterface $context): void
     {
+        if (!$context->isAvailable()) {
+            return;
+        }
+
         $carrierData = $this->carrierDataProvider->getCarrierShippingData($context->getCarrierId());
 
         if ($carrierData === null) {
-            throw new CarrierNotFoundException(sprintf('Carrier with id "%d" was not found.', $context->getCarrierId()));
+            $context->setAvailable(false);
+
+            return;
         }
 
         $context->setCarrierData($carrierData);

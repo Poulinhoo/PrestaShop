@@ -30,6 +30,16 @@ class ZoneResolutionCalculatorTest extends TestCase
         $this->calculator = new ZoneResolutionCalculator($this->addressRepository);
     }
 
+    public function testItReturnsEarlyIfAlreadyUnavailable(): void
+    {
+        $context = $this->createContext(10);
+        $context->setAvailable(false);
+
+        $this->addressRepository->expects($this->never())->method('getZoneId');
+
+        $this->calculator->compute($context);
+    }
+
     public function testItDoesNotResolveIfAlreadySet(): void
     {
         $context = $this->createContext(null);
@@ -51,6 +61,7 @@ class ZoneResolutionCalculatorTest extends TestCase
 
         $this->calculator->compute($context);
         $this->assertSame(3, $context->getResolvedZoneId());
+        $this->assertTrue($context->isAvailable());
     }
 
     public function testItResolvesFromCountryZoneFallback(): void
@@ -62,6 +73,20 @@ class ZoneResolutionCalculatorTest extends TestCase
 
         $this->calculator->compute($context);
         $this->assertSame(2, $context->getResolvedZoneId());
+        $this->assertTrue($context->isAvailable());
+    }
+
+    public function testItSetsUnavailableIfZoneCannotBeResolved(): void
+    {
+        $context = $this->createContext(10);
+
+        $this->addressRepository->method('getZoneId')
+            ->willThrowException(new \PrestaShop\PrestaShop\Core\Domain\Address\Exception\AddressNotFoundException());
+
+        $this->calculator->compute($context);
+
+        $this->assertFalse($context->isAvailable());
+        $this->assertNull($context->getResolvedZoneId());
     }
 
     private function createContext(?int $addressId): ShippingCostPriceInterface

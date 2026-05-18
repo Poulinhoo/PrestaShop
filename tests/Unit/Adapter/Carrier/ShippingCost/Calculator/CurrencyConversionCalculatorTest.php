@@ -37,6 +37,16 @@ class CurrencyConversionCalculatorTest extends TestCase
         $this->calculator = new CurrencyConversionCalculator($this->tools, $this->currencyRepository);
     }
 
+    public function testItReturnsEarlyIfAlreadyUnavailable(): void
+    {
+        $context = $this->createContext(1);
+        $context->setAvailable(false);
+
+        $this->tools->expects($this->never())->method('convertPrice');
+
+        $this->calculator->compute($context);
+    }
+
     public function testItDoesNotComputeIfFreeShippingIsAlreadySet(): void
     {
         $context = $this->createContext(1);

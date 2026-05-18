@@ -31,6 +31,16 @@ class HandlingCostCalculatorTest extends TestCase
         $this->calculator = new HandlingCostCalculator($this->configuration);
     }
 
+    public function testItReturnsEarlyIfAlreadyUnavailable(): void
+    {
+        $context = $this->createContext();
+        $context->setAvailable(false);
+
+        $this->configuration->expects($this->never())->method('get');
+
+        $this->calculator->compute($context);
+    }
+
     public function testItDoesNotComputeIfFreeShippingIsAlreadySet(): void
     {
         $context = $this->createContext();
@@ -44,7 +54,7 @@ class HandlingCostCalculatorTest extends TestCase
     public function testItDoesNotComputeIfCarrierHandlingIsNotEnabled(): void
     {
         $context = $this->createContext();
-        $context->setCarrierData(new CarrierShippingData(1, 0, 0, true, false));
+        $context->setCarrierData(new CarrierShippingData(1, 0, 0, false, false));
 
         $this->configuration->expects($this->never())->method('get');
 

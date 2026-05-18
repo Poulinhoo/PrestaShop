@@ -47,6 +47,16 @@ class FreeShippingCalculatorTest extends TestCase
         );
     }
 
+    public function testItReturnsEarlyIfAlreadyUnavailable(): void
+    {
+        $context = $this->createContext(1, new DecimalNumber('10'));
+        $context->setAvailable(false);
+
+        $this->criteriaProvider->expects($this->never())->method('getCriteria');
+
+        $this->calculator->compute($context);
+    }
+
     public function testItDoesNotComputeIfFreeShippingIsAlreadySet(): void
     {
         $context = $this->createContext(1, new DecimalNumber('10'));

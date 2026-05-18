@@ -27,7 +27,7 @@ class FreeShippingCalculator implements ShippingCostCalculatorInterface
 
     public function compute(ShippingCostPriceInterface $context): void
     {
-        if ($context->isFreeShipping()) {
+        if (!$context->isAvailable() || $context->isFreeShipping()) {
             return;
         }
 

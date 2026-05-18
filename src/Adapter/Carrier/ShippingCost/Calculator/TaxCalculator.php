@@ -28,6 +28,10 @@ class TaxCalculator implements ShippingCostCalculatorInterface
 
     public function compute(ShippingCostPriceInterface $context): void
     {
+        if (!$context->isAvailable()) {
+            return;
+        }
+
         $currency = $this->currencyRepository->get(new CurrencyId($context->getCurrencyId()));
         $precision = (int) $currency->precision;
         $context->setPrecision($precision);

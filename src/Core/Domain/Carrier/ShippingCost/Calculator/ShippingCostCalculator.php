@@ -20,6 +20,10 @@ class ShippingCostCalculator implements ShippingCostCalculatorInterface
     public function compute(ShippingCostPriceInterface $context): void
     {
         foreach ($this->calculators as $calculator) {
+            if (!$context->isAvailable()) {
+                return;
+            }
+
             $calculator->compute($context);
         }
     }

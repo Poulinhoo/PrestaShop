@@ -48,6 +48,10 @@ interface ShippingCostPriceInterface
 
     public function setCost(DecimalNumber $cost): void;
 
+    public function isAvailable(): bool;
+
+    public function setAvailable(bool $isAvailable): void;
+
     public function getTaxExcluded(): ?DecimalNumber;
 
     public function setTaxExcluded(DecimalNumber $taxExcluded): void;

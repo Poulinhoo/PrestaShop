@@ -22,7 +22,7 @@ class BaseRangeCostCalculator implements ShippingCostCalculatorInterface
 
     public function compute(ShippingCostPriceInterface $context): void
     {
-        if ($context->isFreeShipping()) {
+        if (!$context->isAvailable() || $context->isFreeShipping()) {
             return;
         }
 
@@ -30,6 +30,8 @@ class BaseRangeCostCalculator implements ShippingCostCalculatorInterface
         $zoneId = $context->getResolvedZoneId();
 
         if ($carrierData === null || $zoneId === null) {
+            $context->setAvailable(false);
+
             return;
         }
 
@@ -41,7 +43,13 @@ class BaseRangeCostCalculator implements ShippingCostCalculatorInterface
             $context->getCurrencyId(),
         );
 
-        if ($cost === null || $cost->equals(new DecimalNumber('0'))) {
+        if ($cost === null) {
+            $context->setAvailable(false);
+
+            return;
+        }
+
+        if ($cost->equals(new DecimalNumber('0'))) {
             $context->setFreeShipping(true);
 
             return;

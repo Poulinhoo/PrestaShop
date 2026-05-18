@@ -9,6 +9,7 @@ declare(strict_types=1);
 namespace PrestaShop\PrestaShop\Adapter\Carrier\ShippingCost\Calculator;
 
 use PrestaShop\PrestaShop\Adapter\Address\Repository\AddressRepository;
+use PrestaShop\PrestaShop\Core\Domain\Address\Exception\AddressNotFoundException;
 use PrestaShop\PrestaShop\Core\Domain\Address\ValueObject\AddressId;
 use PrestaShop\PrestaShop\Core\Domain\Carrier\ShippingCost\Calculator\ShippingCostCalculatorInterface;
 use PrestaShop\PrestaShop\Core\Domain\Carrier\ShippingCost\ShippingCostPriceInterface;
@@ -22,14 +23,23 @@ class ZoneResolutionCalculator implements ShippingCostCalculatorInterface
 
     public function compute(ShippingCostPriceInterface $context): void
     {
-        if ($context->getResolvedZoneId() !== null) {
+        if (!$context->isAvailable() || $context->getResolvedZoneId() !== null) {
             return;
         }
 
         $addressId = $context->getAddressId();
-        $zoneId = $addressId !== null
-            ? $this->addressRepository->getZoneId(new AddressId($addressId))
-            : $context->getCountryZoneId();
+
+        if ($addressId !== null) {
+            try {
+                $zoneId = $this->addressRepository->getZoneId(new AddressId($addressId));
+            } catch (AddressNotFoundException) {
+                $context->setAvailable(false);
+
+                return;
+            }
+        } else {
+            $zoneId = $context->getCountryZoneId();
+        }
 
         $context->setResolvedZoneId($zoneId);
     }

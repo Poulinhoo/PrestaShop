@@ -22,6 +22,7 @@ final class ShippingCostPrice implements ShippingCostPriceInterface
     private ?int $resolvedZoneId = null;
     private ?CarrierShippingData $carrierData = null;
     private bool $isFreeShipping = false;
+    private bool $isAvailable = true;
     private DecimalNumber $cost;
     private ?DecimalNumber $taxExcluded = null;
     private ?DecimalNumber $taxIncluded = null;
@@ -139,6 +140,16 @@ final class ShippingCostPrice implements ShippingCostPriceInterface
     public function setCost(DecimalNumber $cost): void
     {
         $this->cost = $cost;
+    }
+
+    public function isAvailable(): bool
+    {
+        return $this->isAvailable;
+    }
+
+    public function setAvailable(bool $isAvailable): void
+    {
+        $this->isAvailable = $isAvailable;
     }
 
     public function getTaxExcluded(): ?DecimalNumber

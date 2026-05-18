@@ -71,7 +71,7 @@ class CarrierDataProvider implements CarrierDataProviderInterface
             : $carrier->getDeliveryPriceByPrice($orderTotalFloat, $zoneId, $currencyId);
 
         if ($cost === false) {
-            return new DecimalNumber('0');
+            return null;
         }
 
         return new DecimalNumber((string) $cost);

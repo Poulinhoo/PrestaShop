@@ -31,6 +31,16 @@ class BaseRangeCostCalculatorTest extends TestCase
         $this->calculator = new BaseRangeCostCalculator($this->carrierDataProvider);
     }
 
+    public function testItReturnsEarlyIfAlreadyUnavailable(): void
+    {
+        $context = $this->createContextWithData();
+        $context->setAvailable(false);
+
+        $this->carrierDataProvider->expects($this->never())->method('getRangeCost');
+
+        $this->calculator->compute($context);
+    }
+
     public function testItDoesNotComputeIfFreeShippingIsAlreadySet(): void
     {
         $context = $this->createMinimalContext();
@@ -41,16 +51,18 @@ class BaseRangeCostCalculatorTest extends TestCase
         $this->calculator->compute($context);
     }
 
-    public function testItDoesNotComputeIfCarrierDataOrZoneIdAreMissing(): void
+    public function testItSetsUnavailableIfCarrierDataOrZoneIdAreMissing(): void
     {
         $context = $this->createMinimalContext();
 
         $this->carrierDataProvider->expects($this->never())->method('getRangeCost');
 
         $this->calculator->compute($context);
+
+        $this->assertFalse($context->isAvailable());
     }
 
-    public function testItSetsFreeShippingIfCostIsNull(): void
+    public function testItSetsUnavailableIfCostIsNull(): void
     {
         $context = $this->createContextWithData();
 
@@ -58,7 +70,8 @@ class BaseRangeCostCalculatorTest extends TestCase
 
         $this->calculator->compute($context);
 
-        $this->assertTrue($context->isFreeShipping());
+        $this->assertFalse($context->isAvailable());
+        $this->assertFalse($context->isFreeShipping());
     }
 
     public function testItSetsFreeShippingIfCostIsZero(): void

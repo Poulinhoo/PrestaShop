@@ -45,6 +45,16 @@ class TaxCalculatorTest extends TestCase
         );
     }
 
+    public function testItReturnsEarlyIfAlreadyUnavailable(): void
+    {
+        $context = $this->createContext(1);
+        $context->setAvailable(false);
+
+        $this->currencyRepository->expects($this->never())->method('get');
+
+        $this->calculator->compute($context);
+    }
+
     public function testItSetsZeroTaxesIfFreeShipping(): void
     {
         $context = $this->createContext(1);
