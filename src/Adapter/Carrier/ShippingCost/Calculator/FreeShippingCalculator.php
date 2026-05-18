@@ -13,7 +13,7 @@ use PrestaShop\PrestaShop\Adapter\Currency\Repository\CurrencyRepository;
 use PrestaShop\PrestaShop\Adapter\Tools;
 use PrestaShop\PrestaShop\Core\Domain\Carrier\ShippingCost\Calculator\ShippingCostCalculatorInterface;
 use PrestaShop\PrestaShop\Core\Domain\Carrier\ShippingCost\Provider\FreeShippingCriteriaProviderInterface;
-use PrestaShop\PrestaShop\Core\Domain\Carrier\ShippingCost\ShippingCostContext;
+use PrestaShop\PrestaShop\Core\Domain\Carrier\ShippingCost\ShippingCostPriceInterface;
 use PrestaShop\PrestaShop\Core\Domain\Currency\ValueObject\CurrencyId;
 
 class FreeShippingCalculator implements ShippingCostCalculatorInterface
@@ -25,7 +25,7 @@ class FreeShippingCalculator implements ShippingCostCalculatorInterface
     ) {
     }
 
-    public function compute(ShippingCostContext $context): void
+    public function compute(ShippingCostPriceInterface $context): void
     {
         if ($context->isFreeShipping()) {
             return;

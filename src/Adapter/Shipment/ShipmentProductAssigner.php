@@ -13,7 +13,7 @@ use Order;
 use OrderDetail;
 use PrestaShop\PrestaShop\Adapter\Configuration as AdapterConfiguration;
 use PrestaShop\PrestaShop\Core\Domain\Carrier\ShippingCost\Calculator\ShippingCostCalculatorInterface;
-use PrestaShop\PrestaShop\Core\Domain\Carrier\ShippingCost\ShippingCostContext;
+use PrestaShop\PrestaShop\Core\Domain\Carrier\ShippingCost\ShippingCostPrice;
 use PrestaShop\PrestaShop\Core\Domain\Carrier\ValueObject\ShippingCalculationRequest;
 use PrestaShop\PrestaShop\Core\Domain\Shipment\Exception\ShipmentNotFoundException;
 use PrestaShopBundle\Entity\Repository\ShipmentRepository;
@@ -64,7 +64,7 @@ class ShipmentProductAssigner
                         orderTotal: (float) $order->total_products,
                     );
 
-                    $context = ShippingCostContext::createFromRequest($request);
+                    $context = ShippingCostPrice::createFromRequest($request);
                     $this->shippingCostCalculator->compute($context);
                     if ($context->getTaxExcluded() !== null && $context->getTaxIncluded() !== null) {
                         $shippingCostTaxExcluded = (float) (string) $context->getTaxExcluded();

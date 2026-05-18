@@ -42,3 +42,4 @@ interface ProductPriceInterface
 
     public function setFinalPrice(ImmutableTaxablePrice $finalPrice): void;
 }
+

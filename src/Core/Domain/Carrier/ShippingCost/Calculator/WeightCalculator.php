@@ -9,11 +9,11 @@ declare(strict_types=1);
 namespace PrestaShop\PrestaShop\Core\Domain\Carrier\ShippingCost\Calculator;
 
 use PrestaShop\Decimal\DecimalNumber;
-use PrestaShop\PrestaShop\Core\Domain\Carrier\ShippingCost\ShippingCostContext;
+use PrestaShop\PrestaShop\Core\Domain\Carrier\ShippingCost\ShippingCostPriceInterface;
 
 class WeightCalculator implements ShippingCostCalculatorInterface
 {
-    public function compute(ShippingCostContext $context): void
+    public function compute(ShippingCostPriceInterface $context): void
     {
         if ($context->isFreeShipping()) {
             return;

@@ -15,7 +15,8 @@ use PrestaShop\PrestaShop\Adapter\Carrier\ShippingCost\Calculator\TaxCalculator;
 use PrestaShop\PrestaShop\Adapter\Configuration as AdapterConfiguration;
 use PrestaShop\PrestaShop\Adapter\Currency\Repository\CurrencyRepository;
 use PrestaShop\PrestaShop\Core\Domain\Carrier\ShippingCost\Provider\ShippingTaxRateProviderInterface;
-use PrestaShop\PrestaShop\Core\Domain\Carrier\ShippingCost\ShippingCostContext;
+use PrestaShop\PrestaShop\Core\Domain\Carrier\ShippingCost\ShippingCostPrice;
+use PrestaShop\PrestaShop\Core\Domain\Carrier\ShippingCost\ShippingCostPriceInterface;
 use PrestaShop\PrestaShop\Core\Domain\Carrier\ValueObject\ShippingCalculationRequest;
 
 class TaxCalculatorTest extends TestCase
@@ -84,7 +85,7 @@ class TaxCalculatorTest extends TestCase
         $this->assertTrue($context->getTaxIncluded()->equals(new DecimalNumber('12.00')));
     }
 
-    private function createContext(int $currencyId): ShippingCostContext
+    private function createContext(int $currencyId): ShippingCostPriceInterface
     {
         $request = new ShippingCalculationRequest(
             [], // products
@@ -97,6 +98,6 @@ class TaxCalculatorTest extends TestCase
             10.0 // orderTotal
         );
 
-        return ShippingCostContext::createFromRequest($request);
+        return ShippingCostPrice::createFromRequest($request);
     }
 }

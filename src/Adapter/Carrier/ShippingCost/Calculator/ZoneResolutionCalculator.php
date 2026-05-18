@@ -11,7 +11,7 @@ namespace PrestaShop\PrestaShop\Adapter\Carrier\ShippingCost\Calculator;
 use PrestaShop\PrestaShop\Adapter\Address\Repository\AddressRepository;
 use PrestaShop\PrestaShop\Core\Domain\Address\ValueObject\AddressId;
 use PrestaShop\PrestaShop\Core\Domain\Carrier\ShippingCost\Calculator\ShippingCostCalculatorInterface;
-use PrestaShop\PrestaShop\Core\Domain\Carrier\ShippingCost\ShippingCostContext;
+use PrestaShop\PrestaShop\Core\Domain\Carrier\ShippingCost\ShippingCostPriceInterface;
 
 class ZoneResolutionCalculator implements ShippingCostCalculatorInterface
 {
@@ -20,7 +20,7 @@ class ZoneResolutionCalculator implements ShippingCostCalculatorInterface
     ) {
     }
 
-    public function compute(ShippingCostContext $context): void
+    public function compute(ShippingCostPriceInterface $context): void
     {
         if ($context->getResolvedZoneId() !== null) {
             return;

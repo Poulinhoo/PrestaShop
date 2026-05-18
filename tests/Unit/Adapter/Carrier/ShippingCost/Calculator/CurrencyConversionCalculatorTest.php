@@ -14,7 +14,8 @@ use PrestaShop\Decimal\DecimalNumber;
 use PrestaShop\PrestaShop\Adapter\Carrier\ShippingCost\Calculator\CurrencyConversionCalculator;
 use PrestaShop\PrestaShop\Adapter\Currency\Repository\CurrencyRepository;
 use PrestaShop\PrestaShop\Adapter\Tools;
-use PrestaShop\PrestaShop\Core\Domain\Carrier\ShippingCost\ShippingCostContext;
+use PrestaShop\PrestaShop\Core\Domain\Carrier\ShippingCost\ShippingCostPrice;
+use PrestaShop\PrestaShop\Core\Domain\Carrier\ShippingCost\ShippingCostPriceInterface;
 use PrestaShop\PrestaShop\Core\Domain\Carrier\ValueObject\ShippingCalculationRequest;
 use PrestaShop\PrestaShop\Core\Domain\Currency\ValueObject\CurrencyId;
 
@@ -63,7 +64,7 @@ class CurrencyConversionCalculatorTest extends TestCase
         $this->assertTrue($context->getCost()->equals(new DecimalNumber('12.5')));
     }
 
-    private function createContext(int $currencyId): ShippingCostContext
+    private function createContext(int $currencyId): ShippingCostPriceInterface
     {
         $request = new ShippingCalculationRequest(
             [], // products
@@ -76,6 +77,6 @@ class CurrencyConversionCalculatorTest extends TestCase
             10.0 // orderTotal
         );
 
-        return ShippingCostContext::createFromRequest($request);
+        return ShippingCostPrice::createFromRequest($request);
     }
 }

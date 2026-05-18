@@ -13,7 +13,8 @@ use PrestaShop\Decimal\DecimalNumber;
 use PrestaShop\PrestaShop\Adapter\Carrier\ShippingCost\Calculator\HandlingCostCalculator;
 use PrestaShop\PrestaShop\Adapter\Configuration as AdapterConfiguration;
 use PrestaShop\PrestaShop\Core\Domain\Carrier\ShippingCost\Provider\CarrierShippingData;
-use PrestaShop\PrestaShop\Core\Domain\Carrier\ShippingCost\ShippingCostContext;
+use PrestaShop\PrestaShop\Core\Domain\Carrier\ShippingCost\ShippingCostPrice;
+use PrestaShop\PrestaShop\Core\Domain\Carrier\ShippingCost\ShippingCostPriceInterface;
 use PrestaShop\PrestaShop\Core\Domain\Carrier\ValueObject\ShippingCalculationRequest;
 
 class HandlingCostCalculatorTest extends TestCase
@@ -43,7 +44,7 @@ class HandlingCostCalculatorTest extends TestCase
     public function testItDoesNotComputeIfCarrierHandlingIsNotEnabled(): void
     {
         $context = $this->createContext();
-        $context->setCarrierData(new CarrierShippingData(1, 0, 0, false, false));
+        $context->setCarrierData(new CarrierShippingData(1, 0, 0, true, false));
 
         $this->configuration->expects($this->never())->method('get');
 
@@ -63,7 +64,7 @@ class HandlingCostCalculatorTest extends TestCase
         $this->assertTrue($context->getCost()->equals(new DecimalNumber('15.00')));
     }
 
-    private function createContext(): ShippingCostContext
+    private function createContext(): ShippingCostPriceInterface
     {
         $request = new ShippingCalculationRequest(
             [], // products
@@ -76,6 +77,6 @@ class HandlingCostCalculatorTest extends TestCase
             10.0 // orderTotal
         );
 
-        return ShippingCostContext::createFromRequest($request);
+        return ShippingCostPrice::createFromRequest($request);
     }
 }

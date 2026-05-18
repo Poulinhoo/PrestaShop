@@ -16,7 +16,8 @@ use PrestaShop\PrestaShop\Adapter\Currency\Repository\CurrencyRepository;
 use PrestaShop\PrestaShop\Adapter\Tools;
 use PrestaShop\PrestaShop\Core\Domain\Carrier\ShippingCost\Provider\FreeShippingCriteria;
 use PrestaShop\PrestaShop\Core\Domain\Carrier\ShippingCost\Provider\FreeShippingCriteriaProviderInterface;
-use PrestaShop\PrestaShop\Core\Domain\Carrier\ShippingCost\ShippingCostContext;
+use PrestaShop\PrestaShop\Core\Domain\Carrier\ShippingCost\ShippingCostPrice;
+use PrestaShop\PrestaShop\Core\Domain\Carrier\ShippingCost\ShippingCostPriceInterface;
 use PrestaShop\PrestaShop\Core\Domain\Carrier\ValueObject\ShippingCalculationRequest;
 use PrestaShop\PrestaShop\Core\Domain\Currency\ValueObject\CurrencyId;
 
@@ -83,7 +84,7 @@ class FreeShippingCalculatorTest extends TestCase
         $this->assertTrue($context->isFreeShipping());
     }
 
-    private function createContext(int $currencyId, DecimalNumber $orderTotal): ShippingCostContext
+    private function createContext(int $currencyId, DecimalNumber $orderTotal): ShippingCostPriceInterface
     {
         $request = new ShippingCalculationRequest(
             [], // products
@@ -96,6 +97,6 @@ class FreeShippingCalculatorTest extends TestCase
             (float) $orderTotal->__toString()
         );
 
-        return ShippingCostContext::createFromRequest($request);
+        return ShippingCostPrice::createFromRequest($request);
     }
 }

@@ -12,7 +12,8 @@ use PHPUnit\Framework\TestCase;
 use PrestaShop\PrestaShop\Adapter\Address\Repository\AddressRepository;
 use PrestaShop\PrestaShop\Adapter\Carrier\ShippingCost\Calculator\ZoneResolutionCalculator;
 use PrestaShop\PrestaShop\Core\Domain\Address\ValueObject\AddressId;
-use PrestaShop\PrestaShop\Core\Domain\Carrier\ShippingCost\ShippingCostContext;
+use PrestaShop\PrestaShop\Core\Domain\Carrier\ShippingCost\ShippingCostPrice;
+use PrestaShop\PrestaShop\Core\Domain\Carrier\ShippingCost\ShippingCostPriceInterface;
 use PrestaShop\PrestaShop\Core\Domain\Carrier\ValueObject\ShippingCalculationRequest;
 
 class ZoneResolutionCalculatorTest extends TestCase
@@ -63,7 +64,7 @@ class ZoneResolutionCalculatorTest extends TestCase
         $this->assertSame(2, $context->getResolvedZoneId());
     }
 
-    private function createContext(?int $addressId): ShippingCostContext
+    private function createContext(?int $addressId): ShippingCostPriceInterface
     {
         $request = new ShippingCalculationRequest(
             [], // products
@@ -76,6 +77,6 @@ class ZoneResolutionCalculatorTest extends TestCase
             10.0 // orderTotal
         );
 
-        return ShippingCostContext::createFromRequest($request);
+        return ShippingCostPrice::createFromRequest($request);
     }
 }

@@ -8,9 +8,9 @@ declare(strict_types=1);
 
 namespace PrestaShop\PrestaShop\Core\Domain\Carrier\ShippingCost\Calculator;
 
-use PrestaShop\PrestaShop\Core\Domain\Carrier\ShippingCost\ShippingCostContext;
+use PrestaShop\PrestaShop\Core\Domain\Carrier\ShippingCost\ShippingCostPriceInterface;
 
 interface ShippingCostCalculatorInterface
 {
-    public function compute(ShippingCostContext $context): void;
+    public function compute(ShippingCostPriceInterface $context): void;
 }

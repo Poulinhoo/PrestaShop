@@ -13,7 +13,8 @@ use PrestaShop\Decimal\DecimalNumber;
 use PrestaShop\PrestaShop\Adapter\Carrier\ShippingCost\Calculator\BaseRangeCostCalculator;
 use PrestaShop\PrestaShop\Core\Domain\Carrier\ShippingCost\Provider\CarrierDataProviderInterface;
 use PrestaShop\PrestaShop\Core\Domain\Carrier\ShippingCost\Provider\CarrierShippingData;
-use PrestaShop\PrestaShop\Core\Domain\Carrier\ShippingCost\ShippingCostContext;
+use PrestaShop\PrestaShop\Core\Domain\Carrier\ShippingCost\ShippingCostPrice;
+use PrestaShop\PrestaShop\Core\Domain\Carrier\ShippingCost\ShippingCostPriceInterface;
 use PrestaShop\PrestaShop\Core\Domain\Carrier\ValueObject\ShippingCalculationRequest;
 
 class BaseRangeCostCalculatorTest extends TestCase
@@ -84,14 +85,14 @@ class BaseRangeCostCalculatorTest extends TestCase
         $this->assertTrue($context->getCost()->equals($cost));
     }
 
-    private function createMinimalContext(): ShippingCostContext
+    private function createMinimalContext(): ShippingCostPriceInterface
     {
-        return ShippingCostContext::createFromRequest(new ShippingCalculationRequest(
+        return ShippingCostPrice::createFromRequest(new ShippingCalculationRequest(
             [], 1, null, null, 1, 1, null, 10.0
         ));
     }
 
-    private function createContextWithData(): ShippingCostContext
+    private function createContextWithData(): ShippingCostPriceInterface
     {
         $request = new ShippingCalculationRequest(
             [], // products
@@ -104,7 +105,7 @@ class BaseRangeCostCalculatorTest extends TestCase
             10.0 // orderTotal
         );
 
-        $context = ShippingCostContext::createFromRequest($request);
+        $context = ShippingCostPrice::createFromRequest($request);
         $context->setCarrierData(new CarrierShippingData(1, 0, 0, false, false));
 
         return $context;

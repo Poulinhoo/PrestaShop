@@ -11,7 +11,7 @@ namespace PrestaShop\PrestaShop\Adapter\Shipment;
 use Order;
 use PrestaShop\PrestaShop\Adapter\Order\Repository\OrderRepository;
 use PrestaShop\PrestaShop\Core\Domain\Carrier\ShippingCost\Calculator\ShippingCostCalculatorInterface;
-use PrestaShop\PrestaShop\Core\Domain\Carrier\ShippingCost\ShippingCostContext;
+use PrestaShop\PrestaShop\Core\Domain\Carrier\ShippingCost\ShippingCostPrice;
 use PrestaShop\PrestaShop\Core\Domain\Carrier\ValueObject\ShippingCalculationRequest;
 use PrestaShop\PrestaShop\Core\Domain\Order\ValueObject\OrderId;
 use PrestaShopBundle\Entity\Repository\ShipmentRepository;
@@ -80,7 +80,7 @@ class ShipmentShippingCostUpdater
             orderTotal: (float) $order->total_products,
         );
 
-        $context = ShippingCostContext::createFromRequest($request);
+        $context = ShippingCostPrice::createFromRequest($request);
         $this->shippingCostCalculator->compute($context);
 
         if ($context->getTaxExcluded() !== null && $context->getTaxIncluded() !== null) {

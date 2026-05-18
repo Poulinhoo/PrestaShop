@@ -4,7 +4,7 @@
 
 The architecture mirrors `src/Core/Pricing` (product pricing). It rests on three principles:
 
-- **A mutable DTO `ShippingCostContext`** flows through the entire pipeline, enriched step by step.
+- **A mutable DTO `ShippingCostPrice`** flows through the entire pipeline, enriched step by step.
 - **Calculators** each have a single responsibility: read from and/or write to the context.
 - **Providers** each encapsulate a single business concern for data retrieval.
 
@@ -23,11 +23,11 @@ The architecture mirrors `src/Core/Pricing` (product pricing). It rests on three
 │  ENTRY POINT  [Adapter]                                                          │
 │                                                                                  │
 │  ShippingCostCalculator                                                          │
-│    1. creates ShippingCostContext from request                                   │
+│    1. creates ShippingCostPrice from request                                   │
 │    2. runs pipeline                                                              │
 │    3. returns ShippingCostResult (taxExcluded / taxIncluded)                     │
 └────────────────────────────────┬────────────────────────────────────────────────┘
-                                 │  ShippingCostContext (mutable DTO)
+                                 │  ShippingCostPrice (mutable DTO)
                                  ▼
 ┌─────────────────────────────────────────────────────────────────────────────────┐
 │  PIPELINE  [Core orchestrator → Adapter calculators → Core calculators]          │
@@ -71,7 +71,7 @@ The architecture mirrors `src/Core/Pricing` (product pricing). It rests on three
 │     Writes costTaxExcluded + costTaxIncluded            └─ carrier.getTaxesRate()│
 │     Writes zeros for free shipping case                                          │
 └────────────────────────────────┬────────────────────────────────────────────────┘
-                                 │  ShippingCostContext (fully populated)
+                                 │  ShippingCostPrice (fully populated)
                                  ▼
                          ShippingCostResult
                     { taxExcluded, taxIncluded }
@@ -100,7 +100,7 @@ src/
 │           └── ShippingTaxRateProvider.php
 │
 └── Core/Domain/Carrier/ShippingCost/
-    ├── ShippingCostContext.php                 ← mutable pipeline DTO
+    ├── ShippingCostPrice.php                 ← mutable pipeline DTO
     ├── Calculator/
     │   ├── ShippingCostCalculatorInterface.php
     │   ├── ShippingCostCalculator.php          ← Core orchestrator
@@ -197,13 +197,13 @@ The `ShippingCalculationRequest` is built from:
 ### Entry Point
 
 #### `Adapter\Carrier\ShippingCostCalculator`
-Public entry point for shipping cost calculation. Builds a `ShippingCostContext` from the input parameters (carrierId, addressId, products, cart total, currency), triggers the pipeline, and returns the final result (`taxExcluded` / `taxIncluded`). Thin wrapper — no business logic here.
+Public entry point for shipping cost calculation. Builds a `ShippingCostPrice` from the input parameters (carrierId, addressId, products, cart total, currency), triggers the pipeline, and returns the final result (`taxExcluded` / `taxIncluded`). Thin wrapper — no business logic here.
 
 ---
 
 ### Pipeline DTO
 
-#### `Core\Domain\Carrier\ShippingCost\ShippingCostContext`
+#### `Core\Domain\Carrier\ShippingCost\ShippingCostPrice`
 Mutable DTO flowing through the entire pipeline. Each calculator reads and/or writes into it. Contains:
 - **Input data**: carrierId, addressId, currencyId, orderTotal, physical products
 - **Resolved data** (populated step by step): zoneId, totalWeight, carrierShippingData, rangeCost, isFreeShipping
@@ -214,7 +214,7 @@ Mutable DTO flowing through the entire pipeline. Each calculator reads and/or wr
 ### Pipeline Interface
 
 #### `Core\...\Calculator\ShippingCostCalculatorInterface`
-Common interface for all calculators. Single contract: `compute(ShippingCostContext $context): void`.
+Common interface for all calculators. Single contract: `compute(ShippingCostPriceInterface $context): void`.
 
 ---
 

@@ -13,7 +13,8 @@ use PrestaShop\PrestaShop\Adapter\Carrier\ShippingCost\Calculator\CarrierDataCal
 use PrestaShop\PrestaShop\Core\Domain\Carrier\Exception\CarrierNotFoundException;
 use PrestaShop\PrestaShop\Core\Domain\Carrier\ShippingCost\Provider\CarrierDataProviderInterface;
 use PrestaShop\PrestaShop\Core\Domain\Carrier\ShippingCost\Provider\CarrierShippingData;
-use PrestaShop\PrestaShop\Core\Domain\Carrier\ShippingCost\ShippingCostContext;
+use PrestaShop\PrestaShop\Core\Domain\Carrier\ShippingCost\ShippingCostPrice;
+use PrestaShop\PrestaShop\Core\Domain\Carrier\ShippingCost\ShippingCostPriceInterface;
 use PrestaShop\PrestaShop\Core\Domain\Carrier\ValueObject\ShippingCalculationRequest;
 
 class CarrierDataCalculatorTest extends TestCase
@@ -63,7 +64,7 @@ class CarrierDataCalculatorTest extends TestCase
         $this->assertTrue($context->isFreeShipping());
     }
 
-    private function createContext(int $carrierId): ShippingCostContext
+    private function createContext(int $carrierId): ShippingCostPriceInterface
     {
         $request = new ShippingCalculationRequest(
             [], // products
@@ -76,6 +77,6 @@ class CarrierDataCalculatorTest extends TestCase
             10.0 // orderTotal
         );
 
-        return ShippingCostContext::createFromRequest($request);
+        return ShippingCostPrice::createFromRequest($request);
     }
 }

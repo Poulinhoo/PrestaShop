@@ -16,7 +16,7 @@ use PrestaShop\PrestaShop\Core\Domain\Carrier\ValueObject\ShippingCalculationReq
  * Mutable DTO carrying all state through the shipping cost calculation pipeline.
  * Populated incrementally by each calculator in the chain.
  */
-final class ShippingCostContext
+final class ShippingCostPrice implements ShippingCostPriceInterface
 {
     private DecimalNumber $totalWeight;
     private ?int $resolvedZoneId = null;
