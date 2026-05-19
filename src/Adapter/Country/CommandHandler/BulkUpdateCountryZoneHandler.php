@@ -32,7 +32,7 @@ final class BulkUpdateCountryZoneHandler extends AbstractBulkCommandHandler impl
     public function handle(BulkUpdateCountryZoneCommand $command): void
     {
         $zoneId = $command->getNewZoneId();
-        $this->zoneRepository->get(new ZoneId($zoneId));
+        $this->zoneRepository->assertZoneExists(new ZoneId($zoneId));
 
         $this->handleBulkAction($command->getCountryIds(), CountryException::class, $command);
     }

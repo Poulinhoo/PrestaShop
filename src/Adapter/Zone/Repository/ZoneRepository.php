@@ -28,6 +28,14 @@ class ZoneRepository extends AbstractObjectModelRepository
     /**
      * @throws ZoneNotFoundException
      */
+    public function assertZoneExists(ZoneId $zoneId): void
+    {
+        $this->assertObjectModelExists($zoneId->getValue(), 'zone', ZoneNotFoundException::class);
+    }
+
+    /**
+     * @throws ZoneNotFoundException
+     */
     public function get(ZoneId $zoneId): Zone
     {
         /** @var Zone $zone */

@@ -191,7 +191,7 @@ class CountryFeatureContext extends AbstractDomainFeatureContext
     public function toggleCountryStatus(string $countryReference): void
     {
         try {
-            $this->getCommandBus()->handle(new ToggleCountryStatusCommand((int) $this->getSharedStorage()->get($countryReference)));
+            $this->getCommandBus()->handle(new ToggleCountryStatusCommand($this->referenceToId($countryReference)));
         } catch (CountryException $e) {
             $this->setLastException($e);
         }
@@ -273,7 +273,7 @@ class CountryFeatureContext extends AbstractDomainFeatureContext
      */
     public function assertCountryIsEnabled(string $countryReference): void
     {
-        $country = $this->getQueryBus()->handle(new GetCountryForEditing((int) $this->getSharedStorage()->get($countryReference)));
+        $country = $this->getQueryBus()->handle(new GetCountryForEditing($this->referenceToId($countryReference)));
         Assert::assertTrue($country->isEnabled());
     }
 
@@ -282,7 +282,7 @@ class CountryFeatureContext extends AbstractDomainFeatureContext
      */
     public function assertCountryIsDisabled(string $countryReference): void
     {
-        $country = $this->getQueryBus()->handle(new GetCountryForEditing((int) $this->getSharedStorage()->get($countryReference)));
+        $country = $this->getQueryBus()->handle(new GetCountryForEditing($this->referenceToId($countryReference)));
         Assert::assertFalse($country->isEnabled());
     }
 
@@ -291,7 +291,7 @@ class CountryFeatureContext extends AbstractDomainFeatureContext
      */
     public function assertCountryZone(string $countryReference, int $zoneId): void
     {
-        $country = $this->getQueryBus()->handle(new GetCountryForEditing((int) $this->getSharedStorage()->get($countryReference)));
+        $country = $this->getQueryBus()->handle(new GetCountryForEditing($this->referenceToId($countryReference)));
         Assert::assertSame($zoneId, $country->getZone());
     }
 
@@ -402,7 +402,7 @@ class CountryFeatureContext extends AbstractDomainFeatureContext
         $references = array_map('trim', explode(',', $countryReferences));
 
         return array_map(function (string $reference): int {
-            return (int) $this->getSharedStorage()->get($reference);
+            return $this->referenceToId($reference);
         }, $references);
     }
 }
