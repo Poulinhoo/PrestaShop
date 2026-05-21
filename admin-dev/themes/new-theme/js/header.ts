@@ -18,32 +18,25 @@ export default class Header {
   }
 
   initQuickAccess(): void {
-    $('.js-quick-link').on('click', (e) => {
+    $(document).on('click', '.js-quick-link', (e) => {
       e.preventDefault();
 
-      const method = $(e.target).data('method');
+      const $link = $(e.target).closest('.js-quick-link');
+      const method = $link.data('method');
       let name = null;
 
       if (method === 'add') {
-        const text = $(e.target).data('prompt-text');
-        const link = $(e.target).data('link');
+        const text = $link.data('prompt-text');
+        const link = $link.data('link');
 
         name = prompt(text, link);
       }
 
       if ((method === 'add' && name) || method === 'remove') {
-        const postLink = $(e.target).data('post-link');
-        const quickLinkId = $(e.target).data('quicklink-id');
-        const rand = $(e.target).data('rand');
-        const url = $(e.target).data('url');
-        const icon = $(e.target).data('icon');
-
-        const postUrl = new URL(postLink, window.location.origin);
-        postUrl.searchParams.append('action', 'GetUrl');
-        postUrl.searchParams.append('rand', String(rand));
-        postUrl.searchParams.append('ajax', '1');
-        postUrl.searchParams.append('method', String(method));
-        postUrl.searchParams.append('id_quick_access', String(quickLinkId));
+        const postLink = $link.data('post-link');
+        const quickLinkId = $link.data('quicklink-id');
+        const url = $link.data('url');
+        const icon = $link.data('icon');
 
         $.ajax({
           type: 'POST',
@@ -51,20 +44,16 @@ export default class Header {
             'cache-control': 'no-cache',
           },
           async: true,
-          url: postUrl.toString(),
+          url: postLink,
           data: {
+            method,
             url,
             name,
             icon,
+            id_quick_access: quickLinkId,
           },
           dataType: 'json',
           success: (data) => {
-            let quicklinkList = '';
-            $.each(data, (index) => {
-              /* eslint-disable-next-line max-len */
-              if (typeof data[index].name !== 'undefined') quicklinkList += `<li><a href="${data[index].link}&token=${data[index].token}"><i class="icon-chevron-right"></i> ${data[index].name}</a></li>`;
-            });
-
             if (typeof data.has_errors !== 'undefined' && data.has_errors) {
               $.each(data, (index) => {
                 if (typeof data[index] === 'string') {
@@ -74,14 +63,18 @@ export default class Header {
                   });
                 }
               });
-            } else if (quicklinkList) {
-              $('#header_quick ul.dropdown-menu .divider')
-                .prevAll()
-                .remove();
-              $('#header_quick ul.dropdown-menu').prepend(quicklinkList);
-              $(e.target).remove();
+            } else if (data.success) {
               window.showSuccessMessage(window.update_success_msg);
+              setTimeout(() => window.location.reload(), 1500);
             }
+          },
+          error: (xhr, textStatus) => {
+            $.growl.error({
+              title: 'Quick access error',
+              message: textStatus === 'parsererror'
+                ? `Server returned non-JSON (status ${xhr.status})`
+                : `${xhr.status} ${xhr.statusText}`,
+            });
           },
         });
       }

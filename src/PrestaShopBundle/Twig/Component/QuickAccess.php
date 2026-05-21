@@ -8,9 +8,14 @@ declare(strict_types=1);
 
 namespace PrestaShopBundle\Twig\Component;
 
+use Link;
+use PrestaShop\PrestaShop\Adapter\LegacyContext;
 use PrestaShop\PrestaShop\Core\QuickAccess\QuickAccessGenerator;
+use PrestaShopBundle\Security\Admin\UserTokenManager;
 use PrestaShopBundle\Twig\Layout\MenuBuilder;
 use Symfony\Component\HttpFoundation\RequestStack;
+use Symfony\Component\Routing\Generator\UrlGeneratorInterface;
+use Symfony\Component\Routing\RouterInterface;
 use Symfony\UX\TwigComponent\Attribute\AsTwigComponent;
 
 #[AsTwigComponent(template: '@PrestaShop/Admin/Component/Layout/quick_access.html.twig')]
@@ -41,11 +46,17 @@ class QuickAccess
      */
     protected ?string $currentPageIcon = null;
 
+    protected readonly Link $link;
+
     public function __construct(
         protected readonly RequestStack $requestStack,
         protected readonly MenuBuilder $menuBuilder,
         protected readonly QuickAccessGenerator $quickAccessGenerator,
+        protected readonly RouterInterface $router,
+        protected readonly UserTokenManager $userTokenManager,
+        protected readonly LegacyContext $legacyContext,
     ) {
+        $this->link = $legacyContext->getContext()->link;
     }
 
     /**
@@ -118,6 +129,20 @@ class QuickAccess
         }
 
         return $this->currentPageIcon;
+    }
+
+    public function getManageUrl(): string
+    {
+        return $this->link->getAdminLink('AdminQuickAccesses');
+    }
+
+    public function getAjaxUrl(): string
+    {
+        return $this->router->generate(
+            'admin_quick_accesses_ajax',
+            ['_token' => $this->userTokenManager->getSymfonyToken()],
+            UrlGeneratorInterface::ABSOLUTE_URL
+        );
     }
 
     protected function fillCurrentUrlFields(): void

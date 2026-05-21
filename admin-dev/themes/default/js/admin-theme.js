@@ -127,7 +127,7 @@ $(() => {
       },
     );
 
-  $('.nav-bar li.link-levelone.has_submenu > a').on('click', function (e) {
+  $('.nav-bar li.link-levelone.has_submenu > a').off('click').on('click', function (e) {
     e.preventDefault();
     e.stopPropagation();
 
@@ -175,7 +175,7 @@ $(() => {
     $submenu.find('.submenu').css('top', itemOffsetTop);
   });
 
-  $('.nav-bar').on('click', '.menu-collapse', function () {
+  $('.nav-bar').off('click', '.menu-collapse').on('click', '.menu-collapse', function () {
     $('body').toggleClass('page-sidebar-closed');
     $('.main-menu').toggleClass('sidebar-closed');
 
@@ -202,6 +202,55 @@ $(() => {
       },
     });
   });
+  $(document).on('click', '.js-quick-link', (e) => {
+    e.preventDefault();
+
+    const $link = $(e.target).closest('.js-quick-link');
+    const method = $link.data('method');
+    let name = null;
+
+    if (method === 'add') {
+      name = prompt($link.data('prompt-text'), $link.data('link'));
+    }
+
+    if ((method === 'add' && name) || method === 'remove') {
+      $.ajax({
+        type: 'POST',
+        headers: {'cache-control': 'no-cache'},
+        async: true,
+        url: $link.data('post-link'),
+        data: {
+          method,
+          url: $link.data('url'),
+          name,
+          icon: $link.data('icon'),
+          id_quick_access: $link.data('quicklink-id'),
+        },
+        dataType: 'json',
+        success: (data) => {
+          if (typeof data.has_errors !== 'undefined' && data.has_errors) {
+            $.each(data, (index) => {
+              if (typeof data[index] === 'string') {
+                $.growl.error({title: '', message: data[index]});
+              }
+            });
+          } else if (data.success) {
+            window.showSuccessMessage(window.update_success_msg);
+            setTimeout(() => window.location.reload(), 1500);
+          }
+        },
+        error: (xhr, textStatus) => {
+          $.growl.error({
+            title: 'Quick access error',
+            message: textStatus === 'parsererror'
+              ? `Server returned non-JSON (status ${xhr.status})`
+              : `${xhr.status} ${xhr.statusText}`,
+          });
+        },
+      });
+    }
+  });
+
   addMobileBodyClickListener();
   const MAX_MOBILE_WIDTH = 1023;
 

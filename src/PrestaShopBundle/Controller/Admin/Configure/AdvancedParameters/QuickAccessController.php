@@ -9,6 +9,8 @@ declare(strict_types=1);
 namespace PrestaShopBundle\Controller\Admin\Configure\AdvancedParameters;
 
 use Exception;
+use PrestaShop\PrestaShop\Core\Context\LanguageContext;
+use PrestaShop\PrestaShop\Core\Domain\QuickAccess\Command\AddQuickAccessCommand;
 use PrestaShop\PrestaShop\Core\Domain\QuickAccess\Command\BulkDeleteQuickAccessCommand;
 use PrestaShop\PrestaShop\Core\Domain\QuickAccess\Command\DeleteQuickAccessCommand;
 use PrestaShop\PrestaShop\Core\Domain\QuickAccess\Command\ToggleQuickAccessNewWindowCommand;
@@ -150,7 +152,7 @@ class QuickAccessController extends PrestaShopAdminController
     #[AdminSecurity("is_granted('delete', request.get('_legacy_controller'))", redirectRoute: 'admin_quick_accesses_index')]
     public function bulkDeleteAction(Request $request): RedirectResponse
     {
-        $quickAccessIds = $request->request->all('quick_access_quick_access_bulk');
+        $quickAccessIds = $request->request->all('quick_access_bulk');
 
         if (empty($quickAccessIds)) {
             $this->addFlash('info', $this->trans('You must select at least one element to delete.', [], 'Admin.Notifications.Error'));
@@ -168,6 +170,41 @@ class QuickAccessController extends PrestaShopAdminController
         }
 
         return $this->redirectToRoute('admin_quick_accesses_index');
+    }
+
+    #[DemoRestricted(redirectRoute: 'admin_quick_accesses_index')]
+    #[AdminSecurity("is_granted('read', request.get('_legacy_controller'))")]
+    public function ajaxQuickLinkAction(
+        Request $request,
+        LanguageContext $languageContext,
+    ): JsonResponse {
+        $method = $request->request->getString('method');
+
+        if ($method === 'add') {
+            try {
+                $this->dispatchCommand(new AddQuickAccessCommand(
+                    [$languageContext->getId() => $request->request->getString('name')],
+                    $request->request->getString('url'),
+                    false,
+                ));
+            } catch (QuickAccessException $e) {
+                return new JsonResponse([
+                    'has_errors' => true,
+                    0 => $this->getErrorMessageForException($e, $this->getErrorMessages()),
+                ]);
+            }
+        } elseif ($method === 'remove') {
+            try {
+                $this->dispatchCommand(new DeleteQuickAccessCommand($request->request->getInt('id_quick_access')));
+            } catch (QuickAccessException $e) {
+                return new JsonResponse([
+                    'has_errors' => true,
+                    0 => $this->getErrorMessageForException($e, $this->getErrorMessages()),
+                ]);
+            }
+        }
+
+        return new JsonResponse(['success' => true]);
     }
 
     #[DemoRestricted(redirectRoute: 'admin_quick_accesses_index')]

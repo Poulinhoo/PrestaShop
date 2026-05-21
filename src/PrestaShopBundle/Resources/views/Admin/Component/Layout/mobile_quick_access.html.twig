@@ -22,7 +22,7 @@
        data-quicklink-id="{{ this.activeQuickAccess.id_quick_access }}"
        data-rand="{{ random(1, 200) }}"
        data-url="{{ this.activeQuickAccess.link }}"
-       data-post-link="{{ legacy_path('AdminQuickAccesses') }}"
+       data-post-link="{{ this.ajaxUrl }}"
        data-prompt-text="{{ 'Please name this shortcut:'|trans({}, 'Admin.Navigation.Header') }}"
        data-link="{{ this.activeQuickAccess.name }}"
     >
@@ -37,7 +37,7 @@
        data-method="add"
        data-icon="{{ this.currentPageIcon }}"
        data-url="{{ this.currentPageQuickAccessLink }}"
-       data-post-link="{{ legacy_path('AdminQuickAccesses') }}"
+       data-post-link="{{ this.ajaxUrl }}"
        data-prompt-text="{{ 'Please name this shortcut:'|trans({}, 'Admin.Navigation.Header') }}"
        data-link="{{ this.currentPageTitle }}"
     >
@@ -45,7 +45,7 @@
       {{ 'Add current page to Quick Access'|trans({}, 'Admin.Actions') }}
     </a>
   {% endif %}
-  <a id="quick-manage-link" class="dropdown-item" href="{{ legacy_path('AdminQuickAccesses') }}">
+  <a id="quick-manage-link" class="dropdown-item" href="{{ this.manageUrl }}">
   <i class="material-icons">settings</i>
     {{ 'Manage your quick accesses'|trans({}, 'Admin.Navigation.Header') }}
   </a>

@@ -656,6 +656,7 @@ class AdminControllerCore extends Controller
             'breadcrumbs2' => $breadcrumbs2,
             'quick_access_current_link_name' => Tools::safeOutput($breadcrumbs2['tab']['name'] . ' - ' . $breadcrumbs2['action']['name']),
             'quick_access_current_link_icon' => $breadcrumbs2['container']['icon'],
+            'quick_access_current_link_short_name' => Tools::safeOutput($breadcrumbs2['tab']['name']),
         ]);
 
         /* BEGIN - Backward compatibility < 1.6.0.3 */
@@ -1999,8 +2000,19 @@ class AdminControllerCore extends Controller
         $is_multishop = Shop::isFeatureActive();
 
         // Quick access
+        $quick_access = [];
+        $quick_access_ajax_url = $this->context->link->getAdminLink('AdminQuickAccesses', true, [], ['action' => 'GetUrl', 'ajax' => 1]);
         if ((int) $this->context->employee->id) {
             $quick_access = QuickAccess::getQuickAccessesWithToken($this->context->language->id, (int) $this->context->employee->id);
+            try {
+                $quick_access_ajax_url = $this->context->link->getAdminLink(
+                    'AdminQuickAccesses',
+                    false,
+                    ['route' => 'admin_quick_accesses_ajax', '_token' => $this->get(UserTokenManager::class)->getSymfonyToken()]
+                );
+            } catch (\Exception $e) {
+                // keep legacy fallback URL
+            }
         }
 
         $tabs = $this->getTabs();
@@ -2031,6 +2043,7 @@ class AdminControllerCore extends Controller
                 'search_type' => Tools::getValue('bo_search_type'),
                 'bo_query' => Tools::safeOutput(Tools::getValue('bo_query')),
                 'quick_access' => empty($quick_access) ? [] : $quick_access,
+                'quick_access_ajax_url' => $quick_access_ajax_url,
                 'multi_shop' => Shop::isFeatureActive(),
                 'shop_list' => $helperShop->getRenderedShopList(),
                 'current_shop_name' => $helperShop->getCurrentShopName(),
@@ -2686,6 +2699,7 @@ class AdminControllerCore extends Controller
                     'token' => $this->get(UserTokenManager::class)->getSymfonyToken(),
                 ],
             ]);
+
         }
 
         // Specific Admin Theme

@@ -38,13 +38,6 @@ class QuickAccessType extends TranslatorAwareType
                                 ['%limit%' => 32]
                             ),
                         ]),
-                        new NotBlank([
-                            'message' => $this->trans(
-                                'The %s field is required.',
-                                'Admin.Notifications.Error',
-                                [sprintf('"%s"', $this->trans('Name', 'Admin.Global'))]
-                            ),
-                        ]),
                     ],
                 ],
             ])

@@ -14,9 +14,28 @@ class QuickAccessPage {
     quickAccessGrid.addExtension(new window.prestashop.component.GridExtensions.LinkRowActionExtension());
     quickAccessGrid.addExtension(new window.prestashop.component.GridExtensions.FiltersSubmitButtonEnablerExtension());
     quickAccessGrid.addExtension(new window.prestashop.component.GridExtensions.AsyncToggleColumnExtension());
+
+    window.prestashop.component.initComponents(
+      [
+        'TranslatableInput',
+      ],
+    );
   }
 }
 
 $(() => {
   new QuickAccessPage();
+
+  $(document).ajaxComplete((_event, xhr, settings) => {
+    if (settings.url && String(settings.url).includes('toggle-new-window')) {
+      try {
+        const response = JSON.parse(xhr.responseText);
+        if (response.status) {
+          setTimeout(() => window.location.reload(), 1500);
+        }
+      } catch (_e) {
+        // ignore non-JSON responses
+      }
+    }
+  });
 });
