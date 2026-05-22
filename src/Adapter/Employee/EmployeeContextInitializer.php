@@ -28,7 +28,7 @@ class EmployeeContextInitializer
     }
 
     /**
-     * @return int|null The impersonated employee ID, or null if no super-admin exists.
+     * @return int|null The impersonated employee ID, or null if no super-admin exists
      */
     public function initializeWithFirstSuperAdmin(): ?int
     {
