@@ -9,7 +9,7 @@ declare(strict_types=1);
 namespace Tests\Unit\PrestaShopBundle\EventListener\Admin\Context;
 
 use PrestaShop\PrestaShop\Adapter\ContextStateManager;
-use PrestaShop\PrestaShop\Core\Domain\Country\Repository\CountryRepositoryInterface;
+use PrestaShop\PrestaShop\Adapter\Country\Repository\CountryRepositoryInterface;
 use PrestaShop\PrestaShop\Core\Context\CountryContextBuilder;
 use PrestaShop\PrestaShop\Core\Context\LanguageContext;
 use PrestaShopBundle\EventListener\Admin\Context\CountryContextSubscriber;

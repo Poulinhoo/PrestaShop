@@ -6,7 +6,7 @@
 
 declare(strict_types=1);
 
-namespace PrestaShop\PrestaShop\Core\Domain\Country\Repository;
+namespace PrestaShop\PrestaShop\Adapter\Country\Repository;
 
 use Country;
 use PrestaShop\PrestaShop\Core\Domain\Country\ValueObject\CountryId;

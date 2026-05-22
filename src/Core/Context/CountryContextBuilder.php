@@ -10,7 +10,7 @@ namespace PrestaShop\PrestaShop\Core\Context;
 
 use Country as LegacyCountry;
 use PrestaShop\PrestaShop\Adapter\ContextStateManager;
-use PrestaShop\PrestaShop\Core\Domain\Country\Repository\CountryRepositoryInterface;
+use PrestaShop\PrestaShop\Adapter\Country\Repository\CountryRepositoryInterface;
 use PrestaShop\PrestaShop\Core\Domain\Country\ValueObject\CountryId;
 use PrestaShop\PrestaShop\Core\Exception\InvalidArgumentException;
 

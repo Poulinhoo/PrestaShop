@@ -11,7 +11,7 @@ namespace Tests\Unit\Core\Context;
 use Country;
 use PHPUnit\Framework\MockObject\MockObject;
 use PrestaShop\PrestaShop\Adapter\ContextStateManager;
-use PrestaShop\PrestaShop\Core\Domain\Country\Repository\CountryRepositoryInterface;
+use PrestaShop\PrestaShop\Adapter\Country\Repository\CountryRepositoryInterface;
 use PrestaShop\PrestaShop\Core\Context\CountryContextBuilder;
 use Tests\Unit\Core\Configuration\MockConfigurationTrait;
 
