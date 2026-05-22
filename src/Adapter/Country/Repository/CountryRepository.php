@@ -14,6 +14,7 @@ use PrestaShop\PrestaShop\Core\Domain\Country\Exception\CannotDeleteCountryExcep
 use PrestaShop\PrestaShop\Core\Domain\Country\Exception\CannotEditCountryException;
 use PrestaShop\PrestaShop\Core\Domain\Country\Exception\CountryConstraintException;
 use PrestaShop\PrestaShop\Core\Domain\Country\Exception\CountryNotFoundException;
+use PrestaShop\PrestaShop\Core\Domain\Country\Repository\CountryRepositoryInterface;
 use PrestaShop\PrestaShop\Core\Domain\Country\ValueObject\CountryId;
 use PrestaShop\PrestaShop\Core\Exception\CoreException;
 use PrestaShop\PrestaShop\Core\Repository\AbstractObjectModelRepository;
@@ -21,7 +22,7 @@ use PrestaShop\PrestaShop\Core\Repository\AbstractObjectModelRepository;
 /**
  * Provides methods to access data storage of Country
  */
-class CountryRepository extends AbstractObjectModelRepository
+final class CountryRepository extends AbstractObjectModelRepository implements CountryRepositoryInterface
 {
     public function __construct(
         private readonly CountryValidator $countryValidator,

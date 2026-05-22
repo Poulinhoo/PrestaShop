@@ -22,6 +22,9 @@ services:
   PrestaShop\PrestaShop\Adapter\Country\Repository\CountryRepository:
     autowire: true
 
+  PrestaShop\PrestaShop\Core\Domain\Country\Repository\CountryRepositoryInterface:
+    alias: PrestaShop\PrestaShop\Adapter\Country\Repository\CountryRepository
+
   PrestaShop\PrestaShop\Adapter\Country\CommandHandler\AddCountryHandler:
     public: true
     autowire: true
