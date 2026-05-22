@@ -8,7 +8,6 @@ declare(strict_types=1);
 
 namespace PrestaShopBundle\Twig\Component;
 
-use Link;
 use PrestaShop\PrestaShop\Adapter\LegacyContext;
 use PrestaShop\PrestaShop\Core\QuickAccess\QuickAccessGenerator;
 use PrestaShopBundle\Security\Admin\UserTokenManager;
@@ -46,8 +45,6 @@ class QuickAccess
      */
     protected ?string $currentPageIcon = null;
 
-    protected readonly Link $link;
-
     public function __construct(
         protected readonly RequestStack $requestStack,
         protected readonly MenuBuilder $menuBuilder,
@@ -56,7 +53,6 @@ class QuickAccess
         protected readonly UserTokenManager $userTokenManager,
         protected readonly LegacyContext $legacyContext,
     ) {
-        $this->link = $legacyContext->getContext()->link;
     }
 
     /**
@@ -133,7 +129,7 @@ class QuickAccess
 
     public function getManageUrl(): string
     {
-        return $this->link->getAdminLink('AdminQuickAccesses');
+        return $this->legacyContext->getContext()->link->getAdminLink('AdminQuickAccesses');
     }
 
     public function getAjaxUrl(): string

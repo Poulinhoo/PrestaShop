@@ -2010,7 +2010,7 @@ class AdminControllerCore extends Controller
                     false,
                     ['route' => 'admin_quick_accesses_ajax', '_token' => $this->get(UserTokenManager::class)->getSymfonyToken()]
                 );
-            } catch (\Exception $e) {
+            } catch (Exception $e) {
                 // keep legacy fallback URL
             }
         }
@@ -2699,7 +2699,6 @@ class AdminControllerCore extends Controller
                     'token' => $this->get(UserTokenManager::class)->getSymfonyToken(),
                 ],
             ]);
-
         }
 
         // Specific Admin Theme
