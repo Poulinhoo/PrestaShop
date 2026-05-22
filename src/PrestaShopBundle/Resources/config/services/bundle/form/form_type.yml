@@ -403,7 +403,7 @@ services:
       - '@prestashop.core.form.choice_provider.customer_service_order_messages_name'
       - '@prestashop.core.form.choice_provider.customer_service_order_messages'
 
-  PrestaShopBundle\Form\Admin\Sell\CustomerService\MerchandiseReturn\OrderReturnType:
+  PrestaShopBundle\Form\Admin\Sell\CustomerService\OrderReturn\OrderReturnType:
     arguments:
       $stateChoices: '@=service("prestashop.adapter.form.choice_provider.order_return_state").getChoices()'
 
@@ -576,7 +576,7 @@ services:
 
   PrestaShopBundle\Form\Admin\Improve\International\Locations\CountryOptionsType:
 
-  PrestaShopBundle\Form\Admin\Sell\CustomerService\MerchandiseReturn\MerchandiseReturnOptionsType:
+  PrestaShopBundle\Form\Admin\Sell\CustomerService\OrderReturn\OrderReturnOptionsType:
 
   PrestaShopBundle\Form\Admin\Type\CarrierChoiceType:
     arguments:
