@@ -3,6 +3,11 @@
  # docs/licenses/LICENSE.txt file that was distributed with this source code.
  #}
 
+{# We redefine the form type row block, because since the parent is HiddentType, it doesn't display labels and errors by default #}
+{% block address_format_builder_row %}
+  {{- block('form_row') -}}
+{% endblock %}
+
 {% block address_format_builder_widget %}
   {% set options = address_format_options %}
   <div class="js-address-format-wrapper address-format-wrapper">

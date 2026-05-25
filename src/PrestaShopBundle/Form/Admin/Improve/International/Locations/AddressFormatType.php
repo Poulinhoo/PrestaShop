@@ -6,7 +6,7 @@
 
 declare(strict_types=1);
 
-namespace PrestaShopBundle\Form\Admin\Type;
+namespace PrestaShopBundle\Form\Admin\Improve\International\Locations;
 
 use PrestaShop\PrestaShop\Core\ConstraintValidator\Constraints\ValidAddressFormat;
 use PrestaShop\PrestaShop\Core\Domain\Country\AddressFormat\AddressFormatFieldsProviderInterface;
