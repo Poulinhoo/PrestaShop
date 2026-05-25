@@ -1460,6 +1460,7 @@ CREATE TABLE `PREFIX_order_return_detail` (
   `id_order_detail` int(10) unsigned NOT NULL,
   `id_customization` int(10) unsigned NOT NULL DEFAULT '0',
   `product_quantity` int(10) unsigned NOT NULL DEFAULT '0',
+  `cancelled` tinyint(1) unsigned NOT NULL DEFAULT '0',
   PRIMARY KEY (
     `id_order_return`, `id_order_detail`,
     `id_customization`
@@ -1470,6 +1471,7 @@ CREATE TABLE `PREFIX_order_return_detail` (
 CREATE TABLE `PREFIX_order_return_state` (
   `id_order_return_state` int(10) unsigned NOT NULL auto_increment,
   `color` varchar(32) DEFAULT NULL,
+  `is_cancelling_return` tinyint(1) unsigned NOT NULL DEFAULT '0',
   PRIMARY KEY (`id_order_return_state`)
 ) ENGINE=ENGINE_TYPE DEFAULT CHARSET=utf8mb4 COLLATION;
 
