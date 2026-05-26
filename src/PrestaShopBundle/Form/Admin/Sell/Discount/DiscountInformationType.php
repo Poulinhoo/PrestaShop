@@ -29,10 +29,16 @@ class DiscountInformationType extends TranslatorAwareType
             ->add('discount_type', TextPreviewType::class, [
                 'data' => $discountType,
                 'label' => $this->trans('Discount Type', 'Admin.Catalog.Feature'),
+                'label_attr' => [
+                    'class' => 'font-weight-bold',
+                ],
                 'required' => false,
             ])
             ->add('names', TranslatableType::class, [
                 'label' => $this->trans('Discount Name', 'Admin.Catalog.Feature'),
+                'label_attr' => [
+                    'class' => 'font-weight-bold',
+                ],
                 'label_help_box' => $this->trans('This will be displayed in the cart summary, as well as on the invoice.', 'Admin.Catalog.Help'),
                 'required' => true,
                 'type' => TextType::class,
@@ -57,6 +63,9 @@ class DiscountInformationType extends TranslatorAwareType
             ])
             ->add('description', TextareaType::class, [
                 'label' => $this->trans('Discount description', 'Admin.Global'),
+                'label_attr' => [
+                    'class' => 'font-weight-bold',
+                ],
                 'required' => false,
                 'label_help_box' => $this->trans(
                     'For your eyes only. This will never be displayed to the customer.',
@@ -78,6 +87,9 @@ class DiscountInformationType extends TranslatorAwareType
             ])
             ->add('active', SwitchType::class, [
                 'label' => $this->trans('Enable discount', 'Admin.Catalog.Feature'),
+                'label_attr' => [
+                    'class' => 'font-weight-bold',
+                ],
                 'required' => false,
             ])
         ;
