@@ -36,7 +36,7 @@ class DiscountInformationType extends TranslatorAwareType
                     'You have selected a discount type to apply. Please remember this choice is final and can not be changed.',
                     'Admin.Catalog.Feature'
                 ),
-                'preview_class' => 'badge badge-info badge-pill',
+                'preview_class' => 'badge badge-discount-type',
                 'required' => false,
             ])
             ->add('names', TranslatableType::class, [
