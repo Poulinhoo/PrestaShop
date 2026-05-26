@@ -18,6 +18,7 @@ use PrestaShop\PrestaShop\Core\Domain\Carrier\ShippingCost\Provider\ShippingTaxR
 use PrestaShop\PrestaShop\Core\Domain\Carrier\ShippingCost\ShippingCostPrice;
 use PrestaShop\PrestaShop\Core\Domain\Carrier\ShippingCost\ShippingCostPriceInterface;
 use PrestaShop\PrestaShop\Core\Domain\Carrier\ValueObject\ShippingCalculationRequest;
+use PrestaShop\PrestaShop\Core\Pricing\Rounding\RoundingServiceInterface;
 use PrestaShop\PrestaShop\Core\Pricing\ValueObject\TaxRate;
 
 class TaxCalculatorTest extends TestCase
@@ -31,6 +32,9 @@ class TaxCalculatorTest extends TestCase
     /** @var CurrencyRepository|\PHPUnit\Framework\MockObject\MockObject */
     private $currencyRepository;
 
+    /** @var RoundingServiceInterface|\PHPUnit\Framework\MockObject\MockObject */
+    private $roundingService;
+
     /** @var TaxCalculator */
     private $calculator;
 
@@ -39,10 +43,12 @@ class TaxCalculatorTest extends TestCase
         $this->configuration = $this->createMock(AdapterConfiguration::class);
         $this->taxRateProvider = $this->createMock(ShippingTaxRateProviderInterface::class);
         $this->currencyRepository = $this->createMock(CurrencyRepository::class);
+        $this->roundingService = $this->createMock(RoundingServiceInterface::class);
         $this->calculator = new TaxCalculator(
             $this->configuration,
             $this->taxRateProvider,
-            $this->currencyRepository
+            $this->currencyRepository,
+            $this->roundingService
         );
     }
 
@@ -89,6 +95,8 @@ class TaxCalculatorTest extends TestCase
             return $map[$key] ?? null;
         });
         $this->taxRateProvider->method('getTaxRate')->willReturn(new TaxRate(new DecimalNumber('20'))); // 20% tax
+
+        $this->roundingService->method('round')->willReturnCallback(fn (DecimalNumber $number) => $number);
 
         $this->calculator->compute($context);
 

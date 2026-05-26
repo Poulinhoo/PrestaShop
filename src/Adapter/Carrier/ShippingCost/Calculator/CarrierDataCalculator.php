@@ -21,10 +21,6 @@ class CarrierDataCalculator implements ShippingCostCalculatorInterface
 
     public function compute(ShippingCostPriceInterface $context): void
     {
-        if (!$context->isAvailable()) {
-            return;
-        }
-
         $carrierData = $this->carrierDataProvider->getCarrierShippingData($context->getCarrierId());
 
         if ($carrierData === null) {

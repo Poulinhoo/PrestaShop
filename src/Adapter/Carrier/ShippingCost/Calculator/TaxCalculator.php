@@ -9,13 +9,13 @@ declare(strict_types=1);
 namespace PrestaShop\PrestaShop\Adapter\Carrier\ShippingCost\Calculator;
 
 use PrestaShop\Decimal\DecimalNumber;
-use PrestaShop\Decimal\Operation\Rounding;
 use PrestaShop\PrestaShop\Adapter\Configuration as AdapterConfiguration;
 use PrestaShop\PrestaShop\Adapter\Currency\Repository\CurrencyRepository;
 use PrestaShop\PrestaShop\Core\Domain\Carrier\ShippingCost\Calculator\ShippingCostCalculatorInterface;
 use PrestaShop\PrestaShop\Core\Domain\Carrier\ShippingCost\Provider\ShippingTaxRateProviderInterface;
 use PrestaShop\PrestaShop\Core\Domain\Carrier\ShippingCost\ShippingCostPriceInterface;
 use PrestaShop\PrestaShop\Core\Domain\Currency\ValueObject\CurrencyId;
+use PrestaShop\PrestaShop\Core\Pricing\Rounding\RoundingServiceInterface;
 
 class TaxCalculator implements ShippingCostCalculatorInterface
 {
@@ -23,6 +23,7 @@ class TaxCalculator implements ShippingCostCalculatorInterface
         private readonly AdapterConfiguration $configuration,
         private readonly ShippingTaxRateProviderInterface $taxRateProvider,
         private readonly CurrencyRepository $currencyRepository,
+        private readonly RoundingServiceInterface $roundingService,
     ) {
     }
 
@@ -59,12 +60,7 @@ class TaxCalculator implements ShippingCostCalculatorInterface
             $taxIncluded = $cost->times($taxRate->getMultiplier());
         }
 
-        $context->setTaxExcluded($this->roundAmount($cost, $precision));
-        $context->setTaxIncluded($this->roundAmount($taxIncluded, $precision));
-    }
-
-    private function roundAmount(DecimalNumber $amount, int $precision): DecimalNumber
-    {
-        return new DecimalNumber($amount->round($precision, Rounding::ROUND_HALF_UP));
+        $context->setTaxExcluded($this->roundingService->round($cost, $precision));
+        $context->setTaxIncluded($this->roundingService->round($taxIncluded, $precision));
     }
 }
