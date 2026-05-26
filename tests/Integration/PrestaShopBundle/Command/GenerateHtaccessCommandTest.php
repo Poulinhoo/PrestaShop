@@ -4,6 +4,8 @@
  * docs/licenses/LICENSE.txt file that was distributed with this source code.
  */
 
+declare(strict_types=1);
+
 namespace Tests\Integration\PrestaShopBundle\Command;
 
 use Symfony\Bundle\FrameworkBundle\Console\Application;
@@ -18,7 +20,7 @@ class GenerateHtaccessCommandTest extends KernelTestCase
         self::bootKernel();
     }
 
-    public function testGenerateHtaccessFile()
+    public function testGenerateHtaccessFile(): void
     {
         $application = new Application(static::$kernel);
         $command = $application->find('prestashop:htaccess:generate');
@@ -28,6 +30,7 @@ class GenerateHtaccessCommandTest extends KernelTestCase
         $tester = new CommandTester($command);
         $tester->execute([
             'command' => $command->getName(),
+            '--force' => true,
         ]);
         $display = $tester->getDisplay();
 
