@@ -234,7 +234,7 @@ $(() => {
                 $.growl.error({title: '', message: data[index]});
               }
             });
-          } else if (data.success) {
+          } else if (data.success || Array.isArray(data)) {
             window.showSuccessMessage(window.update_success_msg);
             setTimeout(() => window.location.reload(), 1500);
           }
