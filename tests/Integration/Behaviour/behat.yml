@@ -28,6 +28,7 @@ default:
       contexts:
         - Tests\Integration\Behaviour\Features\Context\CommonFeatureContext
         - Tests\Integration\Behaviour\Features\Context\Domain\TaxRulesGroupFeatureContext
+        - Tests\Integration\Behaviour\Features\Context\Domain\TaxRuleFeatureContext
         - Tests\Integration\Behaviour\Features\Transform\StringToBoolTransformContext
     title:
       paths:
