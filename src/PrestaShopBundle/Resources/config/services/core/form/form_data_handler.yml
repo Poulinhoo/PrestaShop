@@ -271,6 +271,10 @@ services:
     arguments:
       - '@prestashop.core.command_bus'
 
+  PrestaShop\PrestaShop\Core\Form\IdentifiableObject\DataHandler\TaxRuleFormDataHandler:
+    arguments:
+      - '@prestashop.core.command_bus'
+
   PrestaShop\PrestaShop\Core\Form\IdentifiableObject\DataHandler\DiscountFormDataHandler:
     autowire: true
     public: false

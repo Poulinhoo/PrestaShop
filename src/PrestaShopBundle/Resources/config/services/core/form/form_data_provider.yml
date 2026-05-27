@@ -244,6 +244,10 @@ services:
     arguments:
       - '@prestashop.core.query_bus'
 
+  PrestaShop\PrestaShop\Core\Form\IdentifiableObject\DataProvider\TaxRuleFormDataProvider:
+    arguments:
+      - '@prestashop.core.query_bus'
+
   PrestaShop\PrestaShop\Core\Form\IdentifiableObject\DataProvider\DiscountFormDataProvider:
     autowire: true
 

@@ -631,6 +631,13 @@ services:
       $permissionChoices: '@=service("prestashop.core.form.choice_provider.permissions_choice_provider").getChoices()'
 
   PrestaShopBundle\Form\Admin\Improve\International\Tax\TaxRulesGroupType:
+
+  PrestaShopBundle\Form\Admin\Improve\International\Tax\TaxRuleType:
+    arguments:
+      $taxByIdChoiceProvider: '@PrestaShop\PrestaShop\Core\Form\ChoiceProvider\TaxByIdChoiceProvider'
+      $connection: '@doctrine.dbal.default_connection'
+      $dbPrefix: '%database_prefix%'
+
   PrestaShopBundle\Form\Admin\Type\FeatureChoiceType:
     arguments:
       $featureChoiceProvider: '@PrestaShop\PrestaShop\Adapter\Form\ChoiceProvider\FeaturesChoiceProvider'
