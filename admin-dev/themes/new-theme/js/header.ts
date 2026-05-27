@@ -92,7 +92,8 @@ export default class Header {
             const classAttr = item.class ? ` ${item.class}` : '';
             const activeClass = item.active ? ' active' : '';
             const target = item.new_window ? ' target="_blank"' : '';
-            quicklinkList += `<a class="dropdown-item quick-row-link${classAttr}${activeClass}" href="${item.link}"${target} data-item="${item.name}">${item.name}</a>`;
+            quicklinkList += `<a class="dropdown-item quick-row-link${classAttr}${activeClass}"`
+              + ` href="${item.link}"${target} data-item="${item.name}">${item.name}</a>`;
           });
           const $menu = $('#quick-access-container .dropdown-menu');
           $menu.find('.dropdown-divider').prevAll('a.quick-row-link').remove();

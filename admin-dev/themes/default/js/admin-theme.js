@@ -240,7 +240,8 @@ $(() => {
               if (typeof item.name !== 'undefined') {
                 const activeClass = item.active ? ' active' : '';
                 const classAttr = item.class ? ` class="${item.class}"` : '';
-                quicklinkList += `<li class="quick-row-link${activeClass}"><a${classAttr} href="${item.link}" data-item="${item.name}">${item.name}</a></li>`;
+                quicklinkList += `<li class="quick-row-link${activeClass}">`
+                  + `<a${classAttr} href="${item.link}" data-item="${item.name}">${item.name}</a></li>`;
               }
             });
             if (quicklinkList) {
