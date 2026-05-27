@@ -149,6 +149,8 @@ class LegacyLinkLinterCommand extends Command
         'admin_products_specific_prices_edit',
         'admin_products_specific_prices_list',
         'admin_products_toggle_status_for_shop',
+        'admin_quick_accesses_ajax_add',
+        'admin_quick_accesses_ajax_delete',
         'admin_security_sessions_customer_search',
         'admin_security_sessions_employee_search',
         'admin_servers',

@@ -194,6 +194,8 @@ class QuickAccessController extends PrestaShopAdminController
         return new JsonResponse(['success' => true]);
     }
 
+    #[DemoRestricted(redirectRoute: 'admin_quick_accesses_index')]
+    #[AdminSecurity("is_granted('delete', request.get('_legacy_controller'))", redirectRoute: 'admin_quick_accesses_index')]
     public function ajaxDeleteQuickLinkAction(Request $request): JsonResponse
     {
         try {
