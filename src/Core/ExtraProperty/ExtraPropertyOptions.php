@@ -17,8 +17,8 @@ namespace PrestaShop\PrestaShop\Core\ExtraProperty;
  * immutability. Use withModuleName() to derive a copy with a resolved module name.
  *
  * About BO label translations:
- * - title/description are not stored as per-language values in SQL;
- * - use wording + domain pairs (titleWording/titleDomain and descriptionWording/descriptionDomain);
+ * - label/description are not stored as per-language values in SQL;
+ * - use wording + domain pairs (labelWording/labelDomain and descriptionWording/descriptionDomain);
  * - BO rendering translates them at runtime with Translator::trans();
  * - for BO translation pages to discover those strings, modules must expose the same wordings through
  *   explicit $this->trans('...', [], 'Modules.<Module>.Admin') calls (and/or module XLF files).
@@ -45,15 +45,15 @@ final class ExtraPropertyOptions
      *                           When true, marks the BO form field as required (HTML required + Symfony NotBlank constraint).
      *                           Independent of $nullable: a field can be NOT NULL with a default and still be optional in the form.
      * @param int|null $size
-     *                       For ExtraPropertyType::String: the varchar column length (1–16383).
+     *                       For ExtraPropertyType::STRING: the varchar column length (1–16383).
      *                       Defaults to 255 when null. Ignored for all other types.
      * @param string|null $moduleName
      *                                Override the owning module name. Null means use the calling module's name.
      *                                Automatically populated by Module::registerExtraProperty() when left null.
-     * @param string|null $titleWording
+     * @param string|null $labelWording
      *                                  Translation wording key shown in BO forms. Example: "Theme color".
-     * @param string|null $titleDomain
-     *                                 Translation domain used for the title wording. Example: "Modules.MyModule.Admin".
+     * @param string|null $labelDomain
+     *                                 Translation domain used for the label wording. Example: "Modules.MyModule.Admin".
      * @param string|null $descriptionWording
      *                                        Translation wording key shown as BO help text
      * @param string|null $descriptionDomain
@@ -72,15 +72,22 @@ final class ExtraPropertyOptions
      *                         Include this field in Admin API JSON responses
      * @param bool $displayForm
      *                          Show and edit this field in BO forms
-     * @param bool $displayGrid
-     *                          Display this field as a column in BO Symfony grids
+     * @param list<string>|null $associatedGrids
+     *                                           Grid placement entries. Each entry uses the format "gridId[.columnId[:before|after]]":
+     *                                           - "product"                  → appears in product grid, appended at end
+     *                                           - "product.reference"        → appears after the 'reference' column (default :after)
+     *                                           - "product.reference:before" → appears before the 'reference' column
+     *                                           - "product.reference:after"  → appears after the 'reference' column (explicit)
+     *                                           Null or empty means the field is not displayed in any grid.
+     *                                           Each gridId must be unique within the list.
+     * @param bool $displayFront
+     *                           Allow this field to be exposed in front-office presenters.
+     *                           Set to false for BO-only or API-only fields.
      * @param string|null $formPosition
      *                                  Dot-notation Symfony form path specifying where the field is injected in the form tree
-     * @param string|int|null $gridPosition
-     *                                      Column id (or integer position) after which the extra grid column is inserted
      */
     public function __construct(
-        public readonly ExtraPropertyType $type = ExtraPropertyType::String,
+        public readonly ExtraPropertyType $type = ExtraPropertyType::STRING,
         public readonly ExtraPropertyScope $scope = ExtraPropertyScope::Common,
         public readonly ?array $enumValues = null,
         public readonly int|float|string|bool|null $defaultValue = null,
@@ -88,8 +95,8 @@ final class ExtraPropertyOptions
         public readonly bool $formRequired = false,
         public readonly ?int $size = null,
         public readonly ?string $moduleName = null,
-        public readonly ?string $titleWording = null,
-        public readonly ?string $titleDomain = null,
+        public readonly ?string $labelWording = null,
+        public readonly ?string $labelDomain = null,
         public readonly ?string $descriptionWording = null,
         public readonly ?string $descriptionDomain = null,
         public readonly ExtraPropertySqlIndex $sqlIndex = ExtraPropertySqlIndex::None,
@@ -98,9 +105,9 @@ final class ExtraPropertyOptions
         public readonly ?string $validator = null,
         public readonly bool $displayApi = false,
         public readonly bool $displayForm = true,
-        public readonly bool $displayGrid = false,
+        public readonly ?array $associatedGrids = null,
+        public readonly bool $displayFront = true,
         public readonly ?string $formPosition = null,
-        public readonly string|int|null $gridPosition = null,
     ) {
     }
 
@@ -125,8 +132,8 @@ final class ExtraPropertyOptions
             formRequired: $this->formRequired,
             size: $this->size,
             moduleName: $moduleName,
-            titleWording: $this->titleWording,
-            titleDomain: $this->titleDomain,
+            labelWording: $this->labelWording,
+            labelDomain: $this->labelDomain,
             descriptionWording: $this->descriptionWording,
             descriptionDomain: $this->descriptionDomain,
             sqlIndex: $this->sqlIndex,
@@ -135,9 +142,9 @@ final class ExtraPropertyOptions
             validator: $this->validator,
             displayApi: $this->displayApi,
             displayForm: $this->displayForm,
-            displayGrid: $this->displayGrid,
+            associatedGrids: $this->associatedGrids,
+            displayFront: $this->displayFront,
             formPosition: $this->formPosition,
-            gridPosition: $this->gridPosition,
         );
     }
 }

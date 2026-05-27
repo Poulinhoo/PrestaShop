@@ -3,8 +3,6 @@
 > **Discussion**: https://github.com/PrestaShop/PrestaShop/discussions/40767
 >
 > This document describes the architecture for a system that allows modules to register extra properties on existing PrestaShop entities without modifying core database tables.
->
-> **Note**: this is the implemented version. It diverges from the original proposal on several points — see inline notes marked **[impl]**.
 
 ---
 
@@ -13,18 +11,15 @@
 1. [Overview & Naming Conventions](#1-overview--naming-conventions)
 2. [Database Structure](#2-database-structure)
 3. [Core Services](#3-core-services)
-4. [CQRS Domain Layer (Partial)](#4-cqrs-domain-layer-partial)
-5. [Module Integration](#5-module-integration)
-6. [ObjectModel Integration (Front-Office)](#6-objectmodel-integration-front-office)
-7. [Admin API Integration](#7-admin-api-integration)
-8. [Back-Office Form Integration](#8-back-office-form-integration)
-9. [Grid Integration](#9-grid-integration)
-10. [Supported Types](#10-supported-types)
-11. [Performance Considerations](#11-performance-considerations)
-12. [Conflict Handling](#12-conflict-handling)
-13. [Backward Compatibility](#13-backward-compatibility)
-14. [Phased Implementation Plan](#14-phased-implementation-plan)
-15. [Testing Strategy](#15-testing-strategy)
+4. [Module Integration](#4-module-integration)
+5. [ObjectModel Integration (Front-Office)](#5-objectmodel-integration-front-office)
+6. [Admin API Integration](#6-admin-api-integration)
+7. [Back-Office Form Integration](#7-back-office-form-integration)
+8. [Grid Integration](#8-grid-integration)
+9. [Supported Types](#9-supported-types)
+10. [Performance Considerations](#10-performance-considerations)
+11. [Conflict Handling](#11-conflict-handling)
+12. [Testing Strategy](#12-testing-strategy)
 
 ---
 
@@ -41,7 +36,7 @@ Modules can register **extra properties** on existing entities (Product, Custome
 | **Namespace** | `PrestaShop\PrestaShop\Core\ExtraProperty` |
 | **Directory** | `src/Core/ExtraProperty/` |
 | **DB table suffix** | `_extra`, `_extra_lang`, `_extra_shop` |
-| **Column naming** | `{module_name}_{field_name}` |
+| **Column naming** | `{module_name}_{field_name}` (core fields: `{field_name}` only) |
 | **Column name max length** | 64 characters (MariaDB identifier limit) |
 
 ### Scopes
@@ -54,7 +49,7 @@ Extra properties support three scopes, mirroring PrestaShop's native multilang/m
 | `Lang` | `{entity}_extra_lang` | Value varies per language (and per shop if multilang_shop) |
 | `Shop` | `{entity}_extra_shop` | Value varies per shop |
 
-> **[impl]** Scope identifiers are lowercase strings (`common`, `lang`, `shop`) matching the string-backed `ExtraPropertyScope` enum values and the `scope` ENUM column in the DB.
+Scope identifiers are lowercase strings (`common`, `lang`, `shop`) matching the string-backed `ExtraPropertyScope` enum values and the `scope` ENUM column in the DB.
 
 ---
 
@@ -79,13 +74,13 @@ CREATE TABLE IF NOT EXISTS `PREFIX_extra_property_definition` (
   `validator` varchar(255) DEFAULT NULL,
   `display_api` tinyint(1) unsigned NOT NULL DEFAULT '0',
   `display_form` tinyint(1) unsigned NOT NULL DEFAULT '1',
-  `display_grid` tinyint(1) unsigned NOT NULL DEFAULT 0,
+  `display_front` tinyint(1) unsigned NOT NULL DEFAULT '1',
+  `associated_grids` text DEFAULT NULL,
   `form_field_type` varchar(255) DEFAULT NULL,
   `form_options` text DEFAULT NULL,
   `form_position` varchar(255) DEFAULT NULL,
-  `grid_position` varchar(64) DEFAULT NULL,
-  `title_wording` varchar(191) DEFAULT NULL,
-  `title_domain` varchar(255) DEFAULT NULL,
+  `label_wording` varchar(191) DEFAULT NULL,
+  `label_domain` varchar(255) DEFAULT NULL,
   `description_wording` varchar(191) DEFAULT NULL,
   `description_domain` varchar(255) DEFAULT NULL,
   PRIMARY KEY (`id_extra_property_definition`),
@@ -103,32 +98,22 @@ CREATE TABLE IF NOT EXISTS `PREFIX_extra_property_definition` (
 - `scope`: maps to `ExtraPropertyScope` string-backed enum values (`'common'`, `'lang'`, `'shop'`)
 - `sql_index`: index strategy — `'none'`, `'key'` (standard index), or `'unique'` (unique constraint)
 - `size`: for `string` type only: varchar column length (defaults to 255 when `NULL`). Ignored for all other types.
-- `default_value`: SQL DEFAULT clause value as declared in `ExtraPropertyOptions` (stored as varchar, cast to the appropriate type during DDL generation)
+- `default_value`: SQL DEFAULT clause value (stored as varchar, cast to the appropriate type during DDL generation)
+- `display_api`: when `1`, the field is included in Admin API responses
+- `display_form`: when `1`, the field is included in BO forms
+- `display_front`: when `1`, the field is returned by `ExtraPropertiesLazyArray::getValues()` for FO templates
+- `associated_grids`: JSON-encoded array of grid placement entries in `"gridId[.columnId[:before|after]]"` format (e.g. `["product.reference:after","product_catalog"]`); `NULL` = not shown in any grid. Each gridId must be unique within the array. Parsed by `ExtraPropertyNaming::parseGridEntry()`.
 - `form_field_type`: optional Symfony form type FQCN override for BO forms
-- `form_required`: when `1`, the BO form field is marked as required (HTML required + Symfony NotBlank). Independent of SQL `NULL`/`NOT NULL`.
 - `form_options`: optional JSON-encoded array of extra options merged into the Symfony form type constructor call
 - `form_position`: optional dot-notation form path to control where the field is injected in the BO form tree
-- `grid_position`: optional column ID (string) after which the extra column is inserted in BO grids (e.g. `"reference"`)
-- `title_wording`, `title_domain`: i18n label for BO (wording + translation domain, resolved at runtime)
+- `label_wording`, `label_domain`: i18n label for BO (wording + translation domain, resolved at runtime)
 - `description_wording`, `description_domain`: i18n description for BO
-- `display_api`, `display_form`, `display_grid`: visibility flags per context (front-office display is left to module templates; no registry flag needed)
-
-> **[impl]** Compared to the original proposal:
-> - Column names are renamed throughout: `field_name` → `property_name`, `field_type` → `type`, `field_scope` → `scope`, `symfony_field_type` → `form_field_type`, `property_path` → `form_position`, `display_bo` → `display_form`.
-> - `storage_column_name` was dropped — it is always computed as `{module_name}_{property_name}` via `ExtraPropertyNaming::storageColumnName()` and never persisted.
-> - `module_name` is `DEFAULT NULL` (nullable). `NULL` identifies core fields. The UNIQUE KEY includes `scope` (not just entity + module + property) to allow the same property name in different scopes.
-> - `grid_position` is `varchar(64)` (a column ID string), not `int`.
-> - `sql_index` is a string ENUM (`'none'`, `'key'`, `'unique'`), not a boolean.
-> - `choices` was removed — use `type = 'choice'` with `enumValues` in `ExtraPropertyOptions` (the ENUM DDL is generated by `ColumnDefinitionMapper`).
-> - `date_add` / `date_upd` were dropped as unnecessary for definition rows.
-> - `size`, `form_required`, `default_value`, and `form_options` were re-added from the original proposal (the initial implementation had dropped them). `required` was renamed `form_required` to make explicit that it is a form-only concern, independent of the SQL `NOT NULL` constraint.
 
 ### 2.2. Dynamic Entity Extra Tables
 
-These tables are created dynamically by the `ExtraPropertySchemaManager` when the first extra property is registered for an entity. Columns are added/removed as modules register/unregister properties.
+These tables are created dynamically by the `ExtraPropertySchemaManager` when the first extra property is registered for an entity.
 
 **Common extra table** — `PREFIX_{entity}_extra`:
-
 ```sql
 CREATE TABLE IF NOT EXISTS `PREFIX_product_extra` (
   `id_product` int(10) unsigned NOT NULL,
@@ -137,7 +122,6 @@ CREATE TABLE IF NOT EXISTS `PREFIX_product_extra` (
 ```
 
 **Lang extra table** — `PREFIX_{entity}_extra_lang`:
-
 ```sql
 CREATE TABLE IF NOT EXISTS `PREFIX_product_extra_lang` (
   `id_product` int(10) unsigned NOT NULL,
@@ -148,7 +132,6 @@ CREATE TABLE IF NOT EXISTS `PREFIX_product_extra_lang` (
 ```
 
 **Shop extra table** — `PREFIX_{entity}_extra_shop`:
-
 ```sql
 CREATE TABLE IF NOT EXISTS `PREFIX_product_extra_shop` (
   `id_product` int(10) unsigned NOT NULL,
@@ -157,28 +140,22 @@ CREATE TABLE IF NOT EXISTS `PREFIX_product_extra_shop` (
 ) ENGINE=ENGINE_TYPE DEFAULT CHARSET=utf8mb4 COLLATION;
 ```
 
-Columns are added dynamically via `ALTER TABLE ADD COLUMN` when a module registers an extra property. For example:
-
-```sql
-ALTER TABLE `PREFIX_product_extra` ADD COLUMN `mymodule_custom_size` varchar(255) DEFAULT NULL;
-ALTER TABLE `PREFIX_product_extra_lang` ADD COLUMN `mymodule_custom_label` varchar(255) DEFAULT NULL;
-ALTER TABLE `PREFIX_product_extra_shop` ADD COLUMN `mymodule_shop_flag` tinyint(1) DEFAULT 0;
-```
+Columns are added dynamically via `ALTER TABLE ADD COLUMN` when a module registers an extra property.
 
 ### 2.3. Column Type Mapping
 
 | ExtraPropertyType | SQL Column Type |
 |---|---|
-| `Int` | `int(10) DEFAULT NULL` |
-| `Bool` | `tinyint(1) DEFAULT 0` |
-| `String` | `varchar({size}) DEFAULT NULL` (size defaults to 255) |
-| `Float` | `decimal(20,6) DEFAULT NULL` |
-| `Date` | `datetime DEFAULT NULL` |
-| `Html` | `text DEFAULT NULL` |
-| `Json` | `text DEFAULT NULL` |
-| `Choice` | `ENUM('val1','val2',...) DEFAULT NULL` |
+| `INT` | `int(10) DEFAULT NULL` |
+| `BOOL` | `tinyint(1) DEFAULT 0` |
+| `STRING` | `varchar({size}) DEFAULT NULL` (size defaults to 255) |
+| `FLOAT` | `decimal(20,6) DEFAULT NULL` |
+| `DATE` | `datetime DEFAULT NULL` |
+| `HTML` | `text DEFAULT NULL` |
+| `JSON` | `text DEFAULT NULL` |
+| `CHOICE` | `ENUM('val1','val2',...) DEFAULT NULL` |
 
-> **[impl]** The `choice` type generates a MySQL `ENUM` DDL (not `varchar(64)`). The allowed values come from `ExtraPropertyOptions::$enumValues`. `ColumnDefinitionMapper` supports `$size` (String type only: varchar length), `$defaultValue`, and `$nullable` to build the full column definition. `size` is ignored for all other types.
+The `choice` type generates a MySQL `ENUM` DDL. The allowed values come from `ExtraPropertyOptions::$enumValues`. `ColumnDefinitionMapper` handles `$size` (String type only), `$defaultValue`, and `$nullable`.
 
 ---
 
@@ -196,77 +173,70 @@ src/Core/ExtraProperty/
 ├── ExtraPropertyOptions.php
 ├── ExtraPropertyDefinitionCollection.php
 ├── ExtraPropertyScopeGrouper.php
-├── ExtraPropertiesBag.php               ← lazy-loading ArrayAccess bag (ObjectModel integration)
+├── ExtraPropertiesBag.php               ← lazy-loading grouped bag (module → ModuleFieldsBag)
+├── ModuleFieldsBag.php                  ← per-module ArrayAccess bag (field → value, dirty-tracking)
+├── Definition/
+│   ├── ExtraPropertyDefinitionInfo.php              ← immutable typed VO (registry read-side)
+│   └── CachedExtraPropertyDefinitionRepository.php ← read-only cache decorator
 ├── Registry/
-│   ├── ExtraPropertyRegistryInterface.php  ← write-only (register/unregister)
-│   └── ExtraPropertyRegistry.php           ← Core implementation (write + cache invalidation)
+│   ├── ExtraPropertyRegistryInterface.php    ← write API (register/unregister)
+│   ├── ExtraPropertyRegistry.php             ← pure implementation (no cache)
+│   └── CachedExtraPropertyRegistry.php      ← cache-invalidating decorator
 ├── Repository/
-│   ├── ExtraPropertyDefinitionRepositoryInterface.php  ← read-only
-│   ├── ExtraPropertyDefinitionWriterInterface.php      ← write-side (used by ExtraPropertyRegistry)
-│   ├── ExtraPropertyDefinitionRepository.php           ← DBAL implementation (read + write)
-│   └── CachedExtraPropertyDefinitionRepository.php    ← read-only cache decorator
+│   ├── ExtraPropertyDefinitionRepositoryInterface.php  ← 2-method read contract
+│   ├── ExtraPropertyDefinitionWriterInterface.php      ← write contract (save/delete)
+│   └── ExtraPropertyDefinitionRepository.php           ← DBAL implementation
 ├── Schema/
 │   ├── ExtraPropertySchemaManagerInterface.php
 │   ├── ColumnDefinitionMapper.php
-│   ├── ExtraPropertySchemaManager.php                 ← raw DDL via DBAL
-│   └── CacheInvalidatingSchemaManager.php             ← cache-invalidating decorator
-├── Storage/
-│   ├── ExtraPropertyReaderInterface.php               ← read values + findCustomFieldDefinition
+│   └── ExtraPropertySchemaManager.php       ← raw DDL via DBAL
+├── Value/
+│   ├── ExtraPropertyReaderInterface.php
 │   ├── ExtraPropertyWriterInterface.php
 │   ├── ExtraPropertyReader.php
 │   ├── ExtraPropertyWriter.php
+│   └── ExtraPropertiesLazyArray.php         ← FO value bag for presenters
+├── Validation/
+│   ├── ExtraPropertyValidationInterface.php
 │   └── ExtraPropertyValueValidator.php
 ├── Form/
 │   ├── ExtraPropertiesFormBuilderModifier.php
-│   ├── ExtraPropertiesFormDataPersister.php
-│   └── ExtraPropertiesFormDefinitionProvider.php
+│   └── ExtraPropertiesFormDataPersister.php
 └── Grid/
     ├── ExtraPropertiesGridDefinitionModifier.php
-    ├── ExtraPropertiesGridDefinitionProvider.php
     └── ExtraPropertiesGridQueryBuilderModifier.php
 
-src/Adapter/ExtraProperty/
-├── CommandHandler/
-│   └── UpdateExtraPropertyValuesCommandHandler.php
-└── QueryHandler/
-    └── GetExtraPropertyValuesHandler.php
+src/PrestaShopBundle/ApiPlatform/ExtraProperties/
+└── ExtraPropertiesApiService.php
 
-src/Adapter/Presenter/
-├── AbstractLazyArray.php                ← adds getExtraProperties() + $extraPropertiesLazyArray
-└── ExtraPropertiesLazyArray.php         ← factory methods fromObjectModel/fromObjectModelClass
+src/Core/Domain/ExtraProperty/
+└── Exception/
+    └── ExtraPropertyDomainException.php
 ```
 
 ### 3.2. ExtraPropertyType
 
-PHP enum for supported field types:
-
-> **[impl]** String-backed (not int-backed). The string values match the MySQL ENUM literals in `type`.
+String-backed PHP enum. Case names are uppercase (`INT`, `BOOL`, `STRING`, …); values are lowercase SQL literals matching the DB ENUM column.
 
 ```php
-namespace PrestaShop\PrestaShop\Core\ExtraProperty;
-
 enum ExtraPropertyType: string
 {
-    case Int = 'int';
-    case Bool = 'bool';
-    case String = 'string';
-    case Float = 'float';
-    case Date = 'date';
-    case Html = 'html';
-    case Json = 'json';
-    case Choice = 'choice';
+    case INT = 'int';
+    case BOOL = 'bool';
+    case STRING = 'string';
+    case FLOAT = 'float';
+    case DATE = 'date';
+    case HTML = 'html';
+    case JSON = 'json';
+    case CHOICE = 'choice';
 }
 ```
 
 ### 3.3. ExtraPropertyScope
 
-PHP enum for property scope:
-
-> **[impl]** String-backed (not int-backed). The string values match the MySQL ENUM literals in `scope`.
+String-backed PHP enum. Values match the DB ENUM literals.
 
 ```php
-namespace PrestaShop\PrestaShop\Core\ExtraProperty;
-
 enum ExtraPropertyScope: string
 {
     case Common = 'common';
@@ -275,54 +245,17 @@ enum ExtraPropertyScope: string
 }
 ```
 
-### 3.4. ExtraPropertyDefinition / ExtraPropertyDefinitionInfo
+### 3.4. ExtraPropertyDefinitionInfo
 
-Two complementary representations of a definition row exist:
+Immutable typed VO located in `src/Core/ExtraProperty/Definition/ExtraPropertyDefinitionInfo.php`. Used throughout the Symfony service layer (repository reads, form/grid modifiers, reader, API service). Built from a raw DB row via `ExtraPropertyDefinitionInfo::fromRow(array $row): self`. Exposes typed getters and derives the physical storage column name on-the-fly via `ExtraPropertyNaming::storageColumnName()`.
 
-**`classes/ExtraPropertyDefinition.php`** — legacy ObjectModel mapped to `extra_property_definition`.
-
-Used when installation scripts, native module system, or legacy BO controllers need standard ObjectModel CRUD (`new ExtraPropertyDefinition()`, `->add()`, `->update()`, `->delete()`). Fields match the registry schema 1-to-1:
-
-```php
-class ExtraPropertyDefinitionCore extends ObjectModel
-{
-    public string $entity_name;
-    public string $scope = 'common';          // ExtraPropertyScope literal
-    public ?string $module_name;
-    public string $property_name;
-    public string $type = 'string';           // ExtraPropertyType literal
-    public ?int $size;
-    public string $sql_index = 'none';
-    public bool $form_required = false;
-    public ?string $default_value;
-    public ?string $validator;
-    public bool $display_api = false;
-    public bool $display_form = true;
-    public bool $display_grid = false;
-    public ?string $form_field_type;
-    public ?string $form_options;             // JSON-encoded
-    public ?string $form_position;
-    public ?string $grid_position;
-    public ?string $title_wording;
-    public ?string $title_domain;
-    public ?string $description_wording;
-    public ?string $description_domain;
-}
-```
-
-**`src/Core/Domain/ExtraProperty/QueryResult/ExtraPropertyDefinitionInfo`** — immutable typed VO used throughout the Symfony service layer (repository reads, form/grid modifiers, reader, API service).
-
-Built from a raw row via `ExtraPropertyDefinitionInfo::fromRow(array $row): self`. Exposes typed getters (e.g. `getStorageColumnName()`, `getFieldType()`, `isDisplayApi()`) and derives the physical column name on-the-fly via `ExtraPropertyNaming::storageColumnName()`.
-
-> **[impl]** The original proposal described a single `ExtraPropertyDefinition` value object living in `Core/ExtraProperty/`. In the implementation this role is split: the ObjectModel handles legacy persistence; `ExtraPropertyDefinitionInfo` is the read-side VO consumed by all Symfony services.
+There is no legacy ObjectModel for extra property definitions — `ExtraPropertyDefinitionInfo` is the only representation.
 
 ### 3.5. ExtraPropertyNaming
 
-> **[impl]** New utility class (not in original proposal) that centralizes all naming conventions, eliminating duplicated private methods across 10+ files.
+Centralized naming utility that eliminates duplicated private methods across files.
 
 ```php
-namespace PrestaShop\PrestaShop\Core\ExtraProperty;
-
 class ExtraPropertyNaming
 {
     public const CORE_MODULE_KEY = '_core';
@@ -330,406 +263,209 @@ class ExtraPropertyNaming
     /** Returns the extra table name: "{entity}_extra[_{scope}]" */
     public static function extraTableName(string $entityName, string $fieldScope): string;
 
-    /** Returns the storage column name: "{module}_{field}" (or "{field}" for core) */
-    public static function storageColumnName(string $moduleName, string $fieldName): string;
+    /** Returns the storage column name: "{module}_{field}" (or "{field}" for core, module = null) */
+    public static function storageColumnName(?string $moduleName, string $fieldName): string;
 
     /** Returns the BO form field name and grid column alias: "extra_{scope}_{module}_{field}" */
     public static function formFieldName(string $moduleName, string $fieldName, string $scope): string;
 
     /** Normalizes module_name: null, '' or '_core' → '_core', otherwise returns the value as-is */
     public static function displayModuleKey(?string $moduleName): string;
-
-    /**
-     * Returns ordered entity table name candidates for definition lookups.
-     * Tries: exact name → suffix extraction ("order_detail" → "detail"/"details") → plural/singular toggle.
-     * Used by ExtraPropertiesFormDefinitionProvider and ExtraPropertiesGridDefinitionProvider.
-     *
-     * @return list<string>
-     */
-    public static function resolveEntityTableCandidates(string $name): array;
 }
 ```
 
+Note: `storageColumnName()` accepts `?string $moduleName` — `null` means a core field (no prefix).
+
 ### 3.6. ExtraPropertyOptions
 
-DTO for the optional configuration passed to `registerExtraProperty()`. Provides a clear contract with IDE autocompletion.
-
-> **[impl]** Field names differ from the original proposal: `symfonyFieldType` → `formFieldType`, `propertyPath` → `formPosition`, `displayBo` → `displayForm`. The `choices` array was replaced by `enumValues` (for `choice` type ENUM DDL), `defaultValue` (SQL DEFAULT clause), and `nullable` (NULL vs NOT NULL). `sqlIndex` is now an `ExtraPropertySqlIndex` enum (`None`, `Key`, `Unique`) instead of a boolean. `size`, `formRequired`, and `formOptions` were re-added from the original proposal (`required` → `formRequired` to make explicit it is a form-only concern).
+DTO passed to `registerExtraProperty()`. All fields are `readonly`.
 
 ```php
-namespace PrestaShop\PrestaShop\Core\ExtraProperty;
-
 class ExtraPropertyOptions
 {
     public function __construct(
-        public readonly ExtraPropertyType $type = ExtraPropertyType::String,
+        public readonly ExtraPropertyType $type = ExtraPropertyType::STRING,
         public readonly ExtraPropertyScope $scope = ExtraPropertyScope::Common,
-        public readonly ?array $enumValues = null,               // for choice type
+        public readonly ?array $enumValues = null,
         public readonly int|float|string|bool|null $defaultValue = null,
         public readonly bool $nullable = true,
-        public readonly bool $formRequired = false,               // BO form required (not SQL NOT NULL)
-        public readonly ?int $size = null,                       // varchar length for string type (default 255)
+        public readonly bool $formRequired = false,
+        public readonly ?int $size = null,
         public readonly ?string $moduleName = null,
-        public readonly ?string $titleWording = null,
-        public readonly ?string $titleDomain = null,
+        public readonly ?string $labelWording = null,
+        public readonly ?string $labelDomain = null,
         public readonly ?string $descriptionWording = null,
         public readonly ?string $descriptionDomain = null,
         public readonly ExtraPropertySqlIndex $sqlIndex = ExtraPropertySqlIndex::None,
         public readonly ?string $formFieldType = null,
-        public readonly ?array $formOptions = null,              // extra Symfony form type options
+        public readonly ?array $formOptions = null,
         public readonly ?string $validator = null,
         public readonly bool $displayApi = false,
         public readonly bool $displayForm = true,
-        public readonly bool $displayGrid = false,
+        public readonly bool $displayFront = true,
+        public readonly ?array $associatedGrids = null,  // e.g. ['product.reference:after', 'product_catalog']
         public readonly ?string $formPosition = null,
-        public readonly string|int|null $gridPosition = null,
     ) {}
 
     public function withModuleName(string $moduleName): self;
 }
 ```
 
-Usage:
-```php
-$this->registerExtraProperty(
-    'product',
-    'video_link',
-    new ExtraPropertyOptions(
-        type: ExtraPropertyType::String,
-        scope: ExtraPropertyScope::Lang,
-        titleWording: 'Video link',
-        titleDomain: 'Modules.Extrafieldproduct.Admin',
-        displayApi: true,
-        displayForm: true,
-        validator: 'isUrl',
-    )
-);
-```
-
 ### 3.7. ExtraPropertyRegistry
 
-> **[impl]** The registry is split into a read side and a write side:
->
-> **Read side** — `ExtraPropertyDefinitionRepositoryInterface` (Core):
-> - `getByEntityNameAllScopes(string $entityName): list<ExtraPropertyDefinitionInfo>`
-> - `getByEntityName(string $entityName, string $fieldScope): list<ExtraPropertyDefinitionInfo>`
-> - `getByEntityAndPropertyName(...): ?ExtraPropertyDefinitionInfo`
-> - `getDefinitionById(int $id): ?ExtraPropertyDefinitionInfo`
-> - `findDefinitionByModuleAndField(string $entityName, ?string $moduleName, string $fieldName, string $fieldScope): ?ExtraPropertyDefinitionInfo`
-> - `getDefinitionCollection(string $entityName): ExtraPropertyDefinitionCollection`
->
-> All read methods return typed `ExtraPropertyDefinitionInfo` value objects (not raw associative arrays).
->
-> **Write side** — `ExtraPropertyRegistryInterface` (Core, write-only):
-> - `register(string $entityName, string $propertyName, ExtraPropertyOptions $options): bool`
-> - `unregister(string $entityName, string $propertyName, ?string $moduleName, ExtraPropertyScope $fieldScope, bool $dropColumn): bool`
->
-**`ExtraPropertyRegistry`** (Core `Core\ExtraProperty\Registry\`): orchestrates register/unregister — validates input, calls `ExtraPropertySchemaManager` to create tables/columns, calls `ExtraPropertyDefinitionWriterInterface` to persist. Injects two repository handles: `$readRepository` (cached, for pre-flight checks) and `$writeRepository` (uncached DBAL, for mutations).
+The registry is split into three layers:
 
-- `register()` relies entirely on the `CacheInvalidatingSchemaManager` decorator for cache invalidation (no redundant call after the write).
-- `unregister()` delegates to `unregisterById()` (now **protected** — internal helper, not part of the public API). `unregisterById()` invalidates the cache itself when `dropColumn = false` (no DDL fires → the decorator does not trigger → explicit invalidation is essential to avoid stale reads).
-- For `unregister(dropColumn = true)` a harmless double-invalidation remains: the decorator fires on `dropExtraColumnIfExists` and `unregisterById()` fires again after the DELETE — idempotent and safe.
+**`ExtraPropertyDefinitionRepositoryInterface`** (read, 2 methods):
+- `getDefinitionCollection(string $entityName): ExtraPropertyDefinitionCollection`
+- `findDefinitionByModuleAndField(string $entityName, ?string $moduleName, string $fieldName, string $fieldScope): ?ExtraPropertyDefinitionInfo`
 
-**`CachedExtraPropertyDefinitionRepository`** (Core `Core\ExtraProperty\Repository\`): read-only cache decorator wrapping `ExtraPropertyDefinitionRepository`. Uses Symfony `cache.app` (optional, `@?cache.app`) + `FilesystemAdapter` fallback under `%ps_cache_dir%/extra_property_definition`. The cache key is computed by the public static method `CachedExtraPropertyDefinitionRepository::buildCacheKey(string $entityName)` — the single authoritative source used by both the registry and the schema manager decorator.
+All read methods return typed `ExtraPropertyDefinitionInfo` value objects. The interface is resolved to `CachedExtraPropertyDefinitionRepository` in the DI container.
 
-**`CacheInvalidatingSchemaManager`** (Core `Core\ExtraProperty\Schema\`): wraps `ExtraPropertySchemaManager`. Invalidates both cache pools after each DDL operation (`ensureExtraTableAndColumn`, `dropExtraColumnIfExists`).
+**`ExtraPropertyRegistryInterface`** (write-only):
+- `register(string $entityName, string $propertyName, ExtraPropertyOptions $options): bool`
+- `unregister(string $entityName, string $propertyName, ?string $moduleName, ExtraPropertyScope $fieldScope, bool $dropColumn): bool`
 
-### 3.8. ExtraPropertyValueValidator
+**`ExtraPropertyRegistry`** (pure, no cache): orchestrates register/unregister — validates input, calls `ExtraPropertySchemaManagerInterface` to create tables/columns, calls `ExtraPropertyDefinitionWriterInterface` to persist. Blocks storage-critical changes (type, size, scope, defaultValue) on already-registered definitions to prevent destructive ALTER TABLE.
 
-Centralizes validation of extra property values against their registered definitions. Used by `ExtraPropertiesApiService` (Admin API), `ExtraPropertiesFormDataPersister` (BO forms), and `ObjectModel::validateExtraProperties()`.
+**`CachedExtraPropertyRegistry`** (cache-invalidating decorator): wraps `ExtraPropertyRegistry`. Single point of cache invalidation after every `register()` or `unregister()` call. `ExtraPropertyRegistryInterface` is resolved to this class in the DI container.
+
+**`CachedExtraPropertyDefinitionRepository`**: read-only cache decorator wrapping `ExtraPropertyDefinitionRepository`. Receives a single `CacheInterface $definitionCache` (filesystem pool). The cache key is computed by the public static method `CachedExtraPropertyDefinitionRepository::buildCacheKey(string $entityName)` — used by both the repository and the registry decorator.
+
+### 3.8. ExtraPropertyDefinitionCollection
+
+Immutable collection of `ExtraPropertyDefinitionInfo` with chainable `filter*()` methods:
+
+- `filterByForm(): self` — only definitions with `display_form = true`
+- `filterByGrid(string $gridId): self` — only definitions where `associated_grids` contains `$gridId`
+- `filterForFrontOffice(): self` — only definitions with `display_front = true`
+- `filterByApi(): self` — only definitions with `display_api = true`
+- `filterByModuleName(?string $moduleName): self`
+- `filterByScope(ExtraPropertyScope|string $scope): self`
+- `filterByEntity(string $entityName): self`
+- `isEmpty(): bool`
+- `static empty(): self` — returns a shared empty singleton
+
+### 3.9. ExtraPropertyValidationInterface
+
+Centralized validation contract:
 
 ```php
-// Validates a flat column_name => value map against a list of definitions.
-// Returns true on success, or an error message string on first failure.
-$validator->validate(array $flatValues, list<ExtraPropertyDefinitionInfo> $definitions): true|string
+interface ExtraPropertyValidationInterface
+{
+    public function isTableOrIdentifier(string $value): bool;
+    public function isModuleName(string $value): bool;
+
+    /** Returns true on success, or a translated error message string on failure. */
+    public function validateValue(ExtraPropertyDefinitionInfo $definition, mixed $value): bool|string;
+}
 ```
 
-`$flatValues` uses the same storage-column format as `ExtraPropertiesBag::getModifiedValues()`: `['module_field' => value]`. The validator looks up each definition's column name via `ExtraPropertyNaming::storageColumnName()`.
-
-> **[impl]** Validators `isRequiredWhenActive` / `defaultLanguageRequiredWhenActive` require access to the ObjectModel instance and are skipped by this service; ObjectModel-level validation handles those cases directly.
-
-### 3.9. ColumnDefinitionMapper
-
-Maps `ExtraPropertyType` string values to SQL column definitions. Handles `ExtraPropertySqlIndex` (`None`, `Key`, `Unique`) to append index clauses. Used by `ExtraPropertySchemaManager`.
+`ExtraPropertyValueValidator` is the concrete implementation. Uses pure regex — no legacy ObjectModel dependency.
 
 ### 3.10. ExtraPropertyReader
 
 Reads extra property values from `_extra` tables. Uses `Doctrine\DBAL\Connection`.
 
-**Interface**: `ExtraPropertyReaderInterface` (merges former `ExtraPropertyValueProviderInterface`)
-
-Key methods:
+**Interface**: `ExtraPropertyReaderInterface` (`src/Core/ExtraProperty/Value/`)
 
 ```php
-/**
- * Returns values grouped by module: ['_core' => ['field' => value], 'mymodule' => [...]]
- *
- * Semantics of null lang/shop:
- *   $langId = null  → lang-scope fields returned as [id_lang => value] (all languages)
- *   $langId = int   → lang-scope fields returned as scalar (specific language, FO pattern)
- *   $shopId = null  → shop-scope fields returned as [id_shop => value] (all shops)
- *   $shopId = int   → shop-scope fields returned as scalar (specific shop, FO pattern)
- *
- * Usage contexts:
- *   FO / ObjectModel  → specific langId + shopId + isLangMultishop from entity def
- *   BO forms          → null langId + specific shopId + isLangMultishop = true
- *   Admin API / CQRS  → null langId + null shopId + isLangMultishop = false
- */
 public function getExtraProperties(
     string $entityName,
     string $primaryKeyName,
     int $entityId,
-    ?int $langId = null,
-    ?int $shopId = null,
+    ?int $langId,
+    ShopConstraint $shopConstraint,
     bool $isLangMultishop = false,
-    ?ExtraPropertyDefinitionCollection $preloadedDefinitions = null,
 ): array;
-
-/**
- * Returns typed definitions for a given entity, filtered by module and/or scope.
- *
- * @return list<ExtraPropertyDefinitionInfo>
- */
-public function getDefinitionsByModule(string $entityName, ?string $moduleName, ?string $fieldScope = null): array;
-
-/**
- * Finds one definition by field name. Returns null when ambiguous (multiple scopes match).
- */
-public function findCustomFieldDefinition(string $entityName, string $fieldName, ?string $fieldScope = null): ?ExtraPropertyDefinitionInfo;
 ```
 
-> **[impl]** The original proposal returned a flat `['column_name' => value]` map. The actual reader returns values **grouped by module**: `['_core' => ['field' => value], 'mymodule' => ['field' => value]]`. Conversion to the flat format happens in `ObjectModel::createExtraPropertiesBag()` (closure). `ExtraPropertiesLazyArray` (FO presenters) consumes the grouped format directly. The method accepts `primaryKeyName` (not assumed from entity name), `isLangMultishop`, and `preloadedDefinitions` (typed `ExtraPropertyDefinitionCollection`, to avoid double DB reads when definitions are already loaded by ObjectModel). `displayFrontOnly` was removed: front-office display is a template concern left to module developers.
->
-> **Null-lang / null-shop consolidation**: `getExtraProperties()` is the single source for all value reads. `ExtraPropertiesFormDataLoader` was deleted — `ExtraPropertiesFormBuilderModifier` calls the Reader directly with `langId = null` + specific `shopId` + `isLangMultishop = true`. `GetExtraPropertyValuesHandler` was simplified to delegate to the Reader with both `langId` and `shopId` null (returns all languages × all shops for the Admin API), removing its own DBAL queries and `buildColumnPropertyMap()` method.
->
-> `findCustomFieldDefinition()` was formerly on the now-deleted `ExtraPropertyValueProviderInterface`. It was merged into `ExtraPropertyReaderInterface` to eliminate the need for a separate value provider service — `ExtraPropertiesLazyArray` only depends on `ExtraPropertyReaderInterface`.
+Return format: `['module_key' => ['field_name' => value]]` where `module_key` is `ExtraPropertyNaming::displayModuleKey($moduleName)` (`'_core'` for core fields).
 
-**Performance**: reads definitions from the repository (cached); if no definitions exist for the entity, returns an empty array immediately without DB query.
+Lang-scope semantics:
+- `$langId = null` → lang-scope fields returned as `[id_lang => value]` (all languages; BO forms, Admin API)
+- `$langId = int` → lang-scope fields returned as scalar (specific language; FO pattern)
+
+Shop-scope semantics:
+- `ShopConstraint::shop($id)` → scalar value for that shop
+- `ShopConstraint::allShops()` → `[id_shop => value]` (Admin API)
+
+Performance: if no definitions exist for the entity, returns `[]` immediately without DB query.
 
 ### 3.11. ExtraPropertyWriter
 
-Writes extra property values to `_extra` tables. Uses `INSERT ... ON DUPLICATE KEY UPDATE` for upsert behavior.
+Writes extra property values to `_extra` tables via `INSERT ... ON DUPLICATE KEY UPDATE`.
 
-**Interface**: `ExtraPropertyWriterInterface`
-
-Key methods:
+**Interface**: `ExtraPropertyWriterInterface` (`src/Core/ExtraProperty/Value/`)
 
 ```php
-/**
- * Bulk write: entity values + all lang rows + shop row in one call.
- */
 public function writeAll(
     string $entityName,
     string $primaryKeyName,
     int $entityId,
-    array $entityValues,
-    array $langValuesByIdLang,
-    array $shopValues,
-    ?int $shopId = null,
+    array $entityValues,          // ['storageColumn' => value] for common scope
+    array $langValuesByIdLang,    // [idLang => ['storageColumn' => value]]
+    array $shopValues,            // ['storageColumn' => value] for shop scope
+    ShopConstraint $shopConstraint,
 ): void;
 
-/**
- * Single-field write for a specific scope.
- */
-public function writeValue(
-    string $entityName,
-    string $primaryKeyName,
-    int $entityId,
-    string $storageColumnName,
-    mixed $value,
-    string $fieldScope = 'common',
-    ?int $langId = null,
-    ?int $shopId = null,
-): bool;
-
-/**
- * Deletes all extra property rows for one entity instance (all three scopes).
- * Safe to call even if no extra properties are registered — tables that do not
- * exist are silently skipped.
- */
 public function deleteAll(string $entityName, string $primaryKeyName, int $entityId): void;
 ```
 
-> **[impl]** The original proposal named the methods `saveExtraProperties()` / `deleteExtraProperties()`. The actual implementation uses `writeAll()` (bulk, scope-separated), `writeValue()` (single field), and `deleteAll()` (cleans up all three `*_extra*` tables when an entity is deleted). `ObjectModel::delete()` calls `deleteAll()` via `ServiceLocator`, mirroring the pattern used in `persistExtraProperties()`.
+`ShopConstraint::allShops()` skips lang and shop-scope writes (caller must iterate shops for broad writes). `deleteAll()` silently skips tables that do not exist yet.
 
-### 3.12. ExtraPropertyDefinitionRepository
+### 3.12. Service Configuration
 
-CRUD operations for the `ps_extra_property_definition` table. Uses `Doctrine\DBAL\Connection`. Implements both `ExtraPropertyDefinitionRepositoryInterface` (read) and `ExtraPropertyDefinitionWriterInterface` (write).
-
-Key methods:
-
-- `getByEntityNameAllScopes(string $entityName): list<ExtraPropertyDefinitionInfo>` — typed objects for all scopes
-- `getDefinitionCollection(string $entityName): ExtraPropertyDefinitionCollection`
-- `getDefinitionById(int $id): ?ExtraPropertyDefinitionInfo`
-- `findDefinitionByModuleAndField(string $entity, ?string $module, string $field, string $scope): ?ExtraPropertyDefinitionInfo`
-- `normalizeEntityNameAndFieldScope(string $entityName, string $fieldScope): array{0: string|null, 1: string|null}` — resolves `_lang`/`_shop` suffixes, validates scope
-- `save(ExtraPropertyOptions $options, string $entityName, string $propertyName, ?string $moduleName, string $scope, ?int $existingId): int|false`
-- `delete(int $id): bool`
-
-> **[impl]** All read methods return typed `ExtraPropertyDefinitionInfo` value objects (not raw arrays). `save()` takes typed parameters (not an `array $data` map); the data array is assembled internally. The storage column name is never stored in the registry row — it is always computed by `ExtraPropertyNaming::storageColumnName()`.
-
-### 3.13. Service Configuration
-
-Located at `src/PrestaShopBundle/Resources/config/services/adapter/extra_property.yml` (for most services) and `src/PrestaShopBundle/Resources/config/services/core/grid/grid_extra_properties.yml` (for grid services):
-
-> **[impl]** The read/write split is reflected in the service aliases:
-> - `ExtraPropertyDefinitionRepositoryInterface` → `CachedExtraPropertyDefinitionRepository` (read, cached)
-> - `ExtraPropertyRegistryInterface` → `ExtraPropertyRegistry` (write, Core class)
->
-> All implementations live in `Core\ExtraProperty\*`. Only `CommandHandler` and `QueryHandler` remain in `Adapter\ExtraProperty\*`.
->
-> Cache key is computed by `CachedExtraPropertyDefinitionRepository::buildCacheKey()` (public static) — the single source of truth used by registry, schema manager decorator, and any future caller.
+`src/PrestaShopBundle/Resources/config/services/adapter/extra_property.yml`:
 
 ```yaml
 services:
   _defaults:
-    public: true
+    autowire: true
+    public: false
 
-  # Filesystem fallback cache pool
+  # Single filesystem cache pool shared by repository (reads) and registry (invalidation).
   prestashop.extra_property.definition.filesystem_cache:
     class: Symfony\Component\Cache\Adapter\FilesystemAdapter
     arguments: ['', 0, '%ps_cache_dir%/extra_property_definition']
 
-  # Repository (uncached, Core)
-  PrestaShop\PrestaShop\Core\ExtraProperty\Repository\ExtraPropertyDefinitionRepository:
-    arguments:
-      $connection: '@doctrine.dbal.default_connection'
-      $prefix: '%database_prefix%'
+  # Repository: uncached DBAL implementation + cached read-only decorator
+  PrestaShop\PrestaShop\Core\ExtraProperty\Repository\ExtraPropertyDefinitionRepositoryInterface:
+    alias: 'PrestaShop\PrestaShop\Core\ExtraProperty\Definition\CachedExtraPropertyDefinitionRepository'
+    public: true
 
-  PrestaShop\PrestaShop\Core\ExtraProperty\Repository\ExtraPropertyDefinitionWriterInterface:
+  PretraShop\PrestaShop\Core\ExtraProperty\Repository\ExtraPropertyDefinitionWriterInterface:
     alias: 'PrestaShop\PrestaShop\Core\ExtraProperty\Repository\ExtraPropertyDefinitionRepository'
 
-  # Cached read-only repository decorator (Core)
-  PrestaShop\PrestaShop\Core\ExtraProperty\Repository\CachedExtraPropertyDefinitionRepository:
-    arguments:
-      $repository: '@PrestaShop\PrestaShop\Core\ExtraProperty\Repository\ExtraPropertyDefinitionRepository'
-      $cacheApp: '@?cache.app'
-      $filesystemDefinitionCache: '@prestashop.extra_property.definition.filesystem_cache'
-
-  PrestaShop\PrestaShop\Core\ExtraProperty\Repository\ExtraPropertyDefinitionRepositoryInterface:
-    alias: 'PrestaShop\PrestaShop\Core\ExtraProperty\Repository\CachedExtraPropertyDefinitionRepository'
-
-  # Schema manager: base + cache-invalidating decorator (Core)
-  PrestaShop\PrestaShop\Core\ExtraProperty\Schema\ExtraPropertySchemaManager:
-    arguments:
-      $connection: '@doctrine.dbal.default_connection'
-      $prefix: '%database_prefix%'
-      $logger: '@?logger'
-
-  PrestaShop\PrestaShop\Core\ExtraProperty\Schema\CacheInvalidatingSchemaManager:
-    arguments:
-      $inner: '@PrestaShop\PrestaShop\Core\ExtraProperty\Schema\ExtraPropertySchemaManager'
-      $cacheApp: '@?cache.app'
-      $filesystemDefinitionCache: '@prestashop.extra_property.definition.filesystem_cache'
-
+  # Schema manager: raw DDL, no cache decorator
   PrestaShop\PrestaShop\Core\ExtraProperty\Schema\ExtraPropertySchemaManagerInterface:
-    alias: 'PrestaShop\PrestaShop\Core\ExtraProperty\Schema\CacheInvalidatingSchemaManager'
+    alias: 'PrestaShop\PrestaShop\Core\ExtraProperty\Schema\ExtraPropertySchemaManager'
 
-  # Registry (write-only, Core)
-  PrestaShop\PrestaShop\Core\ExtraProperty\Registry\ExtraPropertyRegistry:
-    arguments:
-      $readRepository: '@PrestaShop\PrestaShop\Core\ExtraProperty\Repository\ExtraPropertyDefinitionRepositoryInterface'
-      $writeRepository: '@PrestaShop\PrestaShop\Core\ExtraProperty\Repository\ExtraPropertyDefinitionRepository'
-      $schemaManager: '@PrestaShop\PrestaShop\Core\ExtraProperty\Schema\ExtraPropertySchemaManagerInterface'
-      $cacheApp: '@?cache.app'
-      $filesystemDefinitionCache: '@prestashop.extra_property.definition.filesystem_cache'
-      $logger: '@?logger'
-
+  # Registry: pure implementation + cache-invalidating decorator
   PrestaShop\PrestaShop\Core\ExtraProperty\Registry\ExtraPropertyRegistryInterface:
-    alias: 'PrestaShop\PrestaShop\Core\ExtraProperty\Registry\ExtraPropertyRegistry'
+    alias: 'PrestaShop\PrestaShop\Core\ExtraProperty\Registry\CachedExtraPropertyRegistry'
+    public: true
 
-  # Reader / Writer (Core)
-  PrestaShop\PrestaShop\Core\ExtraProperty\Storage\ExtraPropertyReader:
-    arguments:
-      $repository: '@PrestaShop\PrestaShop\Core\ExtraProperty\Repository\ExtraPropertyDefinitionRepositoryInterface'
-      $connection: '@doctrine.dbal.default_connection'
-      $prefix: '%database_prefix%'
+  # Reader / Writer
+  PrestaShop\PrestaShop\Core\ExtraProperty\Value\ExtraPropertyReaderInterface:
+    alias: 'PrestaShop\PrestaShop\Core\ExtraProperty\Value\ExtraPropertyReader'
+    public: true
 
-  PrestaShop\PrestaShop\Core\ExtraProperty\Storage\ExtraPropertyReaderInterface:
-    alias: 'PrestaShop\PrestaShop\Core\ExtraProperty\Storage\ExtraPropertyReader'
-
-  PrestaShop\PrestaShop\Core\ExtraProperty\Storage\ExtraPropertyWriter:
-    arguments:
-      $connection: '@doctrine.dbal.default_connection'
-      $prefix: '%database_prefix%'
-
-  PrestaShop\PrestaShop\Core\ExtraProperty\Storage\ExtraPropertyWriterInterface:
-    alias: 'PrestaShop\PrestaShop\Core\ExtraProperty\Storage\ExtraPropertyWriter'
+  PrestaShop\PrestaShop\Core\ExtraProperty\Value\ExtraPropertyWriterInterface:
+    alias: 'PrestaShop\PrestaShop\Core\ExtraProperty\Value\ExtraPropertyWriter'
+    public: true
 ```
+
+Grid services: `src/PrestaShopBundle/Resources/config/services/core/grid/grid_extra_properties.yml`
 
 ---
 
-## 4. CQRS Domain Layer (Partial)
+## 4. Module Integration
 
-Only value read/write operations that need API exposure use the CQRS pattern. Registration/unregistration is handled via direct service calls (see [Module Integration](#5-module-integration)).
-
-### 4.1. Directory Structure
-
-```
-src/Core/Domain/ExtraProperty/
-├── Command/
-│   └── UpdateExtraPropertyValuesCommand.php
-├── CommandHandler/
-│   └── UpdateExtraPropertyValuesCommandHandlerInterface.php
-├── Query/
-│   └── GetExtraPropertyValues.php
-├── QueryHandler/
-│   └── GetExtraPropertyValuesHandlerInterface.php
-├── QueryResult/
-│   ├── ExtraPropertyDefinitionInfo.php
-│   └── ExtraPropertyValuesResult.php
-└── Exception/
-    └── ExtraPropertyDomainException.php
-```
-
-> **[impl]** Compared to the original proposal, two planned items were dropped:
->
-> - `Query/GetExtraPropertyDefinitions.php` + its handler — definition reads go directly through `ExtraPropertyDefinitionRepositoryInterface` injected into services; no dedicated admin endpoint for listing definitions exists in this PR, so routing through the CQRS bus would add overhead with no benefit.
-> - `ValueObject/ExtraPropertyId.php` — PS typed ID value objects (e.g. `ProductId`) are useful when a handler needs to express "this ID belongs to *this* domain entity". Here handlers receive `entityId` (a product/customer/etc. ID), not a definition ID. The `id_extra_property_definition` is only used internally by the registry (`unregisterById`), which bypasses the bus entirely. No handler signature required a typed wrapper.
-
-Adapter implementations in:
-```
-src/Adapter/ExtraProperty/
-├── CommandHandler/
-│   └── UpdateExtraPropertyValuesCommandHandler.php
-└── QueryHandler/
-    └── GetExtraPropertyValuesHandler.php
-```
-
-### 4.2. Commands & Queries
-
-`**UpdateExtraPropertyValuesCommand**`: Takes entity name, entity ID, associative array of `column_name => value`, optional lang ID and shop ID. Used by API write processors and BO form handlers.
-
-> **[impl]** The actual command carries three separate scope arrays instead of a single flat map: `entityValues` (common scope), `langValuesByIdLang` (`[id_lang => [col => value]]`), `shopValuesByShopId` (`[id_shop => [col => value]]`), and an optional `langShopId` for lang-multishop context. This avoids ambiguity between lang and shop keys and matches the `ExtraPropertyWriterInterface::writeAll()` signature exactly.
-
-`**GetExtraPropertyValues**`: Query to read values for a specific entity instance. Used by the Admin API to include extra properties in entity responses.
-
-> **[impl]** `GetExtraPropertyValues` does not accept `langId`/`shopId` parameters. The handler (`GetExtraPropertyValuesHandler`) delegates to `ExtraPropertyReaderInterface::getExtraProperties()` with both null to load **all** languages and **all** shops in a single pass — the pattern required by the Admin API. A `displayApiOnly: bool` flag restricts the result to definitions with `display_api = 1` before calling the Reader. Lang-scope values are returned indexed by `id_lang` (int); `ExtraPropertiesApiService` converts them to locale strings (e.g. `"fr-FR"`) for the API response.
-
-> **[impl]** `ObjectModel` still calls `ExtraPropertyWriterInterface` directly via `ServiceLocator` (legacy context, unchanged). The CQRS bus is the entry point for `ExtraPropertiesApiService` (Admin API) and `ExtraPropertiesFormDataPersister` (BO forms).
-
----
-
-## 5. Module Integration
-
-### 5.1. New Methods on Module Class
+### 4.1. New Methods on Module Class
 
 File: `classes/module/Module.php`
 
-> **[impl]** `Module::registerExtraProperty()` / `unregisterExtraProperty()` use `ExtraPropertyRegistryInterface` (write-only).
-
-#### `registerExtraProperty()`
-
 ```php
-/**
- * Register an extra property for an entity.
- *
- * @param string $entityName Entity table name (e.g., 'product', 'customer')
- * @param string $propertyName Property name (will be prefixed with module name in storage)
- * @param ExtraPropertyOptions $options Configuration DTO
- *
- * @return bool
- */
 public function registerExtraProperty(
     string $entityName,
     string $propertyName,
@@ -737,467 +473,269 @@ public function registerExtraProperty(
 ): bool
 ```
 
-This method calls core services directly (no CommandBus):
-
-1. Resolves `$this->name` as the module name (via `$options->withModuleName($this->name)`)
-2. Calls `ExtraPropertyRegistryInterface::register()` which orchestrates schema creation, definition persistence, and cache invalidation
-
-#### `unregisterExtraProperty()`
+Resolves `$this->name` as the module name (via `$options->withModuleName($this->name)`) and calls `ExtraPropertyRegistryInterface::register()`.
 
 ```php
 public function unregisterExtraProperty(
     string $entityName,
     string $propertyName,
     ExtraPropertyScope $fieldScope = ExtraPropertyScope::Common,
-    bool $dropColumn = false,
+    bool $dropData = false,
 ): bool
 ```
 
-### 5.2. Automatic Cleanup on Uninstall
+`dropData = true` drops the physical column in addition to deleting the definition row.
 
-> **[impl]** Automatic cleanup on uninstall is **not yet implemented**. `Module::uninstall()` does not call any extra property cleanup. Modules are responsible for calling `unregisterExtraProperty()` explicitly in their `uninstall()` method if they want to clean up their definitions and/or columns.
->
-> `unregisterAllExtraProperties()` is **not** exposed on `Module`. If needed, modules can iterate their definitions via `ExtraPropertyDefinitionRepositoryInterface` and call `ExtraPropertyRegistryInterface::unregister()` directly.
+### 4.2. Automatic Cleanup on Uninstall
 
-### 5.3. Module Usage Example
+Not yet implemented. Modules are responsible for calling `unregisterExtraProperty()` explicitly in their `uninstall()` method.
+
+### 4.3. Module Usage Example
 
 ```php
 $this->registerExtraProperty(
     'product',
     'video_link',
     new ExtraPropertyOptions(
-        type: ExtraPropertyType::String,
+        type: ExtraPropertyType::STRING,
         scope: ExtraPropertyScope::Lang,
-        titleWording: 'Video link',
-        titleDomain: 'Modules.Extrafieldproduct.Admin',
+        labelWording: 'Video link',
+        labelDomain: 'Modules.Extrafieldproduct.Admin',
         descriptionWording: 'Video URL per language',
         descriptionDomain: 'Modules.Extrafieldproduct.Admin',
         displayApi: true,
         displayForm: true,
-        validator: 'isUrl'
+        displayFront: true,
+        associatedGrids: ['product'],
+        validator: 'isUrl',
     )
 );
-
-// Make strings discoverable by the BO translation UI
-$this->trans('Video link', [], 'Modules.Extrafieldproduct.Admin');
-$this->trans('Video URL per language', [], 'Modules.Extrafieldproduct.Admin');
 ```
 
-### 5.4. Handling Two Modules on the Same Entity
+### 4.4. Handling Two Modules on the Same Entity
 
-When two modules register extra properties on the same entity (e.g., `product`), they share the same `product_extra` table but have distinct column names due to the `{module_name}_` prefix:
-
-```
-product_extra table:
-| id_product | moduleA_custom_size | moduleB_is_organic |
-|------------|---------------------|--------------------|
-| 1          | "XL"                | 1                  |
-| 2          | "M"                 | 0                  |
-```
-
-Each module only reads/writes its own columns. Uninstalling one module removes only its columns.
+Modules share the same `{entity}_extra` table but have distinct column names due to the `{module_name}_` prefix. Uninstalling one module removes only its columns.
 
 ---
 
-## 6. ObjectModel Integration (Front-Office)
+## 5. ObjectModel Integration (Front-Office)
 
-### 6.1. ExtraPropertiesLazyArray
+### 5.1. ExtraPropertiesLazyArray
 
-> **[impl]** `ExtraPropertiesLazyArray` lives in `src/Adapter/Presenter/` (not `src/Core/ExtraProperty/`). It does **not** extend `AbstractLazyArray` directly — it is a collaborator assigned to a protected property `$extraPropertiesLazyArray` on `AbstractLazyArray`. The lazy-load method `getExtraProperties()` is defined once on `AbstractLazyArray` and delegates to this collaborator.
->
-> `ExtraPropertiesLazyArray` exposes two factory methods that resolve entity metadata from `ObjectModel::getDefinition()`. Both factories resolve `ExtraPropertyReaderInterface` and `Context` internally via `ServiceLocator` / `Context::getContext()` — callers pass no infrastructure dependencies:
+Located in `src/Core/ExtraProperty/Value/ExtraPropertiesLazyArray.php`. Not an `AbstractLazyArray` subclass — it is a collaborator assigned to the `$extraPropertiesLazyArray` protected property on `AbstractLazyArray`. `AbstractLazyArray::getExtraProperties()` delegates to `$extraPropertiesLazyArray->getValues()`.
+
+Private constructor; built exclusively via two static factories:
 
 ```php
-namespace PrestaShop\PrestaShop\Adapter\Presenter;
+/** For a loaded ObjectModel instance (e.g. Order). No-op when $object->id <= 0. */
+public static function fromObjectModel(ObjectModel $object): self;
 
-class ExtraPropertiesLazyArray
-{
-    /** For array-based data (e.g. product from presenter): resolves pk from ObjectModel static def */
-    public static function fromObjectModelClass(
-        string $objectModelClass,
-        int $entityId,
-    ): self;
-
-    /** For an already-loaded ObjectModel instance (e.g. Order) */
-    public static function fromObjectModel(
-        ObjectModel $object,
-    ): self;
-
-    /** Called by AbstractLazyArray::getExtraProperties() */
-    public function getValues(): array;
-}
+/** For array-based data (e.g. product from presenter): resolves PK from ObjectModel static def. */
+public static function fromObjectModelClass(string $objectModelClass, int $entityId): self;
 ```
 
-`getValues()` delegates to `ExtraPropertyReaderInterface::getExtraProperties()`. The `isLangMultishop` flag is derived from the entity's ObjectModel definition (`$def['multilang'] && $def['multilang_shop']`), not hardcoded — entities that are not lang-multishop pass `false`. All registered extra properties are returned — front-office filtering is left to the module template.
+Both factories resolve `ExtraPropertyReaderInterface` and `ExtraPropertyDefinitionRepositoryInterface` via `ContainerFinder`.
 
-**LazyArrays that expose `extraProperties`** (via `$this->extraPropertiesLazyArray` assignment before `parent::__construct()`):
+`getValues()`:
+- Returns `[]` immediately when provider is null (invalid/unresolvable state or id = 0)
+- Calls `repository->getDefinitionCollection()->filterForFrontOffice()` — skips DB read when no FO fields are registered
+- Filters the reader result to only fields in the FO whitelist (`display_front = true`)
+- Returns: `['module_key' => ['field_name' => value]]`
 
+**LazyArrays that expose `extraProperties`** (via `$this->extraPropertiesLazyArray` assignment):
 - `ProductLazyArray`
 - `CategoryLazyArray`, `SupplierLazyArray`, `ManufacturerLazyArray`, `StoreLazyArray`
 - `OrderLazyArray`, `OrderDetailLazyArray`, `OrderReturnLazyArray`
 
-`CartLazyArray` does **not** expose `extraProperties` (left as `null`).
+`CartLazyArray` does **not** expose `extraProperties`.
 
-### 6.2. ObjectModel Integration
+### 5.2. ObjectModel Integration
 
 File: `classes/ObjectModel.php`
 
-> **[impl]** ObjectModel holds a single protected field `$extra_properties` typed as `?ExtraPropertiesBag`. Accessed from outside the class via `__get('extra_properties')`, which initializes the bag on first call.
+ObjectModel holds a single protected field `$extra_properties` typed as `?ExtraPropertiesBag`. Accessed from outside the class via `__get('extra_properties')`, which initializes the bag on first call.
 
-**`ExtraPropertiesBag`** (`src/Core/ExtraProperty/ExtraPropertiesBag.php`): lazy-loading value bag implementing `ArrayAccess`, `IteratorAggregate`, and `JsonSerializable`. Keys are flat storage column names (`ExtraPropertyNaming::storageColumnName($module, $field)` = `{module}_{field}`). The dirty flag lives inside the bag — `hasModifications()` / `getModifiedValues()` are the only interface `ObjectModel` uses for persist/validate decisions.
+**`ExtraPropertiesBag`** (`src/Core/ExtraProperty/ExtraPropertiesBag.php`): lazy-loading grouped bag implementing `ArrayAccess`, `IteratorAggregate`, and `JsonSerializable`. Keys are module names (`'mymodule'`, `'_core'`); values are `ModuleFieldsBag` instances.
 
-```php
-$product->extra_properties['mymodule_video_link']           // read (ArrayAccess)
-$product->extra_properties['mymodule_video_link'] = '...'   // write + mark dirty
-isset($product->extra_properties['mymodule_video_link'])    // isset
-foreach ($product->extra_properties as $col => $val) {}    // iterate (triggers load)
-json_encode($product->extra_properties)                     // serialize (triggers load)
-```
-
-The bag is initialized by a closure created in `ObjectModel::createExtraPropertiesBag()`. The closure calls `ExtraPropertyReaderInterface::getExtraProperties()` (grouped format) via `ContainerFinder`, then converts to flat: for each `[module][field] => value` entry, the key becomes `storageColumnName(module, field)`.
-
-Key ObjectModel methods:
+**`ModuleFieldsBag`** (`src/Core/ExtraProperty/ModuleFieldsBag.php`): per-module `ArrayAccess` bag. Keys are field names; values are scalars (or `[id_lang => value]` arrays for lang-scoped fields). Tracks its own dirty fields and computes storage column names on `getModifiedValues()`.
 
 ```php
-/** Returns all extra properties as a flat column_name => value array. */
-public function getExtraProperties(): array
-
-/** Get a single extra property value (resolves definition, then reads from bag). */
-public function getExtraProperty(?string $moduleName, string $propertyName, ?string $scope = null): mixed
-
-/** Set a single extra property in memory (resolves definition, writes to bag → marks dirty). */
-public function setExtraProperty(?string $moduleName, string $propertyName, mixed $value, ?string $scope = null): bool
+$product->extra_properties['mymodule']['video_link']           // read (grouped)
+$product->extra_properties['mymodule']['video_link'] = '...'   // write + mark dirty
 ```
 
-Persistence is handled by `persistExtraProperties()` (called from `add()`/`update()`): checks `$bag->hasModifications()`, iterates definitions to compute column names and determine scope routing, then delegates to `ExtraPropertyWriterInterface::writeAll()`.
+`offsetGet()` on `ExtraPropertiesBag` auto-creates an empty `ModuleFieldsBag` for unknown keys, which makes chained writes work without a prior load. `getModifiedValues()` on the parent bag aggregates flat `[storageColumnName => value]` maps from all module bags.
 
-### 6.3. Lazy Loading
+Persistence via `persistExtraProperties()` (called from `add()`/`update()` after `actionObject*After` hooks): iterates definitions to compute scope routing, then delegates to `ExtraPropertyWriterInterface::writeAll()` with `ShopConstraint` from `Context::getContext()->getShopConstraint()`. Multi-shop persistence iterates `$this->id_shop_list` for shop-scoped fields.
 
-Extra properties are NOT loaded in the ObjectModel constructor. `getExtraProperties()` queries the DB on first call. If no extra properties are registered for the entity, an empty array is returned immediately without any DB query.
-
-### 6.4. Automatic Persistence
-
-In `add()` and `update()`, after the `actionObject*After` hooks, `persistExtraProperties()` is called to flush any values set via `setExtraProperty()`.
-
-### 6.5. Front-Office Template Access
-
-Since `extraProperties` is exposed on all relevant LazyArrays, it is automatically available in FO templates:
+### 5.3. Front-Office Template Access
 
 **In Smarty templates** (via presenter):
 
 ```smarty
 {$product.extraProperties.ps_extrafield_product.video_link|default:''}
 {$category.extraProperties.ps_extrafield_category.theme_color|default:''}
-{$order.extraProperties.ps_extrafield_order.is_priority|default:false}
 ```
 
-**In PHP** (any ObjectModel):
+**On ObjectModel directly** (grouped ArrayAccess):
 
 ```php
-// ArrayAccess on ExtraPropertiesBag (flat column name = module_name . '_' . field_name)
-$product->extra_properties['mymodule_custom_size'];          // read
-$product->extra_properties['mymodule_custom_size'] = 'XL';  // write (persisted on next save())
-
-// Via explicit getter / setter (resolves definition, then delegates to bag)
-$product->getExtraProperty('mymodule', 'custom_size');
-$product->setExtraProperty('mymodule', 'custom_size', 'XL');
+$product->extra_properties['mymodule']['video_link'];
+$product->extra_properties['mymodule']['video_link'] = 'https://...';
 ```
 
 ---
 
-## 7. Admin API Integration
+## 6. Admin API Integration
 
-### 7.1. Strategy
+### 6.1. Strategy
 
-Extra properties are exposed as an `extraProperties` sub-object in entity API responses, grouped by module name. This clearly distinguishes native fields from extra ones and avoids naming conflicts.
-
-Example API response:
+Extra properties appear as an `extraProperties` sub-object in entity API responses, grouped by module name. Only properties with `display_api = 1` are included.
 
 ```json
 {
   "productId": 1,
   "name": "T-shirt",
-  "price": "19.99",
   "extraProperties": {
-    "mymodule": {
-      "custom_size": "XL",
-      "custom_label": "Limited Edition"
-    },
-    "othermodule": {
-      "is_organic": true
-    }
+    "mymodule": { "custom_size": "XL" },
+    "_core": { "internal_code": "ABC" }
   }
 }
 ```
 
-> **[impl]** The response format nests fields under their module name (`extraProperties.{module}.{field}`) rather than flattening all fields under `extraProperties`. Only properties with `display_api = 1` are included.
+### 6.2. Implementation
 
-### 7.2. Implementation
+`ExtraPropertiesApiService` (`src/PrestaShopBundle/ApiPlatform/ExtraProperties/`) is called from `CQRSApiSerializer` during `normalize()` and `denormalize()`.
 
-> **[impl]** There is no dedicated CQRS layer for API integration. The API integration uses a single service `ExtraPropertiesApiService` (in `src/PrestaShopBundle/ApiPlatform/ExtraProperties/`) called from `CQRSApiSerializer` during `normalize()` and `denormalize()`. It injects `ExtraPropertyDefinitionRepositoryInterface` (read) and dispatches read/write via the command bus.
-
-`ExtraPropertiesApiService` responsibilities:
-
-- **Read**: dispatches `GetExtraPropertyValues` query; converts `id_lang` → locale strings for the response
-- **Write**: validates payload, stores pending values in the Request, then dispatches `UpdateExtraPropertyValuesCommand` during the `normalize()` pass
-- **Validation**: `validateExtraPropertiesPayload()` — checks submitted field names against registry definitions filtered to `display_api = 1`
-
-### 7.3. Write Operations
-
-```
-PATCH /api/products/1
-{
-  "extraProperties": {
-    "mymodule": {
-      "custom_size": "M"
-    }
-  }
-}
-```
-
-### 7.4. API Resource Mapping
-
-The definition's `property_name` is used as-is in the API. For core fields (`module_name IS NULL`), they appear under the `_core` key in the response.
+Responsibilities:
+- **Read**: calls `ExtraPropertyReaderInterface::getExtraProperties()` with `ShopConstraint`; converts `id_lang` → locale strings for the response
+- **Write**: validates payload, dispatches write via `ExtraPropertyWriterInterface::writeAll()`
+- **Validation**: checks submitted field names against registry definitions filtered to `display_api = 1`
 
 ---
 
-## 8. Back-Office Form Integration
+## 7. Back-Office Form Integration
 
-### 8.1. Strategy
+### 7.1. Strategy
 
-Extra property fields are added to BO entity forms via the existing hook system. Instead of a single `ExtraPropertyFormHelper`, the implementation uses dedicated modifier/loader/persister services that are wired to the existing Symfony form event system.
+`ExtraPropertiesFormBuilderModifier` adds extra property fields to BO entity forms. It is injected into `FormHandler` and called directly — no hook required. `ExtraPropertiesFormDataPersister` is injected into `FormHandler` for persistence.
 
-> **[impl]** There is no `ExtraPropertyFormHelper`. The original proposal's single-helper approach was replaced by a set of specialized services:
-> - `ExtraPropertiesFormBuilderModifier` — adds form fields (filters by `display_form = 1`) and loads existing values via `ExtraPropertyReaderInterface` (`langId = null` → all langs, `isLangMultishop = true`)
-> - `ExtraPropertiesFormDataPersister` — persists submitted values (dispatches `UpdateExtraPropertyValuesCommand`)
-> - `ExtraPropertiesFormDefinitionProvider` — provides filtered `ExtraPropertyDefinitionCollection` (display_form = 1)
->
-> `ExtraPropertiesFormDataLoader` was deleted — `ExtraPropertiesFormBuilderModifier` calls `ExtraPropertyReaderInterface::getExtraProperties()` directly.
+- `ExtraPropertiesFormBuilderModifier::apply()`: calls `repository->getDefinitionCollection($entityName)->filterByForm()` directly; loads existing values via `ExtraPropertyReaderInterface` with `null` langId (all langs) and `ShopContext::getShopConstraint()`
+- `ExtraPropertiesFormDataPersister`: calls `ExtraPropertyWriterInterface::writeAll()` directly
 
-### 8.2. Type Mapping (ExtraPropertyType → Symfony FormType)
+### 7.2. Placement Logic
 
-If `form_field_type` is set in the definition, it is used directly. Otherwise, the default mapping applies:
+- `form_position` empty → fields added to a dedicated `extra_fields.extra_properties` section (created if missing). On simple forms without tabs, fields are injected at root level instead.
+- `form_position` set → must point to an already-existing sub-builder (strict dot-path resolution, no silent creation).
+- Optional `:before`/`:after` suffix → relative placement via `FormBuilderModifier::addBefore()`/`addAfter()`. Example: `combination_details.reference:before` inserts the field just before the `reference` field inside the `combination_details` sub-builder.
 
-| ExtraPropertyType | Symfony Form Type       | Notes                                |
-| ----------------- | ----------------------- | ------------------------------------ |
-| `int`             | `IntegerType`           |                                      |
-| `bool`            | `CheckboxType`          | Rendered as toggle in BO             |
-| `string`          | `TextType`              |                                      |
-| `float`           | `NumberType`            |                                      |
-| `date`            | `DateTimeType`          |                                      |
-| `html`            | `FormattedTextareaType` | PrestaShop's TinyMCE textarea        |
-| `json`            | `TextareaType`          |                                      |
-| `choice`          | `ChoiceType`            | choices from definition's `enumValues` |
+### 7.3. Type Mapping (ExtraPropertyType → Symfony FormType)
+
+If `form_field_type` is set in the definition, it is used directly. Otherwise:
+
+| ExtraPropertyType | Symfony Form Type |
+|---|---|
+| `INT` | `IntegerType` |
+| `BOOL` | `CheckboxType` |
+| `STRING` | `TextType` (default) |
+| `FLOAT` | `NumberType` |
+| `DATE` | `DateTimeType` |
+| `HTML` | `FormattedTextareaType` |
+| `JSON` | `TextareaType` |
+| `CHOICE` | `ChoiceType` |
 
 For `lang` fields, the form type is wrapped in `TranslatableType`.
 
-### 8.3. i18n Labels
+### 7.4. i18n Labels
 
-Labels and descriptions are stored as wording + domain in the registry. They are resolved at runtime via the Symfony translator:
+Labels and descriptions use `label_wording` + `label_domain` stored in the registry, resolved at runtime via the Symfony translator.
 
-```
-ExtraPropertiesFormBuilderModifier::apply(...)
-  └─ $translator->trans($definition->getTitleWording(), [], $definition->getTitleDomain())
-```
-
-Modules must call `$this->trans(...)` (or provide `.xlf` files) to make wordings discoverable in the BO translation UI.
-
-### 8.4. Basic Integration (via form_rest)
-
-Fields added via `ExtraPropertiesFormBuilderModifier` are automatically rendered by `form_rest()` or `form_end()` calls in Twig templates. Extra properties appear at the end of the form by default.
-
-### 8.5. Module Usage in Form Hooks
-
-> **[impl]** Core handles form building, data loading, and persistence automatically via `ExtraPropertiesFormBuilderModifier` and `ExtraPropertiesFormDataPersister` (wired to the entity's form hooks in `services.yml`). Modules do not need to implement `hookActionProductFormBuilderModifier` themselves unless they need custom positioning or custom form types.
+`label_wording` is **required** when `display_form = true` or `associated_grids` is non-empty. `ExtraPropertyRegistry::register()` returns `false` (with a logged error) if this constraint is violated.
 
 ---
 
-## 9. Grid Integration
+## 8. Grid Integration
 
-### 9.1. Strategy
+### 8.1. Strategy
 
-Extra property columns are added to BO grids via dedicated modifier services. These services are wired to the existing grid definition/query builder modifier hooks.
+`ExtraPropertiesGridDefinitionModifier` adds columns and filters to BO grids. It is injected into `DoctrineGridDataFactory`. `ExtraPropertiesGridQueryBuilderModifier` adds LEFT JOINs.
 
-> **[impl]** There is no `ExtraPropertyGridHelper`. The original proposal's single-helper approach was replaced by:
-> - `ExtraPropertiesGridDefinitionModifier` — adds columns and filters (`display_grid = 1`)
-> - `ExtraPropertiesGridQueryBuilderModifier` — adds LEFT JOINs and SELECT aliases
-> - `ExtraPropertiesGridDefinitionProvider` — provides filtered `ExtraPropertyDefinitionCollection` (`display_grid = 1`)
+`filterByGrid(string $gridId)` selects only definitions whose `associated_grids` JSON array contains an entry whose `gridId` component matches — via `ExtraPropertyDefinitionInfo::getGridEntry($gridId)` (parses each entry with `ExtraPropertyNaming::parseGridEntry()`). `ExtraPropertyDefinitionRepositoryInterface::getDefinitionCollectionByGridId($gridId)` queries the DB directly with `JSON_SEARCH` for cross-entity lookups. JSON fields are skipped (no meaningful grid representation).
 
-### 9.2. Query Builder Modification
-
-The grid modifier adds LEFT JOINs to the existing search query:
+### 8.2. Query Builder Modification
 
 ```sql
 SELECT p.*, extra.mymodule_custom_size AS extra_common_mymodule_custom_size
 FROM ps_product p
 LEFT JOIN ps_product_extra extra ON extra.id_product = p.id_product
-WHERE ...
-ORDER BY extra_common_mymodule_custom_size ASC
 ```
 
-> **[impl]** SELECT aliases follow the naming convention: `extra_{scope}_{module}_{field}` (generated by `ExtraPropertyNaming::formFieldName()`). This ensures column IDs are unique across scopes and modules.
+SELECT aliases follow `ExtraPropertyNaming::formFieldName()`: `extra_{scope}_{module}_{field}`.
 
-### 9.3. Column Type Mapping
+### 8.3. Column Type Mapping
 
 | ExtraPropertyType | Grid Column Type |
 |---|---|
-| `Int`, `Float` | `DataColumn` |
-| `Bool` | `ToggleColumn` |
-| `String`, `Html` | `DataColumn` |
-| `Date` | `DateTimeColumn` |
-| `Choice` | `DataColumn` |
-| `Json` | Not displayed in grid |
+| `INT`, `FLOAT` | `DataColumn` |
+| `BOOL` | `ToggleColumn` (uses `admin_common_extra_properties_toggle` route) |
+| `STRING`, `HTML`, `CHOICE` | `DataColumn` |
+| `DATE` | `DateTimeColumn` |
+| `JSON` | Not displayed in grid |
 
 ---
 
-## 10. Supported Types
+## 9. Supported Types
 
-### Phase 2 (Initial types)
-
-| Type | Constant | ObjectModel equiv. | Description |
-|------|----------|---------------------|-------------|
-| Boolean | `Bool` | `ObjectModel::TYPE_BOOL` | true/false, stored as `tinyint(1)` |
-| Integer | `Int` | `ObjectModel::TYPE_INT` | Whole numbers |
-| String | `String` | `ObjectModel::TYPE_STRING` | Text up to `size` characters |
-
-### Phase 7 (Additional types)
-
-| Type | Constant | Description |
-|------|----------|-------------|
-| Float | `Float` | Decimal numbers, stored as `decimal(20,6)` |
-| DateTime | `Date` | Date and time values |
-| Choice | `Choice` | Enum-like, configured with `enumValues` array (stored as MySQL `ENUM`) |
-| JSON | `Json` | Arbitrary JSON data, auto `json_encode`/`json_decode` on read/write |
-
-### HTML type
-
-| Type | Constant | Description |
-|------|----------|-------------|
-| HTML | `Html` | Rich text content, purified via `Tools::purifyHTML()` |
+| Type | Constant | SQL column | Notes |
+|------|----------|------------|-------|
+| Boolean | `ExtraPropertyType::BOOL` | `tinyint(1)` | |
+| Integer | `ExtraPropertyType::INT` | `int(10)` | |
+| String | `ExtraPropertyType::STRING` | `varchar({size})` | size default: 255 |
+| Float | `ExtraPropertyType::FLOAT` | `decimal(20,6)` | |
+| DateTime | `ExtraPropertyType::DATE` | `datetime` | |
+| Choice | `ExtraPropertyType::CHOICE` | `ENUM(...)` | values from `enumValues` |
+| JSON | `ExtraPropertyType::JSON` | `text` | not shown in grid |
+| HTML | `ExtraPropertyType::HTML` | `text` | rich text, purified |
 
 ---
 
-## 11. Performance Considerations
+## 10. Performance Considerations
 
-1. **Definition caching**: `CachedExtraPropertyDefinitionRepository` uses Symfony's `cache.app` pool with a `FilesystemAdapter` fallback for FO legacy contexts. Cache is invalidated by `ExtraPropertyRegistry` after any write (register/unregister).
-2. **Lazy loading in ObjectModel**: Extra properties are NOT loaded on object construction. They are loaded on first `getExtraProperties()` / `getExtraProperty()` call.
-3. **No-op when unused**: The reader checks definitions first. If no extra properties exist for an entity, an empty array is returned immediately without DB query.
-4. **Bulk reading in grids**: `ExtraPropertiesGridQueryBuilderModifier` adds LEFT JOINs to existing grid queries — extra properties are fetched alongside main entity data in a single query (no N+1 problem).
-5. **Column-based storage**: Unlike WordPress-style meta tables (one row per meta value), extra properties are stored as columns. This enables SQL indexing and constraints, no row multiplication, and reduced JOINs.
-6. **Optional column indexing**: For extra properties used as grid filters, the schema manager can add a `KEY` or `UNIQUE` index if `sqlIndex` is set in the definition.
-7. **Definition cache across requests**: The `FilesystemAdapter` fallback ensures definitions are not re-read from DB on every FO request even when `cache.app` is not available.
-
----
-
-## 12. Conflict Handling
-
-1. **Column name uniqueness**: The column name `{module_name}_{property_name}` is enforced unique per entity+scope via the DB unique key `extra_property_definition_unique`. For core fields, `module_name IS NULL` so core columns are named `{property_name}` (no prefix).
-2. **Module name uniqueness**: Module names are guaranteed unique in the `ps_module` table.
-
-3. **Column name length**: Enforced to be <= 64 characters. `registerExtraProperty()` returns false if exceeded.
-4. **MariaDB limits**: ~1000 columns per table (65 KB row size limit). In practice, this allows hundreds of extra properties per entity.
-
-5. **Type changes**: A module must unregister and re-register to change a field's type. The registry checks for conflicts on `register()`.
----
-
-## 13. Backward Compatibility
-
-1. **No core table modifications**: All extra properties are stored in separate `_extra` tables.
-
-2. **ObjectModel is extended, not broken**: New methods (`getExtraProperties()`, `setExtraProperty()`) are additive. Existing code is completely unaffected.
-
-3. **Module opt-in**: Extra properties only exist when a module registers them. Zero overhead for shops without modules using this feature.
-
-4. **API opt-in**: The `extraProperties` field in API responses is absent by default and only populated for entities that have registered extra properties.
-
-5. **Standard hook integration**: Grid and form integration uses existing, stable hook mechanisms.
+1. **Definition caching**: `CachedExtraPropertyDefinitionRepository` uses a `FilesystemAdapter` pool. Cache is invalidated by `CachedExtraPropertyRegistry` after any `register()` or `unregister()` call.
+2. **Lazy loading in ObjectModel**: Extra properties are NOT loaded on object construction. They are loaded on first `extra_properties` access.
+3. **No-op when unused**: Reader checks definitions first; returns `[]` immediately without DB query when none exist.
+4. **FO whitelist pre-check**: `ExtraPropertiesLazyArray::getValues()` calls `filterForFrontOffice()` before querying values — skips the reader entirely when no FO fields are registered.
+5. **Bulk reading in grids**: `ExtraPropertiesGridQueryBuilderModifier` adds LEFT JOINs to existing grid queries — no N+1 problem.
+6. **Column-based storage**: Unlike EAV meta tables, extra properties are stored as columns — enables SQL indexing, no row multiplication.
 
 ---
 
-## 14. Phased Implementation Plan
+## 11. Conflict Handling
 
-### Phase 1 — POC: Validate DB Structure ✓
-
-- `ExtraPropertyType`, `ExtraPropertyScope`, `ExtraPropertySqlIndex` string-backed enums
-- `ColumnDefinitionMapper`
-- `ExtraPropertySchemaManager` (create/alter/drop tables)
-- `ExtraPropertyDefinitionRepository` (CRUD for definitions)
-- `ps_extra_property_definition` table in `install-dev/data/db_structure.sql`
-
-### Phase 2 — Module Methods + Example Module ✓
-
-- `ExtraPropertyRegistry` service (Core) — registers/unregisters + invalidates cache
-- `CachedExtraPropertyDefinitionRepository` — read-only cache decorator (Adapter)
-- `Module::registerExtraProperty()`, `Module::unregisterExtraProperty()`
-- `ExtraPropertyNaming` utility
-- Example module (`modules/demoextrafield/`)
-
-> **Not yet done**: `Module::unregisterAllExtraProperties()` and automatic cleanup in `Module::uninstall()` — see §5.2.
-
-### Phase 3 — FO Integration (ObjectModel) ✓
-
-- `ExtraPropertyReader` and `ExtraPropertyWriter` services
-- `ObjectModel` API (`getExtraProperties()`, `getExtraProperty()`, `setExtraProperty()`, `persistExtraProperties()`)
-- `ExtraPropertiesLazyArray` (uses `ExtraPropertyReaderInterface`; `ExtraPropertyValueProviderInterface` was merged into it)
-- FO LazyArrays: `ProductLazyArray`, `CategoryLazyArray`, `OrderLazyArray`, etc.
-
-### Phase 4 — Admin API Integration ✓
-
-- `ExtraPropertiesApiService` (no CQRS in this PR)
-- `CQRSApiSerializer` integration
-- `display_api` visibility flag
-- Module-grouped response format (`extraProperties.{module}.{field}`)
-
-### Phase 5 — BO Form Integration ✓
-
-- `ExtraPropertiesFormBuilderModifier`, `ExtraPropertiesFormDataPersister`
-- `ExtraPropertiesFormDefinitionProvider`
-- Type mapping (`ExtraPropertyType` → Symfony `FormType`)
-- `TranslatableType` wrapping for `lang` fields
-- i18n via wording/domain runtime translation
-- Data loading consolidated into `ExtraPropertyReader` (null langId = all langs)
-
-### Phase 6 — Grid Integration ✓
-
-- `ExtraPropertiesGridDefinitionModifier`, `ExtraPropertiesGridQueryBuilderModifier`
-- `ExtraPropertiesGridDefinitionProvider`
-- LEFT JOIN query modification
-- Toggle route (`admin_common_extra_properties_toggle`)
-
-### Phase 7 — Additional Types ✓
-
-Included in initial implementation: `float`, `date`, `choice`, `json`, `html`.
-
-### Phase 8 — Advanced BO Integration (future)
-
-- Custom form type class (`form_field_type` already supported in DB)
-- `form_position` for exact form field positioning
-- Custom Twig form themes for extra property fields
-
-### Phase 9 — Native BO Module for No-Code Management (future)
-
-- Native module for administrators to create/manage extra properties from the BO without writing code
+1. **Column name uniqueness**: `{module_name}_{property_name}` is unique per `(entity_name, module_name, property_name, scope)` via DB unique key.
+2. **Core fields**: `module_name IS NULL` → column name = `{property_name}` (no prefix).
+3. **Column name length**: enforced ≤ 64 characters; `register()` returns `false` if exceeded.
+4. **Type/size immutability**: `ExtraPropertyRegistry::register()` refuses to change `type`, `size`, `scope`, or `defaultValue` on already-registered definitions to prevent destructive ALTER TABLE.
 
 ---
 
-## 15. Testing Strategy
+## 12. Testing Strategy
 
 ### Unit Tests
 
-- `ExtraPropertyNaming` conventions
-- `ColumnDefinitionMapper` type-to-SQL mapping
-- `CachedExtraPropertyDefinitionRepository` caching behavior
+- `ExtraPropertyNaming` conventions (`tests/Unit/Core/ExtraProperty/ExtraPropertyNamingTest.php`)
+- `ColumnDefinitionMapper` type-to-SQL mapping (`tests/Unit/Core/ExtraProperty/Schema/ColumnDefinitionMapperTest.php`)
+- `ExtraPropertyDefinitionCollection` filter methods
 - `ExtraPropertyScopeGrouper` grouping logic
 
 ### Integration Tests
 
 - Full lifecycle: register → create entity with extras → read → update → unregister
 - Multi-module coexistence on same entity
-- Module uninstall cleanup
 - Schema manager table/column creation and removal
 - ObjectModel `add()`/`update()` with extra properties
 
-### Functional Tests (via Behat or similar)
+### Functional Tests
 
 - Admin API CRUD with extra properties
 - BO form display and submission

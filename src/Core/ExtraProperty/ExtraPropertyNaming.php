@@ -50,17 +50,17 @@ final class ExtraPropertyNaming
     /**
      * Returns the physical SQL storage column name for a given module and field name.
      *
-     * Core fields (empty module_name) use the bare field name.
+     * Core fields (null/empty module_name) use the bare field name.
      * Module fields use '{module_name}_{property_name}'.
      *
-     * @param string $moduleName Module technical name, or '' for core properties
+     * @param string|null $moduleName Module technical name, or null/'' for core properties
      * @param string $propertyName Property name as declared in the registry
      *
      * @return string e.g. 'ps_mymodule_video_link' or 'video_link'
      */
-    public static function storageColumnName(string $moduleName, string $propertyName): string
+    public static function storageColumnName(?string $moduleName, string $propertyName): string
     {
-        if ('' === $moduleName || self::CORE_MODULE_KEY === $moduleName) {
+        if (null === $moduleName || '' === $moduleName || self::CORE_MODULE_KEY === $moduleName) {
             return $propertyName;
         }
 
@@ -106,47 +106,72 @@ final class ExtraPropertyNaming
     }
 
     /**
-     * Returns the ordered list of entity table name candidates to try when looking up definitions.
+     * Parses one entry from the associated_grids JSON array into its components.
      *
-     * Handles the mismatch between the grid/form caller name and the registry entity name:
-     *   - The exact name is always tried first.
-     *   - Underscore suffix stripping: "order_detail" → try "detail" and "details".
-     *   - Plural/singular toggle: "products" → try "product", "product" → try "products".
+     * Format: "gridId[.columnId[:before|after]]"
      *
-     * This covers the most common PrestaShop patterns where grid IDs differ from entity table names
-     * (e.g. grid "products" → entity "product", grid "order_details" → entity "order_detail").
+     * Examples:
+     *   "product"                  → gridId: "product", columnId: null,        mode: null     (append)
+     *   "product.reference"        → gridId: "product", columnId: "reference", mode: "after"  (default)
+     *   "product.reference:after"  → gridId: "product", columnId: "reference", mode: "after"
+     *   "product.reference:before" → gridId: "product", columnId: "reference", mode: "before"
      *
-     * @param string $name Entity or grid identifier to resolve
-     *
-     * @return list<string>
+     * @return array{gridId: string, columnId: string|null, mode: 'before'|'after'|null}
      */
-    public static function resolveEntityTableCandidates(string $name): array
+    public static function parseGridEntry(string $entry): array
     {
-        $name = trim($name);
-        if ('' === $name) {
-            return [];
+        $dotPos = strpos($entry, '.');
+        if (false === $dotPos) {
+            return ['gridId' => $entry, 'columnId' => null, 'mode' => null];
         }
 
-        $candidates = [$name];
+        $gridId = substr($entry, 0, $dotPos);
+        $rest = substr($entry, $dotPos + 1);
 
-        // Suffix stripping: "order_detail" → bare suffix "detail" (and its plural)
-        $lastUnderscore = strrpos($name, '_');
-        if (false !== $lastUnderscore && $lastUnderscore < strlen($name) - 1) {
-            $suffix = substr($name, $lastUnderscore + 1);
-            $candidates[] = $suffix;
-            if (!str_ends_with($suffix, 's')) {
-                $candidates[] = $suffix . 's';
+        // Default mode when a column reference is specified is :after.
+        $mode = 'after';
+        foreach ([':before', ':after'] as $suffix) {
+            if (str_ends_with($rest, $suffix)) {
+                $mode = ltrim($suffix, ':');
+                $rest = substr($rest, 0, -strlen($suffix));
+                break;
             }
         }
 
-        // Plural/singular toggle
-        if (!str_ends_with($name, 's')) {
-            $candidates[] = $name . 's';
-        } else {
-            $candidates[] = rtrim($name, 's');
+        return ['gridId' => $gridId, 'columnId' => '' !== $rest ? $rest : null, 'mode' => '' !== $rest ? $mode : null];
+    }
+
+    /**
+     * Derives the BO legacy controller name for a given entity name.
+     *
+     * Applies standard English pluralization rules to match PS controller naming conventions:
+     * - consonant + 'y' → 'ies'  (category → AdminCategories)
+     * - 's', 'x', 'z', 'sh', 'ch' → append 'es'  (address → AdminAddresses)
+     * - everything else → append 's'  (product → AdminProducts)
+     *
+     * Used server-side to verify employee permissions without trusting any
+     * client-supplied value (e.g. for the extra-property toggle endpoint).
+     */
+    public static function legacyControllerFromEntityName(string $entityName): string
+    {
+        $length = strlen($entityName);
+        if ($length > 1) {
+            $last = strtolower($entityName[$length - 1]);
+            $prev = strtolower($entityName[$length - 2]);
+
+            // consonant + 'y' → 'ies'
+            if ('y' === $last && !in_array($prev, ['a', 'e', 'i', 'o', 'u'], true)) {
+                return 'Admin' . ucfirst(substr($entityName, 0, -1)) . 'ies';
+            }
+
+            // 's', 'x', 'z', 'sh', 'ch' → 'es'
+            if ('s' === $last || 'x' === $last || 'z' === $last
+                || ('h' === $last && in_array($prev, ['s', 'c'], true))) {
+                return 'Admin' . ucfirst($entityName) . 'es';
+            }
         }
 
-        return array_values(array_unique(array_filter($candidates, static fn (string $v): bool => '' !== $v)));
+        return 'Admin' . ucfirst($entityName) . 's';
     }
 
     /**

@@ -11,7 +11,7 @@ namespace PrestaShop\PrestaShop\Core\ExtraProperty;
 use ArrayIterator;
 use Countable;
 use IteratorAggregate;
-use PrestaShop\PrestaShop\Core\Domain\ExtraProperty\QueryResult\ExtraPropertyDefinitionInfo;
+use PrestaShop\PrestaShop\Core\ExtraProperty\Definition\ExtraPropertyDefinitionInfo;
 use Traversable;
 
 /**
@@ -27,6 +27,9 @@ final class ExtraPropertyDefinitionCollection implements Countable, IteratorAggr
     /** @var list<ExtraPropertyDefinitionInfo> */
     private readonly array $definitions;
 
+    /** @var self|null Cached empty instance — avoids repeated allocations for entities without extra properties */
+    private static ?self $emptyInstance = null;
+
     /**
      * @param list<ExtraPropertyDefinitionInfo> $definitions
      */
@@ -36,11 +39,18 @@ final class ExtraPropertyDefinitionCollection implements Countable, IteratorAggr
     }
 
     /**
-     * Creates a collection from an empty state.
+     * Returns the shared empty collection instance (singleton).
+     *
+     * Reusing a single instance avoids repeated allocations in the common case
+     * where an entity has no extra properties registered.
      */
     public static function empty(): self
     {
-        return new self([]);
+        if (null === self::$emptyInstance) {
+            self::$emptyInstance = new self([]);
+        }
+
+        return self::$emptyInstance;
     }
 
     // -------------------------------------------------------------------------
@@ -115,8 +125,10 @@ final class ExtraPropertyDefinitionCollection implements Countable, IteratorAggr
      *
      * Pass null to get core (no-module) definitions.
      * Pass '_core' as a string alias for core fields.
+     *
+     * @param string|null $moduleName Module technical name, or null/'_core'/'' for core fields
      */
-    public function filterByModule(?string $moduleName): self
+    public function filterByModuleName(?string $moduleName): self
     {
         // '_core', null and '' all refer to core fields (module_name IS NULL in DB).
         $isCore = null === $moduleName || '_core' === $moduleName || '' === $moduleName;
@@ -152,9 +164,24 @@ final class ExtraPropertyDefinitionCollection implements Countable, IteratorAggr
     }
 
     /**
-     * Returns a new collection containing only definitions with display_form = 1.
+     * Returns a new collection filtered to the given entity.
+     *
+     * Useful when a collection groups definitions from multiple entities.
+     *
+     * @param string $entityName Entity table name (e.g. 'product')
      */
-    public function withDisplayForm(): self
+    public function filterByEntity(string $entityName): self
+    {
+        return new self(array_values(array_filter(
+            $this->definitions,
+            static fn (ExtraPropertyDefinitionInfo $d): bool => $d->getEntityName() === $entityName
+        )));
+    }
+
+    /**
+     * Returns a new collection containing only definitions eligible for Back Office forms (display_form = true).
+     */
+    public function filterByForm(): self
     {
         return new self(array_values(array_filter(
             $this->definitions,
@@ -163,20 +190,41 @@ final class ExtraPropertyDefinitionCollection implements Countable, IteratorAggr
     }
 
     /**
-     * Returns a new collection containing only definitions with display_grid = 1.
+     * Returns a new collection containing only definitions associated with the given grid ID.
+     *
+     * A definition is included when any of its associated_grids entries targets $gridId,
+     * using the "gridId[.columnId[:before|after]]" format.
+     *
+     * @param string $gridId Grid identifier (e.g. 'product', 'customer')
      */
-    public function withDisplayGrid(): self
+    public function filterByGrid(string $gridId): self
     {
         return new self(array_values(array_filter(
             $this->definitions,
-            static fn (ExtraPropertyDefinitionInfo $d): bool => $d->isDisplayGrid()
+            static fn (ExtraPropertyDefinitionInfo $d): bool => null !== $d->getGridEntry($gridId)
         )));
     }
 
     /**
-     * Returns a new collection containing only definitions with display_api = 1.
+     * Filters definitions eligible for front-office display.
+     *
+     * Only fields with display_front = true are returned.
+     * Use this before passing definitions to the FO reader or presenter.
      */
-    public function withDisplayApi(): self
+    public function filterForFrontOffice(): self
+    {
+        return new self(array_values(array_filter(
+            $this->definitions,
+            static fn (ExtraPropertyDefinitionInfo $d): bool => $d->isDisplayFront()
+        )));
+    }
+
+    /**
+     * Returns a new collection containing only definitions eligible for the Admin API (display_api = true).
+     *
+     * Chainable: $collection->filterByEntity('product')->filterByApi()
+     */
+    public function filterByApi(): self
     {
         return new self(array_values(array_filter(
             $this->definitions,

@@ -34,7 +34,7 @@ final class FormBuilderFactory implements FormBuilderFactoryInterface
     private $registry;
 
     /**
-     * @var ExtraPropertiesFormBuilderModifier|null
+     * @var ExtraPropertiesFormBuilderModifier
      */
     private $extraPropertiesFormBuilderModifier;
 
@@ -47,7 +47,7 @@ final class FormBuilderFactory implements FormBuilderFactoryInterface
         FormFactoryInterface $formFactory,
         HookDispatcherInterface $hookDispatcher,
         FormRegistryInterface $registry,
-        ?ExtraPropertiesFormBuilderModifier $extraPropertiesFormBuilderModifier = null
+        ExtraPropertiesFormBuilderModifier $extraPropertiesFormBuilderModifier
     ) {
         $this->formFactory = $formFactory;
         $this->hookDispatcher = $hookDispatcher;

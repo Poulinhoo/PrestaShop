@@ -49,7 +49,7 @@ class ColumnDefinitionMapper
      *
      * @param ExtraPropertyType $type
      * @param list<string> $enumValues Only used for Choice type
-     * @param int|null $size For String type: varchar length (1–16383). Defaults to 255 when null.
+     * @param int|null $size For STRING type: varchar length (1–16383). Defaults to 255 when null.
      *                       Ignored for all other types.
      *
      * @return string
@@ -57,14 +57,14 @@ class ColumnDefinitionMapper
     private static function buildBaseDefinition(ExtraPropertyType $type, array $enumValues, ?int $size = null): string
     {
         return match ($type) {
-            ExtraPropertyType::Int => 'INT(11)',
-            ExtraPropertyType::Bool => 'TINYINT(1) UNSIGNED',
-            ExtraPropertyType::String => 'VARCHAR(' . (null !== $size && $size > 0 ? $size : 255) . ')',
-            ExtraPropertyType::Float => 'DECIMAL(20,6)',
-            ExtraPropertyType::Date => 'DATETIME',
-            ExtraPropertyType::Html => 'TEXT',
-            ExtraPropertyType::Json => 'LONGTEXT',
-            ExtraPropertyType::Choice => !empty($enumValues) ? self::buildEnumDefinition($enumValues) : 'VARCHAR(64)',
+            ExtraPropertyType::INT => 'INT(11)',
+            ExtraPropertyType::BOOL => 'TINYINT(1) UNSIGNED',
+            ExtraPropertyType::STRING => 'VARCHAR(' . (null !== $size && $size > 0 ? $size : 255) . ')',
+            ExtraPropertyType::FLOAT => 'DECIMAL(20,6)',
+            ExtraPropertyType::DATE => 'DATETIME',
+            ExtraPropertyType::HTML => 'TEXT',
+            ExtraPropertyType::JSON => 'LONGTEXT',
+            ExtraPropertyType::CHOICE => !empty($enumValues) ? self::buildEnumDefinition($enumValues) : 'VARCHAR(64)',
         };
     }
 
@@ -98,14 +98,14 @@ class ColumnDefinitionMapper
     private static function quoteDefaultValue(ExtraPropertyType $type, mixed $defaultValue): string
     {
         return match ($type) {
-            ExtraPropertyType::Int,
-            ExtraPropertyType::Bool,
-            ExtraPropertyType::Float => (string) $defaultValue,
-            ExtraPropertyType::String,
-            ExtraPropertyType::Date,
-            ExtraPropertyType::Html,
-            ExtraPropertyType::Json,
-            ExtraPropertyType::Choice => "'" . str_replace("'", "''", (string) $defaultValue) . "'",
+            ExtraPropertyType::INT,
+            ExtraPropertyType::BOOL,
+            ExtraPropertyType::FLOAT => (string) $defaultValue,
+            ExtraPropertyType::STRING,
+            ExtraPropertyType::DATE,
+            ExtraPropertyType::HTML,
+            ExtraPropertyType::JSON,
+            ExtraPropertyType::CHOICE => "'" . str_replace("'", "''", (string) $defaultValue) . "'",
         };
     }
 }

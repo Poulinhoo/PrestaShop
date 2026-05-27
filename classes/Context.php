@@ -9,6 +9,7 @@ use PrestaShop\PrestaShop\Adapter\ContainerFinder;
 use PrestaShop\PrestaShop\Adapter\Module\Repository\ModuleRepository;
 use PrestaShop\PrestaShop\Adapter\SymfonyContainer;
 use PrestaShop\PrestaShop\Core\Context\LegacyControllerContext;
+use PrestaShop\PrestaShop\Core\Domain\Shop\ValueObject\ShopConstraint;
 use PrestaShop\PrestaShop\Core\Exception\ContainerNotFoundException;
 use PrestaShop\PrestaShop\Core\Localization\CLDR\ComputingPrecision;
 use PrestaShop\PrestaShop\Core\Localization\LocaleInterface;
@@ -270,6 +271,17 @@ class ContextCore
     public function cloneContext()
     {
         return clone $this;
+    }
+
+    /**
+     * Returns a ShopConstraint for the current FO shop context.
+     *
+     * In front-office, a context is always associated with one specific shop.
+     * Useful as a typed alternative to passing $this->shop->id as a raw integer.
+     */
+    public function getShopConstraint(): ShopConstraint
+    {
+        return ShopConstraint::shop((int) $this->shop->id);
     }
 
     /**

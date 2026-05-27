@@ -11,12 +11,16 @@ namespace PrestaShop\PrestaShop\Core\ExtraProperty\Form;
 use DateTimeImmutable;
 use DateTimeInterface;
 use Exception;
-use PrestaShop\PrestaShop\Core\Domain\ExtraProperty\QueryResult\ExtraPropertyDefinitionInfo;
+use InvalidArgumentException;
+use PrestaShop\PrestaShop\Core\Context\ShopContext;
+use PrestaShop\PrestaShop\Core\ExtraProperty\Definition\ExtraPropertyDefinitionInfo;
 use PrestaShop\PrestaShop\Core\ExtraProperty\ExtraPropertyNaming;
-use PrestaShop\PrestaShop\Core\ExtraProperty\Storage\ExtraPropertyReaderInterface;
+use PrestaShop\PrestaShop\Core\ExtraProperty\Repository\ExtraPropertyDefinitionRepositoryInterface;
 use PrestaShop\PrestaShop\Core\ExtraProperty\Validation\ExtraPropertyValidationInterface;
+use PrestaShop\PrestaShop\Core\ExtraProperty\Value\ExtraPropertyReaderInterface;
 use PrestaShopBundle\Form\Admin\Type\NavigationTabType;
 use PrestaShopBundle\Form\Admin\Type\TranslatableType;
+use PrestaShopBundle\Form\FormBuilderModifier;
 use Symfony\Component\Form\Extension\Core\Type\CheckboxType;
 use Symfony\Component\Form\Extension\Core\Type\DateTimeType;
 use Symfony\Component\Form\Extension\Core\Type\FormType;
@@ -31,9 +35,15 @@ use Symfony\Contracts\Translation\TranslatorInterface;
 /**
  * Adds extra properties fields into an identifiable object form builder.
  *
- * Placement:
- * - if registry form_position is empty => under a fallback container 'extra_properties'
- * - else => within the existing sub-form path when possible (dot-separated), otherwise created as nested FormType nodes.
+ * Placement (form_position from the definition registry):
+ * - null/empty        => dedicated 'extra_fields.extra_properties' section (created if missing); on simple
+ *                        forms without tabs, fields are placed at root level instead.
+ * - dot-path          => all segments except the last must exist (throws InvalidArgumentException
+ *                        on missing intermediate segment); the last segment is created automatically
+ *                        as an unmapped FormType container if it does not exist yet.
+ * - dot-path:before   => navigate to the parent builder and insert the field BEFORE the last segment
+ *                        (e.g. "header.name:before" inserts before the 'name' field inside 'header').
+ * - dot-path:after    => navigate to the parent builder and insert the field AFTER the last segment.
  *
  * Data mapping:
  * - fields are added as unmapped; persistence reads submitted values from the FormInterface.
@@ -44,21 +54,22 @@ class ExtraPropertiesFormBuilderModifier
     private const DEFAULT_FALLBACK_TAB = 'extra_fields';
 
     public function __construct(
-        protected readonly ExtraPropertiesFormDefinitionProvider $definitionProvider,
+        protected readonly ExtraPropertyDefinitionRepositoryInterface $repository,
         protected readonly ExtraPropertyReaderInterface $reader,
         protected readonly TranslatorInterface $translator,
         protected readonly ExtraPropertyValidationInterface $validatorAdapter,
+        protected readonly ShopContext $shopContext,
+        protected readonly FormBuilderModifier $formBuilderModifier,
     ) {
     }
 
     /**
      * @param string $entityName Entity table name (usually equals form block prefix, e.g. 'product')
      * @param int|null $entityId When null, no prefill is attempted (create form)
-     * @param int $shopId Current shop context ID (lang/shop scopes)
      */
-    public function apply(FormBuilderInterface $formBuilder, string $entityName, ?int $entityId, int $shopId): void
+    public function apply(FormBuilderInterface $formBuilder, string $entityName, ?int $entityId): void
     {
-        $definitions = $this->definitionProvider->getDefinitionsForEntity($entityName);
+        $definitions = $this->repository->getDefinitionCollection($entityName)->filterByForm();
         if ($definitions->isEmpty()) {
             return;
         }
@@ -71,9 +82,8 @@ class ExtraPropertiesFormBuilderModifier
                 'id_' . $storageEntityName,
                 $entityId,
                 null,
-                $shopId,
-                true,
-                $definitions
+                $this->shopContext->getShopConstraint(),
+                true
             );
         }
 
@@ -86,31 +96,18 @@ class ExtraPropertiesFormBuilderModifier
             $moduleName = ExtraPropertyNaming::displayModuleKey($definition->getModuleName());
             $scope = $definition->getFieldScope();
 
-            $targetPath = trim($definition->getFormPosition() ?? '');
-            if ('' === $targetPath) {
-                // On forms with tabs (e.g. product), group all extra fields in one dedicated sub-section.
-                // On simple forms (e.g. category), place fields at root level.
-                $targetPath = ($formBuilder->has(self::DEFAULT_FALLBACK_TAB) || $this->isNavigationTabForm($formBuilder))
-                    ? self::DEFAULT_FALLBACK_TAB . '.' . self::FALLBACK_FORM_SECTION
-                    : '';
-            }
-
-            $targetBuilder = $this->resolveOrCreatePath($formBuilder, $targetPath);
+            $moduleFormPosition = trim($definition->getFormPosition() ?? '');
 
             $formFieldName = ExtraPropertyNaming::formFieldName($moduleName, $fieldName, $scope);
-            if ($targetBuilder->has($formFieldName)) {
-                continue;
-            }
 
             [$type, $typeOptions] = $this->resolveFieldTypeAndOptions($definition);
 
             $typeOptions['mapped'] = false;
             $typeOptions['required'] = $definition->isFormRequired();
-            $defaultLabel = ucfirst(str_replace('_', ' ', $fieldName));
             $typeOptions['label'] = $this->translateLabel(
-                $definition->getTitleWording(),
-                $definition->getTitleDomain(),
-                $defaultLabel
+                $definition->getLabelWording(),
+                $definition->getLabelDomain(),
+                null
             );
             $typeOptions['help'] = $this->translateLabel(
                 $definition->getDescriptionWording(),
@@ -123,7 +120,14 @@ class ExtraPropertiesFormBuilderModifier
                 $typeOptions['data'] = $this->normalizeExistingValueForType($definition, $type, $rawValue);
             }
 
-            $targetBuilder->add($formFieldName, $type, $typeOptions);
+            if ('' === $moduleFormPosition) {
+                $targetBuilder = $this->resolveOrCreateFallbackPath($formBuilder);
+                if (!$targetBuilder->has($formFieldName)) {
+                    $targetBuilder->add($formFieldName, $type, $typeOptions);
+                }
+            } else {
+                $this->addAtPosition($formBuilder, $moduleFormPosition, $formFieldName, $type, $typeOptions);
+            }
         }
     }
 
@@ -140,25 +144,15 @@ class ExtraPropertiesFormBuilderModifier
         $baseType = (null !== $declaredType && class_exists($declaredType)) ? $declaredType : TextType::class;
 
         $fieldConstraint = null;
-        if (null !== $validator && $this->validatorAdapter->hasValidator($validator)) {
+        if (null !== $validator) {
             $message = $this->translator->trans('The field is invalid.', domain: 'Admin.Notifications.Error');
-            // Keep same behavior as in ObjectModel::validateField() for those two validators
-            $isEmptyValidationMethod = 'isrequiredwhenactive' === strtolower($validator)
-                || 'defaultlanguagerequiredwhenactive' === strtolower($validator);
-
             $fieldConstraint = new Assert\Callback(
-                function ($value, ExecutionContextInterface $context) use ($validator, $message, $isEmptyValidationMethod): void {
-                    if (null === $value || '' === $value) {
-                        if (!$isEmptyValidationMethod) {
-                            return;
-                        }
-                    }
-
+                function ($value, ExecutionContextInterface $context) use ($definition, $message): void {
                     if ($value instanceof DateTimeInterface) {
                         $value = $value->format('Y-m-d H:i:s');
                     }
 
-                    if (!$this->validatorAdapter->validateByName($validator, $value)) {
+                    if (true !== $this->validatorAdapter->validateValue($definition, $value)) {
                         $context->addViolation($message);
                     }
                 }
@@ -268,7 +262,142 @@ class ExtraPropertiesFormBuilderModifier
         }
     }
 
-    protected function resolveOrCreatePath(FormBuilderInterface $rootBuilder, string $path): FormBuilderInterface
+    /**
+     * Adds a field at the position described by $position (a dot-path with optional :before/:after suffix).
+     *
+     * - "a.b"        → navigate strictly to builder a; auto-create b if missing; add field inside b
+     * - "a.b:before" → navigate to builder at a, call FormBuilderModifier::addBefore(builder, 'b', field)
+     * - "a.b:after"  → navigate to builder at a, call FormBuilderModifier::addAfter(builder, 'b', field)
+     *
+     * @param class-string<FormTypeInterface> $type
+     * @param array<string, mixed> $typeOptions
+     *
+     * @throws InvalidArgumentException when an intermediate path segment does not exist
+     */
+    protected function addAtPosition(
+        FormBuilderInterface $rootBuilder,
+        string $position,
+        string $formFieldName,
+        string $type,
+        array $typeOptions,
+    ): void {
+        [$path, $mode] = $this->parsePosition($position);
+
+        if (null === $mode) {
+            // Plain path: navigate to the parent strictly, auto-create the leaf if needed.
+            $lastDot = strrpos($path, '.');
+            if (false === $lastDot) {
+                $parentBuilder = $rootBuilder;
+                $leafSegment = $path;
+            } else {
+                $parentBuilder = $this->resolvePath($rootBuilder, substr($path, 0, $lastDot));
+                $leafSegment = substr($path, $lastDot + 1);
+            }
+
+            if (!$parentBuilder->has($leafSegment)) {
+                $parentBuilder->add($leafSegment, FormType::class, [
+                    'mapped' => false,
+                    'required' => false,
+                    'label' => false,
+                    'row_attr' => [],
+                ]);
+            }
+
+            /** @var FormBuilderInterface $targetBuilder */
+            $targetBuilder = $parentBuilder->get($leafSegment);
+            if (!$targetBuilder->has($formFieldName)) {
+                $targetBuilder->add($formFieldName, $type, $typeOptions);
+            }
+
+            return;
+        }
+
+        // Relative mode: split path into parent path + anchor field name.
+        $lastDot = strrpos($path, '.');
+        if (false === $lastDot) {
+            $parentBuilder = $rootBuilder;
+            $anchorField = $path;
+        } else {
+            $parentBuilder = $this->resolvePath($rootBuilder, substr($path, 0, $lastDot));
+            $anchorField = substr($path, $lastDot + 1);
+        }
+
+        if ($parentBuilder->has($formFieldName)) {
+            return;
+        }
+
+        if ('before' === $mode) {
+            $this->formBuilderModifier->addBefore($parentBuilder, $anchorField, $formFieldName, $type, $typeOptions);
+        } else {
+            $this->formBuilderModifier->addAfter($parentBuilder, $anchorField, $formFieldName, $type, $typeOptions);
+        }
+    }
+
+    /**
+     * Parses a position string into a [path, mode] pair.
+     *
+     * Mode is 'before', 'after', or null (plain path).
+     *
+     * @return array{0: string, 1: 'before'|'after'|null}
+     */
+    protected function parsePosition(string $position): array
+    {
+        if (str_ends_with($position, ':before')) {
+            return [substr($position, 0, -7), 'before'];
+        }
+        if (str_ends_with($position, ':after')) {
+            return [substr($position, 0, -6), 'after'];
+        }
+
+        return [$position, null];
+    }
+
+    /**
+     * Resolves (and creates if missing) the designated fallback area for extra fields.
+     *
+     * - Forms with tabs: resolves/creates 'extra_fields.extra_properties'.
+     * - Simple forms (no tabs): returns the root builder (fields injected at root level).
+     */
+    protected function resolveOrCreateFallbackPath(FormBuilderInterface $rootBuilder): FormBuilderInterface
+    {
+        if (!$rootBuilder->has(self::DEFAULT_FALLBACK_TAB) && !$this->isNavigationTabForm($rootBuilder)) {
+            return $rootBuilder;
+        }
+
+        if (!$rootBuilder->has(self::DEFAULT_FALLBACK_TAB)) {
+            $rootBuilder->add(self::DEFAULT_FALLBACK_TAB, FormType::class, [
+                'mapped' => false,
+                'required' => false,
+                'label' => $this->translator->trans('Extra fields', domain: 'Admin.Global'),
+                'row_attr' => [],
+            ]);
+        }
+
+        /** @var FormBuilderInterface $tabBuilder */
+        $tabBuilder = $rootBuilder->get(self::DEFAULT_FALLBACK_TAB);
+
+        if (!$tabBuilder->has(self::FALLBACK_FORM_SECTION)) {
+            $tabBuilder->add(self::FALLBACK_FORM_SECTION, FormType::class, [
+                'mapped' => false,
+                'required' => false,
+                'label' => false,
+                'row_attr' => [],
+            ]);
+        }
+
+        /** @var FormBuilderInterface $sectionBuilder */
+        $sectionBuilder = $tabBuilder->get(self::FALLBACK_FORM_SECTION);
+
+        return $sectionBuilder;
+    }
+
+    /**
+     * Strictly resolves a dot-separated path inside an existing form builder.
+     * Used to navigate to a parent builder; all segments must already exist.
+     *
+     * @throws InvalidArgumentException when any segment of the path does not exist
+     */
+    protected function resolvePath(FormBuilderInterface $rootBuilder, string $path): FormBuilderInterface
     {
         $segments = array_values(array_filter(array_map('trim', explode('.', $path)), static fn (string $s): bool => '' !== $s));
         if (empty($segments)) {
@@ -276,30 +405,16 @@ class ExtraPropertiesFormBuilderModifier
         }
 
         $builder = $rootBuilder;
-        foreach ($segments as $i => $segment) {
-            if ($builder->has($segment)) {
-                $child = $builder->get($segment);
-                if ($child instanceof FormBuilderInterface) {
-                    $builder = $child;
-                    continue;
-                }
+        foreach ($segments as $segment) {
+            if (!$builder->has($segment)) {
+                throw new InvalidArgumentException(sprintf(
+                    'Extra property form_position "%s": intermediate segment "%s" does not exist in the form.',
+                    $path,
+                    $segment
+                ));
             }
-
-            $isRoot = 0 === $i;
-            $isExtraFieldsTab = $isRoot && self::DEFAULT_FALLBACK_TAB === $segment;
-
-            // Create a container node when missing.
-            $builder->add($segment, FormType::class, [
-                'mapped' => false,
-                'required' => false,
-                'label' => $isExtraFieldsTab
-                    ? $this->translator->trans('Extra fields', domain: 'Admin.Global')
-                    : false,
-                'row_attr' => [],
-            ]);
-            /** @var FormBuilderInterface $newChild */
-            $newChild = $builder->get($segment);
-            $builder = $newChild;
+            /** @var FormBuilderInterface $builder */
+            $builder = $builder->get($segment);
         }
 
         return $builder;

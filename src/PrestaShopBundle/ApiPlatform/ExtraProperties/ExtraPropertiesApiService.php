@@ -9,16 +9,17 @@ declare(strict_types=1);
 
 namespace PrestaShopBundle\ApiPlatform\ExtraProperties;
 
-use Doctrine\DBAL\Connection;
-use PrestaShop\PrestaShop\Core\CommandBus\CommandBusInterface;
+use ApiPlatform\Metadata\Property\Factory\PropertyMetadataFactoryInterface;
+use ApiPlatform\Metadata\Property\Factory\PropertyNameCollectionFactoryInterface;
 use PrestaShop\PrestaShop\Core\Context\ShopContext;
-use PrestaShop\PrestaShop\Core\Domain\ExtraProperty\Command\UpdateExtraPropertyValuesCommand;
-use PrestaShop\PrestaShop\Core\Domain\ExtraProperty\Query\GetExtraPropertyValues;
-use PrestaShop\PrestaShop\Core\Domain\ExtraProperty\QueryResult\ExtraPropertyDefinitionInfo;
-use PrestaShop\PrestaShop\Core\Domain\ExtraProperty\QueryResult\ExtraPropertyValuesResult;
+use PrestaShop\PrestaShop\Core\Domain\Shop\ValueObject\ShopConstraint;
+use PrestaShop\PrestaShop\Core\ExtraProperty\Definition\ExtraPropertyDefinitionInfo;
 use PrestaShop\PrestaShop\Core\ExtraProperty\ExtraPropertyNaming;
 use PrestaShop\PrestaShop\Core\ExtraProperty\Repository\ExtraPropertyDefinitionRepositoryInterface;
 use PrestaShop\PrestaShop\Core\ExtraProperty\Validation\ExtraPropertyValidationInterface;
+use PrestaShop\PrestaShop\Core\ExtraProperty\Value\ExtraPropertyReaderInterface;
+use PrestaShop\PrestaShop\Core\ExtraProperty\Value\ExtraPropertyWriterInterface;
+use PrestaShopBundle\Entity\Repository\LangRepository;
 use Symfony\Component\HttpFoundation\RequestStack;
 use Symfony\Component\Validator\ConstraintViolation;
 use Symfony\Component\Validator\ConstraintViolationList;
@@ -33,7 +34,7 @@ use Throwable;
  *  - Extract `extraProperties` from incoming JSON payloads before denormalization
  *  - Store pending extra properties in the Request for persistence after entity save
  *  - Inject extra properties (filtered by display_api=1) into serialized JSON responses
- *  - Dispatch read/write operations through the CQRS command/query bus
+ *  - Delegate read/write operations to ExtraPropertyReaderInterface / ExtraPropertyWriterInterface
  *
  * Three field scopes are supported:
  *  - entity : stored in `{prefix}{entity}_extra`,      keyed directly by field name
@@ -66,13 +67,6 @@ class ExtraPropertiesApiService
     ];
 
     /**
-     * Request-lifetime cache for the id_lang → locale mapping.
-     *
-     * @var array<int, string>|null
-     */
-    private ?array $langLocaleCache = null;
-
-    /**
      * Request-lifetime cache for the list of API-exposed lang-scoped fields, grouped by module.
      *
      * Keyed by entity table name (e.g. 'product') to avoid recomputing it for each normalized item
@@ -84,12 +78,14 @@ class ExtraPropertiesApiService
 
     public function __construct(
         protected readonly ExtraPropertyDefinitionRepositoryInterface $repository,
-        protected readonly Connection $connection,
-        protected readonly string $dbPrefix,
         protected readonly RequestStack $requestStack,
-        protected readonly CommandBusInterface $commandBus,
+        protected readonly ExtraPropertyReaderInterface $reader,
+        protected readonly ExtraPropertyWriterInterface $writer,
         protected readonly ExtraPropertyValidationInterface $validatorAdapter,
-        protected readonly ?ShopContext $shopContext = null,
+        protected readonly ShopContext $shopContext,
+        protected readonly LangRepository $langRepository,
+        protected readonly ?PropertyNameCollectionFactoryInterface $propertyNameCollectionFactory = null,
+        protected readonly ?PropertyMetadataFactoryInterface $propertyMetadataFactory = null,
     ) {
     }
 
@@ -129,7 +125,7 @@ class ExtraPropertiesApiService
         $entityTable = strtolower(preg_replace('/(?<!^)[A-Z]/', '_$0', $shortName));
 
         // Validate: the repository must have at least one definition for this entity
-        if (empty($this->repository->getByEntityNameAllScopes($entityTable))) {
+        if ($this->repository->getDefinitionCollection($entityTable)->isEmpty()) {
             return null;
         }
 
@@ -193,18 +189,13 @@ class ExtraPropertiesApiService
     {
         $violations = new ConstraintViolationList();
 
-        $allDefinitions = $this->repository->getByEntityNameAllScopes($entityTable);
+        $allDefinitions = $this->repository->getDefinitionCollection($entityTable)->toArray();
         if (empty($allDefinitions) || empty($extraPropertiesByModule)) {
             return $violations;
         }
 
         foreach ($allDefinitions as $def) {
-            if (!$def->isDisplayApi()) {
-                continue;
-            }
-
-            $validator = $def->getValidator() ?? '';
-            if ('' === $validator || !$this->validatorAdapter->hasValidator($validator)) {
+            if (!$def->isDisplayApi() || null === $def->getValidator()) {
                 continue;
             }
 
@@ -217,50 +208,39 @@ class ExtraPropertiesApiService
             }
 
             $value = $extraPropertiesByModule[$moduleName][$fieldName];
-
-            // Keep same behavior as in ObjectModel::validateField() for those two validators
-            $isEmptyValidationMethod = 'isrequiredwhenactive' === strtolower($validator)
-                || 'defaultlanguagerequiredwhenactive' === strtolower($validator);
-
             $basePath = sprintf('extraProperties.%s.%s', $moduleName, $fieldName);
 
             if ('lang' === $scope && is_array($value)) {
                 foreach ($value as $locale => $localeValue) {
-                    $this->validateScalarValue($violations, $validator, $localeValue, $basePath . '.' . (string) $locale, $isEmptyValidationMethod);
+                    $this->validateOneValue($violations, $def, $localeValue, $basePath . '.' . (string) $locale);
                 }
                 continue;
             }
 
             if ('shop' === $scope && is_array($value)) {
                 foreach ($value as $shopId => $shopValue) {
-                    $this->validateScalarValue($violations, $validator, $shopValue, $basePath . '.' . (string) $shopId, $isEmptyValidationMethod);
+                    $this->validateOneValue($violations, $def, $shopValue, $basePath . '.' . (string) $shopId);
                 }
                 continue;
             }
 
-            // entity scope (scalar) or non-array fallback
-            $this->validateScalarValue($violations, $validator, $value, $basePath, $isEmptyValidationMethod);
+            $this->validateOneValue($violations, $def, $value, $basePath);
         }
 
         return $violations;
     }
 
     /**
-     * @param ConstraintViolationListInterface $violations
      * @param mixed $value
      */
-    protected function validateScalarValue(
+    protected function validateOneValue(
         ConstraintViolationListInterface $violations,
-        string $validator,
+        ExtraPropertyDefinitionInfo $def,
         $value,
         string $propertyPath,
-        bool $isEmptyValidationMethod,
     ): void {
-        if ((null === $value || '' === $value) && !$isEmptyValidationMethod) {
-            return;
-        }
-
-        if (!$this->validatorAdapter->validateByName($validator, $value)) {
+        $result = $this->validatorAdapter->validateValue($def, $value);
+        if (true !== $result) {
             $violations->add(new ConstraintViolation(
                 'This value is not valid.',
                 'This value is not valid.',
@@ -291,7 +271,7 @@ class ExtraPropertiesApiService
             return $normalizedData;
         }
 
-        $entityId = $this->resolveEntityIdFromData($normalizedData, $entityTable);
+        $entityId = $this->resolveEntityIdFromData($normalizedData, $entityTable, $resourceClass);
         if ($entityId <= 0) {
             return $normalizedData;
         }
@@ -316,14 +296,15 @@ class ExtraPropertiesApiService
     }
 
     /**
-     * Loads all extra properties for the three supported scopes via the query bus.
+     * Loads all extra properties for the three supported scopes via the reader.
      *
-     * Lang-scope values returned by the query handler are id_lang-keyed (int).
+     * Lang-scope values are id_lang-keyed (int).
      * This method converts them to locale-string-keyed (e.g. "fr-FR") for the API response.
      *
      * - entity scope : ['module' => ['field' => scalar_value]]
      * - lang scope   : ['module' => ['field' => ['fr-FR' => value, 'en-GB' => value]]]
-     * - shop scope   : ['module' => ['field' => [1 => value, 2 => value]]]
+     * - shop scope   : ['module' => ['field' => scalar_value]]   (single-shop context, R8)
+     * - shop scope   : ['module' => ['field' => [1 => value, 2 => value]]]  (all-shops context)
      *
      * @param string $entityTable Entity storage table (e.g. 'product')
      * @param int $entityId Entity primary key value
@@ -332,12 +313,10 @@ class ExtraPropertiesApiService
      */
     protected function loadExtraProperties(string $entityTable, int $entityId): array
     {
-        /** @var ExtraPropertyValuesResult $result */
-        $result = $this->commandBus->handle(
-            new GetExtraPropertyValues($entityTable, 'id_' . $entityTable, $entityId, true)
-        );
+        $shopConstraint = $this->shopContext->getShopConstraint();
+        $values = $this->reader->getExtraProperties($entityTable, 'id_' . $entityTable, $entityId, null, $shopConstraint, true);
 
-        if ($result->isEmpty()) {
+        if (empty($values)) {
             return [];
         }
 
@@ -345,18 +324,39 @@ class ExtraPropertiesApiService
         // Without this, shop-scope fields keyed by id_shop (e.g. 1) can be mistaken for id_lang keys
         // and wrongly converted to locales (e.g. "fr-FR") when id_lang=1 exists.
         $langScopedFieldsByModule = $this->buildLangScopedFieldsByModule($entityTable);
+        $shopScopedFieldsByModule = $this->buildShopScopedFieldsByModule($entityTable);
 
         // Convert id_lang → locale string for API presentation
         $langLocaleMap = $this->fetchLangIdLocaleMap();
 
-        return $this->convertLangKeysToLocale($result->getValuesByModule(), $langLocaleMap, $langScopedFieldsByModule);
+        $result = $this->convertLangKeysToLocale($values, $langLocaleMap, $langScopedFieldsByModule);
+
+        // R8: flatten [id_shop => value] → scalar when the request is scoped to a single shop.
+        if ($shopConstraint->isSingleShopContext()) {
+            $result = $this->flattenShopScopedValues($result, $shopScopedFieldsByModule);
+        }
+
+        // Keep only fields flagged display_api = 1.
+        $whitelist = [];
+        foreach ($this->repository->getDefinitionCollection($entityTable)->filterByApi() as $def) {
+            $whitelist[ExtraPropertyNaming::displayModuleKey($def->getModuleName())][$def->getPropertyName()] = true;
+        }
+        foreach ($result as $moduleKey => $fields) {
+            foreach (array_keys($fields) as $fieldName) {
+                if (!isset($whitelist[$moduleKey][$fieldName])) {
+                    unset($result[$moduleKey][$fieldName]);
+                }
+            }
+            if (empty($result[$moduleKey])) {
+                unset($result[$moduleKey]);
+            }
+        }
+
+        return $result;
     }
 
     /**
-     * Persists extra properties for all three scopes via the command bus.
-     *
-     * Builds the scope-separated payload arrays from the module-keyed input,
-     * then dispatches a single UpdateExtraPropertyValuesCommand.
+     * Persists extra properties for all three scopes via the writer.
      *
      * @param string $entityTable Entity storage table (e.g. 'product')
      * @param int $entityId Entity primary key value
@@ -364,7 +364,7 @@ class ExtraPropertiesApiService
      */
     protected function persistExtraProperties(string $entityTable, int $entityId, array $extraPropertiesByModule): void
     {
-        $allDefinitions = $this->repository->getByEntityNameAllScopes($entityTable);
+        $allDefinitions = $this->repository->getDefinitionCollection($entityTable)->toArray();
         if (empty($allDefinitions)) {
             return;
         }
@@ -377,17 +377,34 @@ class ExtraPropertiesApiService
             return;
         }
 
-        $currentShopId = null !== $this->shopContext ? $this->shopContext->getId() : 1;
+        $shopConstraint = $this->shopContext->getShopConstraint();
 
-        $this->commandBus->handle(new UpdateExtraPropertyValuesCommand(
-            $entityTable,
-            'id_' . $entityTable,
-            $entityId,
-            $entityValues,
-            $langValuesByIdLang,
-            $shopValuesByShopId,
-            $currentShopId
-        ));
+        if (!empty($entityValues) || !empty($langValuesByIdLang)) {
+            $this->writer->writeAll(
+                $entityTable,
+                'id_' . $entityTable,
+                $entityId,
+                $entityValues,
+                $langValuesByIdLang,
+                [],
+                $shopConstraint
+            );
+        }
+
+        foreach ($shopValuesByShopId as $shopId => $shopValues) {
+            if (empty($shopValues)) {
+                continue;
+            }
+            $this->writer->writeAll(
+                $entityTable,
+                'id_' . $entityTable,
+                $entityId,
+                [],
+                [],
+                $shopValues,
+                ShopConstraint::shop((int) $shopId)
+            );
+        }
     }
 
     /**
@@ -419,7 +436,7 @@ class ExtraPropertiesApiService
                 continue;
             }
 
-            $storageColumn = ExtraPropertyNaming::storageColumnName($def->getModuleName() ?? '', $fieldName);
+            $storageColumn = ExtraPropertyNaming::storageColumnName($def->getModuleName(), $fieldName);
             $columnValues[$storageColumn] = $extraPropertiesByModule[$moduleName][$fieldName];
         }
 
@@ -517,16 +534,32 @@ class ExtraPropertiesApiService
     /**
      * Resolves the entity primary key value from the normalized response array.
      *
-     * Looks for 'id' first (most common field name in API responses), then falls back to
-     * the camelCase pattern derived from the entity table name (e.g. 'productId', 'customerId').
+     * When ApiPlatform property metadata factories are available, inspects #[ApiProperty(identifier: true)]
+     * on the resource class to find the identifier property name. Falls back to the 'id' field and then
+     * to the camelCase pattern derived from the entity table name (e.g. 'productId', 'customerId').
      *
      * @param array<string, mixed> $normalizedData Normalized response data
      * @param string $entityTable Entity storage table (e.g. 'product', 'customer_address')
+     * @param string|null $resourceClass Fully-qualified ApiResource class name (used for metadata lookup)
      *
      * @return int Entity ID, or 0 when not found
      */
-    protected function resolveEntityIdFromData(array $normalizedData, string $entityTable): int
+    protected function resolveEntityIdFromData(array $normalizedData, string $entityTable, ?string $resourceClass = null): int
     {
+        // R5: use #[ApiProperty(identifier: true)] metadata when available.
+        if (null !== $resourceClass && null !== $this->propertyNameCollectionFactory && null !== $this->propertyMetadataFactory) {
+            try {
+                foreach ($this->propertyNameCollectionFactory->create($resourceClass) as $propertyName) {
+                    $metadata = $this->propertyMetadataFactory->create($resourceClass, $propertyName);
+                    if ($metadata->isIdentifier() && isset($normalizedData[$propertyName]) && is_int($normalizedData[$propertyName])) {
+                        return $normalizedData[$propertyName];
+                    }
+                }
+            } catch (Throwable) {
+                // Fall through to heuristic resolution below.
+            }
+        }
+
         // Try the generic 'id' field first (most common in PS API resources)
         if (isset($normalizedData['id']) && is_int($normalizedData['id'])) {
             return $normalizedData['id'];
@@ -564,7 +597,7 @@ class ExtraPropertiesApiService
                 continue;
             }
 
-            $storageColumn = ExtraPropertyNaming::storageColumnName($def->getModuleName() ?? '', $fieldName);
+            $storageColumn = ExtraPropertyNaming::storageColumnName($def->getModuleName(), $fieldName);
             $map[$storageColumn] = [
                 'module_name' => ExtraPropertyNaming::displayModuleKey($def->getModuleName()),
                 'property_name' => $fieldName,
@@ -572,6 +605,35 @@ class ExtraPropertiesApiService
         }
 
         return $map;
+    }
+
+    /**
+     * Returns a module-keyed set of field names that are shop-scoped and API-exposed.
+     *
+     * Used by R8 (flatten shop-scoped values in single-shop context).
+     *
+     * @param string $entityTable Entity storage table (e.g. 'product')
+     *
+     * @return array<string, array<string, true>> ['moduleKey' => ['fieldName' => true]]
+     */
+    private function buildShopScopedFieldsByModule(string $entityTable): array
+    {
+        $shopFields = [];
+        foreach ($this->repository->getDefinitionCollection($entityTable)->toArray() as $def) {
+            if ('shop' !== $def->getFieldScope() || !$def->isDisplayApi()) {
+                continue;
+            }
+
+            $fieldName = $def->getPropertyName();
+            if ('' === $fieldName) {
+                continue;
+            }
+
+            $moduleKey = ExtraPropertyNaming::displayModuleKey($def->getModuleName());
+            $shopFields[$moduleKey][$fieldName] = true;
+        }
+
+        return $shopFields;
     }
 
     /**
@@ -588,7 +650,7 @@ class ExtraPropertiesApiService
         }
 
         $langFields = [];
-        foreach ($this->repository->getByEntityNameAllScopes($entityTable) as $def) {
+        foreach ($this->repository->getDefinitionCollection($entityTable)->toArray() as $def) {
             if ('lang' !== $def->getFieldScope() || !$def->isDisplayApi()) {
                 continue;
             }
@@ -605,6 +667,37 @@ class ExtraPropertiesApiService
         $this->langScopedFieldsByEntityTableCache[$entityTable] = $langFields;
 
         return $langFields;
+    }
+
+    /**
+     * Flattens shop-scoped array values to scalars when in single-shop context.
+     *
+     * In single-shop context, a shop-scope field value is stored as [id_shop => value].
+     * The API response should expose the scalar value directly, not the shop-keyed array.
+     *
+     * @param array<string, array<string, mixed>> $valuesByModule
+     * @param array<string, array<string, true>> $shopScopedFieldsByModule ['moduleKey' => ['fieldName' => true]]
+     *
+     * @return array<string, array<string, mixed>>
+     */
+    private function flattenShopScopedValues(array $valuesByModule, array $shopScopedFieldsByModule): array
+    {
+        if (empty($shopScopedFieldsByModule)) {
+            return $valuesByModule;
+        }
+
+        foreach ($valuesByModule as $moduleName => &$fields) {
+            foreach ($fields as $fieldName => &$value) {
+                if (!empty($shopScopedFieldsByModule[$moduleName][$fieldName]) && is_array($value)) {
+                    // Single-shop context: unwrap the single-element shop array.
+                    $value = !empty($value) ? reset($value) : null;
+                }
+            }
+            unset($value);
+        }
+        unset($fields);
+
+        return $valuesByModule;
     }
 
     /**
@@ -657,29 +750,23 @@ class ExtraPropertiesApiService
     }
 
     /**
-     * Returns the id_lang → locale mapping, cached for the duration of the request.
+     * Returns the id_lang → locale mapping via LangRepository.
      *
      * @return array<int, string>
      */
     private function fetchLangIdLocaleMap(): array
     {
-        if (null !== $this->langLocaleCache) {
-            return $this->langLocaleCache;
-        }
-
         try {
-            $rows = $this->connection->fetchAllAssociative(
-                sprintf('SELECT id_lang, locale FROM %s', $this->connection->quoteIdentifier($this->dbPrefix . 'lang'))
-            );
+            $mapping = $this->langRepository->getMapping();
         } catch (Throwable) {
-            return $this->langLocaleCache = [];
+            return [];
         }
 
-        $this->langLocaleCache = [];
-        foreach ($rows as $row) {
-            $this->langLocaleCache[(int) $row['id_lang']] = (string) $row['locale'];
+        $result = [];
+        foreach ($mapping as $idLang => $row) {
+            $result[(int) $idLang] = (string) $row['locale'];
         }
 
-        return $this->langLocaleCache;
+        return $result;
     }
 }

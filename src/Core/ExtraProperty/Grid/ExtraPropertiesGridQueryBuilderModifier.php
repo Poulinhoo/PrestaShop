@@ -8,9 +8,10 @@ declare(strict_types=1);
 namespace PrestaShop\PrestaShop\Core\ExtraProperty\Grid;
 
 use Doctrine\DBAL\Query\QueryBuilder;
-use PrestaShop\PrestaShop\Core\Domain\ExtraProperty\QueryResult\ExtraPropertyDefinitionInfo;
+use PrestaShop\PrestaShop\Core\ExtraProperty\Definition\ExtraPropertyDefinitionInfo;
 use PrestaShop\PrestaShop\Core\ExtraProperty\ExtraPropertyNaming;
 use PrestaShop\PrestaShop\Core\ExtraProperty\ExtraPropertyScopeGrouper;
+use PrestaShop\PrestaShop\Core\ExtraProperty\Repository\ExtraPropertyDefinitionRepositoryInterface;
 use PrestaShop\PrestaShop\Core\Grid\Search\SearchCriteriaInterface;
 use Symfony\Component\Form\Extension\Core\Type\CheckboxType;
 
@@ -28,7 +29,7 @@ class ExtraPropertiesGridQueryBuilderModifier
     private const EXTRA_SHOP_ALIAS = 'extra_shop';
 
     public function __construct(
-        protected readonly ExtraPropertiesGridDefinitionProvider $definitionProvider,
+        protected readonly ExtraPropertyDefinitionRepositoryInterface $repository,
         protected readonly string $dbPrefix,
         protected readonly int $contextLangId,
     ) {
@@ -40,7 +41,7 @@ class ExtraPropertiesGridQueryBuilderModifier
         SearchCriteriaInterface $searchCriteria,
         string $gridId
     ): void {
-        $definitions = $this->definitionProvider->getDefinitionsForGrid($gridId);
+        $definitions = $this->repository->getDefinitionCollectionByGridId($gridId);
         if ($definitions->isEmpty()) {
             return;
         }
@@ -204,7 +205,7 @@ class ExtraPropertiesGridQueryBuilderModifier
                 continue;
             }
 
-            $storageColumn = ExtraPropertyNaming::storageColumnName($definition->getModuleName() ?? '', $fieldName);
+            $storageColumn = ExtraPropertyNaming::storageColumnName($definition->getModuleName(), $fieldName);
 
             $selectAlias = ExtraPropertyNaming::formFieldName($moduleName, $fieldName, $scope);
             $searchQb->addSelect(sprintf('%s.`%s` AS `%s`', $joinAlias, $storageColumn, $selectAlias));

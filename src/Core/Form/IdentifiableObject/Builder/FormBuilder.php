@@ -156,13 +156,10 @@ final class FormBuilder implements FormBuilderInterface
         $formBuilder = $this->formFactory->createBuilder($formType, $data, $options);
 
         if (null !== $this->extraPropertiesFormBuilderModifier) {
-            $entityName = $this->getFormName();
-            $shopId = (int) ($options['shop_id'] ?? ($data['shop_id'] ?? 1));
             $this->extraPropertiesFormBuilderModifier->apply(
                 $formBuilder,
-                $entityName,
+                $this->getFormName(),
                 null !== $id ? (int) $id : null,
-                $shopId
             );
         }
 

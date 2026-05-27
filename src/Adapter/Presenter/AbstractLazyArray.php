@@ -13,6 +13,7 @@ use Closure;
 use Countable;
 use Iterator;
 use JsonSerializable;
+use PrestaShop\PrestaShop\Core\ExtraProperty\Value\ExtraPropertiesLazyArray;
 use PrestaShop\PrestaShop\Core\Util\Inflector;
 use ReflectionClass;
 use ReflectionException;

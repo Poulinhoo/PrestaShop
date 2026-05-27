@@ -7,8 +7,11 @@ declare(strict_types=1);
 
 namespace PrestaShop\PrestaShop\Core\ExtraProperty\Grid;
 
-use PrestaShop\PrestaShop\Core\Domain\ExtraProperty\QueryResult\ExtraPropertyDefinitionInfo;
+use PrestaShop\PrestaShop\Core\Context\ShopContext;
+use PrestaShop\PrestaShop\Core\ExtraProperty\Definition\ExtraPropertyDefinitionInfo;
 use PrestaShop\PrestaShop\Core\ExtraProperty\ExtraPropertyNaming;
+use PrestaShop\PrestaShop\Core\ExtraProperty\ExtraPropertyType;
+use PrestaShop\PrestaShop\Core\ExtraProperty\Repository\ExtraPropertyDefinitionRepositoryInterface;
 use PrestaShop\PrestaShop\Core\Grid\Column\ColumnCollectionInterface;
 use PrestaShop\PrestaShop\Core\Grid\Column\ColumnInterface;
 use PrestaShop\PrestaShop\Core\Grid\Column\Type\Common\DataColumn;
@@ -18,7 +21,6 @@ use PrestaShop\PrestaShop\Core\Grid\Definition\GridDefinition;
 use PrestaShop\PrestaShop\Core\Grid\Exception\ColumnNotFoundException;
 use PrestaShop\PrestaShop\Core\Grid\Filter\Filter;
 use PrestaShopBundle\Form\Admin\Type\YesAndNoChoiceType;
-use Symfony\Component\Form\Extension\Core\Type\CheckboxType;
 use Symfony\Component\Form\Extension\Core\Type\TextType;
 use Symfony\Contracts\Translation\TranslatorInterface;
 
@@ -28,8 +30,9 @@ use Symfony\Contracts\Translation\TranslatorInterface;
 class ExtraPropertiesGridDefinitionModifier
 {
     public function __construct(
-        protected readonly ExtraPropertiesGridDefinitionProvider $definitionProvider,
+        protected readonly ExtraPropertyDefinitionRepositoryInterface $repository,
         protected readonly TranslatorInterface $translator,
+        protected readonly ShopContext $shopContext,
     ) {
     }
 
@@ -39,7 +42,7 @@ class ExtraPropertiesGridDefinitionModifier
      */
     public function apply(GridDefinition $definition, string $gridId): void
     {
-        $definitions = $this->definitionProvider->getDefinitionsForGrid($gridId);
+        $definitions = $this->repository->getDefinitionCollectionByGridId($gridId);
         if ($definitions->isEmpty()) {
             return;
         }
@@ -53,6 +56,11 @@ class ExtraPropertiesGridDefinitionModifier
                 continue;
             }
 
+            // H8: JSON fields have no meaningful grid representation — skip them.
+            if (ExtraPropertyType::JSON->value === $extraDefinition->getFieldType()) {
+                continue;
+            }
+
             $moduleName = ExtraPropertyNaming::displayModuleKey($extraDefinition->getModuleName());
             $scope = $extraDefinition->getFieldScope();
 
@@ -61,19 +69,22 @@ class ExtraPropertiesGridDefinitionModifier
                 continue;
             }
 
-            $defaultLabel = $this->translator->trans(ucfirst(str_replace('_', ' ', $fieldName)), [], 'Admin.Global');
             $label = $this->translateLabel(
-                $extraDefinition->getTitleWording(),
-                $extraDefinition->getTitleDomain(),
-                $defaultLabel
+                $extraDefinition->getLabelWording(),
+                $extraDefinition->getLabelDomain(),
             );
 
             $column = $this->buildColumn($gridId, $columnId, $label, $extraDefinition);
 
-            $positionRef = trim($extraDefinition->getGridPosition() ?? '');
-            if ('' !== $positionRef) {
+            $gridEntry = ExtraPropertyNaming::parseGridEntry($extraDefinition->getGridEntry($gridId) ?? $gridId);
+            $columnRef = $gridEntry['columnId'];
+            if (null !== $columnRef) {
                 try {
-                    $columns->addAfter($positionRef, $column);
+                    if ('before' === $gridEntry['mode']) {
+                        $columns->addBefore($columnRef, $column);
+                    } else {
+                        $columns->addAfter($columnRef, $column);
+                    }
                 } catch (ColumnNotFoundException) {
                     $this->addBeforeActionsOrAtEnd($columns, $column);
                 }
@@ -81,25 +92,24 @@ class ExtraPropertiesGridDefinitionModifier
                 $this->addBeforeActionsOrAtEnd($columns, $column);
             }
 
-            [$filterType, $filterOptions] = $this->resolveFilterTypeAndOptions($extraDefinition);
             $filters->add(
-                (new Filter($columnId, $filterType))
+                (new Filter($columnId, $this->resolveFilterType($extraDefinition)))
                     ->setAssociatedColumn($columnId)
-                    ->setTypeOptions($filterOptions)
+                    ->setTypeOptions(['required' => false])
             );
         }
     }
 
     protected function buildColumn(string $gridId, string $columnId, string $label, ExtraPropertyDefinitionInfo $definition): ColumnInterface
     {
-        $declaredType = $definition->getFormFieldType();
+        // H8: column type is derived from the logical field type, not the form type override.
+        $fieldType = $definition->getFieldType();
         $scope = $definition->getFieldScope();
         $moduleName = ExtraPropertyNaming::displayModuleKey($definition->getModuleName());
         $fieldName = $definition->getPropertyName();
 
-        if (CheckboxType::class === $declaredType && '' !== $fieldName) {
+        if (ExtraPropertyType::BOOL->value === $fieldType && '' !== $fieldName) {
             $primaryField = 'id_' . $gridId;
-            $legacyController = $this->guessLegacyController($gridId);
             $entityName = $definition->getEntityName();
 
             return (new ToggleColumn($columnId))
@@ -114,13 +124,20 @@ class ExtraPropertiesGridDefinitionModifier
                         'moduleName' => $moduleName,
                         'propertyName' => $fieldName,
                         'scope' => $scope,
-                        'shopId' => 'id_shop_default',
-                        '_legacy_controller' => $legacyController,
+                        // H10: single shop → use its ID; all-shops context → use the current default shop
+                        // (toggle must not implicitly cascade to all shops).
+                        'shopId' => $this->shopContext->getShopConstraint()->isSingleShopContext()
+                            ? $this->shopContext->getShopConstraint()->getShopId()->getValue()
+                            : $this->shopContext->getId(),
+                        // _legacy_controller is intentionally absent: the toggle endpoint derives
+                        // the permission subject server-side from entityName (non-forgeable URL
+                        // path parameter). Sending it from the client would allow privilege
+                        // escalation by forging a controller name the user holds rights on.
                     ],
                 ]);
         }
 
-        if (\Symfony\Component\Form\Extension\Core\Type\DateTimeType::class === $declaredType) {
+        if (ExtraPropertyType::DATE->value === $fieldType) {
             return (new DateTimeColumn($columnId))
                 ->setName($label)
                 ->setOptions([
@@ -139,21 +156,16 @@ class ExtraPropertiesGridDefinitionModifier
             ]);
     }
 
-    protected function guessLegacyController(string $entityName): string
-    {
-        return 'Admin' . ucfirst($entityName) . 's';
-    }
-
     /**
-     * @return array{0: class-string, 1: array<string, mixed>}
+     * @return class-string
      */
-    protected function resolveFilterTypeAndOptions(ExtraPropertyDefinitionInfo $definition): array
+    protected function resolveFilterType(ExtraPropertyDefinitionInfo $definition): string
     {
-        if (CheckboxType::class === $definition->getFormFieldType()) {
-            return [YesAndNoChoiceType::class, ['required' => false]];
+        if (ExtraPropertyType::BOOL->value === $definition->getFieldType()) {
+            return YesAndNoChoiceType::class;
         }
 
-        return [TextType::class, ['required' => false]];
+        return TextType::class;
     }
 
     protected function addBeforeActionsOrAtEnd(ColumnCollectionInterface $columns, ColumnInterface $column): void
@@ -178,13 +190,10 @@ class ExtraPropertiesGridDefinitionModifier
         return false;
     }
 
-    /**
-     * Translates a wording/domain pair from a definition, falling back to $default.
-     */
-    protected function translateLabel(?string $wording, ?string $domain, string $default): string
+    protected function translateLabel(?string $wording, ?string $domain): string
     {
         if (null === $wording || '' === trim($wording)) {
-            return $default;
+            return '';
         }
 
         return $this->translator->trans($wording, [], $domain ?? 'Admin.Global');

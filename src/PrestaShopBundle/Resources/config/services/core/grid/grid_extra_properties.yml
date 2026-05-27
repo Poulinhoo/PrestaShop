@@ -1,27 +1,16 @@
 services:
   _defaults:
-    public: true
-
-  PrestaShop\PrestaShop\Core\ExtraProperty\Grid\ExtraPropertiesGridDefinitionProvider:
+    autowire: true
     public: false
-    arguments:
-      $repository: '@PrestaShop\PrestaShop\Core\ExtraProperty\Repository\ExtraPropertyDefinitionRepositoryInterface'
 
   PrestaShop\PrestaShop\Core\ExtraProperty\Grid\ExtraPropertiesGridDefinitionModifier:
-    public: false
     arguments:
-      $definitionProvider: '@PrestaShop\PrestaShop\Core\ExtraProperty\Grid\ExtraPropertiesGridDefinitionProvider'
+      $repository: '@PrestaShop\PrestaShop\Core\ExtraProperty\Repository\ExtraPropertyDefinitionRepositoryInterface'
       $translator: '@translator'
+      $shopContext: '@PrestaShop\PrestaShop\Core\Context\ShopContext'
 
   PrestaShop\PrestaShop\Core\ExtraProperty\Grid\ExtraPropertiesGridQueryBuilderModifier:
-    public: false
     arguments:
-      $definitionProvider: '@PrestaShop\PrestaShop\Core\ExtraProperty\Grid\ExtraPropertiesGridDefinitionProvider'
+      $repository: '@PrestaShop\PrestaShop\Core\ExtraProperty\Repository\ExtraPropertyDefinitionRepositoryInterface'
       $dbPrefix: '%database_prefix%'
       $contextLangId: '@=service("prestashop.adapter.legacy.context").getContext().language.id'
-
-  _instanceof:
-    PrestaShop\PrestaShop\Core\Grid\Definition\Factory\AbstractGridDefinitionFactory:
-      calls:
-        - setExtraPropertiesGridDefinitionModifier:
-            - '@PrestaShop\PrestaShop\Core\ExtraProperty\Grid\ExtraPropertiesGridDefinitionModifier'

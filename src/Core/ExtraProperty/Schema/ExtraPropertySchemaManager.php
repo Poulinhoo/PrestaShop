@@ -232,14 +232,6 @@ class ExtraPropertySchemaManager implements ExtraPropertySchemaManagerInterface
         $columnDefinitions = [];
 
         foreach ($primaryKey->getColumns() as $primaryColumnName) {
-            if (!$baseTableDetails->hasColumn($primaryColumnName)) {
-                throw new RuntimeException(sprintf(
-                    'Primary key column "%s" was not found on base table "%s".',
-                    $primaryColumnName,
-                    $baseTableName
-                ));
-            }
-
             $primaryColumn = $baseTableDetails->getColumn($primaryColumnName);
             $columnOptions = $this->buildColumnDeclarationOptions($primaryColumn);
             $columnDefinitions[] = $platform->getColumnDeclarationSQL($primaryColumnName, $columnOptions);

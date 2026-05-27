@@ -8,7 +8,7 @@ declare(strict_types=1);
 
 namespace PrestaShop\PrestaShop\Core\ExtraProperty\Repository;
 
-use PrestaShop\PrestaShop\Core\Domain\ExtraProperty\QueryResult\ExtraPropertyDefinitionInfo;
+use PrestaShop\PrestaShop\Core\ExtraProperty\Definition\ExtraPropertyDefinitionInfo;
 use PrestaShop\PrestaShop\Core\ExtraProperty\ExtraPropertyDefinitionCollection;
 
 /**
@@ -17,68 +17,37 @@ use PrestaShop\PrestaShop\Core\ExtraProperty\ExtraPropertyDefinitionCollection;
  * Provides definition look-ups used by the registry, the BO form/grid modifiers,
  * and the ObjectModel. Implementations may be decorated with a cache layer.
  *
- * All read methods return typed ExtraPropertyDefinitionInfo value objects.
+ * All read methods return typed ExtraPropertyDefinitionInfo value objects or collections.
  */
 interface ExtraPropertyDefinitionRepositoryInterface
 {
     /**
      * Returns all extra property definitions for an entity as a typed collection.
      *
-     * @param string $entityName
+     * Use the collection's filter helpers (filterByScope, filterByForm, filterByGrid, …)
+     * instead of relying on scope-specific overloads.
+     *
+     * @param string $entityName Entity table name (e.g. 'product')
      *
      * @return ExtraPropertyDefinitionCollection
      */
     public function getDefinitionCollection(string $entityName): ExtraPropertyDefinitionCollection;
 
     /**
-     * Returns all extra property definitions for an entity, across all scopes.
+     * Returns all extra property definitions that target the given grid ID, regardless of entity.
      *
-     * @param string $entityName
+     * Unlike getDefinitionCollection() (which queries by entity_name), this method searches
+     * the associated_grids JSON column across all entities and returns every definition whose
+     * entry list contains the given $gridId — whether as a bare "gridId", "gridId.column",
+     * "gridId.column:before", or "gridId.column:after".
      *
-     * @return list<ExtraPropertyDefinitionInfo>
+     * Use this in grid modifiers instead of getDefinitionCollection($entityName) to avoid the
+     * assumption that grid ID == entity name. The grid ID comes from GridDefinition::getId()
+     * (e.g. 'product' for ProductGridDefinitionFactory, 'customer' for CustomerGridDefinitionFactory).
+     *
+     * @param string $gridId BO grid identifier, as returned by GridDefinition::getId() (e.g. 'product', 'customer')
      */
-    public function getByEntityNameAllScopes(string $entityName): array;
-
-    /**
-     * Returns extra property definitions for one entity + one scope.
-     *
-     * @param string $entityName
-     * @param string $fieldScope 'common' | 'lang' | 'shop'
-     *
-     * @return list<ExtraPropertyDefinitionInfo>
-     */
-    public function getByEntityName(string $entityName, string $fieldScope = 'common'): array;
-
-    /**
-     * Returns a single definition matching entity + property name + scope.
-     * Returns null when not found or when parameters fail validation.
-     *
-     * @param string $entityName
-     * @param string $propertyName
-     * @param string $fieldScope 'common' | 'lang' | 'shop'
-     *
-     * @return ExtraPropertyDefinitionInfo|null
-     */
-    public function getByEntityAndPropertyName(string $entityName, string $propertyName, string $fieldScope = 'common'): ?ExtraPropertyDefinitionInfo;
-
-    /**
-     * Returns true when at least one extra property is defined for the given entity (any scope).
-     *
-     * @param string $entityName
-     *
-     * @return bool
-     */
-    public function hasExtraProperties(string $entityName): bool;
-
-    /**
-     * Loads one definition by primary key.
-     * Returns null when not found.
-     *
-     * @param int $id
-     *
-     * @return ExtraPropertyDefinitionInfo|null
-     */
-    public function getDefinitionById(int $id): ?ExtraPropertyDefinitionInfo;
+    public function getDefinitionCollectionByGridId(string $gridId): ExtraPropertyDefinitionCollection;
 
     /**
      * Finds one registry definition matching entity, module, property name, and scope.

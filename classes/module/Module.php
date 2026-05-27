@@ -1264,18 +1264,18 @@ abstract class ModuleCore implements ModuleInterface
      * @param string $entityName Entity table name (e.g. "product")
      * @param string $propertyName Property name within the module (without the module prefix)
      * @param ExtraPropertyScope $fieldScope Scope of the property to unregister
-     * @param bool $dropColumn If true, also DROP the SQL column from the *_extra table
+     * @param bool $dropData If true, also DROP the SQL column and its data from the *_extra table
      *
      * @return bool
      */
-    public function unregisterExtraProperty(string $entityName, string $propertyName, ExtraPropertyScope $fieldScope = ExtraPropertyScope::Common, bool $dropColumn = false): bool
+    public function unregisterExtraProperty(string $entityName, string $propertyName, ExtraPropertyScope $fieldScope = ExtraPropertyScope::Common, bool $dropData = false): bool
     {
         $moduleName = !empty($this->name) ? $this->name : null;
 
         /** @var ExtraPropertyRegistryInterface $entityCustomFieldRegistry */
         $entityCustomFieldRegistry = $this->get(ExtraPropertyRegistryInterface::class);
 
-        return $entityCustomFieldRegistry->unregister($entityName, $propertyName, $moduleName, $fieldScope, $dropColumn);
+        return $entityCustomFieldRegistry->unregister($entityName, $propertyName, $moduleName, $fieldScope, $dropData);
     }
 
     /**

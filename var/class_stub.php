@@ -109,7 +109,6 @@ class DeliveryOptionsFinder extends DeliveryOptionsFinderCore {};
 class Dispatcher extends DispatcherCore {};
 class Employee extends EmployeeCore {};
 class EmployeeSession extends EmployeeSessionCore {};
-class ExtraPropertyDefinition extends ExtraPropertyDefinitionCore {};
 class Feature extends FeatureCore {};
 class FeatureFlag extends FeatureFlagCore {};
 class FeatureLang extends FeatureLangCore {};

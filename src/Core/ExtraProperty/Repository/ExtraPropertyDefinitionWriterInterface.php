@@ -22,19 +22,6 @@ use PrestaShop\PrestaShop\Core\ExtraProperty\ExtraPropertyOptions;
 interface ExtraPropertyDefinitionWriterInterface
 {
     /**
-     * Normalizes a legacy entity name suffix (product_lang → entity=product, scope=lang).
-     * Also validates the entity name and scope against known values.
-     *
-     * Returns [entityName, scope] on success, [null, null] when validation fails.
-     *
-     * @param string $entityName Raw entity name (may have _lang / _shop suffix)
-     * @param string $fieldScope Raw scope string ('common', 'lang', 'shop')
-     *
-     * @return array{0: string|null, 1: string|null}
-     */
-    public function normalizeEntityNameAndFieldScope(string $entityName, string $fieldScope): array;
-
-    /**
      * Saves (insert or update) one definition row from typed parameters.
      *
      * When $existingId is provided, performs an UPDATE; otherwise INSERT.

@@ -83,6 +83,11 @@ class CommonController extends PrestaShopAdminController
      * This endpoint is designed for ToggleColumn async usage in BO grids.
      * It performs an UPSERT and toggles the value in SQL without doing a preliminary SELECT.
      *
+     * Security: the legacy controller name is derived server-side from the entityName URL path
+     * parameter (non-forgeable), NOT from any client-supplied value. This prevents privilege
+     * escalation where an authenticated admin could bypass per-entity permission checks by
+     * forging a _legacy_controller value they hold rights on.
+     *
      * @param string $entityName
      * @param int $entityId
      * @param string $moduleName normalized module name, can be "_core" for core properties
@@ -90,7 +95,7 @@ class CommonController extends PrestaShopAdminController
      * @param string $scope Supported scopes: "entity" and "shop"
      * @param int $shopId Shop context for shop-scoped properties (ignored for entity scope)
      */
-    #[AdminSecurity("is_granted('update', request.get('_legacy_controller'))")]
+    #[AdminSecurity("is_granted('ROLE_EMPLOYEE')")]
     public function toggleExtraPropertyAction(
         string $entityName,
         int $entityId,
@@ -100,6 +105,16 @@ class CommonController extends PrestaShopAdminController
         ParameterBagInterface $parameterBag,
         int $shopId = 0,
     ): JsonResponse {
+        // Derive the legacy controller from the entityName URL path param (trusted, non-forgeable).
+        // Never trust a _legacy_controller value coming from the request body/query string.
+        $legacyController = ExtraPropertyNaming::legacyControllerFromEntityName($entityName);
+        if (!$this->isGranted('update', $legacyController)) {
+            return new JsonResponse([
+                'status' => false,
+                'message' => 'Access denied.',
+            ], 403);
+        }
+
         /** @var ExtraPropertyDefinitionRepositoryInterface $repository */
         $repository = $this->container->get(ExtraPropertyDefinitionRepositoryInterface::class);
         /** @var Connection $connection */
@@ -107,27 +122,10 @@ class CommonController extends PrestaShopAdminController
         /** @var TranslatorInterface $translator */
         $translator = $this->container->get(TranslatorInterface::class);
 
-        $definitions = $repository->getByEntityNameAllScopes($entityName);
-        if (empty($definitions)) {
-            return new JsonResponse([
-                'status' => false,
-                'message' => $translator->trans('Field not found.', [], 'Admin.Notifications.Error'),
-            ], 404);
-        }
+        // '_core' is the display sentinel for core properties; the DB stores null.
+        $resolvedModuleName = ExtraPropertyNaming::CORE_MODULE_KEY === $moduleName ? null : $moduleName;
 
-        $matched = null;
-        foreach ($definitions as $definition) {
-            $normalizedDefModule = null !== $definition->getModuleName() ? $definition->getModuleName() : '_core';
-            if (
-                $normalizedDefModule === $moduleName
-                && $definition->getPropertyName() === $propertyName
-                && $definition->getFieldScope() === $scope
-            ) {
-                $matched = $definition;
-                break;
-            }
-        }
-
+        $matched = $repository->findDefinitionByModuleAndField($entityName, $resolvedModuleName, $propertyName, $scope);
         if (null === $matched) {
             return new JsonResponse([
                 'status' => false,
@@ -135,7 +133,7 @@ class CommonController extends PrestaShopAdminController
             ], 404);
         }
 
-        $storageColumn = ExtraPropertyNaming::storageColumnName($matched->getModuleName() ?? '', $matched->getPropertyName());
+        $storageColumn = ExtraPropertyNaming::storageColumnName($matched->getModuleName(), $matched->getPropertyName());
         $databasePrefix = (string) $parameterBag->get('database_prefix');
 
         $primaryKey = 'id_' . $entityName;

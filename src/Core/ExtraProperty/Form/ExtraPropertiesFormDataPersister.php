@@ -9,10 +9,11 @@ declare(strict_types=1);
 namespace PrestaShop\PrestaShop\Core\ExtraProperty\Form;
 
 use DateTimeInterface;
-use PrestaShop\PrestaShop\Core\CommandBus\CommandBusInterface;
-use PrestaShop\PrestaShop\Core\Domain\ExtraProperty\Command\UpdateExtraPropertyValuesCommand;
-use PrestaShop\PrestaShop\Core\Domain\ExtraProperty\QueryResult\ExtraPropertyDefinitionInfo;
+use PrestaShop\PrestaShop\Core\Context\ShopContext;
+use PrestaShop\PrestaShop\Core\ExtraProperty\Definition\ExtraPropertyDefinitionInfo;
 use PrestaShop\PrestaShop\Core\ExtraProperty\ExtraPropertyNaming;
+use PrestaShop\PrestaShop\Core\ExtraProperty\Repository\ExtraPropertyDefinitionRepositoryInterface;
+use PrestaShop\PrestaShop\Core\ExtraProperty\Value\ExtraPropertyWriterInterface;
 use PrestaShopBundle\Form\Admin\Type\NavigationTabType;
 use Symfony\Component\Form\Extension\Core\Type\CheckboxType;
 use Symfony\Component\Form\Extension\Core\Type\DateTimeType;
@@ -25,28 +26,32 @@ use Symfony\Component\Form\ResolvedFormTypeInterface;
  * Strategy:
  * - Read submitted values from form fields (unmapped) based on definitions.
  * - Collect all three scope payloads (common, lang, shop) from the form.
- * - Dispatch a single UpdateExtraPropertyValuesCommand via the command bus.
+ * - Write directly via ExtraPropertyWriterInterface.
  */
 class ExtraPropertiesFormDataPersister
 {
     private const DEFAULT_FALLBACK_TAB = 'extra_fields';
 
     public function __construct(
-        protected readonly ExtraPropertiesFormDefinitionProvider $definitionProvider,
-        protected readonly CommandBusInterface $commandBus,
+        protected readonly ExtraPropertyDefinitionRepositoryInterface $repository,
+        protected readonly ExtraPropertyWriterInterface $writer,
+        protected readonly ShopContext $shopContext,
     ) {
     }
 
-    public function persist(FormInterface $form, string $entityName, int $entityId, int $shopId): void
+    public function persist(FormInterface $form, string $entityName, int $entityId): void
     {
         if ($entityId <= 0) {
             return;
         }
 
-        $definitions = $this->definitionProvider->getDefinitionsForEntity($entityName);
+        $definitions = $this->repository->getDefinitionCollection($entityName)->filterByForm();
         if ($definitions->isEmpty()) {
             return;
         }
+
+        $shopConstraint = $this->shopContext->getShopConstraint();
+        $hasShop = $shopConstraint->isSingleShopContext();
 
         $storageEntityName = $this->resolveStorageEntityName($entityName, $definitions->first());
 
@@ -62,7 +67,7 @@ class ExtraPropertiesFormDataPersister
 
             $moduleName = ExtraPropertyNaming::displayModuleKey($definition->getModuleName());
             $scope = $definition->getFieldScope();
-            $columnName = ExtraPropertyNaming::storageColumnName($definition->getModuleName() ?? '', $fieldName);
+            $columnName = ExtraPropertyNaming::storageColumnName($definition->getModuleName(), $fieldName);
 
             $targetPath = trim($definition->getFormPosition() ?? '');
             if ('' === $targetPath) {
@@ -82,7 +87,7 @@ class ExtraPropertiesFormDataPersister
             $submittedValue = $this->normalizeSubmittedValueForStorage($definition, $submittedValue);
 
             if ('lang' === $scope) {
-                if (!is_array($submittedValue) || $shopId <= 0) {
+                if (!is_array($submittedValue) || !$hasShop) {
                     continue;
                 }
                 foreach ($submittedValue as $idLang => $value) {
@@ -93,7 +98,7 @@ class ExtraPropertiesFormDataPersister
                     $langValuesByIdLang[$idLang][$columnName] = $this->normalizeSubmittedValueForStorage($definition, $value);
                 }
             } elseif ('shop' === $scope) {
-                if ($shopId <= 0) {
+                if (!$hasShop) {
                     continue;
                 }
                 $shopValues[$columnName] = $submittedValue;
@@ -102,18 +107,15 @@ class ExtraPropertiesFormDataPersister
             }
         }
 
-        // Build shop-scope payload: the BO form always writes for the current shop only
-        $shopValuesByShopId = ($shopId > 0 && !empty($shopValues)) ? [$shopId => $shopValues] : [];
-
-        $this->commandBus->handle(new UpdateExtraPropertyValuesCommand(
+        $this->writer->writeAll(
             $storageEntityName,
             'id_' . $storageEntityName,
             $entityId,
             $entityValues,
             $langValuesByIdLang,
-            $shopValuesByShopId,
-            $shopId > 0 ? $shopId : null
-        ));
+            $shopValues,
+            $shopConstraint
+        );
     }
 
     protected function resolveStorageEntityName(string $fallbackEntityName, ?ExtraPropertyDefinitionInfo $firstDefinition): string
@@ -144,6 +146,21 @@ class ExtraPropertiesFormDataPersister
 
     protected function resolvePathForm(FormInterface $rootForm, string $path): ?FormInterface
     {
+        // Strip :before/:after suffix — the extra field lives in the *parent* builder,
+        // not in a child named "something:before". After stripping the suffix we also
+        // drop the reference segment (the sibling used for positioning) so we navigate
+        // to the form that actually owns the extra field.
+        // e.g. "header.name:before" → strip ":before" → "header.name" → drop "name" → "header"
+        // e.g. "name:before"        → strip ":before" → "name"         → drop "name" → "" (root)
+        foreach ([':before', ':after'] as $suffix) {
+            if (str_ends_with($path, $suffix)) {
+                $path = substr($path, 0, -strlen($suffix));
+                $lastDot = strrpos($path, '.');
+                $path = false !== $lastDot ? substr($path, 0, $lastDot) : '';
+                break;
+            }
+        }
+
         $segments = array_values(array_filter(array_map('trim', explode('.', $path)), static fn (string $s): bool => '' !== $s));
         if (empty($segments)) {
             return $rootForm;

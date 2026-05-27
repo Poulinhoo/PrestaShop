@@ -17,14 +17,14 @@ namespace PrestaShop\PrestaShop\Core\ExtraProperty;
  */
 enum ExtraPropertyType: string
 {
-    case Int = 'int';
-    case Bool = 'bool';
-    case String = 'string';
-    case Float = 'float';
-    case Date = 'date';
-    case Html = 'html';
-    case Json = 'json';
-    case Choice = 'choice';
+    case INT = 'int';
+    case BOOL = 'bool';
+    case STRING = 'string';
+    case FLOAT = 'float';
+    case DATE = 'date';
+    case HTML = 'html';
+    case JSON = 'json';
+    case CHOICE = 'choice';
 
     /**
      * Returns all enum raw values (MySQL ENUM literals).

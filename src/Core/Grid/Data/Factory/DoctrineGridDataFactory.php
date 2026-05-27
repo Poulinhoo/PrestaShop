@@ -28,14 +28,14 @@ class DoctrineGridDataFactory implements GridDataFactoryInterface
      * @param HookDispatcherInterface $hookDispatcher
      * @param QueryParserInterface $queryParser
      * @param string $gridId
-     * @param ExtraPropertiesGridQueryBuilderModifier|null $extraPropertiesGridQueryBuilderModifier
+     * @param ExtraPropertiesGridQueryBuilderModifier $extraPropertiesGridQueryBuilderModifier
      */
     public function __construct(
         protected DoctrineQueryBuilderInterface $gridQueryBuilder,
         protected HookDispatcherInterface $hookDispatcher,
         protected QueryParserInterface $queryParser,
         protected string $gridId,
-        protected ?ExtraPropertiesGridQueryBuilderModifier $extraPropertiesGridQueryBuilderModifier = null
+        protected ExtraPropertiesGridQueryBuilderModifier $extraPropertiesGridQueryBuilderModifier
     ) {
     }
 
@@ -47,14 +47,12 @@ class DoctrineGridDataFactory implements GridDataFactoryInterface
         $searchQueryBuilder = $this->gridQueryBuilder->getSearchQueryBuilder($searchCriteria);
         $countQueryBuilder = $this->gridQueryBuilder->getCountQueryBuilder($searchCriteria);
 
-        if (null !== $this->extraPropertiesGridQueryBuilderModifier) {
-            $this->extraPropertiesGridQueryBuilderModifier->apply(
-                $searchQueryBuilder,
-                $countQueryBuilder,
-                $searchCriteria,
-                $this->gridId
-            );
-        }
+        $this->extraPropertiesGridQueryBuilderModifier->apply(
+            $searchQueryBuilder,
+            $countQueryBuilder,
+            $searchCriteria,
+            $this->gridId
+        );
 
         $this->hookDispatcher->dispatchWithParameters('action' . Container::camelize($this->gridId) . 'GridQueryBuilderModifier', [
             'search_query_builder' => $searchQueryBuilder,
