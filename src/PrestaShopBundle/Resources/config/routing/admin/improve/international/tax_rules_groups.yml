@@ -101,6 +101,7 @@ admin_tax_rules_states_for_country:
   defaults:
     _controller: PrestaShopBundle\Controller\Admin\Improve\International\TaxRulesGroupController::getStatesForCountryAction
     _legacy_controller: AdminTaxRulesGroup
+    _legacy_link: AdminTaxRulesGroup
     _legacy_feature_flag: tax_rules_group
   requirements:
     countryId: \d+
@@ -111,6 +112,7 @@ admin_tax_rules_search:
   defaults:
     _controller: PrestaShopBundle\Controller\Admin\Improve\International\TaxRulesGroupController::searchTaxRulesAction
     _legacy_controller: AdminTaxRulesGroup
+    _legacy_link: AdminTaxRulesGroup
     _legacy_feature_flag: tax_rules_group
   requirements:
     taxRulesGroupId: \d+
@@ -121,6 +123,7 @@ admin_tax_rules_create:
   defaults:
     _controller: PrestaShopBundle\Controller\Admin\Improve\International\TaxRulesGroupController::createTaxRuleAction
     _legacy_controller: AdminTaxRulesGroup
+    _legacy_link: AdminTaxRulesGroup
     _legacy_feature_flag: tax_rules_group
   requirements:
     taxRulesGroupId: \d+
@@ -131,6 +134,7 @@ admin_tax_rules_edit:
   defaults:
     _controller: PrestaShopBundle\Controller\Admin\Improve\International\TaxRulesGroupController::editTaxRuleAction
     _legacy_controller: AdminTaxRulesGroup
+    _legacy_link: AdminTaxRulesGroup
     _legacy_feature_flag: tax_rules_group
   requirements:
     taxRulesGroupId: \d+
@@ -142,7 +146,10 @@ admin_tax_rules_delete:
   defaults:
     _controller: PrestaShopBundle\Controller\Admin\Improve\International\TaxRulesGroupController::deleteTaxRuleAction
     _legacy_controller: AdminTaxRulesGroup
+    _legacy_link: AdminTaxRulesGroup:deletetax_rule
     _legacy_feature_flag: tax_rules_group
+    _legacy_parameters:
+      id_tax_rule: taxRuleId
   requirements:
     taxRulesGroupId: \d+
     taxRuleId: \d+
@@ -153,4 +160,5 @@ admin_tax_rules_bulk_delete:
   defaults:
     _controller: PrestaShopBundle\Controller\Admin\Improve\International\TaxRulesGroupController::bulkDeleteTaxRulesAction
     _legacy_controller: AdminTaxRulesGroup
+    _legacy_link: AdminTaxRulesGroup:submitBulkdeletetax_rule
     _legacy_feature_flag: tax_rules_group
