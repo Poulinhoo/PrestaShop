@@ -9,6 +9,7 @@ declare(strict_types=1);
 namespace PrestaShopBundle\Twig\Component;
 
 use PrestaShop\PrestaShop\Adapter\LegacyContext;
+use PrestaShop\PrestaShop\Core\FeatureFlag\FeatureFlagStateCheckerInterface;
 use PrestaShop\PrestaShop\Core\QuickAccess\QuickAccessGenerator;
 use PrestaShopBundle\Security\Admin\UserTokenManager;
 use PrestaShopBundle\Twig\Layout\MenuBuilder;
@@ -52,6 +53,7 @@ class QuickAccess
         protected readonly RouterInterface $router,
         protected readonly UserTokenManager $userTokenManager,
         protected readonly LegacyContext $legacyContext,
+        protected readonly FeatureFlagStateCheckerInterface $featureFlagChecker,
     ) {
     }
 
@@ -134,19 +136,31 @@ class QuickAccess
 
     public function getAjaxAddUrl(): string
     {
-        return $this->router->generate(
-            'admin_quick_accesses_ajax_add',
-            ['_token' => $this->userTokenManager->getSymfonyToken()],
-            UrlGeneratorInterface::ABSOLUTE_URL
+        if ($this->featureFlagChecker->isEnabled('quick_access')) {
+            return $this->router->generate(
+                'admin_quick_accesses_ajax_add',
+                ['_token' => $this->userTokenManager->getSymfonyToken()],
+                UrlGeneratorInterface::ABSOLUTE_URL
+            );
+        }
+
+        return $this->legacyContext->getContext()->link->getAdminLink(
+            'AdminQuickAccesses', true, [], ['action' => 'GetUrl', 'ajax' => 1]
         );
     }
 
     public function getAjaxDeleteUrl(): string
     {
-        return $this->router->generate(
-            'admin_quick_accesses_ajax_delete',
-            ['_token' => $this->userTokenManager->getSymfonyToken()],
-            UrlGeneratorInterface::ABSOLUTE_URL
+        if ($this->featureFlagChecker->isEnabled('quick_access')) {
+            return $this->router->generate(
+                'admin_quick_accesses_ajax_delete',
+                ['_token' => $this->userTokenManager->getSymfonyToken()],
+                UrlGeneratorInterface::ABSOLUTE_URL
+            );
+        }
+
+        return $this->legacyContext->getContext()->link->getAdminLink(
+            'AdminQuickAccesses', true, [], ['action' => 'GetUrl', 'ajax' => 1]
         );
     }
 
