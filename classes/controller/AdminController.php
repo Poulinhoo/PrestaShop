@@ -10,6 +10,7 @@ use PrestaShop\PrestaShop\Core\Action\ActionsBarButtonsCollection;
 use PrestaShop\PrestaShop\Core\Domain\Cart\CartStatus;
 use PrestaShop\PrestaShop\Core\Exception\TypeException;
 use PrestaShop\PrestaShop\Core\Feature\TokenInUrls;
+use PrestaShop\PrestaShop\Core\FeatureFlag\FeatureFlagStateCheckerInterface;
 use PrestaShop\PrestaShop\Core\Localization\Locale;
 use PrestaShop\PrestaShop\Core\Localization\Specification\Number as NumberSpecification;
 use PrestaShop\PrestaShop\Core\Localization\Specification\Price as PriceSpecification;
@@ -2004,14 +2005,18 @@ class AdminControllerCore extends Controller
         $quick_access_ajax_url = $this->context->link->getAdminLink('AdminQuickAccesses', true, [], ['action' => 'GetUrl', 'ajax' => 1]);
         if ((int) $this->context->employee->id) {
             $quick_access = QuickAccess::getQuickAccessesWithToken($this->context->language->id, (int) $this->context->employee->id);
-            try {
-                $quick_access_ajax_url = $this->context->link->getAdminLink(
-                    'AdminQuickAccesses',
-                    false,
-                    ['route' => 'admin_quick_accesses_ajax', '_token' => $this->get(UserTokenManager::class)->getSymfonyToken()]
-                );
-            } catch (Exception $e) {
-                // keep legacy fallback URL
+            /** @var FeatureFlagStateCheckerInterface $featureFlagChecker */
+            $featureFlagChecker = $this->get(FeatureFlagStateCheckerInterface::class);
+            if ($featureFlagChecker->isEnabled('quick_access')) {
+                try {
+                    $quick_access_ajax_url = $this->context->link->getAdminLink(
+                        'AdminQuickAccesses',
+                        false,
+                        ['route' => 'admin_quick_accesses_ajax', '_token' => $this->get(UserTokenManager::class)->getSymfonyToken()]
+                    );
+                } catch (Exception $e) {
+                    // keep legacy fallback URL
+                }
             }
         }
 
