@@ -83,7 +83,8 @@ Feature: Update discount delivery conditions
     Then discount "discount_countries_to_carriers" should have the following properties:
       | countries | france |
     When I update discount "discount_countries_to_carriers" with the following properties:
-      | carriers | carrier2 |
+      | carriers  | carrier2 |
+      | countries |          |
     Then discount "discount_countries_to_carriers" should have the following properties:
       | carriers  | carrier2 |
       | countries |          |
@@ -115,6 +116,7 @@ Feature: Update discount delivery conditions
       | carriers | carrier3 |
     When I update discount "discount_carriers_to_countries" with the following properties:
       | countries | spain |
+      | carriers  |       |
     Then discount "discount_carriers_to_countries" should have the following properties:
       | countries | spain |
       | carriers  |       |
