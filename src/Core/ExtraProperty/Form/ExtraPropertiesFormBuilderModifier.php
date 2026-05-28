@@ -140,13 +140,19 @@ class ExtraPropertiesFormBuilderModifier
         $declaredType = $definition->getFormFieldType();
         $validator = $definition->getValidator();
         $extraOptions = $definition->getFormOptions() ?? [];
+        $constraints = [];
 
         $baseType = (null !== $declaredType && class_exists($declaredType)) ? $declaredType : TextType::class;
 
-        $fieldConstraint = null;
+        // formRequired: true → automatically add NotBlank for real server-side enforcement.
+        // The HTML required attribute alone is bypassed by AJAX form submissions in the BO.
+        if ($definition->isFormRequired()) {
+            $constraints[] = new Assert\NotBlank();
+        }
+
         if (null !== $validator) {
             $message = $this->translator->trans('The field is invalid.', domain: 'Admin.Notifications.Error');
-            $fieldConstraint = new Assert\Callback(
+            $constraints[] = new Assert\Callback(
                 function ($value, ExecutionContextInterface $context) use ($definition, $message): void {
                     if ($value instanceof DateTimeInterface) {
                         $value = $value->format('Y-m-d H:i:s');
@@ -168,7 +174,7 @@ class ExtraPropertiesFormBuilderModifier
                     'type' => $baseType,
                     'options' => array_merge($extraOptions, [
                         'required' => $definition->isFormRequired(),
-                        'constraints' => null !== $fieldConstraint ? [$fieldConstraint] : [],
+                        'constraints' => $constraints,
                     ]),
                 ],
             ];
@@ -178,7 +184,7 @@ class ExtraPropertiesFormBuilderModifier
         return [
             $baseType,
             array_merge(
-                ['constraints' => null !== $fieldConstraint ? [$fieldConstraint] : []],
+                ['constraints' => $constraints],
                 $extraOptions
             ),
         ];

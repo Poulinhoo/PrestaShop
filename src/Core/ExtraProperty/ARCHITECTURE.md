@@ -546,8 +546,7 @@ Both factories resolve `ExtraPropertyReaderInterface` and `ExtraPropertyDefiniti
 - `ProductLazyArray`
 - `CategoryLazyArray`, `SupplierLazyArray`, `ManufacturerLazyArray`, `StoreLazyArray`
 - `OrderLazyArray`, `OrderDetailLazyArray`, `OrderReturnLazyArray`
-
-`CartLazyArray` does **not** expose `extraProperties`.
+- `CartLazyArray`
 
 ### 5.2. ObjectModel Integration
 
