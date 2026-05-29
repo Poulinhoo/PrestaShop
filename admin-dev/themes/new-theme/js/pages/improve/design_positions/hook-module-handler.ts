@@ -94,8 +94,7 @@ export default class HookModuleHandler {
     const buildOption = (hook: HookableInfo): HTMLOptionElement => {
       const option = document.createElement('option');
       option.value = String(hook.id);
-      const label = hook.title || hook.name;
-      option.text = `${label} (${hook.name})`;
+      option.text = hook.title ? `${hook.name} (${hook.title})` : hook.name;
 
       if (String(hook.id) === currentValue) {
         option.selected = true;

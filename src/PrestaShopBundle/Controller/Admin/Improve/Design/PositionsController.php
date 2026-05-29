@@ -530,8 +530,9 @@ class PositionsController extends PrestaShopAdminController
         $choices = [];
         $foundCurrent = false;
         foreach ($hooks as $hook) {
-            $label = $hook->getTitle() ?: $hook->getName();
-            $choices[$label . ' (' . $hook->getName() . ')'] = $hook->getId();
+            $title = $hook->getTitle();
+            $label = $title ? $hook->getName() . ' (' . $title . ')' : $hook->getName();
+            $choices[$label] = $hook->getId();
             if ($forceIncludeHookId !== null && $hook->getId() === $forceIncludeHookId) {
                 $foundCurrent = true;
             }
@@ -540,7 +541,7 @@ class PositionsController extends PrestaShopAdminController
         if ($forceIncludeHookId !== null && !$foundCurrent && $forceIncludeHookId > 0) {
             $hook = new Hook($forceIncludeHookId);
             if ((int) $hook->id === $forceIncludeHookId) {
-                $label = ($hook->title ?: $hook->name) . ' (' . $hook->name . ')';
+                $label = $hook->title ? $hook->name . ' (' . $hook->title . ')' : $hook->name;
                 $choices[$label] = $forceIncludeHookId;
             }
         }
