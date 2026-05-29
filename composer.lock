@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "d9802c92ab1ca020505db94c84762b46",
+    "content-hash": "289ad4da9b89731edd32108c32142228",
     "packages": [
         {
             "name": "api-platform/core",
@@ -5206,16 +5206,16 @@
         },
         {
             "name": "prestashop/ps_apiresources",
-            "version": "v0.6.0",
+            "version": "dev-feature/41324-country-address-format-builder",
             "source": {
                 "type": "git",
-                "url": "https://github.com/PrestaShop/ps_apiresources.git",
-                "reference": "030aa750d52ff3f13936b394fd9f7988a80921f4"
+                "url": "https://github.com/jolelievre/ps_apiresources.git",
+                "reference": "74f8a946a2f66ae8191d5c110838a62913d2aeb0"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/PrestaShop/ps_apiresources/zipball/030aa750d52ff3f13936b394fd9f7988a80921f4",
-                "reference": "030aa750d52ff3f13936b394fd9f7988a80921f4",
+                "url": "https://api.github.com/repos/jolelievre/ps_apiresources/zipball/74f8a946a2f66ae8191d5c110838a62913d2aeb0",
+                "reference": "74f8a946a2f66ae8191d5c110838a62913d2aeb0",
                 "shasum": ""
             },
             "require": {
@@ -5295,10 +5295,9 @@
             "description": "PrestaShop - API Resources",
             "homepage": "https://github.com/PrestaShop/ps_apiresources",
             "support": {
-                "source": "https://github.com/PrestaShop/ps_apiresources/tree/v0.6.0",
-                "issues": "https://github.com/PrestaShop/ps_apiresources/issues"
+                "source": "https://github.com/jolelievre/ps_apiresources/tree/feature/41324-country-address-format-builder"
             },
-            "time": "2026-05-07T12:01:32+00:00"
+            "time": "2026-05-25T09:30:10+00:00"
         },
         {
             "name": "prestashop/ps_banner",
@@ -18421,7 +18420,9 @@
     ],
     "aliases": [],
     "minimum-stability": "dev",
-    "stability-flags": {},
+    "stability-flags": {
+        "prestashop/ps_apiresources": 20
+    },
     "prefer-stable": true,
     "prefer-lowest": false,
     "platform": {

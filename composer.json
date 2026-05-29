@@ -71,7 +71,7 @@
         "prestashop/hummingbird": "^2.0",
         "prestashop/pagesnotfound": "^3",
         "prestashop/productcomments": "^8.0",
-        "prestashop/ps_apiresources": "^0.6",
+        "prestashop/ps_apiresources": "dev-feature/41324-country-address-format-builder",
         "prestashop/ps_banner": "^2",
         "prestashop/ps_bestsellers": "^2.0",
         "prestashop/ps_brandlist": "^1.0",
@@ -213,7 +213,7 @@
         },
         "ps_apiresources": {
             "type": "vcs",
-            "url": "https://github.com/PrestaShop/ps_apiresources"
+            "url": "https://github.com/jolelievre/ps_apiresources"
         }
     },
     "minimum-stability": "dev",
