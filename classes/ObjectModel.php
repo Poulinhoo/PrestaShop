@@ -5,7 +5,6 @@
  */
 use PrestaShop\PrestaShop\Adapter\ContainerFinder;
 use PrestaShop\PrestaShop\Adapter\ServiceLocator;
-use PrestaShop\PrestaShop\Core\Domain\Shop\ValueObject\ShopConstraint;
 use PrestaShop\PrestaShop\Core\Exception\ContainerNotFoundException;
 use PrestaShop\PrestaShop\Core\ExtraProperty\ExtraPropertiesBag;
 use PrestaShop\PrestaShop\Core\ExtraProperty\ExtraPropertyDefinitionCollection;
@@ -15,7 +14,11 @@ use PrestaShop\PrestaShop\Core\ExtraProperty\Value\ExtraPropertyReaderInterface;
 use PrestaShop\PrestaShop\Core\ExtraProperty\Value\ExtraPropertyWriterInterface;
 use PrestaShop\PrestaShop\Core\Image\ImageFormatConfiguration;
 use PrestaShopBundle\Translation\TranslatorComponent;
+use Symfony\Component\DependencyInjection\ContainerInterface;
 
+/**
+ * @property ExtraPropertiesBag $extra_properties
+ */
 abstract class ObjectModelCore implements PrestaShop\PrestaShop\Core\Foundation\Database\EntityInterface
 {
     /**
@@ -133,7 +136,7 @@ abstract class ObjectModelCore implements PrestaShop\PrestaShop\Core\Foundation\
      *
      * @var ExtraPropertiesBag|null
      */
-    protected $extra_properties = null;
+    protected $extra_properties_bag = null;
 
     /**
      * Typed definition collection for this entity (loaded via getDefinitionCollection()).
@@ -141,7 +144,7 @@ abstract class ObjectModelCore implements PrestaShop\PrestaShop\Core\Foundation\
      *
      * @var ExtraPropertyDefinitionCollection|null
      */
-    protected $extra_property_definition_rows = null;
+    protected $extra_property_definitions = null;
 
     /** @var Db|bool An instance of the db in order to avoid calling Db::getInstance() thousands of times. */
     protected static $db = false;
@@ -896,13 +899,14 @@ abstract class ObjectModelCore implements PrestaShop\PrestaShop\Core\Foundation\
 
         // Delete extra property rows from *_extra / *_extra_lang / *_extra_shop
         if (!$has_multishop_entries && !empty($this->def['table']) && (int) $this->id > 0) {
-            try {
-                /** @var ExtraPropertyWriterInterface $writer */
-                $writer = (new ContainerFinder(Context::getContext()))
-                    ->getContainer()
-                    ->get(ExtraPropertyWriterInterface::class);
-                $writer->deleteAll($this->def['table'], $this->def['primary'], (int) $this->id);
-            } catch (Throwable) {
+            /** @var ExtraPropertyWriterInterface|null $writer */
+            $writer = static::findService(ExtraPropertyWriterInterface::class);
+            if ($writer) {
+                try {
+                    $writer->deleteAll($this->def['table'], $this->def['primary'], (int) $this->id);
+                } catch (Throwable) {
+                    $result = false;
+                }
             }
         }
 
@@ -1094,19 +1098,11 @@ abstract class ObjectModelCore implements PrestaShop\PrestaShop\Core\Foundation\
             return true;
         }
 
-        try {
-            $container = (new ContainerFinder(Context::getContext()))->getContainer();
-        } catch (ContainerNotFoundException) {
+        /** @var ExtraPropertyValidationInterface|null $validator */
+        $validator = self::findService(ExtraPropertyValidationInterface::class);
+        if (!$validator) {
             return true;
         }
-
-        if (!$container->has(ExtraPropertyValidationInterface::class)) {
-            // Validator not registered in this container context (e.g. FO legacy container) — skip.
-            return true;
-        }
-
-        /** @var ExtraPropertyValidationInterface $validator */
-        $validator = $container->get(ExtraPropertyValidationInterface::class);
 
         $result = $validator->validate($bag->getModifiedValues(), $collection->toArray());
         if (true !== $result) {
@@ -2190,11 +2186,11 @@ abstract class ObjectModelCore implements PrestaShop\PrestaShop\Core\Foundation\
      */
     private function getExtraPropertiesBag(): ExtraPropertiesBag
     {
-        if (null === $this->extra_properties) {
-            $this->extra_properties = $this->createExtraPropertiesBag();
+        if (null === $this->extra_properties_bag) {
+            $this->extra_properties_bag = $this->createExtraPropertiesBag();
         }
 
-        return $this->extra_properties;
+        return $this->extra_properties_bag;
     }
 
     /**
@@ -2211,23 +2207,21 @@ abstract class ObjectModelCore implements PrestaShop\PrestaShop\Core\Foundation\
             if ((int) $this->id <= 0 || empty($this->def['table'])) {
                 return [];
             }
-            try {
-                /** @var ExtraPropertyReaderInterface $reader */
-                $reader = (new ContainerFinder(Context::getContext()))
-                    ->getContainer()
-                    ->get(ExtraPropertyReaderInterface::class);
 
-                return $reader->getExtraProperties(
-                    $this->def['table'],
-                    $this->def['primary'],
-                    (int) $this->id,
-                    null,
-                    Context::getContext()->getShopConstraint(),
-                    (bool) $this->isLangMultishop()
-                );
-            } catch (Throwable) {
+            /** @var ExtraPropertyReaderInterface|null $reader */
+            $reader = self::findService(ExtraPropertyReaderInterface::class);
+            if (!$reader) {
                 return [];
             }
+
+            return $reader->getExtraProperties(
+                $this->def['table'],
+                $this->def['primary'],
+                (int) $this->id,
+                null,
+                Context::getContext()->getShopConstraint(),
+                (bool) $this->isLangMultishop()
+            );
         });
     }
 
@@ -2238,26 +2232,25 @@ abstract class ObjectModelCore implements PrestaShop\PrestaShop\Core\Foundation\
      */
     private function getDefinitionCollection(): ExtraPropertyDefinitionCollection
     {
-        if (null !== $this->extra_property_definition_rows) {
-            return $this->extra_property_definition_rows;
+        if (null !== $this->extra_property_definitions) {
+            return $this->extra_property_definitions;
         }
 
-        $this->extra_property_definition_rows = ExtraPropertyDefinitionCollection::empty();
+        $this->extra_property_definitions = ExtraPropertyDefinitionCollection::empty();
 
         if (empty($this->def['table'])) {
-            return $this->extra_property_definition_rows;
+            return $this->extra_property_definitions;
         }
 
-        try {
-            /** @var ExtraPropertyDefinitionRepositoryInterface $repository */
-            $repository = (new ContainerFinder(Context::getContext()))
-                ->getContainer()
-                ->get(ExtraPropertyDefinitionRepositoryInterface::class);
-            $this->extra_property_definition_rows = $repository->getDefinitionCollection($this->def['table']);
-        } catch (Throwable) {
+        /** @var ExtraPropertyDefinitionRepositoryInterface|null $repository */
+        $repository = self::findService(ExtraPropertyDefinitionRepositoryInterface::class);
+        if (!$repository) {
+            return $this->extra_property_definitions;
         }
 
-        return $this->extra_property_definition_rows;
+        $this->extra_property_definitions = $repository->getDefinitionCollection($this->def['table']);
+
+        return $this->extra_property_definitions;
     }
 
     /**
@@ -2333,40 +2326,22 @@ abstract class ObjectModelCore implements PrestaShop\PrestaShop\Core\Foundation\
             return true;
         }
 
+        /** @var ExtraPropertyWriterInterface $writer|null */
+        $writer = self::findService(ExtraPropertyWriterInterface::class);
+        if (!$writer) {
+            return true;
+        }
+
         try {
-            /** @var ExtraPropertyWriterInterface $writer */
-            $writer = (new ContainerFinder(Context::getContext()))
-                ->getContainer()
-                ->get(ExtraPropertyWriterInterface::class);
-
-            // Write common + lang values once (current shop context for lang scope).
-            if (!empty($entityValues) || !empty($langValuesByIdLang)) {
-                $writer->writeAll(
-                    $this->def['table'],
-                    $this->def['primary'],
-                    (int) $this->id,
-                    $entityValues,
-                    $langValuesByIdLang,
-                    [],
-                    Context::getContext()->getShopConstraint()
-                );
-            }
-
-            // W4: write shop-scoped values for every shop in the context list (multishop parity).
-            if (!empty($shopValues)) {
-                $shopIds = !empty($this->id_shop_list) ? $this->id_shop_list : Shop::getContextListShopID();
-                foreach ($shopIds as $shopId) {
-                    $writer->writeAll(
-                        $this->def['table'],
-                        $this->def['primary'],
-                        (int) $this->id,
-                        [],
-                        [],
-                        $shopValues,
-                        ShopConstraint::shop((int) $shopId)
-                    );
-                }
-            }
+            $writer->writeAll(
+                $this->def['table'],
+                $this->def['primary'],
+                (int) $this->id,
+                $entityValues,
+                $langValuesByIdLang,
+                $shopValues,
+                Context::getContext()->getShopConstraint()
+            );
         } catch (Throwable) {
             return false;
         }
@@ -2462,5 +2437,20 @@ abstract class ObjectModelCore implements PrestaShop\PrestaShop\Core\Foundation\
         }
 
         return $shopIdsList;
+    }
+
+    protected static function findContainer(): ?ContainerInterface
+    {
+        try {
+            return (new ContainerFinder(Context::getContext()))->getContainer();
+        } catch (ContainerNotFoundException) {
+        }
+
+        return null;
+    }
+
+    protected static function findService(string $serviceName): ?object
+    {
+        return static::findContainer()?->get($serviceName);
     }
 }

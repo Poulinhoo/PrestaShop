@@ -106,7 +106,7 @@ abstract class AbstractLazyArray implements Iterator, ArrayAccess, Countable, Js
      *
      * @return array<string, array<string, mixed>>
      */
-    #[LazyArrayAttribute(arrayAccess: true, indexName: 'extraProperties')]
+    #[LazyArrayAttribute(arrayAccess: true, indexName: 'extra_properties')]
     public function getExtraProperties(): array
     {
         if (null === $this->extraPropertiesLazyArray) {
