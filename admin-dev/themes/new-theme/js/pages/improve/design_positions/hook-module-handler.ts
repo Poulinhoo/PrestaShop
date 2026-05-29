@@ -125,7 +125,7 @@ export default class HookModuleHandler {
     }
 
     // Re-enable the selector now that choices are available.
-    this.hookSelector.disabled = false;
+    this.setHookSelectorEnabled(true);
   }
 
   private clearHookSelector(): void {
@@ -141,6 +141,29 @@ export default class HookModuleHandler {
     }
 
     // Without choices the selector is unusable — disable it.
-    this.hookSelector.disabled = true;
+    this.setHookSelectorEnabled(false);
+  }
+
+  /**
+   * Toggles the disabled state of the hook selector.
+   * The Symfony form theme renders the field disabled by adding a `disabled`
+   * CSS class on both the wrapping `.input-container` and the label. Toggling
+   * the `disabled` property on the <select> alone leaves those classes behind,
+   * which keeps the field visually greyed out — so they must be synced too.
+   */
+  private setHookSelectorEnabled(enabled: boolean): void {
+    if (!this.hookSelector) {
+      return;
+    }
+
+    this.hookSelector.disabled = !enabled;
+
+    const container = this.hookSelector.closest<HTMLElement>('.input-container');
+    container?.classList.toggle('disabled', !enabled);
+
+    const formGroup = this.hookSelector.closest<HTMLElement>('.form-group');
+    formGroup
+      ?.querySelector<HTMLElement>('.form-control-label')
+      ?.classList.toggle('disabled', !enabled);
   }
 }
