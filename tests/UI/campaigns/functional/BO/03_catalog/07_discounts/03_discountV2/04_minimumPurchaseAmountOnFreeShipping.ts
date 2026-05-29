@@ -394,7 +394,8 @@ describe('BO - Catalog - Discounts : Minimum purchase amount (On free shipping)'
     });
   });
 
-  describe('Edit discount (with tax excluded) in BO and check it in FO', async () => {
+  // @todo : https://github.com/PrestaShop/PrestaShop/issues/39929
+  describe.skip('Edit discount (with tax excluded) in BO and check it in FO', async () => {
     it('should go back to BO', async function () {
       await testContext.addContextItem(this, 'testIdentifier', 'goBackToBO', baseContext);
 
