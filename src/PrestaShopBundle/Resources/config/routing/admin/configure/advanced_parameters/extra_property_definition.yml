@@ -1,0 +1,101 @@
+admin_extra_property_definitions_index:
+  path: /
+  methods: GET
+  defaults:
+    _controller: 'PrestaShopBundle\Controller\Admin\Configure\AdvancedParameters\ExtraPropertyDefinitionController::indexAction'
+    _legacy_controller: AdminExtraPropertyDefinitions
+    _legacy_link: AdminExtraPropertyDefinitions
+
+admin_extra_property_definitions_search:
+  path: /
+  methods: POST
+  defaults:
+    _controller: PrestaShopBundle\Controller\Admin\CommonController::searchGridAction
+    gridDefinitionFactoryServiceId: prestashop.core.grid.definition.factory.extra_property_definition
+    redirectRoute: admin_extra_property_definitions_index
+    _legacy_controller: AdminExtraPropertyDefinitions
+    _legacy_link: AdminExtraPropertyDefinitions:submitFilterextra_property_definition
+
+admin_extra_property_definitions_create:
+  path: /new
+  methods: [ GET, POST ]
+  defaults:
+    _controller: 'PrestaShopBundle\Controller\Admin\Configure\AdvancedParameters\ExtraPropertyDefinitionController::createAction'
+    _legacy_controller: AdminExtraPropertyDefinitions
+    _legacy_link: AdminExtraPropertyDefinitions:addextra_property_definition
+
+admin_extra_property_definitions_edit:
+  path: /{extraPropertyDefinitionId}/edit
+  methods: [ GET, POST ]
+  defaults:
+    _controller: 'PrestaShopBundle\Controller\Admin\Configure\AdvancedParameters\ExtraPropertyDefinitionController::editAction'
+    _legacy_controller: AdminExtraPropertyDefinitions
+    _legacy_link: AdminExtraPropertyDefinitions:updateextra_property_definition
+    _legacy_parameters:
+      id_extra_property_definition: extraPropertyDefinitionId
+  requirements:
+    extraPropertyDefinitionId: \d+
+
+admin_extra_property_definitions_delete:
+  path: /{extraPropertyDefinitionId}/delete
+  methods: [ DELETE, POST ]
+  defaults:
+    _controller: 'PrestaShopBundle\Controller\Admin\Configure\AdvancedParameters\ExtraPropertyDefinitionController::deleteAction'
+    _legacy_controller: AdminExtraPropertyDefinitions
+    _legacy_link: AdminExtraPropertyDefinitions:deleteextra_property_definition
+    _legacy_parameters:
+      id_extra_property_definition: extraPropertyDefinitionId
+  requirements:
+    extraPropertyDefinitionId: \d+
+
+admin_extra_property_definitions_delete_drop_column:
+  path: /{extraPropertyDefinitionId}/delete-drop-column
+  methods: [ DELETE, POST ]
+  defaults:
+    _controller: 'PrestaShopBundle\Controller\Admin\Configure\AdvancedParameters\ExtraPropertyDefinitionController::deleteDropColumnAction'
+    _legacy_controller: AdminExtraPropertyDefinitions
+    _legacy_link: AdminExtraPropertyDefinitions:deleteDropColumnextra_property_definition
+    _legacy_parameters:
+      id_extra_property_definition: extraPropertyDefinitionId
+  requirements:
+    extraPropertyDefinitionId: \d+
+
+admin_extra_property_definitions_bulk_delete:
+  path: /bulk-delete
+  methods: POST
+  defaults:
+    _controller: 'PrestaShopBundle\Controller\Admin\Configure\AdvancedParameters\ExtraPropertyDefinitionController::bulkDeleteAction'
+    _legacy_controller: AdminExtraPropertyDefinitions
+    _legacy_link: AdminExtraPropertyDefinitions:submitBulkdeleteextra_property_definition
+
+admin_extra_property_definitions_bulk_delete_drop_column:
+  path: /bulk-delete-drop-column
+  methods: POST
+  defaults:
+    _controller: 'PrestaShopBundle\Controller\Admin\Configure\AdvancedParameters\ExtraPropertyDefinitionController::bulkDeleteDropColumnAction'
+    _legacy_controller: AdminExtraPropertyDefinitions
+    _legacy_link: AdminExtraPropertyDefinitions:submitBulkdeleteDropColumnextra_property_definition
+
+admin_extra_property_definitions_toggle_display_api:
+  path: /{extraPropertyDefinitionId}/toggle-display-api
+  methods: POST
+  defaults:
+    _controller: 'PrestaShopBundle\Controller\Admin\Configure\AdvancedParameters\ExtraPropertyDefinitionController::toggleDisplayApiAction'
+    _legacy_controller: AdminExtraPropertyDefinitions
+    _legacy_link: AdminExtraPropertyDefinitions:display_apiextra_property_definition
+    _legacy_parameters:
+      id_extra_property_definition: extraPropertyDefinitionId
+  requirements:
+    extraPropertyDefinitionId: \d+
+
+admin_extra_property_definitions_toggle_display_front:
+  path: /{extraPropertyDefinitionId}/toggle-display-front
+  methods: POST
+  defaults:
+    _controller: 'PrestaShopBundle\Controller\Admin\Configure\AdvancedParameters\ExtraPropertyDefinitionController::toggleDisplayFrontAction'
+    _legacy_controller: AdminExtraPropertyDefinitions
+    _legacy_link: AdminExtraPropertyDefinitions:display_frontextra_property_definition
+    _legacy_parameters:
+      id_extra_property_definition: extraPropertyDefinitionId
+  requirements:
+    extraPropertyDefinitionId: \d+

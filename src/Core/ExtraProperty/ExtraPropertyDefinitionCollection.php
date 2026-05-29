@@ -1,4 +1,5 @@
 <?php
+
 /**
  * For the full copyright and license information, please view the
  * docs/licenses/LICENSE.txt file that was distributed with this source code.
@@ -179,13 +180,15 @@ final class ExtraPropertyDefinitionCollection implements Countable, IteratorAggr
     }
 
     /**
-     * Returns a new collection containing only definitions eligible for Back Office forms (display_form = true).
+     * Returns a new collection containing only definitions associated with the given form ID.
+     *
+     * @param string $formId Form identifier (usually equals form block_prefix, e.g. 'category')
      */
-    public function filterByForm(): self
+    public function filterByForm(string $formId): self
     {
         return new self(array_values(array_filter(
             $this->definitions,
-            static fn (ExtraPropertyDefinitionInfo $d): bool => $d->isDisplayForm()
+            static fn (ExtraPropertyDefinitionInfo $d): bool => null !== $d->getFormEntry($formId)
         )));
     }
 

@@ -1,4 +1,5 @@
 <?php
+
 /**
  * For the full copyright and license information, please view the
  * docs/licenses/LICENSE.txt file that was distributed with this source code.
@@ -139,6 +140,44 @@ final class ExtraPropertyNaming
         }
 
         return ['gridId' => $gridId, 'columnId' => '' !== $rest ? $rest : null, 'mode' => '' !== $rest ? $mode : null];
+    }
+
+    /**
+     * Parses one entry from the associated_forms JSON array into its components.
+     *
+     * Format: "formId[.path[:before|after]]"
+     *
+     * The first dot-separated segment is always the formId; the remainder is the
+     * injection path within that form's builder tree.
+     *
+     * Examples:
+     *   "category"                              → formId: "category", path: null,                      mode: null
+     *   "category.options.extra_properties"     → formId: "category", path: "options.extra_properties", mode: null
+     *   "category.options.name:before"          → formId: "category", path: "options.name",             mode: "before"
+     *   "category.options.name:after"           → formId: "category", path: "options.name",             mode: "after"
+     *
+     * @return array{formId: string, path: string|null, mode: 'before'|'after'|null}
+     */
+    public static function parseFormEntry(string $entry): array
+    {
+        $dotPos = strpos($entry, '.');
+        if (false === $dotPos) {
+            return ['formId' => $entry, 'path' => null, 'mode' => null];
+        }
+
+        $formId = substr($entry, 0, $dotPos);
+        $rest = substr($entry, $dotPos + 1);
+
+        $mode = null;
+        foreach ([':before', ':after'] as $suffix) {
+            if (str_ends_with($rest, $suffix)) {
+                $mode = ltrim($suffix, ':');
+                $rest = substr($rest, 0, -strlen($suffix));
+                break;
+            }
+        }
+
+        return ['formId' => $formId, 'path' => '' !== $rest ? $rest : null, 'mode' => $mode];
     }
 
     /**

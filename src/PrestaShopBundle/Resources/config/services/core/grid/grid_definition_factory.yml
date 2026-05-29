@@ -41,14 +41,16 @@ services:
     parent: PrestaShop\PrestaShop\Core\Grid\Definition\Factory\AbstractGridDefinitionFactory
     public: true
 
-  prestashop.core.grid.definition.factory.email_body_template:
-    class: 'PrestaShop\PrestaShop\Core\Grid\Definition\Factory\EmailBodyTemplateDefinitionFactory'
-    parent: PrestaShop\PrestaShop\Core\Grid\Definition\Factory\AbstractGridDefinitionFactory
-    public: true
-
   prestashop.core.grid.definition.factory.webservice_key:
     class: 'PrestaShop\PrestaShop\Core\Grid\Definition\Factory\WebserviceKeyDefinitionFactory'
     parent: PrestaShop\PrestaShop\Core\Grid\Definition\Factory\AbstractGridDefinitionFactory
+    public: true
+
+  prestashop.core.grid.definition.factory.extra_property_definition:
+    class: 'PrestaShop\PrestaShop\Core\Grid\Definition\Factory\ExtraPropertyDefinitionGridDefinitionFactory'
+    parent: PrestaShop\PrestaShop\Core\Grid\Definition\Factory\AbstractGridDefinitionFactory
+    arguments:
+      - '@PrestaShop\PrestaShop\Core\Grid\Action\Row\AccessibilityChecker\NonModuleExtraPropertyDefinitionAccessibilityChecker'
     public: true
 
   prestashop.core.grid.definition.factory.meta:

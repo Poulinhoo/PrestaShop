@@ -1,0 +1,109 @@
+{#
+ # For the full copyright and license information, please view the
+ # docs/licenses/LICENSE.txt file that was distributed with this source code.
+ #}
+{% trans_default_domain 'Admin.Advparameters.Feature' %}
+
+{% form_theme extraPropertyDefinitionForm '@PrestaShop/Admin/TwigTemplateForm/prestashop_ui_kit.html.twig' %}
+
+{% block extra_property_definition_form %}
+  {{ form_start(extraPropertyDefinitionForm) }}
+
+  {# ── Structural fields (creation only, read-only in edit) ─────────────────── #}
+  <div class="card">
+    <h3 class="card-header">
+      <i class="material-icons">storage</i>
+      {{ 'Field definition'|trans }}
+    </h3>
+    <div class="card-body">
+      {% if isEdit %}
+        <div class="alert alert-info" role="alert">
+          <p class="alert-text">
+            {{ 'Structural fields cannot be changed after creation because they map to a physical database column.'|trans }}
+          </p>
+        </div>
+      {% endif %}
+      <div class="form-wrapper">
+        {{ form_row(extraPropertyDefinitionForm.entity_name) }}
+        {{ form_row(extraPropertyDefinitionForm.property_name) }}
+        {{ form_row(extraPropertyDefinitionForm.type) }}
+        {{ form_row(extraPropertyDefinitionForm.scope) }}
+        {{ form_row(extraPropertyDefinitionForm.sql_index) }}
+        {{ form_row(extraPropertyDefinitionForm.size) }}
+        {{ form_row(extraPropertyDefinitionForm.default_value) }}
+      </div>
+    </div>
+  </div>
+
+  {# ── Display flags ─────────────────────────────────────────────────────────── #}
+  <div class="card">
+    <h3 class="card-header">
+      <i class="material-icons">visibility</i>
+      {{ 'Visibility'|trans({}, 'Admin.Global') }}
+    </h3>
+    <div class="card-body">
+      <div class="form-wrapper">
+        {{ form_row(extraPropertyDefinitionForm.display_api) }}
+        {{ form_row(extraPropertyDefinitionForm.display_form) }}
+        {{ form_row(extraPropertyDefinitionForm.display_front) }}
+        {{ form_row(extraPropertyDefinitionForm.form_required) }}
+      </div>
+    </div>
+  </div>
+
+  {# ── Labels / descriptions ─────────────────────────────────────────────────── #}
+  <div class="card">
+    <h3 class="card-header">
+      <i class="material-icons">translate</i>
+      {{ 'Labels and descriptions'|trans }}
+    </h3>
+    <div class="card-body">
+      <div class="form-wrapper">
+        {{ form_row(extraPropertyDefinitionForm.label_wording) }}
+        {{ form_row(extraPropertyDefinitionForm.label_domain) }}
+        {{ form_row(extraPropertyDefinitionForm.description_wording) }}
+        {{ form_row(extraPropertyDefinitionForm.description_domain) }}
+      </div>
+    </div>
+  </div>
+
+  {# ── Validation ────────────────────────────────────────────────────────────── #}
+  <div class="card">
+    <h3 class="card-header">
+      <i class="material-icons">check_circle</i>
+      {{ 'Validation'|trans({}, 'Admin.Global') }}
+    </h3>
+    <div class="card-body">
+      <div class="form-wrapper">
+        {{ form_row(extraPropertyDefinitionForm.validator) }}
+      </div>
+    </div>
+  </div>
+
+  {# ── Advanced form integration ──────────────────────────────────────────────── #}
+  <div class="card">
+    <h3 class="card-header">
+      <i class="material-icons">build</i>
+      {{ 'Advanced form integration'|trans }}
+    </h3>
+    <div class="card-body">
+      <div class="form-wrapper">
+        {{ form_row(extraPropertyDefinitionForm.form_field_type) }}
+        {{ form_row(extraPropertyDefinitionForm.form_position) }}
+        {{ form_row(extraPropertyDefinitionForm.form_options) }}
+        {{ form_row(extraPropertyDefinitionForm.associated_grids) }}
+      </div>
+    </div>
+  </div>
+
+  <div class="card-footer">
+    <a href="{{ path('admin_extra_property_definitions_index') }}" class="btn btn-outline-secondary">
+      {{ 'Cancel'|trans({}, 'Admin.Actions') }}
+    </a>
+    <button class="btn btn-primary float-right" id="save-button">
+      {{ 'Save'|trans({}, 'Admin.Actions') }}
+    </button>
+  </div>
+
+  {{ form_end(extraPropertyDefinitionForm) }}
+{% endblock %}

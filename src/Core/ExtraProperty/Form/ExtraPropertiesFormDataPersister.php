@@ -1,4 +1,5 @@
 <?php
+
 /**
  * For the full copyright and license information, please view the
  * docs/licenses/LICENSE.txt file that was distributed with this source code.
@@ -45,7 +46,7 @@ class ExtraPropertiesFormDataPersister
             return;
         }
 
-        $definitions = $this->repository->getDefinitionCollection($entityName)->filterByForm();
+        $definitions = $this->repository->getDefinitionCollectionByFormId($entityName);
         if ($definitions->isEmpty()) {
             return;
         }
@@ -69,7 +70,9 @@ class ExtraPropertiesFormDataPersister
             $scope = $definition->getFieldScope();
             $columnName = ExtraPropertyNaming::storageColumnName($definition->getModuleName(), $fieldName);
 
-            $targetPath = trim($definition->getFormPosition() ?? '');
+            $formEntry = $definition->getFormEntry($entityName);
+            $parsed = null !== $formEntry ? ExtraPropertyNaming::parseFormEntry($formEntry) : null;
+            $targetPath = $parsed['path'] ?? '';
             if ('' === $targetPath) {
                 // Keep fallback placement consistent with ExtraPropertiesFormBuilderModifier.
                 $targetPath = ($form->has(self::DEFAULT_FALLBACK_TAB) || $this->isNavigationTabForm($form))

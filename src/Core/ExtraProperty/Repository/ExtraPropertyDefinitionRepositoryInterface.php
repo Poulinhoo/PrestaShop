@@ -1,4 +1,5 @@
 <?php
+
 /**
  * For the full copyright and license information, please view the
  * docs/licenses/LICENSE.txt file that was distributed with this source code.
@@ -50,6 +51,17 @@ interface ExtraPropertyDefinitionRepositoryInterface
     public function getDefinitionCollectionByGridId(string $gridId): ExtraPropertyDefinitionCollection;
 
     /**
+     * Returns all extra property definitions that target the given form ID, regardless of entity.
+     *
+     * Searches the associated_forms JSON column across all entities and returns every definition
+     * whose entry list contains the given $formId — whether as a bare "formId", "formId.path",
+     * "formId.path:before", or "formId.path:after".
+     *
+     * @param string $formId BO form identifier (usually equals form block_prefix, e.g. 'category')
+     */
+    public function getDefinitionCollectionByFormId(string $formId): ExtraPropertyDefinitionCollection;
+
+    /**
      * Finds one registry definition matching entity, module, property name, and scope.
      * Returns null when not found.
      *
@@ -64,6 +76,6 @@ interface ExtraPropertyDefinitionRepositoryInterface
         string $entityName,
         ?string $moduleName,
         string $fieldName,
-        string $fieldScope
+        string $fieldScope,
     ): ?ExtraPropertyDefinitionInfo;
 }

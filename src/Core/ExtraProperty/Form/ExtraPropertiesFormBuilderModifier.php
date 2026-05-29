@@ -1,4 +1,5 @@
 <?php
+
 /**
  * For the full copyright and license information, please view the
  * docs/licenses/LICENSE.txt file that was distributed with this source code.
@@ -64,19 +65,19 @@ class ExtraPropertiesFormBuilderModifier
     }
 
     /**
-     * @param string $entityName Entity table name (usually equals form block prefix, e.g. 'product')
+     * @param string $formId Form identifier (equals form block_prefix, e.g. 'product', 'category')
      * @param int|null $entityId When null, no prefill is attempted (create form)
      */
-    public function apply(FormBuilderInterface $formBuilder, string $entityName, ?int $entityId): void
+    public function apply(FormBuilderInterface $formBuilder, string $formId, ?int $entityId): void
     {
-        $definitions = $this->repository->getDefinitionCollection($entityName)->filterByForm();
+        $definitions = $this->repository->getDefinitionCollectionByFormId($formId);
         if ($definitions->isEmpty()) {
             return;
         }
 
         $existingValues = null;
         if (null !== $entityId && $entityId > 0) {
-            $storageEntityName = $definitions->first()?->getEntityName() ?: $entityName;
+            $storageEntityName = $definitions->first()?->getEntityName() ?: $formId;
             $existingValues = $this->reader->getExtraProperties(
                 $storageEntityName,
                 'id_' . $storageEntityName,
@@ -96,7 +97,12 @@ class ExtraPropertiesFormBuilderModifier
             $moduleName = ExtraPropertyNaming::displayModuleKey($definition->getModuleName());
             $scope = $definition->getFieldScope();
 
-            $moduleFormPosition = trim($definition->getFormPosition() ?? '');
+            $formEntry = $definition->getFormEntry($formId);
+            $parsed = null !== $formEntry ? ExtraPropertyNaming::parseFormEntry($formEntry) : null;
+            $moduleFormPosition = '';
+            if (null !== $parsed && null !== $parsed['path']) {
+                $moduleFormPosition = $parsed['path'] . (null !== $parsed['mode'] ? ':' . $parsed['mode'] : '');
+            }
 
             $formFieldName = ExtraPropertyNaming::formFieldName($moduleName, $fieldName, $scope);
 
@@ -414,7 +420,7 @@ class ExtraPropertiesFormBuilderModifier
         foreach ($segments as $segment) {
             if (!$builder->has($segment)) {
                 throw new InvalidArgumentException(sprintf(
-                    'Extra property form_position "%s": intermediate segment "%s" does not exist in the form.',
+                    'Extra property associated_forms path "%s": intermediate segment "%s" does not exist in the form.',
                     $path,
                     $segment
                 ));

@@ -1,4 +1,5 @@
 <?php
+
 /**
  * For the full copyright and license information, please view the
  * docs/licenses/LICENSE.txt file that was distributed with this source code.
@@ -69,6 +70,16 @@ class CachedExtraPropertyDefinitionRepository implements ExtraPropertyDefinition
     public function getDefinitionCollectionByGridId(string $gridId): ExtraPropertyDefinitionCollection
     {
         return $this->repository->getDefinitionCollectionByGridId($gridId);
+    }
+
+    /**
+     * {@inheritdoc}
+     *
+     * Not cached: cross-entity form queries span all entity cache buckets.
+     */
+    public function getDefinitionCollectionByFormId(string $formId): ExtraPropertyDefinitionCollection
+    {
+        return $this->repository->getDefinitionCollectionByFormId($formId);
     }
 
     /**

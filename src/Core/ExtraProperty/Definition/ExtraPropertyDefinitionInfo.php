@@ -1,4 +1,5 @@
 <?php
+
 /**
  * For the full copyright and license information, please view the
  * docs/licenses/LICENSE.txt file that was distributed with this source code.
@@ -23,13 +24,12 @@ class ExtraPropertyDefinitionInfo
      * @param string $fieldType Type literal matching ExtraPropertyType (e.g. 'string', 'bool')
      * @param string $fieldScope Scope literal matching ExtraPropertyScope ('common', 'lang', 'shop')
      * @param bool $displayApi Whether the field is exposed via the Admin API
-     * @param bool $displayForm Whether the field is shown in Back Office forms
+     * @param list<string>|null $associatedForms Form placement entries in "formId[.path[:before|after]]" format
      * @param list<string>|null $associatedGrids Grid placement entries in "gridId[.columnId[:before|after]]" format
      * @param bool $displayFront Whether the field is exposed in front-office presenters
      * @param string|null $validator Validate:: method name for value validation
      * @param string|null $formFieldType Symfony form type FQCN override
      * @param array<string, mixed>|null $formOptions Extra options merged into the Symfony form type constructor
-     * @param string|null $formPosition Dot-notation path to the sub-form in BO forms
      * @param string|null $labelWording i18n wording for the field label
      * @param string|null $labelDomain Translation domain for the field label
      * @param string|null $descriptionWording i18n wording for the field description
@@ -46,13 +46,12 @@ class ExtraPropertyDefinitionInfo
         protected readonly string $fieldType,
         protected readonly string $fieldScope,
         protected readonly bool $displayApi,
-        protected readonly bool $displayForm,
+        protected readonly ?array $associatedForms,
         protected readonly ?array $associatedGrids,
         protected readonly bool $displayFront,
         protected readonly ?string $validator,
         protected readonly ?string $formFieldType,
         protected readonly ?array $formOptions,
-        protected readonly ?string $formPosition,
         protected readonly ?string $labelWording,
         protected readonly ?string $labelDomain,
         protected readonly ?string $descriptionWording,
@@ -75,6 +74,11 @@ class ExtraPropertyDefinitionInfo
             ? json_decode($formOptionsRaw, true)
             : null;
 
+        $associatedFormsRaw = $row['associated_forms'] ?? null;
+        $associatedForms = (is_string($associatedFormsRaw) && '' !== $associatedFormsRaw)
+            ? (array_values(array_filter((array) json_decode($associatedFormsRaw, true), static fn (mixed $v): bool => is_string($v) && '' !== $v)) ?: null)
+            : null;
+
         $associatedGridsRaw = $row['associated_grids'] ?? null;
         $associatedGrids = (is_string($associatedGridsRaw) && '' !== $associatedGridsRaw)
             ? (array_values(array_filter((array) json_decode($associatedGridsRaw, true), static fn (mixed $v): bool => is_string($v) && '' !== $v)) ?: null)
@@ -88,13 +92,12 @@ class ExtraPropertyDefinitionInfo
             (string) ($row['type'] ?? ''),
             (string) ($row['scope'] ?? 'common'),
             !empty($row['display_api']),
-            !empty($row['display_form']),
+            $associatedForms,
             $associatedGrids,
             !empty($row['display_front']),
             isset($row['validator']) && '' !== $row['validator'] ? (string) $row['validator'] : null,
             isset($row['form_field_type']) && '' !== $row['form_field_type'] ? (string) $row['form_field_type'] : null,
             is_array($formOptions) ? $formOptions : null,
-            isset($row['form_position']) && '' !== $row['form_position'] ? (string) $row['form_position'] : null,
             isset($row['label_wording']) && '' !== $row['label_wording'] ? (string) $row['label_wording'] : null,
             isset($row['label_domain']) && '' !== $row['label_domain'] ? (string) $row['label_domain'] : null,
             isset($row['description_wording']) && '' !== $row['description_wording'] ? (string) $row['description_wording'] : null,
@@ -145,16 +148,35 @@ class ExtraPropertyDefinitionInfo
         return $this->displayApi;
     }
 
-    public function isDisplayForm(): bool
+    /**
+     * @return list<string>|null
+     */
+    public function getAssociatedForms(): ?array
     {
-        return $this->displayForm;
+        return $this->associatedForms;
     }
 
     /**
-     * Returns the raw grid placement entries for this field.
-     * Each entry uses the format "gridId[.columnId[:before|after]]".
-     * Returns null when the field is not associated with any grid.
+     * Returns the raw placement entry for a specific form, or null if not associated.
      *
+     * @param string $formId Form identifier (usually equals form block_prefix, e.g. 'category')
+     */
+    public function getFormEntry(string $formId): ?string
+    {
+        if (null === $this->associatedForms) {
+            return null;
+        }
+        foreach ($this->associatedForms as $entry) {
+            $parsed = ExtraPropertyNaming::parseFormEntry($entry);
+            if ($parsed['formId'] === $formId) {
+                return $entry;
+            }
+        }
+
+        return null;
+    }
+
+    /**
      * @return list<string>|null
      */
     public function getAssociatedGrids(): ?array
@@ -164,9 +186,6 @@ class ExtraPropertyDefinitionInfo
 
     /**
      * Returns the raw placement entry for a specific grid, or null if not associated.
-     *
-     * The returned string can be parsed with ExtraPropertyNaming::parseGridEntry()
-     * to extract gridId, columnId, and placement mode.
      *
      * @param string $gridId Grid identifier (e.g. 'product')
      */
@@ -185,9 +204,6 @@ class ExtraPropertyDefinitionInfo
         return null;
     }
 
-    /**
-     * Returns true when the field is allowed to be exposed in front-office presenters.
-     */
     public function isDisplayFront(): bool
     {
         return $this->displayFront;
@@ -209,11 +225,6 @@ class ExtraPropertyDefinitionInfo
     public function getFormOptions(): ?array
     {
         return $this->formOptions;
-    }
-
-    public function getFormPosition(): ?string
-    {
-        return $this->formPosition;
     }
 
     /**

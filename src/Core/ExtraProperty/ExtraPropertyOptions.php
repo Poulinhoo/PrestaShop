@@ -70,8 +70,14 @@ final class ExtraPropertyOptions
      *                               PrestaShop Validate method name (e.g. "isUrl", "isBool") applied before persistence.
      * @param bool $displayApi
      *                         Include this field in Admin API JSON responses
-     * @param bool $displayForm
-     *                          Show and edit this field in BO forms
+     * @param list<string>|null $associatedForms
+     *                                           Form placement entries. Each entry uses the format "formId[.path[:before|after]]":
+     *                                           - "category"                               → appears in the category form, default extra_fields section
+     *                                           - "category.options.extra_properties"      → injected at "options.extra_properties" path
+     *                                           - "category.options.name:before"           → injected BEFORE "name" inside "options"
+     *                                           - "category.options.name:after"            → injected AFTER "name" inside "options"
+     *                                           Null or empty means the field is not shown in any BO form.
+     *                                           Each formId must be unique within the list.
      * @param list<string>|null $associatedGrids
      *                                           Grid placement entries. Each entry uses the format "gridId[.columnId[:before|after]]":
      *                                           - "product"                  → appears in product grid, appended at end
@@ -83,8 +89,6 @@ final class ExtraPropertyOptions
      * @param bool $displayFront
      *                           Allow this field to be exposed in front-office presenters.
      *                           Set to false for BO-only or API-only fields.
-     * @param string|null $formPosition
-     *                                  Dot-notation Symfony form path specifying where the field is injected in the form tree
      */
     public function __construct(
         public readonly ExtraPropertyType $type = ExtraPropertyType::STRING,
@@ -104,10 +108,9 @@ final class ExtraPropertyOptions
         public readonly ?array $formOptions = null,
         public readonly ?string $validator = null,
         public readonly bool $displayApi = false,
-        public readonly bool $displayForm = true,
+        public readonly ?array $associatedForms = null,
         public readonly ?array $associatedGrids = null,
         public readonly bool $displayFront = true,
-        public readonly ?string $formPosition = null,
     ) {
     }
 
@@ -141,10 +144,9 @@ final class ExtraPropertyOptions
             formOptions: $this->formOptions,
             validator: $this->validator,
             displayApi: $this->displayApi,
-            displayForm: $this->displayForm,
+            associatedForms: $this->associatedForms,
             associatedGrids: $this->associatedGrids,
             displayFront: $this->displayFront,
-            formPosition: $this->formPosition,
         );
     }
 }

@@ -45,6 +45,13 @@ services:
       - 'PrestaShopBundle\Form\Admin\Configure\AdvancedParameters\Webservice\WebserviceKeyType'
       - '@prestashop.core.form.identifiable_object.data_provider.webservice_key_form_data_provider'
 
+  prestashop.core.form.builder.extra_property_definition_form_builder:
+    class: 'PrestaShop\PrestaShop\Core\Form\IdentifiableObject\Builder\FormBuilder'
+    factory: [ '@prestashop.core.form.builder.form_builder_factory', 'create' ]
+    arguments:
+      - 'PrestaShopBundle\Form\Admin\Configure\AdvancedParameters\ExtraPropertyDefinition\ExtraPropertyDefinitionType'
+      - '@prestashop.core.form.identifiable_object.data_provider.extra_property_definition_form_data_provider'
+
   prestashop.core.form.builder.meta_form_builder:
     class: 'PrestaShop\PrestaShop\Core\Form\IdentifiableObject\Builder\FormBuilder'
     factory: [ '@prestashop.core.form.builder.form_builder_factory', 'create' ]

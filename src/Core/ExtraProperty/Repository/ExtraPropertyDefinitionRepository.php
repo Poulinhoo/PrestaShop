@@ -1,4 +1,5 @@
 <?php
+
 /**
  * For the full copyright and license information, please view the
  * docs/licenses/LICENSE.txt file that was distributed with this source code.
@@ -79,6 +80,35 @@ class ExtraPropertyDefinitionRepository implements ExtraPropertyDefinitionReposi
     /**
      * {@inheritdoc}
      */
+    public function getDefinitionCollectionByFormId(string $formId): ExtraPropertyDefinitionCollection
+    {
+        $table = $this->prefix . 'extra_property_definition';
+        $qb = $this->connection->createQueryBuilder();
+        $qb
+            ->select('eef.*')
+            ->from($table, 'eef')
+            ->where('eef.associated_forms IS NOT NULL')
+            ->andWhere(
+                $qb->expr()->or(
+                    'JSON_SEARCH(eef.associated_forms, \'one\', :exactFormId) IS NOT NULL',
+                    'JSON_SEARCH(eef.associated_forms, \'one\', :prefixFormId) IS NOT NULL'
+                )
+            )
+            ->setParameter('exactFormId', $formId)
+            ->setParameter('prefixFormId', $formId . '.%')
+            ->orderBy('eef.id_extra_property_definition', 'ASC');
+
+        $rows = $qb->executeQuery()->fetchAllAssociative() ?: [];
+
+        return new ExtraPropertyDefinitionCollection(array_values(array_map(
+            static fn (array $row): ExtraPropertyDefinitionInfo => ExtraPropertyDefinitionInfo::fromRow($row),
+            $rows
+        )));
+    }
+
+    /**
+     * {@inheritdoc}
+     */
     public function findDefinitionByModuleAndField(string $entityName, ?string $moduleName, string $fieldName, string $fieldScope): ?ExtraPropertyDefinitionInfo
     {
         $normalizedModule = (null === $moduleName || '' === $moduleName) ? null : $moduleName;
@@ -105,7 +135,7 @@ class ExtraPropertyDefinitionRepository implements ExtraPropertyDefinitionReposi
         string $propertyName,
         ?string $normalizedModuleName,
         string $normalizedScope,
-        ?int $existingId = null
+        ?int $existingId = null,
     ): int|false {
         $table = $this->prefix . 'extra_property_definition';
 
@@ -118,11 +148,10 @@ class ExtraPropertyDefinitionRepository implements ExtraPropertyDefinitionReposi
             'default_value' => null !== $options->defaultValue ? (string) $options->defaultValue : null,
             'form_field_type' => $options->formFieldType,
             'form_options' => null !== $options->formOptions ? json_encode($options->formOptions) : null,
-            'form_position' => $options->formPosition,
             'sql_index' => $options->sqlIndex->value,
             'validator' => $options->validator,
             'display_api' => (int) $options->displayApi,
-            'display_form' => (int) $options->displayForm,
+            'associated_forms' => !empty($options->associatedForms) ? json_encode(array_values($options->associatedForms)) : null,
             'associated_grids' => !empty($options->associatedGrids) ? json_encode(array_values($options->associatedGrids)) : null,
             'display_front' => (int) $options->displayFront,
             'label_wording' => $options->labelWording,

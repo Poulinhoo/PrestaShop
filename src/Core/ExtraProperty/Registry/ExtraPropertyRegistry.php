@@ -1,4 +1,5 @@
 <?php
+
 /**
  * For the full copyright and license information, please view the
  * docs/licenses/LICENSE.txt file that was distributed with this source code.
@@ -65,15 +66,32 @@ class ExtraPropertyRegistry implements ExtraPropertyRegistryInterface
         $normalizedFieldScope = $options->scope->value;
 
         // H6: label_wording is required whenever the field is visible in the BO (form or grid).
-        if (($options->displayForm || !empty($options->associatedGrids))
+        if ((!empty($options->associatedForms) || !empty($options->associatedGrids))
             && (null === $options->labelWording || '' === trim($options->labelWording))
         ) {
             $this->logger->error(
-                'Extra property {entity}.{field} must have a labelWording when displayForm=true or associatedGrids is set.',
+                'Extra property {entity}.{field} must have a labelWording when associatedForms or associatedGrids is set.',
                 ['entity' => $entityName, 'field' => $propertyName]
             );
 
             return false;
+        }
+
+        // Each formId must appear at most once in associatedForms.
+        if (!empty($options->associatedForms)) {
+            $seenFormIds = [];
+            foreach ($options->associatedForms as $entry) {
+                $formId = ExtraPropertyNaming::parseFormEntry((string) $entry)['formId'];
+                if (isset($seenFormIds[$formId])) {
+                    $this->logger->error(
+                        'Extra property {entity}.{field} has duplicate form ID "{formId}" in associatedForms.',
+                        ['entity' => $entityName, 'field' => $propertyName, 'formId' => $formId]
+                    );
+
+                    return false;
+                }
+                $seenFormIds[$formId] = true;
+            }
         }
 
         // Each gridId must appear at most once in associatedGrids.
