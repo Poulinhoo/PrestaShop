@@ -3,6 +3,8 @@
  * docs/licenses/LICENSE.txt file that was distributed with this source code.
  */
 
+const {$} = window;
+
 interface HookableInfo {
   id: number;
   name: string;
@@ -43,7 +45,14 @@ export default class HookModuleHandler {
       return;
     }
 
-    this.moduleSelector.addEventListener('change', () => this.onModuleChange());
+    // Enhance both selects with select2 (search helper). The hook select keeps
+    // its initial disabled state until a module is chosen.
+    $(this.moduleSelector).select2();
+    this.refreshHookSelect2();
+
+    // select2 emits a jQuery "change" event, which a native addEventListener
+    // does not reliably catch — bind through jQuery instead.
+    $(this.moduleSelector).on('change', () => this.onModuleChange());
   }
 
   private async onModuleChange(): Promise<void> {
@@ -165,5 +174,27 @@ export default class HookModuleHandler {
     formGroup
       ?.querySelector<HTMLElement>('.form-control-label')
       ?.classList.toggle('disabled', !enabled);
+
+    // The options and the disabled state were changed programmatically: rebuild
+    // select2 so the widget reflects the new choices and enabled/disabled state.
+    this.refreshHookSelect2();
+  }
+
+  /**
+   * (Re)initializes select2 on the hook selector. select2 caches the original
+   * options at init time, so after repopulating or toggling the field we must
+   * destroy and recreate it for the widget to pick up the changes.
+   */
+  private refreshHookSelect2(): void {
+    if (!this.hookSelector) {
+      return;
+    }
+
+    const $hookSelector = $(this.hookSelector);
+
+    if ($hookSelector.hasClass('select2-hidden-accessible')) {
+      $hookSelector.select2('destroy');
+    }
+    $hookSelector.select2();
   }
 }
