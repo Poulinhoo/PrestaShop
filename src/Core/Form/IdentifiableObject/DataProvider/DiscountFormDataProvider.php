@@ -69,6 +69,9 @@ class DiscountFormDataProvider implements FormDataProviderInterface
         $endDate = (clone $now)->modify('+1 month')->setTime(23, 59);
 
         return [
+            'information' => [
+                'highlight_in_cart' => false,
+            ],
             'period' => [
                 'valid_date_range' => [
                     'from' => $startDate->format(DateTimeUtil::DEFAULT_DATETIME_FORMAT),
@@ -159,6 +162,7 @@ class DiscountFormDataProvider implements FormDataProviderInterface
             'id' => $id,
             'information' => [
                 'active' => $discountForEditing->isActive(),
+                'highlight_in_cart' => $discountForEditing->isHighlightInCart(),
                 'discount_type' => $discountForEditing->getType()->getValue(),
                 'names' => $discountForEditing->getLocalizedNames(),
                 'description' => $discountForEditing->getDescription(),
