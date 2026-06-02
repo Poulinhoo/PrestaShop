@@ -152,6 +152,7 @@ module.exports = {
     shipping_preferences: './js/pages/shipping-preferences',
     specific_price_form: './js/pages/product/specific-price/form',
     sql_manager: './js/pages/sql-manager',
+    quick_access: './js/pages/quick-access',
     state: './js/pages/state',
     stock: './js/app/pages/stock',
     stock_page: './scss/pages/stock/stock_page.scss',

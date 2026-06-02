@@ -68,3 +68,7 @@ trans('Enable / Disable the tag page.', 'Admin.Advparameters.Help');
 // New pricing feature flag
 trans('New pricing', 'Admin.Advparameters.Feature');
 trans('Enable / Disable the new pricing system. This feature introduces an improved pricing engine.', 'Admin.Advparameters.Help');
+
+// Quick access feature flag
+trans('Quick access', 'Admin.Advparameters.Feature');
+trans('Enable / Disable the migrated quick access page.', 'Admin.Advparameters.Help');
