@@ -15,7 +15,7 @@ use PrestaShop\PrestaShop\Core\Domain\ExtraProperty\Command\AddExtraPropertyDefi
 use PrestaShop\PrestaShop\Core\Domain\ExtraProperty\CommandHandler\AddExtraPropertyDefinitionHandlerInterface;
 use PrestaShop\PrestaShop\Core\Domain\ExtraProperty\Exception\ExtraPropertyException;
 use PrestaShop\PrestaShop\Core\Domain\ExtraProperty\ValueObject\ExtraPropertyDefinitionId;
-use PrestaShop\PrestaShop\Core\ExtraProperty\ExtraPropertyOptions;
+use PrestaShop\PrestaShop\Core\ExtraProperty\Definition\ExtraPropertyDefinition;
 use PrestaShop\PrestaShop\Core\ExtraProperty\ExtraPropertyScope;
 use PrestaShop\PrestaShop\Core\ExtraProperty\ExtraPropertySqlIndex;
 use PrestaShop\PrestaShop\Core\ExtraProperty\ExtraPropertyType;
@@ -74,7 +74,7 @@ final class AddExtraPropertyDefinitionHandler extends AbstractExtraPropertyDefin
             }
         }
 
-        $options = new ExtraPropertyOptions(
+        $options = new ExtraPropertyDefinition(
             type: ExtraPropertyType::from($command->getFieldType()),
             scope: ExtraPropertyScope::from($command->getFieldScope()),
             enumValues: null,

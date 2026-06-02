@@ -9,7 +9,6 @@ declare(strict_types=1);
 
 namespace PrestaShop\PrestaShop\Core\ExtraProperty\Definition;
 
-use PrestaShop\PrestaShop\Core\ExtraProperty\ExtraPropertyDefinitionCollection;
 use PrestaShop\PrestaShop\Core\ExtraProperty\Repository\ExtraPropertyDefinitionRepository;
 use PrestaShop\PrestaShop\Core\ExtraProperty\Repository\ExtraPropertyDefinitionRepositoryInterface;
 use Symfony\Component\Cache\Exception\LogicException;
@@ -39,25 +38,21 @@ class CachedExtraPropertyDefinitionRepository implements ExtraPropertyDefinition
     /**
      * {@inheritdoc}
      *
-     * The underlying definition list is cached per entity name. The collection wrapper is
-     * lightweight and not cached itself.
+     * The collection is cached per entity name and returned as-is on subsequent calls.
      */
     public function getDefinitionCollection(string $entityName): ExtraPropertyDefinitionCollection
     {
         $cacheKey = self::buildCacheKey($entityName);
 
-        /** @var list<ExtraPropertyDefinitionInfo> $definitions */
-        $definitions = $this->definitionCache->get($cacheKey, function (ItemInterface $item) use ($entityName): array {
+        return $this->definitionCache->get($cacheKey, function (ItemInterface $item) use ($entityName): ExtraPropertyDefinitionCollection {
             try {
                 $item->tag(['extra_property_definition', 'extra_property_definition_' . $entityName]);
             } catch (LogicException) {
                 // Pool may not be tag-aware; key-based invalidation still works.
             }
 
-            return $this->repository->getDefinitionCollection($entityName)->toArray();
+            return $this->repository->getDefinitionCollection($entityName);
         });
-
-        return new ExtraPropertyDefinitionCollection($definitions);
     }
 
     /**
@@ -88,7 +83,7 @@ class CachedExtraPropertyDefinitionRepository implements ExtraPropertyDefinition
      * Not cached: by-module+field lookups are targeted reads used by the write path (registry),
      * and must always reflect current DB state.
      */
-    public function findDefinitionByModuleAndField(string $entityName, ?string $moduleName, string $fieldName, string $fieldScope): ?ExtraPropertyDefinitionInfo
+    public function findDefinitionByModuleAndField(string $entityName, ?string $moduleName, string $fieldName, string $fieldScope): ?ExtraPropertyDefinition
     {
         return $this->repository->findDefinitionByModuleAndField($entityName, $moduleName, $fieldName, $fieldScope);
     }

@@ -9,9 +9,7 @@ declare(strict_types=1);
 
 namespace PrestaShop\PrestaShop\Core\ExtraProperty\Registry;
 
-use PrestaShop\PrestaShop\Core\ExtraProperty\Definition\ExtraPropertyDefinitionInfo;
-use PrestaShop\PrestaShop\Core\ExtraProperty\ExtraPropertyNaming;
-use PrestaShop\PrestaShop\Core\ExtraProperty\ExtraPropertyOptions;
+use PrestaShop\PrestaShop\Core\ExtraProperty\Definition\ExtraPropertyDefinition;
 use PrestaShop\PrestaShop\Core\ExtraProperty\ExtraPropertyScope;
 use PrestaShop\PrestaShop\Core\ExtraProperty\Repository\ExtraPropertyDefinitionRepositoryInterface;
 use PrestaShop\PrestaShop\Core\ExtraProperty\Repository\ExtraPropertyDefinitionWriterInterface;
@@ -45,7 +43,7 @@ class ExtraPropertyRegistry implements ExtraPropertyRegistryInterface
     /**
      * {@inheritdoc}
      */
-    public function register(string $entityName, string $propertyName, ExtraPropertyOptions $options): bool
+    public function register(string $entityName, string $propertyName, ExtraPropertyDefinition $options): bool
     {
         if (!$this->validator->isTableOrIdentifier($propertyName)) {
             return false;
@@ -57,7 +55,7 @@ class ExtraPropertyRegistry implements ExtraPropertyRegistryInterface
 
         // Resolve module name: from options (explicit override) or null (core property).
         // '_core' is a display-only sentinel — never stored in DB; treat it as no module.
-        $moduleName = (null !== $options->moduleName && '' !== $options->moduleName && ExtraPropertyNaming::CORE_MODULE_KEY !== $options->moduleName) ? $options->moduleName : null;
+        $moduleName = (null !== $options->moduleName && '' !== $options->moduleName && ExtraPropertyDefinition::CORE_MODULE_KEY !== $options->moduleName) ? $options->moduleName : null;
         if (null !== $moduleName && !$this->validator->isModuleName($moduleName)) {
             return false;
         }
@@ -81,7 +79,7 @@ class ExtraPropertyRegistry implements ExtraPropertyRegistryInterface
         if (!empty($options->associatedForms)) {
             $seenFormIds = [];
             foreach ($options->associatedForms as $entry) {
-                $formId = ExtraPropertyNaming::parseFormEntry((string) $entry)['formId'];
+                $formId = ExtraPropertyDefinition::parseFormEntry((string) $entry)['formId'];
                 if (isset($seenFormIds[$formId])) {
                     $this->logger->error(
                         'Extra property {entity}.{field} has duplicate form ID "{formId}" in associatedForms.',
@@ -98,7 +96,7 @@ class ExtraPropertyRegistry implements ExtraPropertyRegistryInterface
         if (!empty($options->associatedGrids)) {
             $seenGridIds = [];
             foreach ($options->associatedGrids as $entry) {
-                $gridId = ExtraPropertyNaming::parseGridEntry((string) $entry)['gridId'];
+                $gridId = ExtraPropertyDefinition::parseGridEntry((string) $entry)['gridId'];
                 if (isset($seenGridIds[$gridId])) {
                     $this->logger->error(
                         'Extra property {entity}.{field} has duplicate grid ID "{gridId}" in associatedGrids.',
@@ -111,7 +109,7 @@ class ExtraPropertyRegistry implements ExtraPropertyRegistryInterface
             }
         }
 
-        $storageColumnName = ExtraPropertyNaming::storageColumnName($moduleName, $propertyName);
+        $storageColumnName = ExtraPropertyDefinition::buildStorageColumnName($moduleName, $propertyName);
         if (!$this->isValidSqlIdentifier($storageColumnName)) {
             return false;
         }
@@ -159,8 +157,7 @@ class ExtraPropertyRegistry implements ExtraPropertyRegistryInterface
             $normalizedEntityName,
             $propertyName,
             $moduleName,
-            $normalizedFieldScope,
-            null !== $existingDefinition ? $existingDefinition->getId() : null
+            $normalizedFieldScope
         );
 
         if (false === $savedId) {
@@ -173,7 +170,7 @@ class ExtraPropertyRegistry implements ExtraPropertyRegistryInterface
     /**
      * {@inheritdoc}
      */
-    public function unregister(string $entityName, string $propertyName, ?string $moduleName, ExtraPropertyScope $fieldScope = ExtraPropertyScope::Common, bool $dropColumn = false): bool
+    public function unregister(string $entityName, string $propertyName, ?string $moduleName, ExtraPropertyScope $fieldScope = ExtraPropertyScope::COMMON, bool $dropColumn = false): bool
     {
         if (!$this->validator->isTableOrIdentifier($propertyName)) {
             return false;
@@ -199,21 +196,17 @@ class ExtraPropertyRegistry implements ExtraPropertyRegistryInterface
     /**
      * Unregisters one definition using its already-loaded value object.
      */
-    protected function unregisterByDefinition(ExtraPropertyDefinitionInfo $definition, bool $dropColumn = false): bool
+    protected function unregisterByDefinition(ExtraPropertyDefinition $definition, bool $dropColumn = false): bool
     {
-        $id = $definition->getId();
-        if ($id <= 0) {
+        if ('' === $definition->getEntityName() || '' === $definition->getPropertyName()) {
             return false;
         }
 
         if ($dropColumn) {
-            $storageColumnName = ExtraPropertyNaming::storageColumnName(
-                $definition->getModuleName(),
-                $definition->getPropertyName()
-            );
+            $storageColumnName = $definition->getStorageColumnName();
 
             try {
-                $this->schemaManager->dropExtraColumnIfExists($definition->getEntityName(), $definition->getFieldScope(), $storageColumnName);
+                $this->schemaManager->dropExtraColumnIfExists($definition->getEntityName(), $definition->getScope()->value, $storageColumnName);
             } catch (Throwable $exception) {
                 $this->logger->error(
                     'Failed to drop extra column: {message}',
@@ -224,7 +217,7 @@ class ExtraPropertyRegistry implements ExtraPropertyRegistryInterface
             }
         }
 
-        return $this->writeRepository->delete($id);
+        return $this->writeRepository->deleteByDefinition($definition);
     }
 
     /**
@@ -236,10 +229,10 @@ class ExtraPropertyRegistry implements ExtraPropertyRegistryInterface
      * Note: `nullable` and `enumValues` are not persisted in the definition registry and
      * therefore cannot be compared here; they are applied only at initial column creation.
      */
-    protected function hasStorageChanges(ExtraPropertyOptions $options, ExtraPropertyDefinitionInfo $existing): bool
+    protected function hasStorageChanges(ExtraPropertyDefinition $options, ExtraPropertyDefinition $existing): bool
     {
-        return $options->type->value !== $existing->getFieldType()
-            || $options->scope->value !== $existing->getFieldScope()
+        return $options->type !== $existing->type
+            || $options->scope !== $existing->scope
             || $options->size !== $existing->getSize()
             || $options->defaultValue !== $existing->getDefaultValue();
     }

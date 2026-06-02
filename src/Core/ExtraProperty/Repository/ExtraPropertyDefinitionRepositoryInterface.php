@@ -9,8 +9,8 @@ declare(strict_types=1);
 
 namespace PrestaShop\PrestaShop\Core\ExtraProperty\Repository;
 
-use PrestaShop\PrestaShop\Core\ExtraProperty\Definition\ExtraPropertyDefinitionInfo;
-use PrestaShop\PrestaShop\Core\ExtraProperty\ExtraPropertyDefinitionCollection;
+use PrestaShop\PrestaShop\Core\ExtraProperty\Definition\ExtraPropertyDefinition;
+use PrestaShop\PrestaShop\Core\ExtraProperty\Definition\ExtraPropertyDefinitionCollection;
 
 /**
  * Read-only repository for extra property definitions.
@@ -18,7 +18,7 @@ use PrestaShop\PrestaShop\Core\ExtraProperty\ExtraPropertyDefinitionCollection;
  * Provides definition look-ups used by the registry, the BO form/grid modifiers,
  * and the ObjectModel. Implementations may be decorated with a cache layer.
  *
- * All read methods return typed ExtraPropertyDefinitionInfo value objects or collections.
+ * All read methods return typed ExtraPropertyDefinition value objects or collections.
  */
 interface ExtraPropertyDefinitionRepositoryInterface
 {
@@ -70,12 +70,12 @@ interface ExtraPropertyDefinitionRepositoryInterface
      * @param string $fieldName Property name
      * @param string $fieldScope Normalized scope ('common', 'lang', 'shop')
      *
-     * @return ExtraPropertyDefinitionInfo|null
+     * @return ExtraPropertyDefinition|null
      */
     public function findDefinitionByModuleAndField(
         string $entityName,
         ?string $moduleName,
         string $fieldName,
         string $fieldScope,
-    ): ?ExtraPropertyDefinitionInfo;
+    ): ?ExtraPropertyDefinition;
 }

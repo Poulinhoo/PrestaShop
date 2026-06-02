@@ -7,12 +7,13 @@
 
 declare(strict_types=1);
 
-namespace PrestaShop\PrestaShop\Core\ExtraProperty;
+namespace PrestaShop\PrestaShop\Core\ExtraProperty\Value;
 
 use ArrayAccess;
 use ArrayIterator;
 use IteratorAggregate;
 use JsonSerializable;
+use PrestaShop\PrestaShop\Core\ExtraProperty\Definition\ExtraPropertyDefinition;
 use Traversable;
 
 /**
@@ -88,7 +89,7 @@ final class ModuleFieldsBag implements ArrayAccess, IteratorAggregate, JsonSeria
         $result = [];
         $module = '_core' === $this->moduleKey ? null : $this->moduleKey;
         foreach ($this->modifiedFields as $fieldName => $value) {
-            $result[ExtraPropertyNaming::storageColumnName($module, $fieldName)] = $value;
+            $result[ExtraPropertyDefinition::buildStorageColumnName($module, $fieldName)] = $value;
         }
 
         return $result;

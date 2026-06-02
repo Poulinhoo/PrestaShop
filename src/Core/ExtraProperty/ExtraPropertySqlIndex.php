@@ -1,4 +1,5 @@
 <?php
+
 /**
  * For the full copyright and license information, please view the
  * docs/licenses/LICENSE.txt file that was distributed with this source code.
@@ -17,11 +18,11 @@ namespace PrestaShop\PrestaShop\Core\ExtraProperty;
 enum ExtraPropertySqlIndex: string
 {
     /** No index on this column. */
-    case None = 'none';
+    case NONE = 'none';
 
     /** Standard (non-unique) index on this column. */
-    case Key = 'key';
+    case KEY = 'key';
 
     /** Unique index on this column; enforces uniqueness at DB level. */
-    case Unique = 'unique';
+    case UNIQUE = 'unique';
 }

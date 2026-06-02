@@ -1,4 +1,5 @@
 <?php
+
 /**
  * For the full copyright and license information, please view the
  * docs/licenses/LICENSE.txt file that was distributed with this source code.
@@ -8,7 +9,8 @@ declare(strict_types=1);
 
 namespace PrestaShop\PrestaShop\Core\ExtraProperty\Validation;
 
-use PrestaShop\PrestaShop\Core\ExtraProperty\Definition\ExtraPropertyDefinitionInfo;
+use PrestaShop\PrestaShop\Core\ExtraProperty\Definition\ExtraPropertyDefinition;
+use PrestaShop\PrestaShop\Core\ExtraProperty\Definition\ExtraPropertyDefinitionCollection;
 
 /**
  * Validation contract for the ExtraProperty feature.
@@ -43,7 +45,7 @@ interface ExtraPropertyValidationInterface
      *
      * @return true|string
      */
-    public function validateValue(ExtraPropertyDefinitionInfo $definition, mixed $value): bool|string;
+    public function validateValue(ExtraPropertyDefinition $definition, mixed $value): bool|string;
 
     /**
      * Validates a batch of extra property values against their definitions.
@@ -53,9 +55,9 @@ interface ExtraPropertyValidationInterface
      * Returns true on success, or the first error message string encountered.
      *
      * @param array<string, mixed> $flatValues column_name => value
-     * @param list<ExtraPropertyDefinitionInfo> $definitions
+     * @param ExtraPropertyDefinitionCollection $definitions
      *
      * @return true|string
      */
-    public function validate(array $flatValues, array $definitions): bool|string;
+    public function validate(array $flatValues, ExtraPropertyDefinitionCollection $definitions): bool|string;
 }

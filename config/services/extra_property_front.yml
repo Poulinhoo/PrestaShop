@@ -32,6 +32,14 @@ services:
     alias: 'PrestaShop\PrestaShop\Core\ExtraProperty\Definition\CachedExtraPropertyDefinitionRepository'
     public: true
 
+  # ─── Validation ──────────────────────────────────────────────────────────────
+
+  PrestaShop\PrestaShop\Core\ExtraProperty\Validation\ExtraPropertyValueValidator: ~
+
+  PrestaShop\PrestaShop\Core\ExtraProperty\Validation\ExtraPropertyValidationInterface:
+    alias: 'PrestaShop\PrestaShop\Core\ExtraProperty\Validation\ExtraPropertyValueValidator'
+    public: true
+
   # ─── Reader ──────────────────────────────────────────────────────────────────
 
   PrestaShop\PrestaShop\Core\ExtraProperty\Value\ExtraPropertyReader:

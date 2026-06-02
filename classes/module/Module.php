@@ -13,7 +13,7 @@ use PrestaShop\PrestaShop\Adapter\Module\Repository\ModuleRepository;
 use PrestaShop\PrestaShop\Adapter\ServiceLocator;
 use PrestaShop\PrestaShop\Core\Context\LegacyControllerContext;
 use PrestaShop\PrestaShop\Core\Exception\ContainerNotFoundException;
-use PrestaShop\PrestaShop\Core\ExtraProperty\ExtraPropertyOptions;
+use PrestaShop\PrestaShop\Core\ExtraProperty\Definition\ExtraPropertyDefinition;
 use PrestaShop\PrestaShop\Core\ExtraProperty\ExtraPropertyScope;
 use PrestaShop\PrestaShop\Core\ExtraProperty\Registry\ExtraPropertyRegistryInterface;
 use PrestaShop\PrestaShop\Core\Foundation\Filesystem\FileSystem;
@@ -1232,20 +1232,20 @@ abstract class ModuleCore implements ModuleInterface
      * Register or update an extra property definition for an entity.
      *
      * The module name is automatically filled in from $this->name when $options->moduleName is null.
-     * Use ExtraPropertyOptions to configure the field type, scope, labels, display flags, etc.
+     * Use ExtraPropertyDefinition to configure the field type, scope, labels, display flags, etc.
      *
      * About BO label translations: store wording/domain pairs in the options, and also call
      * $this->trans() in the module code so strings are discoverable by the BO translation UI.
      *
      * @param string $entityName Entity table name (e.g. "product", "customer")
      * @param string $propertyName Property name within the module (e.g. "video_link")
-     * @param ExtraPropertyOptions $options Typed configuration for the property
+     * @param ExtraPropertyDefinition $options Typed configuration for the property
      *
      * @return bool
      */
-    public function registerExtraProperty(string $entityName, string $propertyName, ?ExtraPropertyOptions $options = null): bool
+    public function registerExtraProperty(string $entityName, string $propertyName, ?ExtraPropertyDefinition $options = null): bool
     {
-        $options ??= new ExtraPropertyOptions();
+        $options ??= new ExtraPropertyDefinition();
 
         // Inject the calling module's name when the developer did not explicitly override it.
         if (null === $options->moduleName && !empty($this->name)) {
@@ -1268,7 +1268,7 @@ abstract class ModuleCore implements ModuleInterface
      *
      * @return bool
      */
-    public function unregisterExtraProperty(string $entityName, string $propertyName, ExtraPropertyScope $fieldScope = ExtraPropertyScope::Common, bool $dropData = false): bool
+    public function unregisterExtraProperty(string $entityName, string $propertyName, ExtraPropertyScope $fieldScope = ExtraPropertyScope::COMMON, bool $dropData = false): bool
     {
         $moduleName = !empty($this->name) ? $this->name : null;
 
@@ -1286,7 +1286,7 @@ abstract class ModuleCore implements ModuleInterface
      *
      * @return bool result
      */
-    public function unregisterExceptions($hook_id, $shop_list = null): bool
+    public function unregisterExceptions($hook_id, $shop_list = null)
     {
         $sql = 'DELETE FROM `' . _DB_PREFIX_ . 'hook_module_exceptions`
             WHERE `id_module` = ' . (int) $this->id . ' AND `id_hook` = ' . (int) $hook_id

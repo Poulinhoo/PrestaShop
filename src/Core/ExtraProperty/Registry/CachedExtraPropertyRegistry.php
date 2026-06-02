@@ -1,4 +1,5 @@
 <?php
+
 /**
  * For the full copyright and license information, please view the
  * docs/licenses/LICENSE.txt file that was distributed with this source code.
@@ -9,7 +10,7 @@ declare(strict_types=1);
 namespace PrestaShop\PrestaShop\Core\ExtraProperty\Registry;
 
 use PrestaShop\PrestaShop\Core\ExtraProperty\Definition\CachedExtraPropertyDefinitionRepository;
-use PrestaShop\PrestaShop\Core\ExtraProperty\ExtraPropertyOptions;
+use PrestaShop\PrestaShop\Core\ExtraProperty\Definition\ExtraPropertyDefinition;
 use PrestaShop\PrestaShop\Core\ExtraProperty\ExtraPropertyScope;
 use Symfony\Contracts\Cache\CacheInterface;
 
@@ -33,7 +34,7 @@ class CachedExtraPropertyRegistry implements ExtraPropertyRegistryInterface
     /**
      * {@inheritdoc}
      */
-    public function register(string $entityName, string $propertyName, ExtraPropertyOptions $options): bool
+    public function register(string $entityName, string $propertyName, ExtraPropertyDefinition $options): bool
     {
         $result = $this->inner->register($entityName, $propertyName, $options);
         if ($result) {
@@ -46,7 +47,7 @@ class CachedExtraPropertyRegistry implements ExtraPropertyRegistryInterface
     /**
      * {@inheritdoc}
      */
-    public function unregister(string $entityName, string $propertyName, ?string $moduleName, ExtraPropertyScope $fieldScope = ExtraPropertyScope::Common, bool $dropColumn = false): bool
+    public function unregister(string $entityName, string $propertyName, ?string $moduleName, ExtraPropertyScope $fieldScope = ExtraPropertyScope::COMMON, bool $dropColumn = false): bool
     {
         $result = $this->inner->unregister($entityName, $propertyName, $moduleName, $fieldScope, $dropColumn);
         if ($result) {

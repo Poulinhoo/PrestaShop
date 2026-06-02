@@ -1,4 +1,5 @@
 <?php
+
 /**
  * For the full copyright and license information, please view the
  * docs/licenses/LICENSE.txt file that was distributed with this source code.
@@ -10,7 +11,7 @@ namespace PrestaShop\PrestaShop\Core\ExtraProperty\Value;
 
 use Doctrine\DBAL\Connection;
 use PrestaShop\PrestaShop\Core\Domain\Shop\ValueObject\ShopConstraint;
-use PrestaShop\PrestaShop\Core\ExtraProperty\ExtraPropertyNaming;
+use PrestaShop\PrestaShop\Core\ExtraProperty\Definition\ExtraPropertyDefinition;
 use PrestaShop\PrestaShop\Core\ExtraProperty\ExtraPropertyScope;
 use Throwable;
 
@@ -24,7 +25,7 @@ class ExtraPropertyWriter implements ExtraPropertyWriterInterface
 {
     public function __construct(
         protected readonly Connection $connection,
-        protected readonly string $prefix
+        protected readonly string $prefix,
     ) {
     }
 
@@ -38,7 +39,7 @@ class ExtraPropertyWriter implements ExtraPropertyWriterInterface
         array $entityValues,
         array $langValuesByIdLang,
         array $shopValues,
-        ShopConstraint $shopConstraint
+        ShopConstraint $shopConstraint,
     ): void {
         $shopId = $shopConstraint->isSingleShopContext() ? $shopConstraint->getShopId()->getValue() : null;
 
@@ -68,7 +69,7 @@ class ExtraPropertyWriter implements ExtraPropertyWriterInterface
 
         foreach (ExtraPropertyScope::values() as $scope) {
             $fullTable = $this->connection->quoteIdentifier(
-                $this->prefix . ExtraPropertyNaming::extraTableName($entityName, $scope)
+                $this->prefix . ExtraPropertyDefinition::buildExtraTableName($entityName, ExtraPropertyScope::from($scope))
             );
 
             try {
@@ -89,7 +90,7 @@ class ExtraPropertyWriter implements ExtraPropertyWriterInterface
      */
     protected function writeCommon(string $entityName, string $primaryKeyName, int $entityId, array $columnValues): void
     {
-        $fullTableName = $this->prefix . ExtraPropertyNaming::extraTableName($entityName, ExtraPropertyScope::Common->value);
+        $fullTableName = $this->prefix . ExtraPropertyDefinition::buildExtraTableName($entityName, ExtraPropertyScope::COMMON);
         $sql = $this->buildUpsertSql($fullTableName, $primaryKeyName, [], $columnValues);
         $this->connection->executeStatement($sql, [$entityId, ...array_values($columnValues)]);
     }
@@ -101,7 +102,7 @@ class ExtraPropertyWriter implements ExtraPropertyWriterInterface
      */
     protected function writeLang(string $entityName, string $primaryKeyName, int $entityId, int $shopId, array $langValuesByIdLang): void
     {
-        $fullTableName = $this->prefix . ExtraPropertyNaming::extraTableName($entityName, ExtraPropertyScope::Lang->value);
+        $fullTableName = $this->prefix . ExtraPropertyDefinition::buildExtraTableName($entityName, ExtraPropertyScope::LANG);
 
         foreach ($langValuesByIdLang as $idLang => $columnValues) {
             if (empty($columnValues)) {
@@ -119,7 +120,7 @@ class ExtraPropertyWriter implements ExtraPropertyWriterInterface
      */
     protected function writeShop(string $entityName, string $primaryKeyName, int $entityId, int $shopId, array $columnValues): void
     {
-        $fullTableName = $this->prefix . ExtraPropertyNaming::extraTableName($entityName, ExtraPropertyScope::Shop->value);
+        $fullTableName = $this->prefix . ExtraPropertyDefinition::buildExtraTableName($entityName, ExtraPropertyScope::SHOP);
         $sql = $this->buildUpsertSql($fullTableName, $primaryKeyName, ['id_shop'], $columnValues);
         $this->connection->executeStatement($sql, [$entityId, $shopId, ...array_values($columnValues)]);
     }

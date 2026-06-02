@@ -11,6 +11,7 @@ services:
 
   PrestaShop\PrestaShop\Core\ExtraProperty\Validation\ExtraPropertyValidationInterface:
     alias: 'PrestaShop\PrestaShop\Core\ExtraProperty\Validation\ExtraPropertyValueValidator'
+    public: true
 
   # Single filesystem cache pool for extra property definitions.
   # Used by CachedExtraPropertyDefinitionRepository (reads) and CachedExtraPropertyRegistry (invalidation).

@@ -1,4 +1,5 @@
 <?php
+
 /**
  * For the full copyright and license information, please view the
  * docs/licenses/LICENSE.txt file that was distributed with this source code.
@@ -8,9 +9,8 @@ declare(strict_types=1);
 namespace PrestaShop\PrestaShop\Core\ExtraProperty\Grid;
 
 use Doctrine\DBAL\Query\QueryBuilder;
-use PrestaShop\PrestaShop\Core\ExtraProperty\Definition\ExtraPropertyDefinitionInfo;
-use PrestaShop\PrestaShop\Core\ExtraProperty\ExtraPropertyNaming;
-use PrestaShop\PrestaShop\Core\ExtraProperty\ExtraPropertyScopeGrouper;
+use PrestaShop\PrestaShop\Core\ExtraProperty\Definition\ExtraPropertyDefinition;
+use PrestaShop\PrestaShop\Core\ExtraProperty\ExtraPropertyScope;
 use PrestaShop\PrestaShop\Core\ExtraProperty\Repository\ExtraPropertyDefinitionRepositoryInterface;
 use PrestaShop\PrestaShop\Core\Grid\Search\SearchCriteriaInterface;
 use Symfony\Component\Form\Extension\Core\Type\CheckboxType;
@@ -39,7 +39,7 @@ class ExtraPropertiesGridQueryBuilderModifier
         QueryBuilder $searchQueryBuilder,
         QueryBuilder $countQueryBuilder,
         SearchCriteriaInterface $searchCriteria,
-        string $gridId
+        string $gridId,
     ): void {
         $definitions = $this->repository->getDefinitionCollectionByGridId($gridId);
         if ($definitions->isEmpty()) {
@@ -55,15 +55,13 @@ class ExtraPropertiesGridQueryBuilderModifier
             return;
         }
 
-        $scopedDefinitions = ExtraPropertyScopeGrouper::groupDefinitionsByScope($definitions->toArray());
-
-        $this->applyEntityScope($searchQueryBuilder, $countQueryBuilder, $searchCriteria, $entityName, $primaryKey, $mainAlias, $scopedDefinitions['common']);
-        $this->applyLangScope($searchQueryBuilder, $countQueryBuilder, $searchCriteria, $entityName, $primaryKey, $mainAlias, $scopedDefinitions['lang']);
-        $this->applyShopScope($searchQueryBuilder, $countQueryBuilder, $searchCriteria, $entityName, $primaryKey, $mainAlias, $scopedDefinitions['shop']);
+        $this->applyEntityScope($searchQueryBuilder, $countQueryBuilder, $searchCriteria, $entityName, $primaryKey, $mainAlias, iterator_to_array($definitions->filterByScope(ExtraPropertyScope::COMMON)));
+        $this->applyLangScope($searchQueryBuilder, $countQueryBuilder, $searchCriteria, $entityName, $primaryKey, $mainAlias, iterator_to_array($definitions->filterByScope(ExtraPropertyScope::LANG)));
+        $this->applyShopScope($searchQueryBuilder, $countQueryBuilder, $searchCriteria, $entityName, $primaryKey, $mainAlias, iterator_to_array($definitions->filterByScope(ExtraPropertyScope::SHOP)));
     }
 
     /**
-     * @param list<ExtraPropertyDefinitionInfo> $definitions
+     * @param list<ExtraPropertyDefinition> $definitions
      */
     protected function applyEntityScope(
         QueryBuilder $searchQb,
@@ -72,13 +70,13 @@ class ExtraPropertiesGridQueryBuilderModifier
         string $entityName,
         string $primaryKey,
         string $mainAlias,
-        array $definitions
+        array $definitions,
     ): void {
         if (empty($definitions)) {
             return;
         }
 
-        $extraTable = $this->dbPrefix . ExtraPropertyNaming::extraTableName($entityName, 'common');
+        $extraTable = $this->dbPrefix . ExtraPropertyDefinition::buildExtraTableName($entityName, ExtraPropertyScope::COMMON);
         $this->ensureLeftJoin($searchQb, $countQb, $mainAlias, $extraTable, self::EXTRA_ENTITY_ALIAS, sprintf(
             '%s.`%s` = %s.`%s`',
             self::EXTRA_ENTITY_ALIAS,
@@ -91,7 +89,7 @@ class ExtraPropertiesGridQueryBuilderModifier
     }
 
     /**
-     * @param list<ExtraPropertyDefinitionInfo> $definitions
+     * @param list<ExtraPropertyDefinition> $definitions
      */
     protected function applyLangScope(
         QueryBuilder $searchQb,
@@ -100,13 +98,13 @@ class ExtraPropertiesGridQueryBuilderModifier
         string $entityName,
         string $primaryKey,
         string $mainAlias,
-        array $definitions
+        array $definitions,
     ): void {
         if (empty($definitions)) {
             return;
         }
 
-        $extraTable = $this->dbPrefix . ExtraPropertyNaming::extraTableName($entityName, 'lang');
+        $extraTable = $this->dbPrefix . ExtraPropertyDefinition::buildExtraTableName($entityName, ExtraPropertyScope::LANG);
         $baseLangTable = $this->dbPrefix . $entityName . '_lang';
         [$langAlias, $langJoinCondition] = $this->findJoinedTableAliasAndCondition($searchQb, $baseLangTable);
 
@@ -138,7 +136,7 @@ class ExtraPropertiesGridQueryBuilderModifier
     }
 
     /**
-     * @param list<ExtraPropertyDefinitionInfo> $definitions
+     * @param list<ExtraPropertyDefinition> $definitions
      */
     protected function applyShopScope(
         QueryBuilder $searchQb,
@@ -147,13 +145,13 @@ class ExtraPropertiesGridQueryBuilderModifier
         string $entityName,
         string $primaryKey,
         string $mainAlias,
-        array $definitions
+        array $definitions,
     ): void {
         if (empty($definitions)) {
             return;
         }
 
-        $extraTable = $this->dbPrefix . ExtraPropertyNaming::extraTableName($entityName, 'shop');
+        $extraTable = $this->dbPrefix . ExtraPropertyDefinition::buildExtraTableName($entityName, ExtraPropertyScope::SHOP);
         $baseShopTable = $this->dbPrefix . $entityName . '_shop';
         [$shopAlias] = $this->findJoinedTableAliasAndCondition($searchQb, $baseShopTable);
 
@@ -186,28 +184,26 @@ class ExtraPropertiesGridQueryBuilderModifier
     }
 
     /**
-     * @param list<ExtraPropertyDefinitionInfo> $definitions
+     * @param list<ExtraPropertyDefinition> $definitions
      */
     protected function applySelectsAndFilters(
         QueryBuilder $searchQb,
         QueryBuilder $countQb,
         SearchCriteriaInterface $criteria,
         string $joinAlias,
-        array $definitions
+        array $definitions,
     ): void {
         $filters = $criteria->getFilters();
 
         foreach ($definitions as $definition) {
-            $moduleName = ExtraPropertyNaming::displayModuleKey($definition->getModuleName());
             $fieldName = $definition->getPropertyName();
-            $scope = $definition->getFieldScope();
             if ('' === $fieldName) {
                 continue;
             }
 
-            $storageColumn = ExtraPropertyNaming::storageColumnName($definition->getModuleName(), $fieldName);
+            $storageColumn = $definition->getStorageColumnName();
 
-            $selectAlias = ExtraPropertyNaming::formFieldName($moduleName, $fieldName, $scope);
+            $selectAlias = $definition->getFormFieldName();
             $searchQb->addSelect(sprintf('%s.`%s` AS `%s`', $joinAlias, $storageColumn, $selectAlias));
 
             if (!array_key_exists($selectAlias, $filters)) {
@@ -236,7 +232,7 @@ class ExtraPropertiesGridQueryBuilderModifier
         string $alias,
         string $column,
         string $paramName,
-        mixed $value
+        mixed $value,
     ): void {
         $expr = sprintf('%s.`%s` = :%s', $alias, $column, $paramName);
         $searchQb->andWhere($expr)->setParameter($paramName, $value);
@@ -249,7 +245,7 @@ class ExtraPropertiesGridQueryBuilderModifier
         string $alias,
         string $column,
         string $paramName,
-        mixed $value
+        mixed $value,
     ): void {
         $expr = sprintf('%s.`%s` LIKE :%s', $alias, $column, $paramName);
         $likeValue = '%' . (string) $value . '%';
@@ -268,7 +264,7 @@ class ExtraPropertiesGridQueryBuilderModifier
         string $fromAlias,
         string $joinTable,
         string $joinAlias,
-        string $condition
+        string $condition,
     ): void {
         if (null === $this->findJoinedTableAliasAndCondition($searchQb, $joinTable)[0]) {
             $searchQb->leftJoin($fromAlias, $joinTable, $joinAlias, $condition);

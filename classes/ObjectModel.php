@@ -1,4 +1,5 @@
 <?php
+
 /**
  * For the full copyright and license information, please view the
  * docs/licenses/LICENSE.txt file that was distributed with this source code.
@@ -6,10 +7,10 @@
 use PrestaShop\PrestaShop\Adapter\ContainerFinder;
 use PrestaShop\PrestaShop\Adapter\ServiceLocator;
 use PrestaShop\PrestaShop\Core\Exception\ContainerNotFoundException;
-use PrestaShop\PrestaShop\Core\ExtraProperty\ExtraPropertiesBag;
-use PrestaShop\PrestaShop\Core\ExtraProperty\ExtraPropertyDefinitionCollection;
+use PrestaShop\PrestaShop\Core\ExtraProperty\Definition\ExtraPropertyDefinitionCollection;
 use PrestaShop\PrestaShop\Core\ExtraProperty\Repository\ExtraPropertyDefinitionRepositoryInterface;
 use PrestaShop\PrestaShop\Core\ExtraProperty\Validation\ExtraPropertyValidationInterface;
+use PrestaShop\PrestaShop\Core\ExtraProperty\Value\ExtraPropertiesBag;
 use PrestaShop\PrestaShop\Core\ExtraProperty\Value\ExtraPropertyReaderInterface;
 use PrestaShop\PrestaShop\Core\ExtraProperty\Value\ExtraPropertyWriterInterface;
 use PrestaShop\PrestaShop\Core\Image\ImageFormatConfiguration;
@@ -1104,7 +1105,7 @@ abstract class ObjectModelCore implements PrestaShop\PrestaShop\Core\Foundation\
             return true;
         }
 
-        $result = $validator->validate($bag->getModifiedValues(), $collection->toArray());
+        $result = $validator->validate($bag->getModifiedValues(), $collection);
         if (true !== $result) {
             if ($die) {
                 throw new PrestaShopException($result);
@@ -1838,6 +1839,37 @@ abstract class ObjectModelCore implements PrestaShop\PrestaShop\Core\Foundation\
     }
 
     /**
+     * Returns true when the given ObjectModel class stores lang fields in a per-shop table.
+     *
+     * Reads the static definition of the class (the $definition array) without instantiating it.
+     * Results are cached by class name to avoid repeated reflection across calls.
+     *
+     * Use this static helper instead of $this->isLangMultishop() whenever you need to check
+     * multishop-lang behaviour from outside an ObjectModel instance (e.g. in ExtraPropertyReader,
+     * form builder, or API integrations).
+     *
+     * @param string $className Fully-qualified or short class name of the ObjectModel subclass
+     *
+     * @return bool
+     */
+    public static function isClassLangMultishop(string $className): bool
+    {
+        static $cache = [];
+
+        if (isset($cache[$className])) {
+            return $cache[$className];
+        }
+
+        if (!class_exists($className)) {
+            return $cache[$className] = false;
+        }
+
+        $def = ObjectModel::getDefinition($className);
+
+        return $cache[$className] = !empty($def['multilang']) && !empty($def['multilang_shop']);
+    }
+
+    /**
      * Updates a table and splits the common datas and the shop datas.
      *
      * @param string $classname
@@ -2286,7 +2318,7 @@ abstract class ObjectModelCore implements PrestaShop\PrestaShop\Core\Foundation\
         $shopValues = [];
 
         foreach ($collection as $definition) {
-            $fieldScope = $definition->getFieldScope();
+            $fieldScope = $definition->getScope()->value;
             $columnName = $definition->getStorageColumnName();
             if (!array_key_exists($columnName, $modifiedValues)) {
                 continue;

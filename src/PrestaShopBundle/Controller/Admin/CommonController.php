@@ -1,4 +1,5 @@
 <?php
+
 /**
  * For the full copyright and license information, please view the
  * docs/licenses/LICENSE.txt file that was distributed with this source code.
@@ -11,7 +12,7 @@ use PrestaShop\PrestaShop\Adapter\Tools;
 use PrestaShop\PrestaShop\Core\Domain\Notification\Command\UpdateEmployeeNotificationLastElementCommand;
 use PrestaShop\PrestaShop\Core\Domain\Notification\Query\GetNotificationLastElements;
 use PrestaShop\PrestaShop\Core\Domain\Notification\QueryResult\NotificationsResults;
-use PrestaShop\PrestaShop\Core\ExtraProperty\ExtraPropertyNaming;
+use PrestaShop\PrestaShop\Core\ExtraProperty\Definition\ExtraPropertyDefinition;
 use PrestaShop\PrestaShop\Core\ExtraProperty\Repository\ExtraPropertyDefinitionRepositoryInterface;
 use PrestaShop\PrestaShop\Core\Grid\Definition\Factory\AbstractGridDefinitionFactory;
 use PrestaShop\PrestaShop\Core\Grid\Definition\Factory\FilterableGridDefinitionFactoryInterface;
@@ -107,7 +108,7 @@ class CommonController extends PrestaShopAdminController
     ): JsonResponse {
         // Derive the legacy controller from the entityName URL path param (trusted, non-forgeable).
         // Never trust a _legacy_controller value coming from the request body/query string.
-        $legacyController = ExtraPropertyNaming::legacyControllerFromEntityName($entityName);
+        $legacyController = self::legacyControllerFromEntityName($entityName);
         if (!$this->isGranted('update', $legacyController)) {
             return new JsonResponse([
                 'status' => false,
@@ -123,7 +124,7 @@ class CommonController extends PrestaShopAdminController
         $translator = $this->container->get(TranslatorInterface::class);
 
         // '_core' is the display sentinel for core properties; the DB stores null.
-        $resolvedModuleName = ExtraPropertyNaming::CORE_MODULE_KEY === $moduleName ? null : $moduleName;
+        $resolvedModuleName = ExtraPropertyDefinition::CORE_MODULE_KEY === $moduleName ? null : $moduleName;
 
         $matched = $repository->findDefinitionByModuleAndField($entityName, $resolvedModuleName, $propertyName, $scope);
         if (null === $matched) {
@@ -133,7 +134,7 @@ class CommonController extends PrestaShopAdminController
             ], 404);
         }
 
-        $storageColumn = ExtraPropertyNaming::storageColumnName($matched->getModuleName(), $matched->getPropertyName());
+        $storageColumn = $matched->getStorageColumnName();
         $databasePrefix = (string) $parameterBag->get('database_prefix');
 
         $primaryKey = 'id_' . $entityName;
@@ -389,7 +390,7 @@ class CommonController extends PrestaShopAdminController
         Request $request,
         string $gridDefinitionFactoryServiceId,
         string $redirectRoute,
-        array $redirectQueryParamsToKeep = []
+        array $redirectQueryParamsToKeep = [],
     ) {
         $definitionFactory = $gridDefinitionFactoryCollection->getFactory($gridDefinitionFactoryServiceId);
 
@@ -426,6 +427,39 @@ class CommonController extends PrestaShopAdminController
             $redirectRoute,
             $redirectQueryParamsToKeep
         );
+    }
+
+    /**
+     * Derives the BO legacy controller name for a given entity name.
+     *
+     * Applies standard English pluralization rules to match PS controller naming conventions:
+     * - consonant + 'y' → 'ies'  (category → AdminCategories)
+     * - 's', 'x', 'z', 'sh', 'ch' → append 'es'  (address → AdminAddresses)
+     * - everything else → append 's'  (product → AdminProducts)
+     *
+     * Used server-side to verify employee permissions without trusting any
+     * client-supplied value (e.g. for the extra-property toggle endpoint).
+     */
+    private static function legacyControllerFromEntityName(string $entityName): string
+    {
+        $length = strlen($entityName);
+        if ($length > 1) {
+            $last = strtolower($entityName[$length - 1]);
+            $prev = strtolower($entityName[$length - 2]);
+
+            // consonant + 'y' → 'ies'
+            if ('y' === $last && !in_array($prev, ['a', 'e', 'i', 'o', 'u'], true)) {
+                return 'Admin' . ucfirst(substr($entityName, 0, -1)) . 'ies';
+            }
+
+            // 's', 'x', 'z', 'sh', 'ch' → 'es'
+            if ('s' === $last || 'x' === $last || 'z' === $last
+                || ('h' === $last && in_array($prev, ['s', 'c'], true))) {
+                return 'Admin' . ucfirst($entityName) . 'es';
+            }
+        }
+
+        return 'Admin' . ucfirst($entityName) . 's';
     }
 
     /**

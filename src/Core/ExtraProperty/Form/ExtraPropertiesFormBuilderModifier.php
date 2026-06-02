@@ -14,11 +14,11 @@ use DateTimeInterface;
 use Exception;
 use InvalidArgumentException;
 use PrestaShop\PrestaShop\Core\Context\ShopContext;
-use PrestaShop\PrestaShop\Core\ExtraProperty\Definition\ExtraPropertyDefinitionInfo;
-use PrestaShop\PrestaShop\Core\ExtraProperty\ExtraPropertyNaming;
+use PrestaShop\PrestaShop\Core\ExtraProperty\Definition\ExtraPropertyDefinition;
 use PrestaShop\PrestaShop\Core\ExtraProperty\Repository\ExtraPropertyDefinitionRepositoryInterface;
 use PrestaShop\PrestaShop\Core\ExtraProperty\Validation\ExtraPropertyValidationInterface;
 use PrestaShop\PrestaShop\Core\ExtraProperty\Value\ExtraPropertyReaderInterface;
+use PrestaShop\PrestaShop\Core\Util\DateTime\DateTime;
 use PrestaShopBundle\Form\Admin\Type\NavigationTabType;
 use PrestaShopBundle\Form\Admin\Type\TranslatableType;
 use PrestaShopBundle\Form\FormBuilderModifier;
@@ -94,35 +94,19 @@ class ExtraPropertiesFormBuilderModifier
                 continue;
             }
 
-            $moduleName = ExtraPropertyNaming::displayModuleKey($definition->getModuleName());
-            $scope = $definition->getFieldScope();
-
             $formEntry = $definition->getFormEntry($formId);
-            $parsed = null !== $formEntry ? ExtraPropertyNaming::parseFormEntry($formEntry) : null;
+            $parsed = null !== $formEntry ? ExtraPropertyDefinition::parseFormEntry($formEntry) : null;
             $moduleFormPosition = '';
             if (null !== $parsed && null !== $parsed['path']) {
                 $moduleFormPosition = $parsed['path'] . (null !== $parsed['mode'] ? ':' . $parsed['mode'] : '');
             }
 
-            $formFieldName = ExtraPropertyNaming::formFieldName($moduleName, $fieldName, $scope);
+            $formFieldName = $definition->getFormFieldName();
 
             [$type, $typeOptions] = $this->resolveFieldTypeAndOptions($definition);
 
-            $typeOptions['mapped'] = false;
-            $typeOptions['required'] = $definition->isFormRequired();
-            $typeOptions['label'] = $this->translateLabel(
-                $definition->getLabelWording(),
-                $definition->getLabelDomain(),
-                null
-            );
-            $typeOptions['help'] = $this->translateLabel(
-                $definition->getDescriptionWording(),
-                $definition->getDescriptionDomain(),
-                null
-            );
-
             if (null !== $existingValues) {
-                $rawValue = $this->resolveExistingValue($existingValues, $moduleName, $fieldName, $scope);
+                $rawValue = $this->resolveExistingValue($existingValues, $definition->getDisplayModuleKey(), $fieldName, $definition->getScope()->value);
                 $typeOptions['data'] = $this->normalizeExistingValueForType($definition, $type, $rawValue);
             }
 
@@ -140,9 +124,9 @@ class ExtraPropertiesFormBuilderModifier
     /**
      * @return array{0: class-string<FormTypeInterface>, 1: array<string, mixed>}
      */
-    protected function resolveFieldTypeAndOptions(ExtraPropertyDefinitionInfo $definition): array
+    protected function resolveFieldTypeAndOptions(ExtraPropertyDefinition $definition): array
     {
-        $scope = $definition->getFieldScope();
+        $scope = $definition->getScope()->value;
         $declaredType = $definition->getFormFieldType();
         $validator = $definition->getValidator();
         $extraOptions = $definition->getFormOptions() ?? [];
@@ -171,6 +155,9 @@ class ExtraPropertiesFormBuilderModifier
             );
         }
 
+        $label = $this->translateLabel($definition->getLabelWording(), $definition->getLabelDomain(), null);
+        $help = $this->translateLabel($definition->getDescriptionWording(), $definition->getDescriptionDomain(), null);
+
         if ('lang' === $scope) {
             // In BO, use TranslatableType (keys are id_lang) for lang-scoped fields.
             // $extraOptions are merged into the inner type options so they are forwarded to each language widget.
@@ -178,6 +165,10 @@ class ExtraPropertiesFormBuilderModifier
                 TranslatableType::class,
                 [
                     'type' => $baseType,
+                    'label' => $label,
+                    'help' => $help,
+                    'mapped' => false,
+                    'required' => $definition->isFormRequired(),
                     'options' => array_merge($extraOptions, [
                         'required' => $definition->isFormRequired(),
                         'constraints' => $constraints,
@@ -190,7 +181,13 @@ class ExtraPropertiesFormBuilderModifier
         return [
             $baseType,
             array_merge(
-                ['constraints' => $constraints],
+                [
+                    'mapped' => false,
+                    'required' => $definition->isFormRequired(),
+                    'label' => $label,
+                    'help' => $help,
+                    'constraints' => $constraints,
+                ],
                 $extraOptions
             ),
         ];
@@ -217,9 +214,9 @@ class ExtraPropertiesFormBuilderModifier
      *
      * @return mixed
      */
-    protected function normalizeExistingValueForType(ExtraPropertyDefinitionInfo $definition, string $resolvedType, $value)
+    protected function normalizeExistingValueForType(ExtraPropertyDefinition $definition, string $resolvedType, $value)
     {
-        $scope = $definition->getFieldScope();
+        $scope = $definition->getScope()->value;
         $declaredType = $definition->getFormFieldType();
 
         if ('lang' === $scope) {
@@ -263,7 +260,7 @@ class ExtraPropertiesFormBuilderModifier
         if ($value instanceof DateTimeInterface) {
             return DateTimeImmutable::createFromInterface($value);
         }
-        if (!is_string($value) || '' === trim($value)) {
+        if (DateTime::isNull($value)) {
             return null;
         }
 

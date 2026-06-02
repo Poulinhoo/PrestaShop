@@ -285,7 +285,7 @@ class ExtraPropertyOptions
 {
     public function __construct(
         public readonly ExtraPropertyType $type = ExtraPropertyType::STRING,
-        public readonly ExtraPropertyScope $scope = ExtraPropertyScope::Common,
+        public readonly ExtraPropertyScope $scope = ExtraPropertyScope::COMMON,
         public readonly ?array $enumValues = null,
         public readonly int|float|string|bool|null $defaultValue = null,
         public readonly bool $nullable = true,
@@ -296,7 +296,7 @@ class ExtraPropertyOptions
         public readonly ?string $labelDomain = null,
         public readonly ?string $descriptionWording = null,
         public readonly ?string $descriptionDomain = null,
-        public readonly ExtraPropertySqlIndex $sqlIndex = ExtraPropertySqlIndex::None,
+        public readonly ExtraPropertySqlIndex $sqlIndex = ExtraPropertySqlIndex::NONE,
         public readonly ?string $formFieldType = null,
         public readonly ?array $formOptions = null,
         public readonly ?string $validator = null,
@@ -479,7 +479,7 @@ Resolves `$this->name` as the module name (via `$options->withModuleName($this->
 public function unregisterExtraProperty(
     string $entityName,
     string $propertyName,
-    ExtraPropertyScope $fieldScope = ExtraPropertyScope::Common,
+    ExtraPropertyScope $fieldScope = ExtraPropertyScope::COMMON,
     bool $dropData = false,
 ): bool
 ```
@@ -498,7 +498,7 @@ $this->registerExtraProperty(
     'video_link',
     new ExtraPropertyOptions(
         type: ExtraPropertyType::STRING,
-        scope: ExtraPropertyScope::Lang,
+        scope: ExtraPropertyScope::LANG,
         labelWording: 'Video link',
         labelDomain: 'Modules.Extrafieldproduct.Admin',
         descriptionWording: 'Video URL per language',

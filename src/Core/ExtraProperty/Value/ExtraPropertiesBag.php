@@ -6,7 +6,7 @@
 
 declare(strict_types=1);
 
-namespace PrestaShop\PrestaShop\Core\ExtraProperty;
+namespace PrestaShop\PrestaShop\Core\ExtraProperty\Value;
 
 use ArrayAccess;
 use ArrayIterator;

@@ -12,10 +12,7 @@ namespace PrestaShop\PrestaShop\Adapter\ExtraProperty\CommandHandler;
 use Doctrine\DBAL\Connection;
 use PrestaShop\PrestaShop\Core\Domain\ExtraProperty\Exception\CannotModifyModuleExtraPropertyDefinitionException;
 use PrestaShop\PrestaShop\Core\Domain\ExtraProperty\Exception\ExtraPropertyDefinitionNotFoundException;
-use PrestaShop\PrestaShop\Core\ExtraProperty\ExtraPropertyOptions;
-use PrestaShop\PrestaShop\Core\ExtraProperty\ExtraPropertyScope;
-use PrestaShop\PrestaShop\Core\ExtraProperty\ExtraPropertySqlIndex;
-use PrestaShop\PrestaShop\Core\ExtraProperty\ExtraPropertyType;
+use PrestaShop\PrestaShop\Core\ExtraProperty\Definition\ExtraPropertyDefinition;
 
 /**
  * Provides shared helpers for extra property definition command handlers.
@@ -24,7 +21,7 @@ use PrestaShop\PrestaShop\Core\ExtraProperty\ExtraPropertyType;
  *  - raw row look-up by primary key (bypasses the cached read repository so
  *    handlers always see fresh data right after a write)
  *  - guard that rejects module-owned definitions from BO mutations
- *  - ExtraPropertyOptions reconstruction from a raw DB row
+ *  - ExtraPropertyDefinition reconstruction from a raw DB row
  */
 abstract class AbstractExtraPropertyDefinitionHandler
 {
@@ -90,78 +87,47 @@ abstract class AbstractExtraPropertyDefinitionHandler
     }
 
     /**
-     * Builds an ExtraPropertyOptions object from a raw DB row, optionally overriding editable fields.
+     * Builds an ExtraPropertyDefinition object from a raw DB row, optionally overriding editable fields.
      *
      * Structural fields (type, scope, size, sql_index, defaultValue) always come from the row.
-     * The $overrides array may contain any ExtraPropertyOptions constructor parameter name as key.
+     * The $overrides array may contain any ExtraPropertyDefinition constructor parameter name as key.
      *
      * @param array<string, mixed> $row Raw row from extra_property_definition
      * @param array<string, mixed> $overrides Editable field overrides keyed by constructor param name
      *
-     * @return ExtraPropertyOptions
+     * @return ExtraPropertyDefinition
      */
-    protected function buildOptionsFromRow(array $row, array $overrides = []): ExtraPropertyOptions
+    protected function buildOptionsFromRow(array $row, array $overrides = []): ExtraPropertyDefinition
     {
-        $formOptionsRaw = $row['form_options'] ?? null;
-        $formOptions = (is_string($formOptionsRaw) && '' !== $formOptionsRaw)
-            ? json_decode($formOptionsRaw, true)
-            : null;
+        $base = ExtraPropertyDefinition::fromRow($row);
 
-        $associatedFormsRaw = $row['associated_forms'] ?? null;
-        $associatedForms = (is_string($associatedFormsRaw) && '' !== $associatedFormsRaw)
-            ? (array_values(array_filter((array) json_decode($associatedFormsRaw, true), static fn (mixed $v): bool => is_string($v) && '' !== $v)) ?: null)
-            : null;
+        if (empty($overrides)) {
+            return $base;
+        }
 
-        $associatedGridsRaw = $row['associated_grids'] ?? null;
-        $associatedGrids = (is_string($associatedGridsRaw) && '' !== $associatedGridsRaw)
-            ? (array_values(array_filter((array) json_decode($associatedGridsRaw, true), static fn (mixed $v): bool => is_string($v) && '' !== $v)) ?: null)
-            : null;
-
-        return new ExtraPropertyOptions(
-            type: ExtraPropertyType::from((string) $row['type']),
-            scope: ExtraPropertyScope::from((string) $row['scope']),
-            enumValues: null,
-            defaultValue: '' !== ($row['default_value'] ?? '') ? $row['default_value'] : null,
-            nullable: true,
-            size: isset($row['size']) && '' !== $row['size'] ? (int) $row['size'] : null,
-            sqlIndex: ExtraPropertySqlIndex::from((string) ($row['sql_index'] ?? 'none')),
-            moduleName: null,
-            formRequired: array_key_exists('formRequired', $overrides)
-                ? (bool) $overrides['formRequired']
-                : !empty($row['form_required']),
-            labelWording: array_key_exists('labelWording', $overrides)
-                ? $overrides['labelWording']
-                : ('' !== ($row['label_wording'] ?? '') ? $row['label_wording'] : null),
-            labelDomain: array_key_exists('labelDomain', $overrides)
-                ? $overrides['labelDomain']
-                : ('' !== ($row['label_domain'] ?? '') ? $row['label_domain'] : null),
-            descriptionWording: array_key_exists('descriptionWording', $overrides)
-                ? $overrides['descriptionWording']
-                : ('' !== ($row['description_wording'] ?? '') ? $row['description_wording'] : null),
-            descriptionDomain: array_key_exists('descriptionDomain', $overrides)
-                ? $overrides['descriptionDomain']
-                : ('' !== ($row['description_domain'] ?? '') ? $row['description_domain'] : null),
-            formFieldType: array_key_exists('formFieldType', $overrides)
-                ? $overrides['formFieldType']
-                : ('' !== ($row['form_field_type'] ?? '') ? $row['form_field_type'] : null),
-            formOptions: array_key_exists('formOptions', $overrides)
-                ? $overrides['formOptions']
-                : (is_array($formOptions) ? $formOptions : null),
-            validator: array_key_exists('validator', $overrides)
-                ? $overrides['validator']
-                : ('' !== ($row['validator'] ?? '') ? $row['validator'] : null),
-            displayApi: array_key_exists('displayApi', $overrides)
-                ? (bool) $overrides['displayApi']
-                : !empty($row['display_api']),
-            associatedForms: array_key_exists('associatedForms', $overrides)
-                ? $overrides['associatedForms']
-                : $associatedForms,
-            associatedGrids: array_key_exists('associatedGrids', $overrides)
-                ? $overrides['associatedGrids']
-                : $associatedGrids,
-            displayFront: array_key_exists('displayFront', $overrides)
-                ? (bool) $overrides['displayFront']
-                : !empty($row['display_front']),
+        return new ExtraPropertyDefinition(
+            type: $base->type,
+            scope: $base->scope,
+            propertyName: $base->propertyName,
+            entityName: $base->entityName,
+            moduleName: $base->moduleName,
+            enumValues: $base->enumValues,
+            defaultValue: $base->defaultValue,
+            nullable: $base->nullable,
+            formRequired: array_key_exists('formRequired', $overrides) ? (bool) $overrides['formRequired'] : $base->formRequired,
+            size: $base->size,
+            sqlIndex: $base->sqlIndex,
+            displayApi: array_key_exists('displayApi', $overrides) ? (bool) $overrides['displayApi'] : $base->displayApi,
+            displayFront: array_key_exists('displayFront', $overrides) ? (bool) $overrides['displayFront'] : $base->displayFront,
+            associatedForms: array_key_exists('associatedForms', $overrides) ? $overrides['associatedForms'] : $base->associatedForms,
+            associatedGrids: array_key_exists('associatedGrids', $overrides) ? $overrides['associatedGrids'] : $base->associatedGrids,
+            formFieldType: array_key_exists('formFieldType', $overrides) ? $overrides['formFieldType'] : $base->formFieldType,
+            formOptions: array_key_exists('formOptions', $overrides) ? $overrides['formOptions'] : $base->formOptions,
+            validator: array_key_exists('validator', $overrides) ? $overrides['validator'] : $base->validator,
+            labelWording: array_key_exists('labelWording', $overrides) ? $overrides['labelWording'] : $base->labelWording,
+            labelDomain: array_key_exists('labelDomain', $overrides) ? $overrides['labelDomain'] : $base->labelDomain,
+            descriptionWording: array_key_exists('descriptionWording', $overrides) ? $overrides['descriptionWording'] : $base->descriptionWording,
+            descriptionDomain: array_key_exists('descriptionDomain', $overrides) ? $overrides['descriptionDomain'] : $base->descriptionDomain,
         );
     }
 }

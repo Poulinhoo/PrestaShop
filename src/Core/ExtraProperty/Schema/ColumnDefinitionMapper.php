@@ -1,4 +1,5 @@
 <?php
+
 /**
  * For the full copyright and license information, please view the
  * docs/licenses/LICENSE.txt file that was distributed with this source code.
@@ -8,11 +9,11 @@ declare(strict_types=1);
 
 namespace PrestaShop\PrestaShop\Core\ExtraProperty\Schema;
 
-use PrestaShop\PrestaShop\Core\ExtraProperty\ExtraPropertyOptions;
+use PrestaShop\PrestaShop\Core\ExtraProperty\Definition\ExtraPropertyDefinition;
 use PrestaShop\PrestaShop\Core\ExtraProperty\ExtraPropertyType;
 
 /**
- * Maps an ExtraPropertyOptions VO to a complete SQL column definition fragment.
+ * Maps an ExtraPropertyDefinition VO to a complete SQL column definition fragment.
  *
  * The returned string is ready to be appended after the column name in an ALTER TABLE … ADD COLUMN statement.
  * NULL/NOT NULL and DEFAULT clauses are always explicit so the caller does not need to add them.
@@ -22,11 +23,11 @@ class ColumnDefinitionMapper
     /**
      * Returns the full SQL column definition fragment for the given options.
      *
-     * @param ExtraPropertyOptions $options Property options containing type, enumValues, nullable, defaultValue
+     * @param ExtraPropertyDefinition $options Property options containing type, enumValues, nullable, defaultValue
      *
      * @return string e.g. "VARCHAR(255) NULL" or "ENUM('a','b') NOT NULL DEFAULT 'a'"
      */
-    public static function getSqlDefinition(ExtraPropertyOptions $options): string
+    public static function getSqlDefinition(ExtraPropertyDefinition $options): string
     {
         $enumValues = null !== $options->enumValues
             ? array_values(array_filter($options->enumValues, 'is_string'))

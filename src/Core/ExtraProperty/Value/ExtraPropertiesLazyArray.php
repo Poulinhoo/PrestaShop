@@ -13,8 +13,7 @@ use Context;
 use ObjectModel;
 use PrestaShop\PrestaShop\Adapter\ContainerFinder;
 use PrestaShop\PrestaShop\Core\Domain\Shop\ValueObject\ShopConstraint;
-use PrestaShop\PrestaShop\Core\ExtraProperty\ExtraPropertyDefinitionCollection;
-use PrestaShop\PrestaShop\Core\ExtraProperty\ExtraPropertyNaming;
+use PrestaShop\PrestaShop\Core\ExtraProperty\Definition\ExtraPropertyDefinitionCollection;
 use PrestaShop\PrestaShop\Core\ExtraProperty\Repository\ExtraPropertyDefinitionRepositoryInterface;
 use Throwable;
 
@@ -188,7 +187,7 @@ final class ExtraPropertiesLazyArray
     {
         $whitelist = [];
         foreach ($frontOfficeDefinitions as $definition) {
-            $moduleKey = ExtraPropertyNaming::displayModuleKey($definition->getModuleName());
+            $moduleKey = $definition->getDisplayModuleKey();
             $fieldName = $definition->getPropertyName();
             if ('' !== $fieldName) {
                 $whitelist[$moduleKey][$fieldName] = true;

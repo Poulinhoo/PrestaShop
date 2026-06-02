@@ -1,4 +1,5 @@
 <?php
+
 /**
  * For the full copyright and license information, please view the
  * docs/licenses/LICENSE.txt file that was distributed with this source code.
@@ -23,11 +24,8 @@ class CartProductPresenter extends ProductPresenter
      *
      * @throws ReflectionException
      */
-    public function present(
-        ProductPresentationSettings $settings,
-        array $product,
-        Language $language
-    ) {
+    public function present(ProductPresentationSettings $settings, array $product, Language $language)
+    {
         $cartProductLazyArray = new CartProductLazyArray(
             $settings,
             $product,
@@ -36,9 +34,7 @@ class CartProductPresenter extends ProductPresenter
             $this->link,
             $this->priceFormatter,
             $this->productColorsRetriever,
-            $this->translator,
-            null,
-            null
+            $this->translator
         );
 
         /*

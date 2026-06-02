@@ -1,4 +1,5 @@
 <?php
+
 /**
  * For the full copyright and license information, please view the
  * docs/licenses/LICENSE.txt file that was distributed with this source code.
@@ -8,8 +9,8 @@ declare(strict_types=1);
 
 namespace PrestaShop\PrestaShop\Core\ExtraProperty\Validation;
 
-use PrestaShop\PrestaShop\Core\ExtraProperty\Definition\ExtraPropertyDefinitionInfo;
-use PrestaShop\PrestaShop\Core\ExtraProperty\ExtraPropertyNaming;
+use PrestaShop\PrestaShop\Core\ExtraProperty\Definition\ExtraPropertyDefinition;
+use PrestaShop\PrestaShop\Core\ExtraProperty\Definition\ExtraPropertyDefinitionCollection;
 use Symfony\Contracts\Translation\TranslatorInterface;
 use Validate;
 
@@ -27,7 +28,7 @@ use Validate;
 class ExtraPropertyValueValidator implements ExtraPropertyValidationInterface
 {
     public function __construct(
-        protected readonly TranslatorInterface $translator,
+        protected readonly ?TranslatorInterface $translator = null,
     ) {
     }
 
@@ -50,7 +51,7 @@ class ExtraPropertyValueValidator implements ExtraPropertyValidationInterface
     /**
      * {@inheritdoc}
      */
-    public function validateValue(ExtraPropertyDefinitionInfo $definition, mixed $value): bool|string
+    public function validateValue(ExtraPropertyDefinition $definition, mixed $value): bool|string
     {
         $validator = $definition->getValidator() ?? '';
         if ('' === $validator || !$this->hasValidatorMethod($validator)) {
@@ -62,7 +63,9 @@ class ExtraPropertyValueValidator implements ExtraPropertyValidationInterface
             || 'defaultlanguagerequiredwhenactive' === strtolower($validator);
 
         $label = $definition->getPropertyName();
-        $errorMessage = $this->translator->trans('The %s field is invalid.', [$label], 'Admin.Notifications.Error');
+        $errorMessage = null !== $this->translator
+            ? $this->translator->trans('The %s field is invalid.', [$label], 'Admin.Notifications.Error')
+            : sprintf('The %s field is invalid.', $label);
 
         if (is_array($value)) {
             foreach ($value as $langValue) {
@@ -91,17 +94,14 @@ class ExtraPropertyValueValidator implements ExtraPropertyValidationInterface
      * Returns true on success, or the first error message string on failure.
      *
      * @param array<string, mixed> $flatValues column_name => value
-     * @param list<ExtraPropertyDefinitionInfo> $definitions
+     * @param ExtraPropertyDefinitionCollection $definitions
      *
      * @return true|string
      */
-    public function validate(array $flatValues, array $definitions): bool|string
+    public function validate(array $flatValues, ExtraPropertyDefinitionCollection $definitions): bool|string
     {
         foreach ($definitions as $definition) {
-            $columnName = ExtraPropertyNaming::storageColumnName(
-                $definition->getModuleName(),
-                $definition->getPropertyName()
-            );
+            $columnName = $definition->getStorageColumnName();
             if (!array_key_exists($columnName, $flatValues)) {
                 continue;
             }

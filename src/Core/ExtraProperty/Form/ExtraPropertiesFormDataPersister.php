@@ -11,8 +11,8 @@ namespace PrestaShop\PrestaShop\Core\ExtraProperty\Form;
 
 use DateTimeInterface;
 use PrestaShop\PrestaShop\Core\Context\ShopContext;
-use PrestaShop\PrestaShop\Core\ExtraProperty\Definition\ExtraPropertyDefinitionInfo;
-use PrestaShop\PrestaShop\Core\ExtraProperty\ExtraPropertyNaming;
+use PrestaShop\PrestaShop\Core\ExtraProperty\Definition\ExtraPropertyDefinition;
+use PrestaShop\PrestaShop\Core\ExtraProperty\ExtraPropertyScope;
 use PrestaShop\PrestaShop\Core\ExtraProperty\Repository\ExtraPropertyDefinitionRepositoryInterface;
 use PrestaShop\PrestaShop\Core\ExtraProperty\Value\ExtraPropertyWriterInterface;
 use PrestaShopBundle\Form\Admin\Type\NavigationTabType;
@@ -66,12 +66,10 @@ class ExtraPropertiesFormDataPersister
                 continue;
             }
 
-            $moduleName = ExtraPropertyNaming::displayModuleKey($definition->getModuleName());
-            $scope = $definition->getFieldScope();
-            $columnName = ExtraPropertyNaming::storageColumnName($definition->getModuleName(), $fieldName);
+            $columnName = $definition->getStorageColumnName();
 
             $formEntry = $definition->getFormEntry($entityName);
-            $parsed = null !== $formEntry ? ExtraPropertyNaming::parseFormEntry($formEntry) : null;
+            $parsed = null !== $formEntry ? ExtraPropertyDefinition::parseFormEntry($formEntry) : null;
             $targetPath = $parsed['path'] ?? '';
             if ('' === $targetPath) {
                 // Keep fallback placement consistent with ExtraPropertiesFormBuilderModifier.
@@ -79,7 +77,7 @@ class ExtraPropertiesFormDataPersister
                     ? self::DEFAULT_FALLBACK_TAB . '.' . ExtraPropertiesFormBuilderModifier::FALLBACK_FORM_SECTION
                     : '';
             }
-            $formFieldName = ExtraPropertyNaming::formFieldName($moduleName, $fieldName, $scope);
+            $formFieldName = $definition->getFormFieldName();
 
             $targetForm = $this->resolveTargetFormForExtraField($form, $targetPath, $formFieldName);
             if (null === $targetForm) {
@@ -89,7 +87,8 @@ class ExtraPropertiesFormDataPersister
             $submittedValue = $targetForm->get($formFieldName)->getData();
             $submittedValue = $this->normalizeSubmittedValueForStorage($definition, $submittedValue);
 
-            if ('lang' === $scope) {
+            $scope = $definition->getScope();
+            if (ExtraPropertyScope::LANG === $scope) {
                 if (!is_array($submittedValue) || !$hasShop) {
                     continue;
                 }
@@ -100,7 +99,7 @@ class ExtraPropertiesFormDataPersister
                     }
                     $langValuesByIdLang[$idLang][$columnName] = $this->normalizeSubmittedValueForStorage($definition, $value);
                 }
-            } elseif ('shop' === $scope) {
+            } elseif (ExtraPropertyScope::SHOP === $scope) {
                 if (!$hasShop) {
                     continue;
                 }
@@ -121,7 +120,7 @@ class ExtraPropertiesFormDataPersister
         );
     }
 
-    protected function resolveStorageEntityName(string $fallbackEntityName, ?ExtraPropertyDefinitionInfo $firstDefinition): string
+    protected function resolveStorageEntityName(string $fallbackEntityName, ?ExtraPropertyDefinition $firstDefinition): string
     {
         if (null !== $firstDefinition && '' !== trim($firstDefinition->getEntityName())) {
             return trim($firstDefinition->getEntityName());
@@ -205,7 +204,7 @@ class ExtraPropertiesFormDataPersister
      *
      * @return mixed
      */
-    protected function normalizeSubmittedValueForStorage(ExtraPropertyDefinitionInfo $definition, $value)
+    protected function normalizeSubmittedValueForStorage(ExtraPropertyDefinition $definition, $value)
     {
         $declaredType = $definition->getFormFieldType();
         if (CheckboxType::class === $declaredType) {

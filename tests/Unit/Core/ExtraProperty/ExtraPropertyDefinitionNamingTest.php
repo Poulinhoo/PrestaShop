@@ -1,0 +1,168 @@
+<?php
+/**
+ * For the full copyright and license information, please view the
+ * docs/licenses/LICENSE.txt file that was distributed with this source code.
+ */
+
+declare(strict_types=1);
+
+namespace Tests\Unit\Core\ExtraProperty;
+
+use PHPUnit\Framework\TestCase;
+use PrestaShop\PrestaShop\Core\ExtraProperty\Definition\ExtraPropertyDefinition;
+use PrestaShop\PrestaShop\Core\ExtraProperty\ExtraPropertyScope;
+
+class ExtraPropertyDefinitionNamingTest extends TestCase
+{
+    /**
+     * @dataProvider extraTableNameProvider
+     */
+    public function testBuildExtraTableName(string $entityName, ExtraPropertyScope $scope, string $expected): void
+    {
+        $this->assertSame($expected, ExtraPropertyDefinition::buildExtraTableName($entityName, $scope));
+    }
+
+    public static function extraTableNameProvider(): array
+    {
+        return [
+            'common scope' => ['product', ExtraPropertyScope::COMMON, 'product_extra'],
+            'lang scope' => ['product', ExtraPropertyScope::LANG, 'product_extra_lang'],
+            'shop scope' => ['product', ExtraPropertyScope::SHOP, 'product_extra_shop'],
+            'different entity common' => ['customer', ExtraPropertyScope::COMMON, 'customer_extra'],
+            'different entity lang' => ['customer', ExtraPropertyScope::LANG, 'customer_extra_lang'],
+            'different entity shop' => ['customer', ExtraPropertyScope::SHOP, 'customer_extra_shop'],
+        ];
+    }
+
+    /**
+     * @dataProvider storageColumnNameProvider
+     */
+    public function testBuildStorageColumnName(?string $moduleName, string $propertyName, string $expected): void
+    {
+        $this->assertSame($expected, ExtraPropertyDefinition::buildStorageColumnName($moduleName, $propertyName));
+    }
+
+    public static function storageColumnNameProvider(): array
+    {
+        return [
+            'null module (core field)' => [null, 'video_link', 'video_link'],
+            'empty string module (core field)' => ['', 'video_link', 'video_link'],
+            'core sentinel module' => [ExtraPropertyDefinition::CORE_MODULE_KEY, 'video_link', 'video_link'],
+            'module prefixes property' => ['ps_mymodule', 'video_link', 'ps_mymodule_video_link'],
+            'another module' => ['demomodule', 'color', 'demomodule_color'],
+        ];
+    }
+
+    /**
+     * @dataProvider formFieldNameProvider
+     */
+    public function testGetFormFieldName(ExtraPropertyDefinition $definition, string $expected): void
+    {
+        $this->assertSame($expected, $definition->getFormFieldName());
+    }
+
+    public static function formFieldNameProvider(): array
+    {
+        return [
+            'module field common scope' => [
+                new ExtraPropertyDefinition(scope: ExtraPropertyScope::COMMON, propertyName: 'video_link', moduleName: 'ps_mymodule'),
+                'extra_common_ps_mymodule_video_link',
+            ],
+            'module field lang scope' => [
+                new ExtraPropertyDefinition(scope: ExtraPropertyScope::LANG, propertyName: 'video_link', moduleName: 'ps_mymodule'),
+                'extra_lang_ps_mymodule_video_link',
+            ],
+            'module field shop scope' => [
+                new ExtraPropertyDefinition(scope: ExtraPropertyScope::SHOP, propertyName: 'video_link', moduleName: 'ps_mymodule'),
+                'extra_shop_ps_mymodule_video_link',
+            ],
+            'core sentinel common scope' => [
+                new ExtraPropertyDefinition(scope: ExtraPropertyScope::COMMON, propertyName: 'my_field', moduleName: ExtraPropertyDefinition::CORE_MODULE_KEY),
+                'extra_common__core_my_field',
+            ],
+            'null module treated as _core' => [
+                new ExtraPropertyDefinition(scope: ExtraPropertyScope::COMMON, propertyName: 'my_field', moduleName: null),
+                'extra_common__core_my_field',
+            ],
+        ];
+    }
+
+    /**
+     * @dataProvider displayModuleKeyProvider
+     */
+    public function testGetDisplayModuleKey(ExtraPropertyDefinition $definition, string $expected): void
+    {
+        $this->assertSame($expected, $definition->getDisplayModuleKey());
+    }
+
+    public static function displayModuleKeyProvider(): array
+    {
+        return [
+            'null maps to _core' => [
+                new ExtraPropertyDefinition(moduleName: null),
+                ExtraPropertyDefinition::CORE_MODULE_KEY,
+            ],
+            '_core stays _core' => [
+                new ExtraPropertyDefinition(moduleName: ExtraPropertyDefinition::CORE_MODULE_KEY),
+                ExtraPropertyDefinition::CORE_MODULE_KEY,
+            ],
+            'actual module name is returned as-is' => [
+                new ExtraPropertyDefinition(moduleName: 'ps_mymodule'),
+                'ps_mymodule',
+            ],
+            'another module' => [
+                new ExtraPropertyDefinition(moduleName: 'demomodule'),
+                'demomodule',
+            ],
+        ];
+    }
+
+    public function testCoreModuleKeyConstant(): void
+    {
+        $this->assertSame('_core', ExtraPropertyDefinition::CORE_MODULE_KEY);
+    }
+
+    /**
+     * @dataProvider parseGridEntryProvider
+     *
+     * @param array{gridId: string, columnId: string|null, mode: 'before'|'after'|null} $expected
+     */
+    public function testParseGridEntry(string $entry, array $expected): void
+    {
+        $this->assertSame($expected, ExtraPropertyDefinition::parseGridEntry($entry));
+    }
+
+    public static function parseGridEntryProvider(): array
+    {
+        return [
+            'bare grid id — no column, no mode' => [
+                'product',
+                ['gridId' => 'product', 'columnId' => null, 'mode' => null],
+            ],
+            'grid with column — default mode is after' => [
+                'product.reference',
+                ['gridId' => 'product', 'columnId' => 'reference', 'mode' => 'after'],
+            ],
+            'grid with column explicit after' => [
+                'product.reference:after',
+                ['gridId' => 'product', 'columnId' => 'reference', 'mode' => 'after'],
+            ],
+            'grid with column explicit before' => [
+                'product.reference:before',
+                ['gridId' => 'product', 'columnId' => 'reference', 'mode' => 'before'],
+            ],
+            'compound grid id with column' => [
+                'manufacturer_address.city',
+                ['gridId' => 'manufacturer_address', 'columnId' => 'city', 'mode' => 'after'],
+            ],
+            'compound grid id with column and before' => [
+                'manufacturer_address.city:before',
+                ['gridId' => 'manufacturer_address', 'columnId' => 'city', 'mode' => 'before'],
+            ],
+            'dot with empty rest treated as no column' => [
+                'product.',
+                ['gridId' => 'product', 'columnId' => null, 'mode' => null],
+            ],
+        ];
+    }
+}

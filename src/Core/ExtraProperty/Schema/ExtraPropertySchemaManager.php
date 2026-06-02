@@ -1,4 +1,5 @@
 <?php
+
 /**
  * For the full copyright and license information, please view the
  * docs/licenses/LICENSE.txt file that was distributed with this source code.
@@ -10,7 +11,8 @@ namespace PrestaShop\PrestaShop\Core\ExtraProperty\Schema;
 
 use Doctrine\DBAL\Connection;
 use Doctrine\DBAL\Schema\Table;
-use PrestaShop\PrestaShop\Core\ExtraProperty\ExtraPropertyNaming;
+use PrestaShop\PrestaShop\Core\ExtraProperty\Definition\ExtraPropertyDefinition;
+use PrestaShop\PrestaShop\Core\ExtraProperty\ExtraPropertyScope;
 use PrestaShop\PrestaShop\Core\ExtraProperty\ExtraPropertySqlIndex;
 use Psr\Log\LoggerInterface;
 use Psr\Log\NullLogger;
@@ -134,7 +136,7 @@ class ExtraPropertySchemaManager implements ExtraPropertySchemaManagerInterface
      */
     protected function buildExtraEntityTableName(string $entityName, string $fieldScope): string
     {
-        return ExtraPropertyNaming::extraTableName($entityName, $fieldScope);
+        return ExtraPropertyDefinition::buildExtraTableName($entityName, ExtraPropertyScope::from($fieldScope));
     }
 
     /**
@@ -146,23 +148,23 @@ class ExtraPropertySchemaManager implements ExtraPropertySchemaManagerInterface
      */
     protected function syncExtraColumnIndex(string $extraTableName, string $columnName, ExtraPropertySqlIndex $sqlIndex): void
     {
-        $keyIndexName = $this->buildExtraColumnIndexName($extraTableName, $columnName, ExtraPropertySqlIndex::Key);
-        $uniqueIndexName = $this->buildExtraColumnIndexName($extraTableName, $columnName, ExtraPropertySqlIndex::Unique);
+        $keyIndexName = $this->buildExtraColumnIndexName($extraTableName, $columnName, ExtraPropertySqlIndex::KEY);
+        $uniqueIndexName = $this->buildExtraColumnIndexName($extraTableName, $columnName, ExtraPropertySqlIndex::UNIQUE);
 
         // Drop any index that no longer matches the desired strategy.
-        if (ExtraPropertySqlIndex::Key !== $sqlIndex) {
+        if (ExtraPropertySqlIndex::KEY !== $sqlIndex) {
             $this->dropIndexIfExists($extraTableName, $keyIndexName);
         }
-        if (ExtraPropertySqlIndex::Unique !== $sqlIndex) {
+        if (ExtraPropertySqlIndex::UNIQUE !== $sqlIndex) {
             $this->dropIndexIfExists($extraTableName, $uniqueIndexName);
         }
 
-        if (ExtraPropertySqlIndex::None === $sqlIndex) {
+        if (ExtraPropertySqlIndex::NONE === $sqlIndex) {
             return;
         }
 
         // Create the desired index if it does not already exist.
-        $indexName = (ExtraPropertySqlIndex::Unique === $sqlIndex) ? $uniqueIndexName : $keyIndexName;
+        $indexName = (ExtraPropertySqlIndex::UNIQUE === $sqlIndex) ? $uniqueIndexName : $keyIndexName;
         if ($this->indexExists($extraTableName, $indexName)) {
             return;
         }
@@ -170,7 +172,7 @@ class ExtraPropertySchemaManager implements ExtraPropertySchemaManagerInterface
         $sql = sprintf(
             'ALTER TABLE %s ADD %s %s (%s)',
             $this->connection->quoteIdentifier($extraTableName),
-            ExtraPropertySqlIndex::Unique === $sqlIndex ? 'UNIQUE INDEX' : 'INDEX',
+            ExtraPropertySqlIndex::UNIQUE === $sqlIndex ? 'UNIQUE INDEX' : 'INDEX',
             $this->connection->quoteIdentifier($indexName),
             $this->connection->quoteIdentifier($columnName)
         );
@@ -395,7 +397,7 @@ class ExtraPropertySchemaManager implements ExtraPropertySchemaManagerInterface
      */
     protected function buildExtraColumnIndexName(string $tableName, string $columnName, ExtraPropertySqlIndex $sqlIndex): string
     {
-        $prefix = (ExtraPropertySqlIndex::Unique === $sqlIndex) ? 'uniq_extra_' : 'idx_extra_';
+        $prefix = (ExtraPropertySqlIndex::UNIQUE === $sqlIndex) ? 'uniq_extra_' : 'idx_extra_';
 
         return $prefix . substr(sha1($tableName . '|' . $columnName), 0, 16);
     }

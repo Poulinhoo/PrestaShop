@@ -1,4 +1,5 @@
 <?php
+
 /**
  * For the full copyright and license information, please view the
  * docs/licenses/LICENSE.txt file that was distributed with this source code.
@@ -71,9 +72,7 @@ class ProductPresenterFactoryCore
                 $this->context->link,
                 new PriceFormatter(),
                 new ProductColorsRetriever(),
-                $this->context->getTranslator(),
-                null,
-                null
+                $this->context->getTranslator()
             );
         }
 

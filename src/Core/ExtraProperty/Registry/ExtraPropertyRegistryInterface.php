@@ -1,4 +1,5 @@
 <?php
+
 /**
  * For the full copyright and license information, please view the
  * docs/licenses/LICENSE.txt file that was distributed with this source code.
@@ -8,7 +9,7 @@ declare(strict_types=1);
 
 namespace PrestaShop\PrestaShop\Core\ExtraProperty\Registry;
 
-use PrestaShop\PrestaShop\Core\ExtraProperty\ExtraPropertyOptions;
+use PrestaShop\PrestaShop\Core\ExtraProperty\Definition\ExtraPropertyDefinition;
 use PrestaShop\PrestaShop\Core\ExtraProperty\ExtraPropertyScope;
 
 /**
@@ -35,11 +36,11 @@ interface ExtraPropertyRegistryInterface
      *
      * @param string $entityName Entity table name (e.g. "product", "customer")
      * @param string $propertyName Property name within the module (e.g. "custom_size")
-     * @param ExtraPropertyOptions $options Typed configuration for the property
+     * @param ExtraPropertyDefinition $options Typed configuration for the property
      *
      * @return bool
      */
-    public function register(string $entityName, string $propertyName, ExtraPropertyOptions $options): bool;
+    public function register(string $entityName, string $propertyName, ExtraPropertyDefinition $options): bool;
 
     /**
      * Unregister an extra property definition by entity, property name and scope.
@@ -53,5 +54,5 @@ interface ExtraPropertyRegistryInterface
      *
      * @return bool
      */
-    public function unregister(string $entityName, string $propertyName, ?string $moduleName, ExtraPropertyScope $fieldScope = ExtraPropertyScope::Common, bool $dropColumn = false): bool;
+    public function unregister(string $entityName, string $propertyName, ?string $moduleName, ExtraPropertyScope $fieldScope = ExtraPropertyScope::COMMON, bool $dropColumn = false): bool;
 }

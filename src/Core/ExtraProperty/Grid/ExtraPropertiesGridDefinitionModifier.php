@@ -1,4 +1,5 @@
 <?php
+
 /**
  * For the full copyright and license information, please view the
  * docs/licenses/LICENSE.txt file that was distributed with this source code.
@@ -8,8 +9,7 @@ declare(strict_types=1);
 namespace PrestaShop\PrestaShop\Core\ExtraProperty\Grid;
 
 use PrestaShop\PrestaShop\Core\Context\ShopContext;
-use PrestaShop\PrestaShop\Core\ExtraProperty\Definition\ExtraPropertyDefinitionInfo;
-use PrestaShop\PrestaShop\Core\ExtraProperty\ExtraPropertyNaming;
+use PrestaShop\PrestaShop\Core\ExtraProperty\Definition\ExtraPropertyDefinition;
 use PrestaShop\PrestaShop\Core\ExtraProperty\ExtraPropertyType;
 use PrestaShop\PrestaShop\Core\ExtraProperty\Repository\ExtraPropertyDefinitionRepositoryInterface;
 use PrestaShop\PrestaShop\Core\Grid\Column\ColumnCollectionInterface;
@@ -57,14 +57,11 @@ class ExtraPropertiesGridDefinitionModifier
             }
 
             // H8: JSON fields have no meaningful grid representation — skip them.
-            if (ExtraPropertyType::JSON->value === $extraDefinition->getFieldType()) {
+            if (ExtraPropertyType::JSON === $extraDefinition->getType()) {
                 continue;
             }
 
-            $moduleName = ExtraPropertyNaming::displayModuleKey($extraDefinition->getModuleName());
-            $scope = $extraDefinition->getFieldScope();
-
-            $columnId = ExtraPropertyNaming::formFieldName($moduleName, $fieldName, $scope);
+            $columnId = $extraDefinition->getFormFieldName();
             if ($this->hasColumnId($columns, $columnId)) {
                 continue;
             }
@@ -76,7 +73,7 @@ class ExtraPropertiesGridDefinitionModifier
 
             $column = $this->buildColumn($gridId, $columnId, $label, $extraDefinition);
 
-            $gridEntry = ExtraPropertyNaming::parseGridEntry($extraDefinition->getGridEntry($gridId) ?? $gridId);
+            $gridEntry = ExtraPropertyDefinition::parseGridEntry($extraDefinition->getGridEntry($gridId) ?? $gridId);
             $columnRef = $gridEntry['columnId'];
             if (null !== $columnRef) {
                 try {
@@ -100,15 +97,14 @@ class ExtraPropertiesGridDefinitionModifier
         }
     }
 
-    protected function buildColumn(string $gridId, string $columnId, string $label, ExtraPropertyDefinitionInfo $definition): ColumnInterface
+    protected function buildColumn(string $gridId, string $columnId, string $label, ExtraPropertyDefinition $definition): ColumnInterface
     {
         // H8: column type is derived from the logical field type, not the form type override.
-        $fieldType = $definition->getFieldType();
-        $scope = $definition->getFieldScope();
-        $moduleName = ExtraPropertyNaming::displayModuleKey($definition->getModuleName());
+        $scope = $definition->getScope()->value;
+        $moduleName = $definition->getDisplayModuleKey();
         $fieldName = $definition->getPropertyName();
 
-        if (ExtraPropertyType::BOOL->value === $fieldType && '' !== $fieldName) {
+        if (ExtraPropertyType::BOOL === $definition->getType() && '' !== $fieldName) {
             $primaryField = 'id_' . $gridId;
             $entityName = $definition->getEntityName();
 
@@ -137,7 +133,7 @@ class ExtraPropertiesGridDefinitionModifier
                 ]);
         }
 
-        if (ExtraPropertyType::DATE->value === $fieldType) {
+        if (ExtraPropertyType::DATE === $definition->getType()) {
             return (new DateTimeColumn($columnId))
                 ->setName($label)
                 ->setOptions([
@@ -159,9 +155,9 @@ class ExtraPropertiesGridDefinitionModifier
     /**
      * @return class-string
      */
-    protected function resolveFilterType(ExtraPropertyDefinitionInfo $definition): string
+    protected function resolveFilterType(ExtraPropertyDefinition $definition): string
     {
-        if (ExtraPropertyType::BOOL->value === $definition->getFieldType()) {
+        if (ExtraPropertyType::BOOL === $definition->getType()) {
             return YesAndNoChoiceType::class;
         }
 

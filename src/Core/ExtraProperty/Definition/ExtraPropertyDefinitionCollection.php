@@ -7,32 +7,32 @@
 
 declare(strict_types=1);
 
-namespace PrestaShop\PrestaShop\Core\ExtraProperty;
+namespace PrestaShop\PrestaShop\Core\ExtraProperty\Definition;
 
 use ArrayIterator;
 use Countable;
 use IteratorAggregate;
-use PrestaShop\PrestaShop\Core\ExtraProperty\Definition\ExtraPropertyDefinitionInfo;
+use PrestaShop\PrestaShop\Core\ExtraProperty\ExtraPropertyScope;
 use Traversable;
 
 /**
  * Immutable, iterable collection of extra property definitions.
  *
- * Each item is a typed ExtraPropertyDefinitionInfo value object.
+ * Each item is a typed ExtraPropertyDefinition value object.
  * Provides fluent helpers for filtering and inspection without modifying the original data.
  *
- * @implements IteratorAggregate<int, ExtraPropertyDefinitionInfo>
+ * @implements IteratorAggregate<int, ExtraPropertyDefinition>
  */
 final class ExtraPropertyDefinitionCollection implements Countable, IteratorAggregate
 {
-    /** @var list<ExtraPropertyDefinitionInfo> */
+    /** @var list<ExtraPropertyDefinition> */
     private readonly array $definitions;
 
     /** @var self|null Cached empty instance — avoids repeated allocations for entities without extra properties */
     private static ?self $emptyInstance = null;
 
     /**
-     * @param list<ExtraPropertyDefinitionInfo> $definitions
+     * @param list<ExtraPropertyDefinition> $definitions
      */
     public function __construct(array $definitions)
     {
@@ -64,7 +64,7 @@ final class ExtraPropertyDefinitionCollection implements Countable, IteratorAggr
     }
 
     /**
-     * @return Traversable<int, ExtraPropertyDefinitionInfo>
+     * @return Traversable<int, ExtraPropertyDefinition>
      */
     public function getIterator(): Traversable
     {
@@ -83,21 +83,11 @@ final class ExtraPropertyDefinitionCollection implements Countable, IteratorAggr
     /**
      * Returns the first definition, or null when the collection is empty.
      *
-     * @return ExtraPropertyDefinitionInfo|null
+     * @return ExtraPropertyDefinition|null
      */
-    public function first(): ?ExtraPropertyDefinitionInfo
+    public function first(): ?ExtraPropertyDefinition
     {
         return $this->definitions[0] ?? null;
-    }
-
-    /**
-     * Returns the raw definitions array.
-     *
-     * @return list<ExtraPropertyDefinitionInfo>
-     */
-    public function toArray(): array
-    {
-        return $this->definitions;
     }
 
     /**
@@ -135,7 +125,7 @@ final class ExtraPropertyDefinitionCollection implements Countable, IteratorAggr
         $isCore = null === $moduleName || '_core' === $moduleName || '' === $moduleName;
         $filtered = array_filter(
             $this->definitions,
-            static function (ExtraPropertyDefinitionInfo $d) use ($isCore, $moduleName): bool {
+            static function (ExtraPropertyDefinition $d) use ($isCore, $moduleName): bool {
                 $defModule = $d->getModuleName();
                 if ($isCore) {
                     return null === $defModule;
@@ -158,7 +148,7 @@ final class ExtraPropertyDefinitionCollection implements Countable, IteratorAggr
         $scopeValue = $scope instanceof ExtraPropertyScope ? $scope->value : $scope;
         $filtered = array_filter(
             $this->definitions,
-            static fn (ExtraPropertyDefinitionInfo $d): bool => $d->getFieldScope() === $scopeValue
+            static fn (ExtraPropertyDefinition $d): bool => $d->getScope()->value === $scopeValue
         );
 
         return new self(array_values($filtered));
@@ -175,7 +165,7 @@ final class ExtraPropertyDefinitionCollection implements Countable, IteratorAggr
     {
         return new self(array_values(array_filter(
             $this->definitions,
-            static fn (ExtraPropertyDefinitionInfo $d): bool => $d->getEntityName() === $entityName
+            static fn (ExtraPropertyDefinition $d): bool => $d->getEntityName() === $entityName
         )));
     }
 
@@ -188,7 +178,7 @@ final class ExtraPropertyDefinitionCollection implements Countable, IteratorAggr
     {
         return new self(array_values(array_filter(
             $this->definitions,
-            static fn (ExtraPropertyDefinitionInfo $d): bool => null !== $d->getFormEntry($formId)
+            static fn (ExtraPropertyDefinition $d): bool => null !== $d->getFormEntry($formId)
         )));
     }
 
@@ -204,7 +194,7 @@ final class ExtraPropertyDefinitionCollection implements Countable, IteratorAggr
     {
         return new self(array_values(array_filter(
             $this->definitions,
-            static fn (ExtraPropertyDefinitionInfo $d): bool => null !== $d->getGridEntry($gridId)
+            static fn (ExtraPropertyDefinition $d): bool => null !== $d->getGridEntry($gridId)
         )));
     }
 
@@ -218,7 +208,7 @@ final class ExtraPropertyDefinitionCollection implements Countable, IteratorAggr
     {
         return new self(array_values(array_filter(
             $this->definitions,
-            static fn (ExtraPropertyDefinitionInfo $d): bool => $d->isDisplayFront()
+            static fn (ExtraPropertyDefinition $d): bool => $d->isDisplayFront()
         )));
     }
 
@@ -231,7 +221,7 @@ final class ExtraPropertyDefinitionCollection implements Countable, IteratorAggr
     {
         return new self(array_values(array_filter(
             $this->definitions,
-            static fn (ExtraPropertyDefinitionInfo $d): bool => $d->isDisplayApi()
+            static fn (ExtraPropertyDefinition $d): bool => $d->isDisplayApi()
         )));
     }
 }

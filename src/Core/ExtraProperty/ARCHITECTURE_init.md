@@ -239,7 +239,7 @@ class ExtraPropertyDefinition
         private readonly string $moduleName,
         private readonly string $fieldName,
         private readonly ExtraPropertyType $type,
-        private readonly ExtraPropertyScope $scope = ExtraPropertyScope::Common,
+        private readonly ExtraPropertyScope $scope = ExtraPropertyScope::COMMON,
         private readonly ExtraPropertyOptions $options = new ExtraPropertyOptions(),
     ) {}
 
@@ -287,7 +287,7 @@ $this->registerExtraProperty(
     'product',
     'custom_size',
     ExtraPropertyType::String,
-    ExtraPropertyScope::Common,
+    ExtraPropertyScope::COMMON,
     new ExtraPropertyOptions(size: 64, validate: 'isGenericName'),
 );
 ```
@@ -512,7 +512,7 @@ public function registerExtraProperty(
     string $entityName,
     string $fieldName,
     ExtraPropertyType $type,
-    ExtraPropertyScope $scope = ExtraPropertyScope::Common,
+    ExtraPropertyScope $scope = ExtraPropertyScope::COMMON,
     ?ExtraPropertyOptions $options = null,
 ): bool
 ```
@@ -567,21 +567,21 @@ class MyModule extends Module
                 'product',
                 'custom_size',
                 ExtraPropertyType::String,
-                ExtraPropertyScope::Common,
+                ExtraPropertyScope::COMMON,
                 new ExtraPropertyOptions(size: 64, validate: 'isGenericName'),
             )
             && $this->registerExtraProperty(
                 'product',
                 'custom_label',
                 ExtraPropertyType::String,
-                ExtraPropertyScope::Lang,
+                ExtraPropertyScope::LANG,
                 new ExtraPropertyOptions(size: 255),
             )
             && $this->registerExtraProperty(
                 'product',
                 'shop_specific_flag',
                 ExtraPropertyType::Bool,
-                ExtraPropertyScope::Shop,
+                ExtraPropertyScope::SHOP,
             )
             && $this->registerHook('actionProductFormBuilderModifier');
     }
@@ -843,7 +843,7 @@ PATCH /api/products/1
 The definition table allows specifying a custom API field name via mapping. For example, `mymodule_custom_size` can be exposed as `customSize` in the API:
 
 ```php
-$this->registerExtraProperty('product', 'custom_size', ExtraPropertyType::String, ExtraPropertyScope::Common,
+$this->registerExtraProperty('product', 'custom_size', ExtraPropertyType::String, ExtraPropertyScope::COMMON,
     new ExtraPropertyOptions(apiMapping: 'customSize'),
 );
 ```
@@ -960,7 +960,7 @@ public function hookActionAfterUpdateProductFormHandler(array $params)
 For placing fields at specific positions rather than at the end, the definition can include form display metadata:
 
 ```php
-$this->registerExtraProperty('product', 'custom_size', ExtraPropertyType::String, ExtraPropertyScope::Common,
+$this->registerExtraProperty('product', 'custom_size', ExtraPropertyType::String, ExtraPropertyScope::COMMON,
     new ExtraPropertyOptions(
         formPosition: 'details.references',
         formType: CustomSizeType::class,
