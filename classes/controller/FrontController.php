@@ -105,7 +105,7 @@ class FrontControllerCore extends Controller
     /**
      * @var array Contains the result of getTemplateVarPage method
      */
-    protected $templateVarPageCache = [];
+    protected $templateVarPageCache = null;
 
     /**
      * Set this parameter to false if you don't want cart's invoice address
