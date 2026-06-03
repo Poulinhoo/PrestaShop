@@ -299,8 +299,8 @@ services:
     parent: PrestaShop\PrestaShop\Core\Grid\Definition\Factory\AbstractGridDefinitionFactory
     public: true
 
-  prestashop.core.grid.definition.factory.merchandise_return:
-    class: 'PrestaShop\PrestaShop\Core\Grid\Definition\Factory\MerchandiseReturnGridDefinitionFactory'
+  prestashop.core.grid.definition.factory.order_return:
+    class: 'PrestaShop\PrestaShop\Core\Grid\Definition\Factory\OrderReturnGridDefinitionFactory'
     parent: PrestaShop\PrestaShop\Core\Grid\Definition\Factory\AbstractGridDefinitionFactory
     public: true
 
