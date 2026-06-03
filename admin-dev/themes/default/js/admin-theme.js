@@ -284,7 +284,9 @@ $(() => {
 
       $modal.find('#quick-access-save-btn').off('click').on('click', () => {
         const name = String($modal.find('#quick-access-name').val()).trim();
+
         if (!name) return;
+
         const newWindow = $modal.find('input[name="quick_access_new_window"]:checked').val() === '1';
         $modal.modal('hide');
         doQuickLinkAjax($link, method, name, newWindow);
