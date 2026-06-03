@@ -24,13 +24,40 @@ export default class Header {
 
       const $link = $(e.target).closest('.js-quick-link');
       const method = $link.data('method');
-      let name = null;
 
       if (method === 'add') {
-        const text = $link.data('prompt-text');
-        const link = $link.data('link');
+        const $modal = $('#quick-access-add-modal');
+        document.body.appendChild($modal[0]);
+        const defaultName = (($link.data('link') as string) ?? '').substring(0, 32);
 
-        name = prompt(text, link);
+        $modal.find('#quick-access-name').val(defaultName);
+        $modal.find('input[name="quick_access_new_window"][value="0"]').prop('checked', true);
+
+        $modal.one('shown.bs.modal', () => {
+          $modal.find('#quick-access-name').trigger('focus');
+        });
+
+        $modal.find('#quick-access-name').off('keypress').on('keypress', (keyEvent) => {
+          if (keyEvent.key === 'Enter') {
+            $modal.find('#quick-access-save-btn').trigger('click');
+          }
+        });
+
+        $modal.find('#quick-access-save-btn').off('click').on('click', () => {
+          const name = ($modal.find('#quick-access-name').val() as string).trim();
+
+          if (!name) {
+            return;
+          }
+
+          const newWindow = $modal.find('input[name="quick_access_new_window"]:checked').val() === '1';
+          $modal.modal('hide');
+          this.doQuickLinkAction($link, method, name, newWindow);
+        });
+
+        $modal.modal('show');
+
+        return;
       }
 
       if (method === 'remove') {
@@ -46,17 +73,11 @@ export default class Header {
           () => this.doQuickLinkAction($link, method, null),
         );
         confirmModal.show();
-
-        return;
-      }
-
-      if (method === 'add' && name) {
-        this.doQuickLinkAction($link, method, name);
       }
     });
   }
 
-  private doQuickLinkAction($link: JQuery, method: string, name: string | null): void {
+  private doQuickLinkAction($link: JQuery, method: string, name: string | null, newWindow: boolean = false): void {
     const postLink = $link.data('post-link');
     const quickLinkId = $link.data('quicklink-id');
     const url = $link.data('url');
@@ -75,6 +96,7 @@ export default class Header {
         name,
         icon,
         id_quick_access: quickLinkId,
+        new_window: newWindow ? 1 : 0,
       },
       dataType: 'json',
       success: (data) => {
