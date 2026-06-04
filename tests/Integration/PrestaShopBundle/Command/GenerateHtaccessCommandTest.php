@@ -14,10 +14,30 @@ use Symfony\Component\Console\Tester\CommandTester;
 
 class GenerateHtaccessCommandTest extends KernelTestCase
 {
+    private string $htaccessPath;
+
+    private ?string $htaccessBackup = null;
+
     public function setUp(): void
     {
         parent::setUp();
         self::bootKernel();
+
+        // Back up the existing .htaccess so the test does not corrupt the shared file
+        $this->htaccessPath = _PS_ROOT_DIR_ . '/.htaccess';
+        $this->htaccessBackup = file_exists($this->htaccessPath) ? file_get_contents($this->htaccessPath) : null;
+    }
+
+    public function tearDown(): void
+    {
+        parent::tearDown();
+
+        // Restore the original .htaccess (or remove it if there was none)
+        if ($this->htaccessBackup !== null) {
+            file_put_contents($this->htaccessPath, $this->htaccessBackup);
+        } elseif (file_exists($this->htaccessPath)) {
+            unlink($this->htaccessPath);
+        }
     }
 
     public function testGenerateHtaccessFile(): void
