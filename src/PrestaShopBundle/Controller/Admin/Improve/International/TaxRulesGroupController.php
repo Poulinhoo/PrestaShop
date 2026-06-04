@@ -294,11 +294,14 @@ class TaxRulesGroupController extends PrestaShopAdminController
         try {
             $handlerResult = $formHandler->handle($taxRuleForm);
             if ($handlerResult->isSubmitted() && $handlerResult->isValid()) {
-                if ($isLiteDisplaying) {
-                    return new Response('<div data-modal-close="true"></div>');
-                }
-
                 $this->addFlash('success', $this->trans('Successful creation', [], 'Admin.Notifications.Success'));
+
+                if ($isLiteDisplaying) {
+                    return $this->redirectToRoute('admin_tax_rules_create', [
+                        'taxRulesGroupId' => $taxRulesGroupId,
+                        'liteDisplaying' => 1,
+                    ]);
+                }
 
                 $newGroupId = $handlerResult->getIdentifiableObjectId();
 
@@ -348,11 +351,15 @@ class TaxRulesGroupController extends PrestaShopAdminController
             $taxRuleForm->handleRequest($request);
             $result = $formHandler->handleFor($taxRuleId, $taxRuleForm);
             if ($result->isSubmitted() && $result->isValid()) {
-                if ($isLiteDisplaying) {
-                    return new Response('<div data-modal-close="true"></div>');
-                }
-
                 $this->addFlash('success', $this->trans('Update successful', [], 'Admin.Notifications.Success'));
+
+                if ($isLiteDisplaying) {
+                    return $this->redirectToRoute('admin_tax_rules_edit', [
+                        'taxRulesGroupId' => $taxRulesGroupId,
+                        'taxRuleId' => $taxRuleId,
+                        'liteDisplaying' => 1,
+                    ]);
+                }
 
                 return $this->redirectToRoute('admin_tax_rules_groups_edit', [
                     'taxRulesGroupId' => $taxRulesGroupId,

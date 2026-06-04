@@ -4,7 +4,7 @@
  */
 
 import DynamicPaginator from '@components/pagination/dynamic-paginator';
-import IframeModal from '@components/modal/iframe-modal';
+import {FormIframeModal} from '@components/modal';
 import PaginatedTaxRulesService from '@pages/tax-rules/service/paginated-tax-rules-service';
 import TaxRulesListRenderer from '@pages/tax-rules/tax-rules-list-renderer';
 
@@ -15,6 +15,7 @@ const {$} = window;
 const LIST_CONTAINER_ID = '#tax-rules-list-container';
 const PAGINATION_CONTAINER_ID = '#tax-rules-pagination';
 const MODAL_ID = 'tax-rule-form-modal';
+const FORM_SELECTOR = 'form[name="tax_rule"]';
 
 export default class TaxRulesManager {
   private paginator!: DynamicPaginator;
@@ -55,6 +56,8 @@ export default class TaxRulesManager {
       this.openModal(
         `${createUrl}${createUrl.includes('?') ? '&' : '?'}liteDisplaying=1`,
         addButton.dataset.modalTitle ?? 'Add new tax rule',
+        addButton.dataset.confirmButtonLabel ?? 'Save',
+        addButton.dataset.cancelButtonLabel ?? 'Cancel',
       );
     });
   }
@@ -76,40 +79,35 @@ export default class TaxRulesManager {
       this.openModal(
         `${editUrl}${editUrl.includes('?') ? '&' : '?'}liteDisplaying=1`,
         editButton.dataset.modalTitle ?? 'Edit tax rule',
+        editButton.dataset.confirmButtonLabel ?? 'Save',
+        editButton.dataset.cancelButtonLabel ?? 'Cancel',
       );
     });
   }
 
-  private openModal(iframeUrl: string, modalTitle: string): void {
-    const iframeModal = new IframeModal({
+  private openModal(
+    formUrl: string,
+    modalTitle: string,
+    confirmButtonLabel: string,
+    closeButtonLabel: string,
+  ): void {
+    const iframeModal = new FormIframeModal({
       id: MODAL_ID,
-      iframeUrl,
+      formSelector: FORM_SELECTOR,
+      formUrl,
       closable: true,
       modalTitle,
-      autoSize: true,
-      autoScrollUp: true,
-      closeOnConfirm: true,
-      onLoaded: (iframe: HTMLIFrameElement): void => {
-        if (!iframe.contentWindow) {
-          return;
-        }
-
-        const iframeDoc = iframe.contentWindow.document;
-        const closeMarker = iframeDoc.querySelector('[data-modal-close]');
-
-        if (closeMarker) {
+      confirmButtonLabel,
+      closeButtonLabel,
+      closeOnConfirm: false,
+      onFormLoaded: (_form: HTMLFormElement, _formData: FormData, dataAttributes: DOMStringMap | null): void => {
+        if (dataAttributes && dataAttributes.alertsSuccess === '1') {
           iframeModal.hide();
           this.paginator.paginate(1);
-          return;
         }
-
-        // Wire cancel buttons inside the iframe to close the modal
-        iframeDoc.querySelectorAll<HTMLElement>('.cancel-btn').forEach((btn) => {
-          btn.addEventListener('click', (e) => {
-            e.preventDefault();
-            iframeModal.hide();
-          });
-        });
+      },
+      formConfirmCallback: (form: HTMLFormElement): void => {
+        form.submit();
       },
     });
     iframeModal.show();
