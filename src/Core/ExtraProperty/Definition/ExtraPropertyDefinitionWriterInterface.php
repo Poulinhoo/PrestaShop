@@ -7,9 +7,7 @@
 
 declare(strict_types=1);
 
-namespace PrestaShop\PrestaShop\Core\ExtraProperty\Repository;
-
-use PrestaShop\PrestaShop\Core\ExtraProperty\Definition\ExtraPropertyDefinition;
+namespace PrestaShop\PrestaShop\Core\ExtraProperty\Definition;
 
 /**
  * Write-side repository contract for extra property definitions.

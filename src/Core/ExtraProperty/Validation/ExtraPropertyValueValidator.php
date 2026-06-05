@@ -35,7 +35,7 @@ class ExtraPropertyValueValidator implements ExtraPropertyValidationInterface
     /**
      * {@inheritdoc}
      */
-    public function isTableOrIdentifier(string $value): bool
+    public static function isTableOrIdentifier(string $value): bool
     {
         return (bool) preg_match('/^[a-zA-Z0-9_-]+$/', $value);
     }
@@ -43,7 +43,7 @@ class ExtraPropertyValueValidator implements ExtraPropertyValidationInterface
     /**
      * {@inheritdoc}
      */
-    public function isModuleName(string $value): bool
+    public static function isModuleName(string $value): bool
     {
         return (bool) preg_match('/^[a-zA-Z0-9_-]+$/', $value);
     }

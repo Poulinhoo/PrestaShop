@@ -10,7 +10,7 @@ declare(strict_types=1);
 namespace PrestaShop\PrestaShop\Core\ExtraProperty\Schema;
 
 use PrestaShop\PrestaShop\Core\ExtraProperty\Definition\ExtraPropertyDefinition;
-use PrestaShop\PrestaShop\Core\ExtraProperty\ExtraPropertyType;
+use PrestaShop\PrestaShop\Core\ExtraProperty\Definition\ExtraPropertyType;
 
 /**
  * Maps an ExtraPropertyDefinition VO to a complete SQL column definition fragment.
@@ -29,17 +29,19 @@ class ColumnDefinitionMapper
      */
     public static function getSqlDefinition(ExtraPropertyDefinition $options): string
     {
-        $enumValues = null !== $options->enumValues
-            ? array_values(array_filter($options->enumValues, 'is_string'))
+        $rawEnumValues = $options->getEnumValues();
+        $enumValues = null !== $rawEnumValues
+            ? array_values(array_filter($rawEnumValues, 'is_string'))
             : [];
 
-        $baseDefinition = self::buildBaseDefinition($options->type, $enumValues, $options->size);
-        $nullClause = $options->nullable ? 'NULL' : 'NOT NULL';
+        $baseDefinition = self::buildBaseDefinition($options->getType(), $enumValues, $options->getSize());
+        $nullClause = $options->isNullable() ? 'NULL' : 'NOT NULL';
 
         $parts = [$baseDefinition, $nullClause];
 
-        if (null !== $options->defaultValue) {
-            $parts[] = 'DEFAULT ' . self::quoteDefaultValue($options->type, $options->defaultValue);
+        $defaultValue = $options->getDefaultValue();
+        if (null !== $defaultValue) {
+            $parts[] = 'DEFAULT ' . self::quoteDefaultValue($options->getType(), $defaultValue);
         }
 
         return implode(' ', $parts);

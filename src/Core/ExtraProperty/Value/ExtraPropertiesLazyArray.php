@@ -14,7 +14,7 @@ use ObjectModel;
 use PrestaShop\PrestaShop\Adapter\ContainerFinder;
 use PrestaShop\PrestaShop\Core\Domain\Shop\ValueObject\ShopConstraint;
 use PrestaShop\PrestaShop\Core\ExtraProperty\Definition\ExtraPropertyDefinitionCollection;
-use PrestaShop\PrestaShop\Core\ExtraProperty\Repository\ExtraPropertyDefinitionRepositoryInterface;
+use PrestaShop\PrestaShop\Core\ExtraProperty\Definition\ExtraPropertyDefinitionRepositoryInterface;
 use Throwable;
 
 /**
@@ -156,7 +156,7 @@ final class ExtraPropertiesLazyArray
 
         // X2: skip DB read entirely when no FO fields are registered.
         $frontOfficeDefinitions = null !== $this->repository
-            ? $this->repository->getDefinitionCollection($this->entityTable)->filterForFrontOffice()
+            ? $this->repository->getAllDefinitions()->filterByEntity($this->entityTable)->filterForFrontOffice()
             : ExtraPropertyDefinitionCollection::empty();
 
         if ($frontOfficeDefinitions->isEmpty()) {

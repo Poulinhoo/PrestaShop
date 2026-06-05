@@ -12,8 +12,8 @@ namespace PrestaShop\PrestaShop\Core\ExtraProperty\Schema;
 use Doctrine\DBAL\Connection;
 use Doctrine\DBAL\Schema\Table;
 use PrestaShop\PrestaShop\Core\ExtraProperty\Definition\ExtraPropertyDefinition;
-use PrestaShop\PrestaShop\Core\ExtraProperty\ExtraPropertyScope;
-use PrestaShop\PrestaShop\Core\ExtraProperty\ExtraPropertySqlIndex;
+use PrestaShop\PrestaShop\Core\ExtraProperty\Definition\ExtraPropertyScope;
+use PrestaShop\PrestaShop\Core\ExtraProperty\Definition\ExtraPropertySqlIndex;
 use Psr\Log\LoggerInterface;
 use Psr\Log\NullLogger;
 use RuntimeException;
@@ -47,7 +47,7 @@ class ExtraPropertySchemaManager implements ExtraPropertySchemaManagerInterface
     /**
      * {@inheritdoc}
      */
-    public function ensureExtraTableAndColumn(string $entityName, string $fieldScope, string $columnName, string $sqlColumnDefinition, ExtraPropertySqlIndex $sqlIndex): void
+    public function ensureExtraTableAndColumn(string $entityName, ExtraPropertyScope $fieldScope, string $columnName, string $sqlColumnDefinition, ExtraPropertySqlIndex $sqlIndex): void
     {
         $baseTableName = $this->prefix . $this->buildBaseEntityTableName($entityName, $fieldScope);
         $extraTableName = $this->prefix . $this->buildExtraEntityTableName($entityName, $fieldScope);
@@ -83,7 +83,7 @@ class ExtraPropertySchemaManager implements ExtraPropertySchemaManagerInterface
     /**
      * {@inheritdoc}
      */
-    public function dropExtraColumnIfExists(string $entityName, string $fieldScope, string $columnName): void
+    public function dropExtraColumnIfExists(string $entityName, ExtraPropertyScope $fieldScope, string $columnName): void
     {
         $extraTableName = $this->prefix . $this->buildExtraEntityTableName($entityName, $fieldScope);
         if (!$this->tableExists($extraTableName) || !$this->columnExists($extraTableName, $columnName)) {
@@ -110,16 +110,16 @@ class ExtraPropertySchemaManager implements ExtraPropertySchemaManagerInterface
      * Returns the base (non-extra) entity table name for a given scope.
      *
      * @param string $entityName
-     * @param string $fieldScope
+     * @param ExtraPropertyScope $fieldScope
      *
      * @return string
      */
-    protected function buildBaseEntityTableName(string $entityName, string $fieldScope): string
+    protected function buildBaseEntityTableName(string $entityName, ExtraPropertyScope $fieldScope): string
     {
-        if ('lang' === $fieldScope) {
+        if (ExtraPropertyScope::LANG === $fieldScope) {
             return $entityName . '_lang';
         }
-        if ('shop' === $fieldScope) {
+        if (ExtraPropertyScope::SHOP === $fieldScope) {
             return $entityName . '_shop';
         }
 
@@ -130,13 +130,13 @@ class ExtraPropertySchemaManager implements ExtraPropertySchemaManagerInterface
      * Returns the extra storage table name (without prefix) for a given entity and scope.
      *
      * @param string $entityName
-     * @param string $fieldScope
+     * @param ExtraPropertyScope $fieldScope
      *
      * @return string
      */
-    protected function buildExtraEntityTableName(string $entityName, string $fieldScope): string
+    protected function buildExtraEntityTableName(string $entityName, ExtraPropertyScope $fieldScope): string
     {
-        return ExtraPropertyDefinition::buildExtraTableName($entityName, ExtraPropertyScope::from($fieldScope));
+        return ExtraPropertyDefinition::buildExtraTableName($entityName, $fieldScope);
     }
 
     /**

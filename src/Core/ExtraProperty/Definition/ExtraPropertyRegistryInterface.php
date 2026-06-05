@@ -7,17 +7,13 @@
 
 declare(strict_types=1);
 
-namespace PrestaShop\PrestaShop\Core\ExtraProperty\Registry;
-
-use PrestaShop\PrestaShop\Core\ExtraProperty\Definition\ExtraPropertyDefinition;
-use PrestaShop\PrestaShop\Core\ExtraProperty\ExtraPropertyScope;
+namespace PrestaShop\PrestaShop\Core\ExtraProperty\Definition;
 
 /**
  * Write interface for extra property definitions: register and unregister operations.
  *
  * Deliberately does NOT extend ExtraPropertyDefinitionRepositoryInterface.
- * Read and write concerns are kept separate: inject ExtraPropertyDefinitionRepositoryInterface
- * for reads, and this interface for writes.
+ * Read and write concerns are kept separate.
  *
  * Implementations are responsible for persisting the definition row AND ensuring the
  * corresponding SQL column exists in the entity's *_extra table, and for invalidating
@@ -28,19 +24,18 @@ interface ExtraPropertyRegistryInterface
     /**
      * Register or update an extra property definition.
      *
+     * The definition must have entityName and propertyName set.
      * When the physical SQL column does not yet exist, it is created.
      * On conflict (same entity+module+field+scope), the definition row is updated.
      *
-     * The module name is resolved from $options->moduleName. If it is null, the registry
-     * treats the field as a core field (no owning module).
+     * The module name is resolved from $definition->getModuleName(). If null, the field is
+     * treated as a core field (no owning module).
      *
-     * @param string $entityName Entity table name (e.g. "product", "customer")
-     * @param string $propertyName Property name within the module (e.g. "custom_size")
-     * @param ExtraPropertyDefinition $options Typed configuration for the property
+     * @param ExtraPropertyDefinition $definition Fully configured definition (entityName and propertyName required)
      *
      * @return bool
      */
-    public function register(string $entityName, string $propertyName, ExtraPropertyDefinition $options): bool;
+    public function register(ExtraPropertyDefinition $definition): bool;
 
     /**
      * Unregister an extra property definition by entity, property name and scope.

@@ -12,8 +12,8 @@ namespace PrestaShop\PrestaShop\Core\ExtraProperty\Value;
 use Doctrine\DBAL\Connection;
 use PrestaShop\PrestaShop\Core\Domain\Shop\ValueObject\ShopConstraint;
 use PrestaShop\PrestaShop\Core\ExtraProperty\Definition\ExtraPropertyDefinition;
-use PrestaShop\PrestaShop\Core\ExtraProperty\ExtraPropertyScope;
-use PrestaShop\PrestaShop\Core\ExtraProperty\Repository\ExtraPropertyDefinitionRepositoryInterface;
+use PrestaShop\PrestaShop\Core\ExtraProperty\Definition\ExtraPropertyDefinitionRepositoryInterface;
+use PrestaShop\PrestaShop\Core\ExtraProperty\Definition\ExtraPropertyScope;
 use Throwable;
 
 /**
@@ -46,7 +46,7 @@ class ExtraPropertyReader implements ExtraPropertyReaderInterface
             return [];
         }
 
-        $allDefinitions = $this->repository->getDefinitionCollection($entityName);
+        $allDefinitions = $this->repository->getAllDefinitions()->filterByEntity($entityName);
         if ($allDefinitions->isEmpty()) {
             return [];
         }
@@ -66,7 +66,7 @@ class ExtraPropertyReader implements ExtraPropertyReaderInterface
                     $entityName,
                     $primaryKeyName,
                     $entityId,
-                    $scope->value,
+                    $scope,
                     iterator_to_array($scoped),
                     $langId,
                     $shopId,
@@ -95,36 +95,28 @@ class ExtraPropertyReader implements ExtraPropertyReaderInterface
         string $entityName,
         string $primaryKeyName,
         int $entityId,
-        string $fieldScope,
+        ExtraPropertyScope $fieldScope,
         array $definitions,
         ?int $langId,
         ?int $shopId,
         bool $isLangMultishop,
     ): array {
-        $groupByLang = ExtraPropertyScope::LANG->value === $fieldScope && null === $langId;
-        $groupByShop = ExtraPropertyScope::SHOP->value === $fieldScope && null === $shopId;
+        $groupByLang = ExtraPropertyScope::LANG === $fieldScope && null === $langId;
+        $groupByShop = ExtraPropertyScope::SHOP === $fieldScope && null === $shopId;
         $isGrouped = $groupByLang || $groupByShop;
 
-        $extraTableName = ExtraPropertyDefinition::buildExtraTableName($entityName, ExtraPropertyScope::from($fieldScope));
+        $extraTableName = ExtraPropertyDefinition::buildExtraTableName($entityName, $fieldScope);
 
         // Build a map from DB column name to [module_key, property_name] and seed $result.
         $columnToPropertyMap = [];
         $result = [];
         foreach ($definitions as $definition) {
             $propertyName = $definition->getPropertyName();
-            if ('' === $propertyName) {
-                continue;
-            }
-
             $moduleName = $definition->getDisplayModuleKey();
             $result[$moduleName] ??= [];
             $result[$moduleName][$propertyName] ??= ($isGrouped ? [] : null);
 
             $columnName = $definition->getStorageColumnName();
-            if ('' === $columnName) {
-                continue;
-            }
-
             $columnToPropertyMap[$columnName] = ['module_name' => $moduleName, 'property_name' => $propertyName];
         }
 
@@ -133,13 +125,13 @@ class ExtraPropertyReader implements ExtraPropertyReaderInterface
         }
 
         // Skip if IDs that must be positive were given but are invalid.
-        if (ExtraPropertyScope::LANG->value === $fieldScope && null !== $langId && $langId <= 0) {
+        if (ExtraPropertyScope::LANG === $fieldScope && null !== $langId && $langId <= 0) {
             return $result;
         }
-        if (ExtraPropertyScope::SHOP->value === $fieldScope && null !== $shopId && $shopId <= 0) {
+        if (ExtraPropertyScope::SHOP === $fieldScope && null !== $shopId && $shopId <= 0) {
             return $result;
         }
-        if (ExtraPropertyScope::LANG->value === $fieldScope && $isLangMultishop && null !== $shopId && $shopId <= 0) {
+        if (ExtraPropertyScope::LANG === $fieldScope && $isLangMultishop && null !== $shopId && $shopId <= 0) {
             return $result;
         }
 
@@ -154,7 +146,7 @@ class ExtraPropertyReader implements ExtraPropertyReaderInterface
             array_keys($columnToPropertyMap)
         );
 
-        if (ExtraPropertyScope::LANG->value === $fieldScope) {
+        if (ExtraPropertyScope::LANG === $fieldScope) {
             if ($groupByLang) {
                 // Fetch all languages; caller will receive an array keyed by id_lang.
                 array_unshift($selectCols, 'extra.' . $this->connection->quoteIdentifier('id_lang'));
@@ -164,7 +156,7 @@ class ExtraPropertyReader implements ExtraPropertyReaderInterface
             if ($isLangMultishop && null !== $shopId) {
                 $qb->andWhere('extra.id_shop = :shopId')->setParameter('shopId', $shopId);
             }
-        } elseif (ExtraPropertyScope::SHOP->value === $fieldScope) {
+        } elseif (ExtraPropertyScope::SHOP === $fieldScope) {
             if ($groupByShop) {
                 // Fetch all shops; caller will receive an array keyed by id_shop.
                 array_unshift($selectCols, 'extra.' . $this->connection->quoteIdentifier('id_shop'));

@@ -13,7 +13,8 @@ use PrestaShop\PrestaShop\Core\Domain\Notification\Command\UpdateEmployeeNotific
 use PrestaShop\PrestaShop\Core\Domain\Notification\Query\GetNotificationLastElements;
 use PrestaShop\PrestaShop\Core\Domain\Notification\QueryResult\NotificationsResults;
 use PrestaShop\PrestaShop\Core\ExtraProperty\Definition\ExtraPropertyDefinition;
-use PrestaShop\PrestaShop\Core\ExtraProperty\Repository\ExtraPropertyDefinitionRepositoryInterface;
+use PrestaShop\PrestaShop\Core\ExtraProperty\Definition\ExtraPropertyDefinitionRepositoryInterface;
+use PrestaShop\PrestaShop\Core\ExtraProperty\Definition\ExtraPropertyScope;
 use PrestaShop\PrestaShop\Core\Grid\Definition\Factory\AbstractGridDefinitionFactory;
 use PrestaShop\PrestaShop\Core\Grid\Definition\Factory\FilterableGridDefinitionFactoryInterface;
 use PrestaShop\PrestaShop\Core\Grid\Definition\Factory\GridDefinitionFactoryProvider;
@@ -126,7 +127,12 @@ class CommonController extends PrestaShopAdminController
         // '_core' is the display sentinel for core properties; the DB stores null.
         $resolvedModuleName = ExtraPropertyDefinition::CORE_MODULE_KEY === $moduleName ? null : $moduleName;
 
-        $matched = $repository->findDefinitionByModuleAndField($entityName, $resolvedModuleName, $propertyName, $scope);
+        $matched = $repository->getAllDefinitions()
+            ->filterByEntity($entityName)
+            ->filterByModuleName($resolvedModuleName)
+            ->filterByScope(ExtraPropertyScope::from($scope))
+            ->filterByPropertyName($propertyName)
+            ->first();
         if (null === $matched) {
             return new JsonResponse([
                 'status' => false,

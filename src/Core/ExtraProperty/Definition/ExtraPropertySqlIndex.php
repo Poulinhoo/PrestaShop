@@ -7,7 +7,7 @@
 
 declare(strict_types=1);
 
-namespace PrestaShop\PrestaShop\Core\ExtraProperty;
+namespace PrestaShop\PrestaShop\Core\ExtraProperty\Definition;
 
 /**
  * Defines the SQL index strategy that can be applied to an extra property storage column.

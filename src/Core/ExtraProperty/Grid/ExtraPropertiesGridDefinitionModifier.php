@@ -10,8 +10,8 @@ namespace PrestaShop\PrestaShop\Core\ExtraProperty\Grid;
 
 use PrestaShop\PrestaShop\Core\Context\ShopContext;
 use PrestaShop\PrestaShop\Core\ExtraProperty\Definition\ExtraPropertyDefinition;
-use PrestaShop\PrestaShop\Core\ExtraProperty\ExtraPropertyType;
-use PrestaShop\PrestaShop\Core\ExtraProperty\Repository\ExtraPropertyDefinitionRepositoryInterface;
+use PrestaShop\PrestaShop\Core\ExtraProperty\Definition\ExtraPropertyDefinitionRepositoryInterface;
+use PrestaShop\PrestaShop\Core\ExtraProperty\Definition\ExtraPropertyType;
 use PrestaShop\PrestaShop\Core\Grid\Column\ColumnCollectionInterface;
 use PrestaShop\PrestaShop\Core\Grid\Column\ColumnInterface;
 use PrestaShop\PrestaShop\Core\Grid\Column\Type\Common\DataColumn;
@@ -42,7 +42,7 @@ class ExtraPropertiesGridDefinitionModifier
      */
     public function apply(GridDefinition $definition, string $gridId): void
     {
-        $definitions = $this->repository->getDefinitionCollectionByGridId($gridId);
+        $definitions = $this->repository->getAllDefinitions()->filterByGrid($gridId);
         if ($definitions->isEmpty()) {
             return;
         }
@@ -51,11 +51,6 @@ class ExtraPropertiesGridDefinitionModifier
         $filters = $definition->getFilters();
 
         foreach ($definitions as $extraDefinition) {
-            $fieldName = $extraDefinition->getPropertyName();
-            if ('' === $fieldName) {
-                continue;
-            }
-
             // H8: JSON fields have no meaningful grid representation — skip them.
             if (ExtraPropertyType::JSON === $extraDefinition->getType()) {
                 continue;
@@ -73,7 +68,8 @@ class ExtraPropertiesGridDefinitionModifier
 
             $column = $this->buildColumn($gridId, $columnId, $label, $extraDefinition);
 
-            $gridEntry = ExtraPropertyDefinition::parseGridEntry($extraDefinition->getGridEntry($gridId) ?? $gridId);
+            // getGridEntry() returns the already-parsed array — no need to call parseGridEntry().
+            $gridEntry = $extraDefinition->getGridEntry($gridId) ?? ['gridId' => $gridId, 'columnId' => null, 'mode' => null];
             $columnRef = $gridEntry['columnId'];
             if (null !== $columnRef) {
                 try {
@@ -104,7 +100,7 @@ class ExtraPropertiesGridDefinitionModifier
         $moduleName = $definition->getDisplayModuleKey();
         $fieldName = $definition->getPropertyName();
 
-        if (ExtraPropertyType::BOOL === $definition->getType() && '' !== $fieldName) {
+        if (ExtraPropertyType::BOOL === $definition->getType()) {
             $primaryField = 'id_' . $gridId;
             $entityName = $definition->getEntityName();
 

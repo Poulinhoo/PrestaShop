@@ -9,15 +9,13 @@ declare(strict_types=1);
 
 namespace PrestaShop\PrestaShop\Core\ExtraProperty\Form;
 
-use DateTimeInterface;
 use PrestaShop\PrestaShop\Core\Context\ShopContext;
 use PrestaShop\PrestaShop\Core\ExtraProperty\Definition\ExtraPropertyDefinition;
-use PrestaShop\PrestaShop\Core\ExtraProperty\ExtraPropertyScope;
-use PrestaShop\PrestaShop\Core\ExtraProperty\Repository\ExtraPropertyDefinitionRepositoryInterface;
+use PrestaShop\PrestaShop\Core\ExtraProperty\Definition\ExtraPropertyDefinitionRepositoryInterface;
+use PrestaShop\PrestaShop\Core\ExtraProperty\Definition\ExtraPropertyScope;
+use PrestaShop\PrestaShop\Core\ExtraProperty\Value\ExtraPropertyValueCaster;
 use PrestaShop\PrestaShop\Core\ExtraProperty\Value\ExtraPropertyWriterInterface;
 use PrestaShopBundle\Form\Admin\Type\NavigationTabType;
-use Symfony\Component\Form\Extension\Core\Type\CheckboxType;
-use Symfony\Component\Form\Extension\Core\Type\DateTimeType;
 use Symfony\Component\Form\FormInterface;
 use Symfony\Component\Form\ResolvedFormTypeInterface;
 
@@ -31,12 +29,11 @@ use Symfony\Component\Form\ResolvedFormTypeInterface;
  */
 class ExtraPropertiesFormDataPersister
 {
-    private const DEFAULT_FALLBACK_TAB = 'extra_fields';
-
     public function __construct(
         protected readonly ExtraPropertyDefinitionRepositoryInterface $repository,
         protected readonly ExtraPropertyWriterInterface $writer,
         protected readonly ShopContext $shopContext,
+        protected readonly ExtraPropertyValueCaster $caster,
     ) {
     }
 
@@ -46,7 +43,7 @@ class ExtraPropertiesFormDataPersister
             return;
         }
 
-        $definitions = $this->repository->getDefinitionCollectionByFormId($entityName);
+        $definitions = $this->repository->getAllDefinitions()->filterByForm($entityName);
         if ($definitions->isEmpty()) {
             return;
         }
@@ -61,20 +58,15 @@ class ExtraPropertiesFormDataPersister
         $shopValues = [];
 
         foreach ($definitions as $definition) {
-            $fieldName = $definition->getPropertyName();
-            if ('' === $fieldName) {
-                continue;
-            }
-
             $columnName = $definition->getStorageColumnName();
 
+            // getFormEntry() returns the already-parsed array — no need to re-parse.
             $formEntry = $definition->getFormEntry($entityName);
-            $parsed = null !== $formEntry ? ExtraPropertyDefinition::parseFormEntry($formEntry) : null;
-            $targetPath = $parsed['path'] ?? '';
+            $targetPath = $formEntry['path'] ?? '';
             if ('' === $targetPath) {
                 // Keep fallback placement consistent with ExtraPropertiesFormBuilderModifier.
-                $targetPath = ($form->has(self::DEFAULT_FALLBACK_TAB) || $this->isNavigationTabForm($form))
-                    ? self::DEFAULT_FALLBACK_TAB . '.' . ExtraPropertiesFormBuilderModifier::FALLBACK_FORM_SECTION
+                $targetPath = ($form->has(ExtraPropertiesFormBuilderModifier::DEFAULT_FALLBACK_TAB) || $this->isNavigationTabForm($form))
+                    ? ExtraPropertiesFormBuilderModifier::DEFAULT_FALLBACK_TAB . '.' . ExtraPropertiesFormBuilderModifier::FALLBACK_FORM_SECTION
                     : '';
             }
             $formFieldName = $definition->getFormFieldName();
@@ -85,7 +77,7 @@ class ExtraPropertiesFormDataPersister
             }
 
             $submittedValue = $targetForm->get($formFieldName)->getData();
-            $submittedValue = $this->normalizeSubmittedValueForStorage($definition, $submittedValue);
+            $submittedValue = $this->caster->castForDb($definition, $submittedValue);
 
             $scope = $definition->getScope();
             if (ExtraPropertyScope::LANG === $scope) {
@@ -97,7 +89,7 @@ class ExtraPropertiesFormDataPersister
                     if ($idLang <= 0) {
                         continue;
                     }
-                    $langValuesByIdLang[$idLang][$columnName] = $this->normalizeSubmittedValueForStorage($definition, $value);
+                    $langValuesByIdLang[$idLang][$columnName] = $value;
                 }
             } elseif (ExtraPropertyScope::SHOP === $scope) {
                 if (!$hasShop) {
@@ -122,16 +114,11 @@ class ExtraPropertiesFormDataPersister
 
     protected function resolveStorageEntityName(string $fallbackEntityName, ?ExtraPropertyDefinition $firstDefinition): string
     {
-        if (null !== $firstDefinition && '' !== trim($firstDefinition->getEntityName())) {
-            return trim($firstDefinition->getEntityName());
-        }
-
-        return $fallbackEntityName;
+        return null !== $firstDefinition ? $firstDefinition->getEntityName() : $fallbackEntityName;
     }
 
     /**
      * Resolves the sub-form that holds the unmapped extra field, consistent with ExtraPropertiesFormBuilderModifier.
-     * If the computed path has no field (e.g. extra_fields tab added after the modifier by a hook), falls back to root.
      */
     protected function resolveTargetFormForExtraField(FormInterface $rootForm, string $targetPath, string $formFieldName): ?FormInterface
     {
@@ -148,12 +135,8 @@ class ExtraPropertiesFormDataPersister
 
     protected function resolvePathForm(FormInterface $rootForm, string $path): ?FormInterface
     {
-        // Strip :before/:after suffix — the extra field lives in the *parent* builder,
-        // not in a child named "something:before". After stripping the suffix we also
-        // drop the reference segment (the sibling used for positioning) so we navigate
-        // to the form that actually owns the extra field.
+        // Strip :before/:after suffix — the extra field lives in the *parent* builder.
         // e.g. "header.name:before" → strip ":before" → "header.name" → drop "name" → "header"
-        // e.g. "name:before"        → strip ":before" → "name"         → drop "name" → "" (root)
         foreach ([':before', ':after'] as $suffix) {
             if (str_ends_with($path, $suffix)) {
                 $path = substr($path, 0, -strlen($suffix));
@@ -195,28 +178,5 @@ class ExtraPropertiesFormDataPersister
         }
 
         return false;
-    }
-
-    /**
-     * Normalizes submitted Symfony values into scalar DB-compatible values.
-     *
-     * @param mixed $value
-     *
-     * @return mixed
-     */
-    protected function normalizeSubmittedValueForStorage(ExtraPropertyDefinition $definition, $value)
-    {
-        $declaredType = $definition->getFormFieldType();
-        if (CheckboxType::class === $declaredType) {
-            return (int) (bool) $value;
-        }
-
-        if (DateTimeType::class === $declaredType) {
-            if ($value instanceof DateTimeInterface) {
-                return $value->format('Y-m-d H:i:s');
-            }
-        }
-
-        return $value;
     }
 }

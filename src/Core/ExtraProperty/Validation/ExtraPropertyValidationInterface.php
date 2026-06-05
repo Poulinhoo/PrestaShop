@@ -27,12 +27,12 @@ interface ExtraPropertyValidationInterface
     /**
      * Checks if a value is a valid SQL table/identifier token.
      */
-    public function isTableOrIdentifier(string $value): bool;
+    public static function isTableOrIdentifier(string $value): bool;
 
     /**
      * Checks if a value is a valid module technical name.
      */
-    public function isModuleName(string $value): bool;
+    public static function isModuleName(string $value): bool;
 
     /**
      * Validates one extra property value against its definition's validator.

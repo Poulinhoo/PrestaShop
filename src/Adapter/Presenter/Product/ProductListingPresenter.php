@@ -36,8 +36,6 @@ class ProductListingPresenter extends ProductPresenter
             $this->priceFormatter,
             $this->productColorsRetriever,
             $this->translator,
-            null,
-            null
         );
 
         Hook::exec('actionPresentProductListing',

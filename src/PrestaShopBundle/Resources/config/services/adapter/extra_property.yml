@@ -24,22 +24,22 @@ services:
 
   # ─── Repository ──────────────────────────────────────────────────────────────
 
-  PrestaShop\PrestaShop\Core\ExtraProperty\Repository\ExtraPropertyDefinitionRepository:
+  PrestaShop\PrestaShop\Core\ExtraProperty\Definition\ExtraPropertyDefinitionRepository:
     arguments:
       $connection: '@doctrine.dbal.default_connection'
       $prefix: '%database_prefix%'
 
-  PrestaShop\PrestaShop\Core\ExtraProperty\Repository\ExtraPropertyDefinitionWriterInterface:
-    alias: 'PrestaShop\PrestaShop\Core\ExtraProperty\Repository\ExtraPropertyDefinitionRepository'
+  PrestaShop\PrestaShop\Core\ExtraProperty\Definition\ExtraPropertyDefinitionWriterInterface:
+    alias: 'PrestaShop\PrestaShop\Core\ExtraProperty\Definition\ExtraPropertyDefinitionRepository'
 
   # ─── Cached repository decorator (read-only, production use) ─────────────────
 
   PrestaShop\PrestaShop\Core\ExtraProperty\Definition\CachedExtraPropertyDefinitionRepository:
     arguments:
-      $repository: '@PrestaShop\PrestaShop\Core\ExtraProperty\Repository\ExtraPropertyDefinitionRepository'
+      $repository: '@PrestaShop\PrestaShop\Core\ExtraProperty\Definition\ExtraPropertyDefinitionRepository'
       $definitionCache: '@prestashop.extra_property.definition.filesystem_cache'
 
-  PrestaShop\PrestaShop\Core\ExtraProperty\Repository\ExtraPropertyDefinitionRepositoryInterface:
+  PrestaShop\PrestaShop\Core\ExtraProperty\Definition\ExtraPropertyDefinitionRepositoryInterface:
     alias: 'PrestaShop\PrestaShop\Core\ExtraProperty\Definition\CachedExtraPropertyDefinitionRepository'
     public: true
 
@@ -56,30 +56,30 @@ services:
 
   # ─── Registry (pure — no cache) ──────────────────────────────────────────────
 
-  PrestaShop\PrestaShop\Core\ExtraProperty\Registry\ExtraPropertyRegistry:
+  PrestaShop\PrestaShop\Core\ExtraProperty\Definition\ExtraPropertyRegistry:
     arguments:
-      $readRepository: '@PrestaShop\PrestaShop\Core\ExtraProperty\Repository\ExtraPropertyDefinitionRepositoryInterface'
-      $writeRepository: '@PrestaShop\PrestaShop\Core\ExtraProperty\Repository\ExtraPropertyDefinitionRepository'
+      $readRepository: '@PrestaShop\PrestaShop\Core\ExtraProperty\Definition\ExtraPropertyDefinitionRepositoryInterface'
+      $writeRepository: '@PrestaShop\PrestaShop\Core\ExtraProperty\Definition\ExtraPropertyDefinitionRepository'
       $schemaManager: '@PrestaShop\PrestaShop\Core\ExtraProperty\Schema\ExtraPropertySchemaManagerInterface'
       $validator: '@PrestaShop\PrestaShop\Core\ExtraProperty\Validation\ExtraPropertyValidationInterface'
       $logger: '@logger'
 
   # ─── Cached registry decorator (single point of cache invalidation) ───────────
 
-  PrestaShop\PrestaShop\Core\ExtraProperty\Registry\CachedExtraPropertyRegistry:
+  PrestaShop\PrestaShop\Core\ExtraProperty\Definition\CachedExtraPropertyRegistry:
     arguments:
-      $inner: '@PrestaShop\PrestaShop\Core\ExtraProperty\Registry\ExtraPropertyRegistry'
+      $inner: '@PrestaShop\PrestaShop\Core\ExtraProperty\Definition\ExtraPropertyRegistry'
       $definitionCache: '@prestashop.extra_property.definition.filesystem_cache'
 
-  PrestaShop\PrestaShop\Core\ExtraProperty\Registry\ExtraPropertyRegistryInterface:
-    alias: 'PrestaShop\PrestaShop\Core\ExtraProperty\Registry\CachedExtraPropertyRegistry'
+  PrestaShop\PrestaShop\Core\ExtraProperty\Definition\ExtraPropertyRegistryInterface:
+    alias: 'PrestaShop\PrestaShop\Core\ExtraProperty\Definition\CachedExtraPropertyRegistry'
     public: true
 
   # ─── Reader ──────────────────────────────────────────────────────────────────
 
   PrestaShop\PrestaShop\Core\ExtraProperty\Value\ExtraPropertyReader:
     arguments:
-      $repository: '@PrestaShop\PrestaShop\Core\ExtraProperty\Repository\ExtraPropertyDefinitionRepositoryInterface'
+      $repository: '@PrestaShop\PrestaShop\Core\ExtraProperty\Definition\ExtraPropertyDefinitionRepositoryInterface'
       $connection: '@doctrine.dbal.default_connection'
       $prefix: '%database_prefix%'
 
@@ -98,28 +98,32 @@ services:
     alias: 'PrestaShop\PrestaShop\Core\ExtraProperty\Value\ExtraPropertyWriter'
     public: true
 
+  PrestaShop\PrestaShop\Core\ExtraProperty\Value\ExtraPropertyValueCaster: ~
+
   # ─── Back-office form services ────────────────────────────────────────────────
 
   PrestaShop\PrestaShop\Core\ExtraProperty\Form\ExtraPropertiesFormBuilderModifier:
     arguments:
-      $repository: '@PrestaShop\PrestaShop\Core\ExtraProperty\Repository\ExtraPropertyDefinitionRepositoryInterface'
+      $repository: '@PrestaShop\PrestaShop\Core\ExtraProperty\Definition\ExtraPropertyDefinitionRepositoryInterface'
       $reader: '@PrestaShop\PrestaShop\Core\ExtraProperty\Value\ExtraPropertyReaderInterface'
       $translator: '@translator'
       $validatorAdapter: '@PrestaShop\PrestaShop\Core\ExtraProperty\Validation\ExtraPropertyValidationInterface'
       $shopContext: '@PrestaShop\PrestaShop\Core\Context\ShopContext'
       $formBuilderModifier: '@PrestaShopBundle\Form\FormBuilderModifier'
+      $caster: '@PrestaShop\PrestaShop\Core\ExtraProperty\Value\ExtraPropertyValueCaster'
 
   PrestaShop\PrestaShop\Core\ExtraProperty\Form\ExtraPropertiesFormDataPersister:
     arguments:
-      $repository: '@PrestaShop\PrestaShop\Core\ExtraProperty\Repository\ExtraPropertyDefinitionRepositoryInterface'
+      $repository: '@PrestaShop\PrestaShop\Core\ExtraProperty\Definition\ExtraPropertyDefinitionRepositoryInterface'
       $writer: '@PrestaShop\PrestaShop\Core\ExtraProperty\Value\ExtraPropertyWriterInterface'
       $shopContext: '@PrestaShop\PrestaShop\Core\Context\ShopContext'
+      $caster: '@PrestaShop\PrestaShop\Core\ExtraProperty\Value\ExtraPropertyValueCaster'
 
   # ─── Admin API extra properties service ──────────────────────────────────────
 
   PrestaShopBundle\ApiPlatform\ExtraProperties\ExtraPropertiesApiService:
     arguments:
-      $repository: '@PrestaShop\PrestaShop\Core\ExtraProperty\Repository\ExtraPropertyDefinitionRepositoryInterface'
+      $repository: '@PrestaShop\PrestaShop\Core\ExtraProperty\Definition\ExtraPropertyDefinitionRepositoryInterface'
       $requestStack: '@request_stack'
       $reader: '@PrestaShop\PrestaShop\Core\ExtraProperty\Value\ExtraPropertyReaderInterface'
       $writer: '@PrestaShop\PrestaShop\Core\ExtraProperty\Value\ExtraPropertyWriterInterface'

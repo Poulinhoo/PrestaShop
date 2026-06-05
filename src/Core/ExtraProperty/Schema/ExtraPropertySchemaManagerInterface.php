@@ -8,7 +8,8 @@ declare(strict_types=1);
 
 namespace PrestaShop\PrestaShop\Core\ExtraProperty\Schema;
 
-use PrestaShop\PrestaShop\Core\ExtraProperty\ExtraPropertySqlIndex;
+use PrestaShop\PrestaShop\Core\ExtraProperty\Definition\ExtraPropertyScope;
+use PrestaShop\PrestaShop\Core\ExtraProperty\Definition\ExtraPropertySqlIndex;
 
 /**
  * Manages the DDL (Data Definition Language) operations on extra storage tables.
@@ -25,20 +26,20 @@ interface ExtraPropertySchemaManagerInterface
      * Synchronises the SQL index strategy on the column.
      *
      * @param string $entityName Normalized entity name (e.g. "product")
-     * @param string $fieldScope Normalized scope: "common", "lang", or "shop"
+     * @param ExtraPropertyScope $fieldScope Storage scope (COMMON, LANG, or SHOP)
      * @param string $columnName
      * @param string $sqlColumnDefinition Full SQL column definition fragment (from ColumnDefinitionMapper)
      * @param ExtraPropertySqlIndex $sqlIndex Index strategy to apply on the column
      */
-    public function ensureExtraTableAndColumn(string $entityName, string $fieldScope, string $columnName, string $sqlColumnDefinition, ExtraPropertySqlIndex $sqlIndex): void;
+    public function ensureExtraTableAndColumn(string $entityName, ExtraPropertyScope $fieldScope, string $columnName, string $sqlColumnDefinition, ExtraPropertySqlIndex $sqlIndex): void;
 
     /**
      * Drops the custom column from the extra table when table and column exist.
      * Also drops the extra table itself when it becomes empty after the column removal.
      *
      * @param string $entityName Normalized entity name (e.g. "product")
-     * @param string $fieldScope Normalized scope: "common", "lang", or "shop"
+     * @param ExtraPropertyScope $fieldScope Storage scope (COMMON, LANG, or SHOP)
      * @param string $columnName
      */
-    public function dropExtraColumnIfExists(string $entityName, string $fieldScope, string $columnName): void;
+    public function dropExtraColumnIfExists(string $entityName, ExtraPropertyScope $fieldScope, string $columnName): void;
 }

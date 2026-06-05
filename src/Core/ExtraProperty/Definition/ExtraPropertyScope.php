@@ -7,7 +7,7 @@
 
 declare(strict_types=1);
 
-namespace PrestaShop\PrestaShop\Core\ExtraProperty;
+namespace PrestaShop\PrestaShop\Core\ExtraProperty\Definition;
 
 /**
  * Storage scope for extra property fields.

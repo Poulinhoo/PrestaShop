@@ -352,8 +352,8 @@ Centralized validation contract:
 ```php
 interface ExtraPropertyValidationInterface
 {
-    public function isTableOrIdentifier(string $value): bool;
-    public function isModuleName(string $value): bool;
+    public static function isTableOrIdentifier(string $value): bool;
+    public static function isModuleName(string $value): bool;
 
     /** Returns true on success, or a translated error message string on failure. */
     public function validateValue(ExtraPropertyDefinitionInfo $definition, mixed $value): bool|string;
@@ -361,6 +361,8 @@ interface ExtraPropertyValidationInterface
 ```
 
 `ExtraPropertyValueValidator` is the concrete implementation. Uses pure regex — no legacy ObjectModel dependency.
+
+`isTableOrIdentifier()` and `isModuleName()` are `static` so that `ExtraPropertyDefinition` constructor can call them directly without DI injection (value objects cannot receive services). The Registry still calls them via `$this->validator::isMethod()` syntax for raw string inputs.
 
 ### 3.10. ExtraPropertyReader
 

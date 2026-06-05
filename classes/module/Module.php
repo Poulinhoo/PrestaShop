@@ -14,8 +14,8 @@ use PrestaShop\PrestaShop\Adapter\ServiceLocator;
 use PrestaShop\PrestaShop\Core\Context\LegacyControllerContext;
 use PrestaShop\PrestaShop\Core\Exception\ContainerNotFoundException;
 use PrestaShop\PrestaShop\Core\ExtraProperty\Definition\ExtraPropertyDefinition;
-use PrestaShop\PrestaShop\Core\ExtraProperty\ExtraPropertyScope;
-use PrestaShop\PrestaShop\Core\ExtraProperty\Registry\ExtraPropertyRegistryInterface;
+use PrestaShop\PrestaShop\Core\ExtraProperty\Definition\ExtraPropertyRegistryInterface;
+use PrestaShop\PrestaShop\Core\ExtraProperty\Definition\ExtraPropertyScope;
 use PrestaShop\PrestaShop\Core\Foundation\Filesystem\FileSystem;
 use PrestaShop\PrestaShop\Core\Module\Legacy\ModuleInterface;
 use PrestaShop\PrestaShop\Core\Module\ModuleOverrideChecker;
@@ -1231,31 +1231,27 @@ abstract class ModuleCore implements ModuleInterface
     /**
      * Register or update an extra property definition for an entity.
      *
-     * The module name is automatically filled in from $this->name when $options->moduleName is null.
-     * Use ExtraPropertyDefinition to configure the field type, scope, labels, display flags, etc.
+     * The definition must have entityName and propertyName set.
+     * The module name is automatically filled in from $this->name when $definition->getModuleName() is null.
      *
-     * About BO label translations: store wording/domain pairs in the options, and also call
+     * About BO label translations: store wording/domain pairs in the definition, and also call
      * $this->trans() in the module code so strings are discoverable by the BO translation UI.
      *
-     * @param string $entityName Entity table name (e.g. "product", "customer")
-     * @param string $propertyName Property name within the module (e.g. "video_link")
-     * @param ExtraPropertyDefinition $options Typed configuration for the property
+     * @param ExtraPropertyDefinition $definition definition
      *
      * @return bool
      */
-    public function registerExtraProperty(string $entityName, string $propertyName, ?ExtraPropertyDefinition $options = null): bool
+    public function registerExtraProperty(ExtraPropertyDefinition $definition): bool
     {
-        $options ??= new ExtraPropertyDefinition();
-
-        // Inject the calling module's name when the developer did not explicitly override it.
-        if (null === $options->moduleName && !empty($this->name)) {
-            $options = $options->withModuleName($this->name);
+        // Inject the calling module's name when the developer did not explicitly set it.
+        if (null === $definition->getModuleName() && !empty($this->name)) {
+            $definition = $definition->withModuleName($this->name);
         }
 
         /** @var ExtraPropertyRegistryInterface $entityCustomFieldRegistry */
         $entityCustomFieldRegistry = $this->get(ExtraPropertyRegistryInterface::class);
 
-        return $entityCustomFieldRegistry->register($entityName, $propertyName, $options);
+        return $entityCustomFieldRegistry->register($definition);
     }
 
     /**

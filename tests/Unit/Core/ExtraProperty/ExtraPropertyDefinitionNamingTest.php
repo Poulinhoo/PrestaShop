@@ -10,7 +10,7 @@ namespace Tests\Unit\Core\ExtraProperty;
 
 use PHPUnit\Framework\TestCase;
 use PrestaShop\PrestaShop\Core\ExtraProperty\Definition\ExtraPropertyDefinition;
-use PrestaShop\PrestaShop\Core\ExtraProperty\ExtraPropertyScope;
+use PrestaShop\PrestaShop\Core\ExtraProperty\Definition\ExtraPropertyScope;
 
 class ExtraPropertyDefinitionNamingTest extends TestCase
 {
@@ -65,23 +65,23 @@ class ExtraPropertyDefinitionNamingTest extends TestCase
     {
         return [
             'module field common scope' => [
-                new ExtraPropertyDefinition(scope: ExtraPropertyScope::COMMON, propertyName: 'video_link', moduleName: 'ps_mymodule'),
+                new ExtraPropertyDefinition(entityName: 'entity', propertyName: 'video_link', scope: ExtraPropertyScope::COMMON, moduleName: 'ps_mymodule'),
                 'extra_common_ps_mymodule_video_link',
             ],
             'module field lang scope' => [
-                new ExtraPropertyDefinition(scope: ExtraPropertyScope::LANG, propertyName: 'video_link', moduleName: 'ps_mymodule'),
+                new ExtraPropertyDefinition(entityName: 'entity', propertyName: 'video_link', scope: ExtraPropertyScope::LANG, moduleName: 'ps_mymodule'),
                 'extra_lang_ps_mymodule_video_link',
             ],
             'module field shop scope' => [
-                new ExtraPropertyDefinition(scope: ExtraPropertyScope::SHOP, propertyName: 'video_link', moduleName: 'ps_mymodule'),
+                new ExtraPropertyDefinition(entityName: 'entity', propertyName: 'video_link', scope: ExtraPropertyScope::SHOP, moduleName: 'ps_mymodule'),
                 'extra_shop_ps_mymodule_video_link',
             ],
             'core sentinel common scope' => [
-                new ExtraPropertyDefinition(scope: ExtraPropertyScope::COMMON, propertyName: 'my_field', moduleName: ExtraPropertyDefinition::CORE_MODULE_KEY),
+                new ExtraPropertyDefinition(entityName: 'entity', propertyName: 'my_field', scope: ExtraPropertyScope::COMMON, moduleName: ExtraPropertyDefinition::CORE_MODULE_KEY),
                 'extra_common__core_my_field',
             ],
             'null module treated as _core' => [
-                new ExtraPropertyDefinition(scope: ExtraPropertyScope::COMMON, propertyName: 'my_field', moduleName: null),
+                new ExtraPropertyDefinition(entityName: 'entity', propertyName: 'my_field', scope: ExtraPropertyScope::COMMON, moduleName: null),
                 'extra_common__core_my_field',
             ],
         ];
@@ -99,19 +99,19 @@ class ExtraPropertyDefinitionNamingTest extends TestCase
     {
         return [
             'null maps to _core' => [
-                new ExtraPropertyDefinition(moduleName: null),
+                new ExtraPropertyDefinition(entityName: 'entity', propertyName: 'field', moduleName: null),
                 ExtraPropertyDefinition::CORE_MODULE_KEY,
             ],
             '_core stays _core' => [
-                new ExtraPropertyDefinition(moduleName: ExtraPropertyDefinition::CORE_MODULE_KEY),
+                new ExtraPropertyDefinition(entityName: 'entity', propertyName: 'field', moduleName: ExtraPropertyDefinition::CORE_MODULE_KEY),
                 ExtraPropertyDefinition::CORE_MODULE_KEY,
             ],
             'actual module name is returned as-is' => [
-                new ExtraPropertyDefinition(moduleName: 'ps_mymodule'),
+                new ExtraPropertyDefinition(entityName: 'entity', propertyName: 'field', moduleName: 'ps_mymodule'),
                 'ps_mymodule',
             ],
             'another module' => [
-                new ExtraPropertyDefinition(moduleName: 'demomodule'),
+                new ExtraPropertyDefinition(entityName: 'entity', propertyName: 'field', moduleName: 'demomodule'),
                 'demomodule',
             ],
         ];
@@ -123,13 +123,25 @@ class ExtraPropertyDefinitionNamingTest extends TestCase
     }
 
     /**
+     * Tests parseGridEntry indirectly via getGridEntry() on a definition instance.
+     *
+     * parseGridEntry() is protected; testing it via getGridEntry() covers the same behavior
+     * through the public API.
+     *
      * @dataProvider parseGridEntryProvider
      *
      * @param array{gridId: string, columnId: string|null, mode: 'before'|'after'|null} $expected
      */
-    public function testParseGridEntry(string $entry, array $expected): void
+    public function testGetGridEntry(string $entry, array $expected): void
     {
-        $this->assertSame($expected, ExtraPropertyDefinition::parseGridEntry($entry));
+        $definition = new ExtraPropertyDefinition(
+            entityName: $expected['gridId'],
+            propertyName: 'test_field',
+            associatedGrids: [$entry],
+            labelWording: 'Test',
+        );
+
+        $this->assertSame($expected, $definition->getGridEntry($expected['gridId']));
     }
 
     public static function parseGridEntryProvider(): array

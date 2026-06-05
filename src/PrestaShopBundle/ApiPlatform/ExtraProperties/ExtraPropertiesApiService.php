@@ -15,7 +15,8 @@ use PrestaShop\PrestaShop\Core\Context\ShopContext;
 use PrestaShop\PrestaShop\Core\Domain\Shop\ValueObject\ShopConstraint;
 use PrestaShop\PrestaShop\Core\ExtraProperty\Definition\ExtraPropertyDefinition;
 use PrestaShop\PrestaShop\Core\ExtraProperty\Definition\ExtraPropertyDefinitionCollection;
-use PrestaShop\PrestaShop\Core\ExtraProperty\Repository\ExtraPropertyDefinitionRepositoryInterface;
+use PrestaShop\PrestaShop\Core\ExtraProperty\Definition\ExtraPropertyDefinitionRepositoryInterface;
+use PrestaShop\PrestaShop\Core\ExtraProperty\Definition\ExtraPropertyScope;
 use PrestaShop\PrestaShop\Core\ExtraProperty\Validation\ExtraPropertyValidationInterface;
 use PrestaShop\PrestaShop\Core\ExtraProperty\Value\ExtraPropertyReaderInterface;
 use PrestaShop\PrestaShop\Core\ExtraProperty\Value\ExtraPropertyWriterInterface;
@@ -125,7 +126,7 @@ class ExtraPropertiesApiService
         $entityTable = strtolower(preg_replace('/(?<!^)[A-Z]/', '_$0', $shortName));
 
         // Validate: the repository must have at least one definition for this entity
-        if ($this->repository->getDefinitionCollection($entityTable)->isEmpty()) {
+        if ($this->repository->getAllDefinitions()->filterByEntity($entityTable)->isEmpty()) {
             return null;
         }
 
@@ -189,7 +190,7 @@ class ExtraPropertiesApiService
     {
         $violations = new ConstraintViolationList();
 
-        $allDefinitions = $this->repository->getDefinitionCollection($entityTable);
+        $allDefinitions = $this->repository->getAllDefinitions()->filterByEntity($entityTable);
         if ($allDefinitions->isEmpty() || empty($extraPropertiesByModule)) {
             return $violations;
         }
@@ -201,7 +202,6 @@ class ExtraPropertiesApiService
 
             $moduleName = $def->getDisplayModuleKey();
             $fieldName = $def->getPropertyName();
-            $scope = $def->getScope()->value;
 
             if ('' === $fieldName || !isset($extraPropertiesByModule[$moduleName]) || !array_key_exists($fieldName, $extraPropertiesByModule[$moduleName])) {
                 continue;
@@ -210,14 +210,14 @@ class ExtraPropertiesApiService
             $value = $extraPropertiesByModule[$moduleName][$fieldName];
             $basePath = sprintf('extraProperties.%s.%s', $moduleName, $fieldName);
 
-            if ('lang' === $scope && is_array($value)) {
+            if (ExtraPropertyScope::LANG === $def->getScope() && is_array($value)) {
                 foreach ($value as $locale => $localeValue) {
                     $this->validateOneValue($violations, $def, $localeValue, $basePath . '.' . (string) $locale);
                 }
                 continue;
             }
 
-            if ('shop' === $scope && is_array($value)) {
+            if (ExtraPropertyScope::SHOP === $def->getScope() && is_array($value)) {
                 foreach ($value as $shopId => $shopValue) {
                     $this->validateOneValue($violations, $def, $shopValue, $basePath . '.' . (string) $shopId);
                 }
@@ -338,7 +338,7 @@ class ExtraPropertiesApiService
 
         // Keep only fields flagged display_api = 1.
         $whitelist = [];
-        foreach ($this->repository->getDefinitionCollection($entityTable)->filterByApi() as $def) {
+        foreach ($this->repository->getAllDefinitions()->filterByEntity($entityTable)->filterByApi() as $def) {
             $whitelist[$def->getDisplayModuleKey()][$def->getPropertyName()] = true;
         }
         foreach ($result as $moduleKey => $fields) {
@@ -364,7 +364,7 @@ class ExtraPropertiesApiService
      */
     protected function persistExtraProperties(string $entityTable, int $entityId, array $extraPropertiesByModule): void
     {
-        $allDefinitions = $this->repository->getDefinitionCollection($entityTable);
+        $allDefinitions = $this->repository->getAllDefinitions()->filterByEntity($entityTable);
         if ($allDefinitions->isEmpty()) {
             return;
         }
@@ -421,7 +421,7 @@ class ExtraPropertiesApiService
     {
         $columnValues = [];
         foreach ($allDefinitions as $def) {
-            if ('common' !== $def->getScope()->value || !$def->isDisplayApi()) {
+            if (ExtraPropertyScope::COMMON !== $def->getScope() || !$def->isDisplayApi()) {
                 continue;
             }
 
@@ -456,7 +456,7 @@ class ExtraPropertiesApiService
      */
     protected function buildLangScopeValues(ExtraPropertyDefinitionCollection $allDefinitions, array $extraPropertiesByModule): array
     {
-        $columnToPropertyMap = $this->buildColumnPropertyMap($allDefinitions, 'lang');
+        $columnToPropertyMap = $this->buildColumnPropertyMap($allDefinitions, ExtraPropertyScope::LANG);
         if (empty($columnToPropertyMap)) {
             return [];
         }
@@ -508,7 +508,7 @@ class ExtraPropertiesApiService
      */
     protected function buildShopScopeValues(ExtraPropertyDefinitionCollection $allDefinitions, array $extraPropertiesByModule): array
     {
-        $columnToPropertyMap = $this->buildColumnPropertyMap($allDefinitions, 'shop');
+        $columnToPropertyMap = $this->buildColumnPropertyMap($allDefinitions, ExtraPropertyScope::SHOP);
         if (empty($columnToPropertyMap)) {
             return [];
         }
@@ -580,15 +580,15 @@ class ExtraPropertiesApiService
      * Builds a storage-column → property-path map for a given scope, filtered to display_api=1.
      *
      * @param ExtraPropertyDefinitionCollection $allDefinitions All repository definitions for the entity
-     * @param string $scope 'common', 'lang' or 'shop'
+     * @param ExtraPropertyScope $scope Scope to filter by
      *
      * @return array<string, array{module_name: string, property_name: string}>
      */
-    private function buildColumnPropertyMap(ExtraPropertyDefinitionCollection $allDefinitions, string $scope): array
+    private function buildColumnPropertyMap(ExtraPropertyDefinitionCollection $allDefinitions, ExtraPropertyScope $scope): array
     {
         $map = [];
         foreach ($allDefinitions as $def) {
-            if ($def->getScope()->value !== $scope || !$def->isDisplayApi()) {
+            if ($def->getScope() !== $scope || !$def->isDisplayApi()) {
                 continue;
             }
 
@@ -619,8 +619,8 @@ class ExtraPropertiesApiService
     private function buildShopScopedFieldsByModule(string $entityTable): array
     {
         $shopFields = [];
-        foreach ($this->repository->getDefinitionCollection($entityTable) as $def) {
-            if ('shop' !== $def->getScope()->value || !$def->isDisplayApi()) {
+        foreach ($this->repository->getAllDefinitions()->filterByEntity($entityTable) as $def) {
+            if (ExtraPropertyScope::SHOP !== $def->getScope() || !$def->isDisplayApi()) {
                 continue;
             }
 
@@ -650,8 +650,8 @@ class ExtraPropertiesApiService
         }
 
         $langFields = [];
-        foreach ($this->repository->getDefinitionCollection($entityTable) as $def) {
-            if ('lang' !== $def->getScope()->value || !$def->isDisplayApi()) {
+        foreach ($this->repository->getAllDefinitions()->filterByEntity($entityTable) as $def) {
+            if (ExtraPropertyScope::LANG !== $def->getScope() || !$def->isDisplayApi()) {
                 continue;
             }
 

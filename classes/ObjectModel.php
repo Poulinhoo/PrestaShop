@@ -8,7 +8,7 @@ use PrestaShop\PrestaShop\Adapter\ContainerFinder;
 use PrestaShop\PrestaShop\Adapter\ServiceLocator;
 use PrestaShop\PrestaShop\Core\Exception\ContainerNotFoundException;
 use PrestaShop\PrestaShop\Core\ExtraProperty\Definition\ExtraPropertyDefinitionCollection;
-use PrestaShop\PrestaShop\Core\ExtraProperty\Repository\ExtraPropertyDefinitionRepositoryInterface;
+use PrestaShop\PrestaShop\Core\ExtraProperty\Definition\ExtraPropertyDefinitionRepositoryInterface;
 use PrestaShop\PrestaShop\Core\ExtraProperty\Validation\ExtraPropertyValidationInterface;
 use PrestaShop\PrestaShop\Core\ExtraProperty\Value\ExtraPropertiesBag;
 use PrestaShop\PrestaShop\Core\ExtraProperty\Value\ExtraPropertyReaderInterface;
@@ -2280,7 +2280,7 @@ abstract class ObjectModelCore implements PrestaShop\PrestaShop\Core\Foundation\
             return $this->extra_property_definitions;
         }
 
-        $this->extra_property_definitions = $repository->getDefinitionCollection($this->def['table']);
+        $this->extra_property_definitions = $repository->getAllDefinitions()->filterByEntity($this->def['table']);
 
         return $this->extra_property_definitions;
     }

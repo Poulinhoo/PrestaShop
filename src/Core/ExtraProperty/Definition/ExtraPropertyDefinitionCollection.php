@@ -12,7 +12,6 @@ namespace PrestaShop\PrestaShop\Core\ExtraProperty\Definition;
 use ArrayIterator;
 use Countable;
 use IteratorAggregate;
-use PrestaShop\PrestaShop\Core\ExtraProperty\ExtraPropertyScope;
 use Traversable;
 
 /**
@@ -140,18 +139,28 @@ final class ExtraPropertyDefinitionCollection implements Countable, IteratorAggr
 
     /**
      * Returns a new collection filtered to the given scope.
-     *
-     * Accepts an ExtraPropertyScope instance or the raw string value ('common', 'lang', 'shop').
      */
-    public function filterByScope(ExtraPropertyScope|string $scope): self
+    public function filterByScope(ExtraPropertyScope $scope): self
     {
-        $scopeValue = $scope instanceof ExtraPropertyScope ? $scope->value : $scope;
         $filtered = array_filter(
             $this->definitions,
-            static fn (ExtraPropertyDefinition $d): bool => $d->getScope()->value === $scopeValue
+            static fn (ExtraPropertyDefinition $d): bool => $d->getScope() === $scope
         );
 
         return new self(array_values($filtered));
+    }
+
+    /**
+     * Returns a new collection filtered to the given property name.
+     *
+     * @param string $propertyName Property name as declared by the module (e.g. 'video_link')
+     */
+    public function filterByPropertyName(string $propertyName): self
+    {
+        return new self(array_values(array_filter(
+            $this->definitions,
+            static fn (ExtraPropertyDefinition $d): bool => $d->getPropertyName() === $propertyName
+        )));
     }
 
     /**

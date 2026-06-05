@@ -12,7 +12,7 @@ namespace PrestaShop\PrestaShop\Core\ExtraProperty\Value;
 use Doctrine\DBAL\Connection;
 use PrestaShop\PrestaShop\Core\Domain\Shop\ValueObject\ShopConstraint;
 use PrestaShop\PrestaShop\Core\ExtraProperty\Definition\ExtraPropertyDefinition;
-use PrestaShop\PrestaShop\Core\ExtraProperty\ExtraPropertyScope;
+use PrestaShop\PrestaShop\Core\ExtraProperty\Definition\ExtraPropertyScope;
 use Throwable;
 
 /**
