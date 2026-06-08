@@ -276,6 +276,10 @@ services:
     arguments:
       $singleDefaultLanguageArrayToFilledArrayDataTransformer: '@PrestaShopBundle\Form\DataTransformer\DefaultLanguageToFilledArrayDataTransformer'
 
+  PrestaShopBundle\Form\Admin\Configure\AdvancedParameters\QuickAccess\QuickAccessType:
+    arguments:
+      $defaultLanguageToFilledArrayDataTransformer: '@PrestaShopBundle\Form\DataTransformer\DefaultLanguageToFilledArrayDataTransformer'
+
   PrestaShopBundle\Form\Admin\Improve\Design\Pages\CmsPageCategoryType:
     arguments:
       $allCmsCategories: '@=service("prestashop.core.form.choice_provider.cms_categories").getChoices()'

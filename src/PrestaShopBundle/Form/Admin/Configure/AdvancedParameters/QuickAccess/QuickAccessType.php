@@ -12,14 +12,24 @@ use PrestaShop\PrestaShop\Core\ConstraintValidator\Constraints\DefaultLanguage;
 use PrestaShopBundle\Form\Admin\Type\SwitchType;
 use PrestaShopBundle\Form\Admin\Type\TranslatableType;
 use PrestaShopBundle\Form\Admin\Type\TranslatorAwareType;
+use Symfony\Component\Form\DataTransformerInterface;
 use Symfony\Component\Form\Extension\Core\Type\TextType;
 use Symfony\Component\Form\FormBuilderInterface;
 use Symfony\Component\Validator\Constraints\Length;
 use Symfony\Component\Validator\Constraints\NotBlank;
 use Symfony\Component\Validator\Constraints\Regex;
+use Symfony\Contracts\Translation\TranslatorInterface;
 
 class QuickAccessType extends TranslatorAwareType
 {
+    public function __construct(
+        TranslatorInterface $translator,
+        array $locales,
+        private readonly DataTransformerInterface $defaultLanguageToFilledArrayDataTransformer,
+    ) {
+        parent::__construct($translator, $locales);
+    }
+
     public function buildForm(FormBuilderInterface $builder, array $options): void
     {
         $builder
@@ -30,13 +40,6 @@ class QuickAccessType extends TranslatorAwareType
                 ],
                 'options' => [
                     'constraints' => [
-                        new NotBlank([
-                            'message' => $this->trans(
-                                'The %s field is required.',
-                                'Admin.Notifications.Error',
-                                [sprintf('"%s"', $this->trans('Name', 'Admin.Global'))]
-                            ),
-                        ]),
                         new Length([
                             'max' => 32,
                             'maxMessage' => $this->trans(
@@ -83,5 +86,9 @@ class QuickAccessType extends TranslatorAwareType
                 'label' => $this->trans('Open in new tab', 'Admin.Navigation.Header'),
                 'required' => false,
             ]);
+
+        // When only the default language name is filled, copy it into the other languages
+        // so every language ends up with a value (same behavior as the legacy page).
+        $builder->get('name')->addModelTransformer($this->defaultLanguageToFilledArrayDataTransformer);
     }
 }
