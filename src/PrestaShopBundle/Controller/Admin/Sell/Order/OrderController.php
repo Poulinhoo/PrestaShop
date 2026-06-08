@@ -89,6 +89,7 @@ use PrestaShop\PrestaShop\Core\Grid\GridFactory;
 use PrestaShop\PrestaShop\Core\Grid\GridFactoryInterface;
 use PrestaShop\PrestaShop\Core\Kpi\Row\KpiRowFactoryInterface;
 use PrestaShop\PrestaShop\Core\Order\OrderSiblingProviderInterface;
+use PrestaShop\PrestaShop\Core\PDF\PDFGeneratorInterface;
 use PrestaShop\PrestaShop\Core\Search\Filters\OrderFilters;
 use PrestaShop\PrestaShop\Core\Search\Filters\ShipmentFilters;
 use PrestaShopBundle\Component\CsvResponse;
