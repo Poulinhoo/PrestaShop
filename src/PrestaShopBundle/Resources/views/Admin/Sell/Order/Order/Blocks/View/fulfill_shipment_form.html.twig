@@ -6,11 +6,11 @@
  {{ form_start(fulfillShipmentForm, {
   action: path('admin_orders_fulfill_shipment', {
     orderId: orderId,
-    shipmentId: shipmentId
+    shipmentId: shipmentId,
   }),
   attr: {
     id: 'fulfill_shipment',
-    class: 'shipment-form'
+    class: 'shipment-form',
   },
 }) }}
   <div class="form-group">
