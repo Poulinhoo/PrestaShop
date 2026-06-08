@@ -26,7 +26,7 @@ use Symfony\Component\Console\Style\SymfonyStyle;
 use Throwable;
 
 #[AsCommand(
-    name: 'prestashop:employee:create',
+    name: 'prestashop:employee:create-admin',
     description: 'Create a new SuperAdmin back-office employee.',
 )]
 final class EmployeeCreateCommand extends Command
