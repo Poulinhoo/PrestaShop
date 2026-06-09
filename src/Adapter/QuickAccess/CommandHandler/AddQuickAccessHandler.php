@@ -8,6 +8,7 @@ declare(strict_types=1);
 
 namespace PrestaShop\PrestaShop\Adapter\QuickAccess\CommandHandler;
 
+use PrestaShop\PrestaShop\Adapter\QuickAccess\LocalizedNamesFiller;
 use PrestaShop\PrestaShop\Adapter\QuickAccess\Repository\QuickAccessRepository;
 use PrestaShop\PrestaShop\Core\CommandBus\Attributes\AsCommandHandler;
 use PrestaShop\PrestaShop\Core\Domain\QuickAccess\Command\AddQuickAccessCommand;
@@ -19,8 +20,10 @@ use QuickAccess;
 #[AsCommandHandler]
 class AddQuickAccessHandler implements AddQuickAccessHandlerInterface
 {
-    public function __construct(private readonly QuickAccessRepository $repository)
-    {
+    public function __construct(
+        private readonly QuickAccessRepository $repository,
+        private readonly LocalizedNamesFiller $localizedNamesFiller,
+    ) {
     }
 
     public function handle(AddQuickAccessCommand $command): QuickAccessId
@@ -34,7 +37,7 @@ class AddQuickAccessHandler implements AddQuickAccessHandlerInterface
 
         $quickAccess = new QuickAccess();
         // @phpstan-ignore-next-line (ObjectModel multilingual field accepts array at runtime)
-        $quickAccess->name = $command->getLocalizedNames();
+        $quickAccess->name = $this->localizedNamesFiller->fill($command->getLocalizedNames());
         $quickAccess->link = $command->getLink();
         $quickAccess->new_window = $command->isNewWindow();
 

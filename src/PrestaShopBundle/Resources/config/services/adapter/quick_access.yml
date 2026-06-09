@@ -10,6 +10,9 @@ services:
 
   PrestaShop\PrestaShop\Adapter\QuickAccess\Repository\QuickAccessRepository: ~
 
+  PrestaShop\PrestaShop\Adapter\QuickAccess\LocalizedNamesFiller:
+    autowire: true
+
   PrestaShop\PrestaShop\Adapter\QuickAccess\CommandHandler\AddQuickAccessHandler:
     autowire: true
     autoconfigure: true
