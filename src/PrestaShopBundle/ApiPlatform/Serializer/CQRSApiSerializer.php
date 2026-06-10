@@ -8,7 +8,6 @@ namespace PrestaShopBundle\ApiPlatform\Serializer;
 
 use ApiPlatform\Metadata\HttpOperation;
 use PrestaShopBundle\ApiPlatform\ContextParametersProvider;
-use PrestaShopBundle\ApiPlatform\ExtraProperties\ExtraPropertiesApiService;
 use PrestaShopBundle\ApiPlatform\LocalizedValueUpdater;
 use PrestaShopBundle\ApiPlatform\Metadata\LocalizedValue;
 use PrestaShopBundle\ApiPlatform\NormalizationMapper;
@@ -23,25 +22,14 @@ use Symfony\Component\Serializer\Normalizer\ContextAwareDenormalizerInterface;
 use Symfony\Component\Serializer\Normalizer\ContextAwareNormalizerInterface;
 use Symfony\Component\Serializer\Serializer;
 use Symfony\Component\Serializer\SerializerInterface;
-use Symfony\Component\Validator\Exception\ValidationFailedException;
 
 /**
  * This serializer decorates the API Platform one, it handles PrestaShop custom modifications like updating the localized values indexes,
  * or apply the mapping between CQRS object and API resources.
- *
- * Extra-properties support is activated by injecting an ExtraPropertiesApiService instance.
- * The dependency is optional (null by default) to preserve backward compatibility with
- * subclasses that call parent::__construct() with the original argument list.
  */
 class CQRSApiSerializer implements SerializerInterface, ContextAwareNormalizerInterface, ContextAwareDenormalizerInterface, ContextAwareEncoderInterface, ContextAwareDecoderInterface
 {
     public const CAST_BOOL = 'cast_bool';
-
-    /**
-     * CQRS command namespaces that must be excluded from extra-properties processing.
-     * Denormalization of these types is for query/command objects, not ApiResources.
-     */
-    protected const CQRS_DOMAIN_NAMESPACE_PREFIX = 'PrestaShop\PrestaShop\Core\Domain\\';
 
     public function __construct(
         protected readonly Serializer $decorated,
@@ -50,7 +38,6 @@ class CQRSApiSerializer implements SerializerInterface, ContextAwareNormalizerIn
         protected readonly LocalizedValueUpdater $localizedValueUpdater,
         protected readonly NormalizationMapper $normalizationMapper,
         protected readonly PositionCollectionUpdater $positionCollectionUpdater,
-        protected readonly ?ExtraPropertiesApiService $extraPropertiesApiService = null,
     ) {
     }
 
@@ -104,26 +91,6 @@ class CQRSApiSerializer implements SerializerInterface, ContextAwareNormalizerIn
             $data = $this->denormalizeLocalizedValues($data, $type, $context);
         }
 
-        // Extract extra properties from the payload before delegating to the decorated serializer.
-        // Only ApiResource classes (not CQRS domain commands) are processed.
-        if (
-            null !== $this->extraPropertiesApiService
-            && is_array($data)
-            && !str_starts_with($type, static::CQRS_DOMAIN_NAMESPACE_PREFIX)
-        ) {
-            $entityTable = $this->extraPropertiesApiService->resolveEntityTableFromClass($type);
-            if (null !== $entityTable) {
-                $extraProperties = $this->extraPropertiesApiService->extractExtraPropertiesFromPayload($data);
-                if (null !== $extraProperties) {
-                    $violations = $this->extraPropertiesApiService->validateExtraPropertiesPayload($entityTable, $extraProperties);
-                    if (count($violations) > 0) {
-                        throw new ValidationFailedException(null, $violations);
-                    }
-                    $this->extraPropertiesApiService->storePendingExtraProperties($entityTable, $extraProperties);
-                }
-            }
-        }
-
         return $this->decorated->denormalize($data, $type, $format, $context);
     }
 
@@ -146,35 +113,12 @@ class CQRSApiSerializer implements SerializerInterface, ContextAwareNormalizerIn
         // Finally perform normalization mapping
         $this->normalizationMapper->mapNormalizedData($normalizedData, $context);
 
-        // Inject extra properties into the serialized response (and persist pending ones for write ops).
-        // Uses the resource_class from context when available (more reliable than get_class($object)
-        // which may return an intermediate DTO class rather than the declared ApiResource class).
-        if (
-            null !== $this->extraPropertiesApiService
-            && is_array($normalizedData)
-            && is_object($object)
-        ) {
-            $resourceClass = $context['resource_class'] ?? get_class($object);
-            if (!str_starts_with($resourceClass, static::CQRS_DOMAIN_NAMESPACE_PREFIX)) {
-                $normalizedData = $this->extraPropertiesApiService->injectExtraPropertiesIntoResponse(
-                    $normalizedData,
-                    $resourceClass
-                );
-            }
-        }
-
         return $normalizedData;
     }
 
     public function serialize(mixed $data, string $format, array $context = []): string
     {
-        // Do not delegate directly to the decorated serializer here:
-        // we need to pass through this class normalize() implementation so that
-        // PrestaShop-specific mappings (localized values, position collections, extraProperties, ...)
-        // are applied before encoding.
-        $normalized = $this->normalize($data, $format, $context);
-
-        return $this->encode($normalized, $format, $context);
+        return $this->decorated->serialize($data, $format, $context);
     }
 
     public function deserialize(mixed $data, string $type, string $format, array $context = []): mixed

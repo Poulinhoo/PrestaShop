@@ -1,7 +1,6 @@
 imports:
   - { resource: set_parameters.php }
   - { resource: services.yml }
-  - { resource: ../../config/services/extra_property.yml }
   - { resource: addons/*.yml }
   - { resource: doctrine.yml }
   - { resource: messenger.yml }

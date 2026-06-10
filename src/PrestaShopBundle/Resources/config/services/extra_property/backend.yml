@@ -1,3 +1,4 @@
+# These are the services for the Extra Property feature that are ONLY used on the backend side
 services:
   _defaults:
     autowire: true

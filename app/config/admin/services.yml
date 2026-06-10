@@ -1,7 +1,4 @@
 # Dedicated services for Admin app
-imports:
-  - { resource: ../../../config/services/admin/extra_property.yml }
-
 services:
   _defaults:
     public: false
