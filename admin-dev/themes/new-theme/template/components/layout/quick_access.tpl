@@ -70,11 +70,19 @@
         </button>
       </div>
       <div class="modal-body">
-        <div class="form-group">
+        <div class="alert alert-danger d-print-none d-none" role="alert" id="quick-access-add-error">
+          <div class="alert-text"></div>
+        </div>
+        <div class="form-group" id="quick-access-name-group">
           <label class="form-control-label" for="quick-access-name">
             {l s='Shortcut name' d='Admin.Navigation.Header'}
           </label>
-          <input type="text" id="quick-access-name" class="form-control" required aria-required="true" maxlength="32">
+          <input type="text" id="quick-access-name" class="form-control" required aria-required="true" maxlength="32"
+                 data-required-message="{l s='Shortcut name is required' d='Admin.Navigation.Header'}">
+          <div class="d-inline-block align-baseline text-danger mt-1 d-none" role="alert" id="quick-access-name-error">
+            <i class="material-icons form-error-icon">error_outline</i>
+            <span class="js-error-text"></span>
+          </div>
         </div>
         <div class="form-group">
           <label class="form-control-label d-block">

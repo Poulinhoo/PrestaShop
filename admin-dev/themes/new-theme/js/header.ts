@@ -43,16 +43,40 @@ export default class Header {
           }
         });
 
+        const $nameInput = $modal.find('#quick-access-name');
+        const $nameGroup = $modal.find('#quick-access-name-group');
+        const $nameError = $modal.find('#quick-access-name-error');
+        const $modalError = $modal.find('#quick-access-add-error');
+
+        const resetErrors = (): void => {
+          $nameGroup.removeClass('has-error');
+          $nameError.addClass('d-none').find('.js-error-text').text('');
+          $modalError.addClass('d-none').find('.alert-text').text('');
+        };
+
+        $modal.one('hidden.bs.modal', resetErrors);
+        $nameInput.off('input').on('input', resetErrors);
+
         $modal.find('#quick-access-save-btn').off('click').on('click', () => {
-          const name = ($modal.find('#quick-access-name').val() as string).trim();
+          resetErrors();
+
+          const name = ($nameInput.val() as string).trim();
 
           if (!name) {
+            $nameGroup.addClass('has-error');
+            $nameError.removeClass('d-none').find('.js-error-text').text($nameInput.data('required-message') as string);
+            $nameInput.trigger('focus');
+
             return;
           }
 
           const newWindow = $modal.find('input[name="quick_access_new_window"]:checked').val() === '1';
-          $modal.modal('hide');
-          this.doQuickLinkAction($link, method, name, newWindow);
+          this.doQuickLinkAction($link, method, name, newWindow, {
+            onSuccess: () => $modal.modal('hide'),
+            onError: (messages: string[]) => {
+              $modalError.removeClass('d-none').find('.alert-text').text(messages.join(' '));
+            },
+          });
         });
 
         $modal.modal('show');
@@ -77,11 +101,32 @@ export default class Header {
     });
   }
 
-  private doQuickLinkAction($link: JQuery, method: string, name: string | null, newWindow: boolean = false): void {
+  private doQuickLinkAction(
+    $link: JQuery,
+    method: string,
+    name: string | null,
+    newWindow: boolean = false,
+    callbacks: {onSuccess?: () => void; onError?: (messages: string[]) => void} = {},
+  ): void {
     const postLink = $link.data('post-link');
     const quickLinkId = $link.data('quicklink-id');
     const url = $link.data('url');
     const icon = $link.data('icon');
+
+    const reportErrors = (messages: string[]): void => {
+      if (callbacks.onError) {
+        callbacks.onError(messages);
+
+        return;
+      }
+
+      messages.forEach((message) => {
+        $.growl.error({
+          title: '',
+          message,
+        });
+      });
+    };
 
     $.ajax({
       type: 'POST',
@@ -101,14 +146,13 @@ export default class Header {
       dataType: 'json',
       success: (data) => {
         if (typeof data.has_errors !== 'undefined' && data.has_errors) {
+          const messages: string[] = [];
           $.each(data, (index) => {
             if (typeof data[index] === 'string') {
-              $.growl.error({
-                title: '',
-                message: data[index],
-              });
+              messages.push(data[index]);
             }
           });
+          reportErrors(messages);
         } else if (Array.isArray(data)) {
           let quicklinkList = '';
           data.forEach((item) => {
@@ -122,15 +166,26 @@ export default class Header {
           $menu.find('.dropdown-divider').prevAll('a.quick-row-link').remove();
           $menu.prepend(quicklinkList);
           $link.remove();
+          if (callbacks.onSuccess) {
+            callbacks.onSuccess();
+          }
           window.showSuccessMessage(window.update_success_msg);
         }
       },
       error: (xhr, textStatus) => {
+        const message = textStatus === 'parsererror'
+          ? `Server returned non-JSON (status ${xhr.status})`
+          : `${xhr.status} ${xhr.statusText}`;
+
+        if (callbacks.onError) {
+          callbacks.onError([message]);
+
+          return;
+        }
+
         $.growl.error({
           title: 'Quick access error',
-          message: textStatus === 'parsererror'
-            ? `Server returned non-JSON (status ${xhr.status})`
-            : `${xhr.status} ${xhr.statusText}`,
+          message,
         });
       },
     });

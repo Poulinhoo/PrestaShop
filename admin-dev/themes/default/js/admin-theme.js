@@ -202,7 +202,18 @@ $(() => {
       },
     });
   });
-  const doQuickLinkAjax = ($link, method, name, newWindow) => {
+  const doQuickLinkAjax = ($link, method, name, newWindow, callbacks = {}) => {
+    const reportErrors = (messages) => {
+      if (callbacks.onError) {
+        callbacks.onError(messages);
+        return;
+      }
+
+      messages.forEach((message) => {
+        $.growl.error({title: '', message});
+      });
+    };
+
     $.ajax({
       type: 'POST',
       headers: {'cache-control': 'no-cache'},
@@ -219,11 +230,13 @@ $(() => {
       dataType: 'json',
       success: (data) => {
         if (typeof data.has_errors !== 'undefined' && data.has_errors) {
+          const messages = [];
           $.each(data, (index) => {
             if (typeof data[index] === 'string') {
-              $.growl.error({title: '', message: data[index]});
+              messages.push(data[index]);
             }
           });
+          reportErrors(messages);
         } else if (Array.isArray(data)) {
           let quicklinkList = '';
           $.each(data, (index, item) => {
@@ -238,17 +251,24 @@ $(() => {
             $('#header_quick ul.dropdown-menu .divider').prevAll().remove();
             $('#header_quick ul.dropdown-menu').prepend(quicklinkList);
             $link.closest('li').remove();
+            if (callbacks.onSuccess) {
+              callbacks.onSuccess();
+            }
             window.showSuccessMessage(window.update_success_msg);
           }
         }
       },
       error: (xhr, textStatus) => {
-        $.growl.error({
-          title: 'Quick access error',
-          message: textStatus === 'parsererror'
-            ? `Server returned non-JSON (status ${xhr.status})`
-            : `${xhr.status} ${xhr.statusText}`,
-        });
+        const message = textStatus === 'parsererror'
+          ? `Server returned non-JSON (status ${xhr.status})`
+          : `${xhr.status} ${xhr.statusText}`;
+
+        if (callbacks.onError) {
+          callbacks.onError([message]);
+          return;
+        }
+
+        $.growl.error({title: 'Quick access error', message});
       },
     });
   };
@@ -282,14 +302,39 @@ $(() => {
         }
       });
 
-      $modal.find('#quick-access-save-btn').off('click').on('click', () => {
-        const name = String($modal.find('#quick-access-name').val()).trim();
+      const $nameInput = $modal.find('#quick-access-name');
+      const $nameGroup = $modal.find('#quick-access-name-group');
+      const $nameError = $modal.find('#quick-access-name-error');
+      const $modalError = $modal.find('#quick-access-add-error');
 
-        if (!name) return;
+      const resetErrors = () => {
+        $nameGroup.removeClass('has-error');
+        $nameError.addClass('hidden').text('');
+        $modalError.addClass('hidden').text('');
+      };
+
+      $modal.one('hidden.bs.modal', resetErrors);
+      $nameInput.off('input').on('input', resetErrors);
+
+      $modal.find('#quick-access-save-btn').off('click').on('click', () => {
+        resetErrors();
+
+        const name = String($nameInput.val()).trim();
+
+        if (!name) {
+          $nameGroup.addClass('has-error');
+          $nameError.text($nameInput.data('required-message')).removeClass('hidden');
+          $nameInput.trigger('focus');
+          return;
+        }
 
         const newWindow = $modal.find('input[name="quick_access_new_window"]:checked').val() === '1';
-        $modal.modal('hide');
-        doQuickLinkAjax($link, method, name, newWindow);
+        doQuickLinkAjax($link, method, name, newWindow, {
+          onSuccess: () => $modal.modal('hide'),
+          onError: (messages) => {
+            $modalError.text(messages.join(' ')).removeClass('hidden');
+          },
+        });
       });
 
       $modal.modal('show');
