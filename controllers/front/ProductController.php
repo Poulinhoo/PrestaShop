@@ -1462,6 +1462,7 @@ class ProductControllerCore extends ProductPresentingFrontControllerCore
 
     /**
      * Generates structured data for the current product, extending the default ones.
+     * If you want to enrich or modify this from a module, for example - add reviews, use hook actionFrontControllerSetVariables.
      *
      * @return array Enriched structured data for the product page
      */
