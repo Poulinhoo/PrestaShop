@@ -65,25 +65,26 @@ class ExtraPropertiesFormBuilderModifier
      */
     public function apply(FormBuilderInterface $formBuilder, string $formId, ?int $entityId): void
     {
-        $definitions = $this->repository->getAllDefinitions()->filterByForm($formId);
-        if ($definitions->isEmpty()) {
+        $formDefinitions = $this->repository->getAllDefinitions()->filterByForm($formId);
+        if ($formDefinitions->isEmpty()) {
             return;
         }
 
         $existingValues = null;
         if (null !== $entityId && $entityId > 0) {
-            $storageEntityName = $definitions->first()->getEntityName();
+            $storageEntityName = $formDefinitions->first()->getEntityName();
             $existingValues = $this->reader->getExtraProperties(
                 $storageEntityName,
                 'id_' . $storageEntityName,
                 $entityId,
                 null,
                 $this->shopContext->getShopConstraint(),
-                true
+                true,
+                $formDefinitions
             );
         }
 
-        foreach ($definitions as $definition) {
+        foreach ($formDefinitions as $definition) {
             $fieldName = $definition->getPropertyName();
 
             $parsed = $definition->getFormEntry($formId);

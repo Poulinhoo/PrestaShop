@@ -12,7 +12,6 @@ use Language;
 use PrestaShop\PrestaShop\Adapter\Image\ImageRetriever;
 use PrestaShop\PrestaShop\Adapter\Presenter\AbstractLazyArray;
 use PrestaShop\PrestaShop\Adapter\Presenter\LazyArrayAttribute;
-use PrestaShop\PrestaShop\Core\ExtraProperty\Value\ExtraPropertiesLazyArray;
 use Store;
 use Symfony\Contracts\Translation\TranslatorInterface;
 
@@ -48,9 +47,10 @@ class StoreLazyArray extends AbstractLazyArray
         $this->language = $language;
         $this->imageRetriever = $imageRetriever;
         $this->translator = $translator;
-        $this->extraPropertiesLazyArray = ExtraPropertiesLazyArray::fromObjectModelClass(
+        $this->initExtraPropertiesBag(
             Store::class,
-            (int) ($this->store['id_store'] ?? $this->store['id'] ?? 0)
+            (int) ($this->store['id_store'] ?? $this->store['id'] ?? 0),
+            $language->getId()
         );
 
         parent::__construct();

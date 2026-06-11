@@ -29,7 +29,6 @@ use PrestaShop\PrestaShop\Adapter\Product\ProductColorsRetriever;
 use PrestaShop\PrestaShop\Core\Domain\Product\ProductCustomizabilitySettings;
 use PrestaShop\PrestaShop\Core\Domain\Product\Stock\ValueObject\OutOfStockType;
 use PrestaShop\PrestaShop\Core\Domain\Product\ValueObject\DeliveryTimeNoteType;
-use PrestaShop\PrestaShop\Core\ExtraProperty\Value\ExtraPropertiesLazyArray;
 use PrestaShop\PrestaShop\Core\Product\ProductPresentationSettings;
 use Product;
 use ReflectionException;
@@ -115,9 +114,10 @@ class ProductLazyArray extends AbstractLazyArray
         $this->translator = $translator;
         $this->hookManager = $hookManager ?? new HookManager();
         $this->configuration = $configuration ?? new Configuration();
-        $this->extraPropertiesLazyArray = ExtraPropertiesLazyArray::fromObjectModelClass(
+        $this->initExtraPropertiesBag(
             Product::class,
-            (int) ($this->product['id_product'] ?? 0)
+            (int) ($this->product['id_product'] ?? 0),
+            $language->getId()
         );
 
         // Load image information right away

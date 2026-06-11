@@ -101,7 +101,7 @@ CREATE TABLE IF NOT EXISTS `PREFIX_extra_property_definition` (
 - `default_value`: SQL DEFAULT clause value (stored as varchar, cast to the appropriate PHP type via `ExtraPropertyValueCaster::castScalarFromDb()` when read back)
 - `display_api`: when `1`, the field is included in Admin API responses
 - `display_form`: when `1`, the field is included in BO forms
-- `display_front`: when `1`, the field is returned by `ExtraPropertiesLazyArray::getValues()` for FO templates
+- `display_front`: when `1`, the field is readable through FO bags (`ExtraPropertiesBag::createForEntity(..., forFrontOffice: true)`) for FO templates
 - `associated_grids`: JSON-encoded array of grid placement entries in `"gridId[.columnId[:before|after]]"` format (e.g. `["product.reference:after","product_catalog"]`); `NULL` = not shown in any grid. Each gridId must be unique within the array. Parsed by `ExtraPropertyDefinition::getGridEntry()`.
 - `associated_forms`: JSON-encoded array of form placement entries in `"formId[.path[:before|after]]"` format. Parsed by `ExtraPropertyDefinition::getFormEntry()`.
 - `form_field_type`: optional Symfony form type FQCN override for BO forms
@@ -201,8 +201,7 @@ src/Core/ExtraProperty/
     ├── ExtraPropertyReader.php
     ├── ExtraPropertyWriter.php
     ├── ExtraPropertyValueCaster.php                  ← static cast helpers (DB ↔ PHP)
-    ├── ExtraPropertiesLazyArray.php                  ← FO value resolver for presenters
-    ├── ExtraPropertiesBag.php                        ← lazy-loading grouped bag (ObjectModel write path)
+    ├── ExtraPropertiesBag.php                        ← lazy-loading grouped bag (BO write path + FO read path)
     └── ModuleFieldsBag.php                           ← per-module ArrayAccess bag (dirty-tracking)
 
 src/PrestaShopBundle/ApiPlatform/ExtraProperties/
@@ -248,6 +247,8 @@ Immutable value object located in `src/Core/ExtraProperty/Definition/ExtraProper
 - **Internal read DTO**: returned by all repository methods. Built from a raw DB row via the static factory `ExtraPropertyDefinition::fromRow(array $row): self`.
 
 There is no separate "options" DTO — `ExtraPropertyDefinition` is the single representation used everywhere.
+
+`nullable` and `enumValues` are **not persisted** in the registry table: the live schema of the storage column is their source of truth. `ExtraPropertyDefinitionRepository::enrichRowsWithColumnMetadata()` introspects the related extra table (one `SHOW COLUMNS` per distinct table, in both `getAllDefinitions()` and `findDefinitionByModuleAndField()`) and injects the synthetic `nullable` / `enum_values` row keys consumed by `fromRow()` — NULL/NOT NULL clause for `nullable`, ENUM literals for CHOICE columns. The cost is amortized by the `getAllDefinitions()` cache; when the storage column does not exist yet, `fromRow()` keeps its safe defaults (nullable, no enum).
 
 **Naming methods** (centralised here, no separate `ExtraPropertyNaming` utility class):
 
@@ -587,33 +588,40 @@ Modules share the same `{entity}_extra` table but have distinct column names due
 
 ## 5. ObjectModel Integration (Front-Office)
 
-### 5.1. ExtraPropertiesLazyArray
+### 5.1. ExtraPropertiesBag::createForEntity()
 
-Located in `src/Core/ExtraProperty/Value/ExtraPropertiesLazyArray.php`. Not an `AbstractLazyArray` subclass — it is a collaborator assigned to the `$extraPropertiesLazyArray` protected property on `AbstractLazyArray`. `AbstractLazyArray::getExtraProperties()` delegates to `$extraPropertiesLazyArray->getValues()`.
-
-Private constructor; built exclusively via two static factories:
+`ExtraPropertiesBag` is the single lazy value resolver for both BO (`ObjectModel`) and FO (presenter lazy arrays). The static factory builds the loader closure once:
 
 ```php
-/** For a loaded ObjectModel instance (e.g. Order). No-op when $object->id <= 0. */
-public static function fromObjectModel(ObjectModel $object): self;
-
-/** For array-based data (e.g. product from presenter): resolves PK from ObjectModel static def. */
-public static function fromObjectModelClass(string $objectModelClass, int $entityId): self;
+public static function createForEntity(
+    ?ContainerInterface $container,   // resolved by the caller — no ContainerFinder/Context in this namespace
+    string $objectModelClassName,
+    int $entityId,
+    ?int $langId,                     // null = all languages ([id_lang => value] arrays)
+    ShopConstraint $shopConstraint,
+    bool $forFrontOffice = true,      // default true (consistent with ExtraPropertyDefinition::$displayFront);
+                                      // true = only display_front definitions are read, BO callers pass false
+): self;
 ```
 
-Both factories resolve `ExtraPropertyReaderInterface` and `ExtraPropertyDefinitionRepositoryInterface` via `ContainerFinder`.
+All guards live inside the loader closure (cheap construction, never throws):
+- Resolves to an empty bag when the container is null, `entityId <= 0`, the class is not an `ObjectModel` subclass, or the definition lacks `table`/`primary`
+- Calls `repository->getAllDefinitions()->filterByEntity()` (+ `->filterForFrontOffice()` when `$forFrontOffice`) — skips the DB read when no matching fields are registered
+- Passes the pre-filtered definitions to the reader (no redundant re-fetch, no post-filtering needed)
 
-`getValues()`:
-- Returns `[]` immediately when provider is null (invalid/unresolvable state or id = 0)
-- Calls `repository->getAllDefinitions()->filterByEntity()->filterForFrontOffice()` — skips DB read when no FO fields are registered
-- Passes the pre-filtered definitions to the reader (no redundant re-fetch inside the reader)
-- Returns: `['module_key' => ['field_name' => value]]`
+Callers resolve the container themselves: `ObjectModel::createExtraPropertiesBag()` uses `static::findContainer()`; FO presenters use `AbstractLazyArray::initExtraPropertiesBag()`, which performs the `ContainerFinder(Context::getContext())` resolution in the Adapter layer and passes the entity's own lang id when it carries one. Both derive `forFrontOffice` from `Context::isFrontOfficeContext()`: current controller type `'front'`/`'modulefront'` → filtered; BO, CLI, API and programmatic access → unfiltered; when the context controller is not available yet, it falls back to the `_PS_FRONT_DIR_` constant (only defined by the FO entry point). Native `$entity->extra_properties` access is therefore FO-safe automatically.
 
-**LazyArrays that expose `extra_properties`** (via `$this->extraPropertiesLazyArray` assignment):
+**LazyArrays that expose `extra_properties`** (via `$this->initExtraPropertiesBag(...)` in their constructor):
 - `ProductLazyArray`
 - `CategoryLazyArray`, `SupplierLazyArray`, `ManufacturerLazyArray`, `StoreLazyArray`
 - `OrderLazyArray`, `OrderDetailLazyArray`, `OrderReturnLazyArray`
 - `CartLazyArray`
+
+`AbstractLazyArray::getExtraProperties()` returns the bag itself — `extra_properties` is an `ExtraPropertiesBag` in BO ObjectModel and FO lazy arrays alike (both bag levels implement `ArrayAccess` + `JsonSerializable`).
+
+The `extra_properties` array index is **opt-in**: it is registered manually when `initExtraPropertiesBag()` is called (no auto-registration via `LazyArrayAttribute`), so lazy arrays that never initialize the bag (e.g. `OrderSubtotalLazyArray`) have no such key at all — generic templates iterating every entry never meet a non-printable bag object.
+
+`ObjectPresenter::present()` also sets the `extra_properties` key on the plain arrays it produces (e.g. the Smarty `$customer`, `$country`, `$language` globals built by `FrontController`), so entities presented as arrays keep their extra properties too.
 
 ### 5.2. ObjectModel Integration
 
@@ -634,7 +642,7 @@ $product->extra_properties['mymodule']['video_link'] = '...'   // write + mark d
 
 Persistence via `persistExtraProperties()` (called from `add()`/`update()` after `actionObject*After` hooks): iterates definitions to compute scope routing, then delegates to `ExtraPropertyWriterInterface::writeAll()` with `ShopConstraint` from `Context::getContext()->getShopConstraint()`. Multi-shop persistence iterates `$this->id_shop_list` for shop-scoped fields.
 
-`$this->lang` is passed as `$langId` to the reader so lang-scope fields return a scalar for a specific language (FO) or the full `[id_lang => value]` array when null (BO programmatic access).
+`$this->id_lang` is passed as the bag `$langId` when the ObjectModel was constructed with a language (lang-scope fields return a scalar for that language — FO pattern), and `null` otherwise (full `[id_lang => value]` arrays — BO/programmatic access, enabling read-modify-save of all languages at once).
 
 ### 5.3. Front-Office Template Access
 
@@ -774,7 +782,7 @@ SELECT aliases follow `ExtraPropertyDefinition::getFormFieldName()`: `extra_{sco
 1. **Definition caching**: `CachedExtraPropertyDefinitionRepository` uses a `FilesystemAdapter` pool. Cache is invalidated on every write (`save`, `delete`, `deleteByDefinition`). The BO container overrides `ExtraPropertyDefinitionWriterInterface` → `CachedExtraPropertyDefinitionRepository` so that write operations in BO also invalidate the cache.
 2. **Lazy loading in ObjectModel**: Extra properties are NOT loaded on object construction. They are loaded on first `extra_properties` access.
 3. **No-op when unused**: Reader checks definitions first; returns `[]` immediately without DB query when none exist.
-4. **FO whitelist pre-check**: `ExtraPropertiesLazyArray::getValues()` calls `filterForFrontOffice()` before querying values — skips the reader entirely when no FO fields are registered. The pre-filtered collection is passed directly to the reader, avoiding a redundant fetch inside it.
+4. **FO whitelist pre-check**: `ExtraPropertiesBag::createForEntity(..., forFrontOffice: true)` chains `filterForFrontOffice()` before querying values — skips the reader entirely when no FO fields are registered. The pre-filtered collection is passed directly to the reader, avoiding a redundant fetch inside it.
 5. **Bulk reading in grids**: `ExtraPropertiesGridQueryBuilderModifier` adds LEFT JOINs to existing grid queries — no N+1 problem.
 6. **Column-based storage**: Unlike EAV meta tables, extra properties are stored as columns — enables SQL indexing, no row multiplication.
 7. **No DDL cache**: `ExtraPropertySchemaManager` performs no internal caching — DDL operations are rare (install/uninstall only) and always reflect current DB state.

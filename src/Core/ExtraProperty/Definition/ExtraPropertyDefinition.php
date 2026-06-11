@@ -182,7 +182,11 @@ final class ExtraPropertyDefinition
     /**
      * Builds an instance from a raw registry DB row.
      *
-     * Fields not stored in the registry (nullable, enumValues) receive safe defaults.
+     * nullable and enumValues are not persisted in the registry table: the live DB schema of
+     * the storage column is their source of truth. The repository injects them into the row
+     * under the synthetic 'nullable' and 'enum_values' keys (see
+     * ExtraPropertyDefinitionRepository::enrichRowsWithColumnMetadata()). When the keys are
+     * absent (e.g. storage column not created yet), safe defaults apply (nullable, no enum).
      *
      * @param array<string, mixed> $row
      *
@@ -213,9 +217,9 @@ final class ExtraPropertyDefinition
             type: $type,
             scope: ExtraPropertyScope::from((string) ($row['scope'] ?? ExtraPropertyScope::COMMON->value)),
             moduleName: isset($row['module_name']) && '' !== $row['module_name'] ? (string) $row['module_name'] : null,
-            enumValues: null,
+            enumValues: isset($row['enum_values']) && is_array($row['enum_values']) && [] !== $row['enum_values'] ? array_values($row['enum_values']) : null,
             defaultValue: null !== $rawDefaultValue ? ExtraPropertyValueCaster::castScalarFromDb($type, $rawDefaultValue) : null,
-            nullable: true,
+            nullable: !array_key_exists('nullable', $row) || (bool) $row['nullable'],
             formRequired: !empty($row['form_required']),
             size: isset($row['size']) && '' !== $row['size'] ? (int) $row['size'] : null,
             sqlIndex: ExtraPropertySqlIndex::from((string) ($row['sql_index'] ?? ExtraPropertySqlIndex::NONE->value)),

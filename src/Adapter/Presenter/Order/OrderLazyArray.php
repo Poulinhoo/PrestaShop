@@ -26,7 +26,6 @@ use PrestaShop\PrestaShop\Adapter\Presenter\LazyArrayAttribute;
 use PrestaShop\PrestaShop\Adapter\Presenter\Object\ObjectPresenter;
 use PrestaShop\PrestaShop\Adapter\Product\PriceFormatter;
 use PrestaShop\PrestaShop\Adapter\Shipment\ShipmentTotalsCalculatorInterface;
-use PrestaShop\PrestaShop\Core\ExtraProperty\Value\ExtraPropertiesLazyArray;
 use PrestaShop\PrestaShop\Core\Util\ColorBrightnessCalculator;
 use PrestaShopBundle\Entity\Repository\ShipmentRepository;
 use PrestaShopBundle\Entity\ShipmentProduct;
@@ -84,7 +83,7 @@ class OrderLazyArray extends AbstractLazyArray
         $containerFinder = new ContainerFinder(Context::getContext());
         $this->shipmentRepository = $containerFinder->getContainer()->get(ShipmentRepository::class);
         $this->shipmentTotalCalculator = $containerFinder->getContainer()->get(ShipmentTotalsCalculatorInterface::class);
-        $this->extraPropertiesLazyArray = ExtraPropertiesLazyArray::fromObjectModel($order);
+        $this->initExtraPropertiesBag(Order::class, (int) $order->id, (int) $order->id_lang ?: null);
 
         parent::__construct();
     }

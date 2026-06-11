@@ -11,7 +11,6 @@ use PrestaShop\PrestaShop\Core\ExtraProperty\Definition\ExtraPropertyDefinitionC
 use PrestaShop\PrestaShop\Core\ExtraProperty\Definition\ExtraPropertyDefinitionRepositoryInterface;
 use PrestaShop\PrestaShop\Core\ExtraProperty\Validation\ExtraPropertyValidationInterface;
 use PrestaShop\PrestaShop\Core\ExtraProperty\Value\ExtraPropertiesBag;
-use PrestaShop\PrestaShop\Core\ExtraProperty\Value\ExtraPropertyReaderInterface;
 use PrestaShop\PrestaShop\Core\ExtraProperty\Value\ExtraPropertyWriterInterface;
 use PrestaShop\PrestaShop\Core\Image\ImageFormatConfiguration;
 use PrestaShopBundle\Translation\TranslatorComponent;
@@ -606,7 +605,7 @@ abstract class ObjectModelCore implements PrestaShop\PrestaShop\Core\Foundation\
 
         $extraResult = true;
         if ($result) {
-            $extraResult = $this->persistExtraProperties($null_values);
+            $extraResult = $this->persistExtraProperties();
         }
 
         // @hook actionObject<ObjectClassName>AddAfter — runs even if extra persistence fails.
@@ -838,7 +837,7 @@ abstract class ObjectModelCore implements PrestaShop\PrestaShop\Core\Foundation\
 
         $extraResult = true;
         if ($result) {
-            $extraResult = $this->persistExtraProperties($null_values);
+            $extraResult = $this->persistExtraProperties();
         }
 
         // @hook actionObject<ObjectClassName>UpdateAfter — runs even if extra persistence fails.
@@ -2229,32 +2228,27 @@ abstract class ObjectModelCore implements PrestaShop\PrestaShop\Core\Foundation\
      * Builds the ExtraPropertiesBag with a loader closure that reads values from the DB.
      *
      * The loader returns grouped data (module => [field => value]) which the bag
-     * wraps in ModuleFieldsBag instances. Lang fields carry [id_lang => value] arrays.
+     * wraps in ModuleFieldsBag instances. The bag langId follows the ObjectModel
+     * semantics: when the instance was constructed with a langId, lang fields are
+     * scalars for that language; without one, they carry [id_lang => value] arrays
+     * (allowing all languages to be read, modified and saved in one go).
+     *
+     * On front-office requests (see Context::isFrontOfficeContext()) the bag is built with
+     * forFrontOffice: true so displayFront=false fields are filtered out natively.
+     * Everywhere else (BO, CLI, API, programmatic access) the bag is unfiltered.
      *
      * @return ExtraPropertiesBag
      */
     private function createExtraPropertiesBag(): ExtraPropertiesBag
     {
-        return new ExtraPropertiesBag(function (): array {
-            if ((int) $this->id <= 0 || empty($this->def['table'])) {
-                return [];
-            }
-
-            /** @var ExtraPropertyReaderInterface|null $reader */
-            $reader = self::findService(ExtraPropertyReaderInterface::class);
-            if (!$reader) {
-                return [];
-            }
-
-            return $reader->getExtraProperties(
-                $this->def['table'],
-                $this->def['primary'],
-                (int) $this->id,
-                null,
-                Context::getContext()->getShopConstraint(),
-                (bool) $this->isLangMultishop()
-            );
-        });
+        return ExtraPropertiesBag::createForEntity(
+            static::findContainer(),
+            static::class,
+            (int) $this->id,
+            (int) $this->id_lang > 0 ? (int) $this->id_lang : null,
+            Context::getContext()->getShopConstraint(),
+            forFrontOffice: Context::isFrontOfficeContext()
+        );
     }
 
     /**
@@ -2291,11 +2285,13 @@ abstract class ObjectModelCore implements PrestaShop\PrestaShop\Core\Foundation\
      * Uses ExtraPropertyWriterInterface via ContainerFinder (Symfony service,
      * available in both FO and BO contexts via common.yml).
      *
-     * @param bool $nullValues
+     * Null handling follows the definition's nullable flag (deduced from the storage
+     * column schema by the definition repository): NULL is persisted as-is for nullable
+     * fields, and skipped for NOT NULL columns (the SQL default applies on first insert).
      *
      * @return bool
      */
-    protected function persistExtraProperties(bool $nullValues = false): bool
+    protected function persistExtraProperties(): bool
     {
         if (empty($this->def['table']) || (int) $this->id <= 0) {
             return true;
@@ -2324,12 +2320,10 @@ abstract class ObjectModelCore implements PrestaShop\PrestaShop\Core\Foundation\
                 continue;
             }
             $value = $modifiedValues[$columnName];
-            if ($nullValues && '' === $value) {
-                $value = null;
-            }
-            // When nullValues=false (default), do not persist explicit NULLs.
-            // This avoids inserting NULL into NOT NULL columns and lets SQL defaults apply on first insert.
-            if (null === $value && !$nullValues) {
+            $isNullable = $definition->isNullable();
+            // NULL is a legitimate value for nullable columns; for NOT NULL columns it is
+            // skipped so the SQL default applies on first insert.
+            if (null === $value && !$isNullable) {
                 continue;
             }
 
@@ -2337,9 +2331,10 @@ abstract class ObjectModelCore implements PrestaShop\PrestaShop\Core\Foundation\
                 // B5: accept [id_lang => value] arrays (multi-lang) or scalar (current lang only).
                 if (is_array($value)) {
                     foreach ($value as $langId => $langVal) {
-                        if ((int) $langId > 0) {
-                            $langValuesByIdLang[(int) $langId][$columnName] = $langVal;
+                        if ((int) $langId <= 0 || (null === $langVal && !$isNullable)) {
+                            continue;
                         }
+                        $langValuesByIdLang[(int) $langId][$columnName] = $langVal;
                     }
                 } else {
                     $langId = $this->resolveCurrentLangId();

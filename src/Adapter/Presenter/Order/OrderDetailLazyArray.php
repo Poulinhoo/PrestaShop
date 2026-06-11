@@ -15,7 +15,6 @@ use HistoryController;
 use Order;
 use PrestaShop\PrestaShop\Adapter\Presenter\AbstractLazyArray;
 use PrestaShop\PrestaShop\Adapter\Presenter\LazyArrayAttribute;
-use PrestaShop\PrestaShop\Core\ExtraProperty\Value\ExtraPropertiesLazyArray;
 use PrestaShop\PrestaShop\Core\Localization\LocaleInterface;
 use PrestaShopBundle\Entity\Repository\ShipmentRepository;
 use PrestaShopBundle\Translation\TranslatorComponent;
@@ -58,7 +57,7 @@ class OrderDetailLazyArray extends AbstractLazyArray
         $this->translator = Context::getContext()->getTranslator();
         $this->locale = $this->context->getCurrentLocale();
         $this->shipmentRepository = $shipmentRepository;
-        $this->extraPropertiesLazyArray = ExtraPropertiesLazyArray::fromObjectModel($order);
+        $this->initExtraPropertiesBag(Order::class, (int) $order->id, (int) $order->id_lang ?: null);
         parent::__construct();
     }
 

@@ -285,6 +285,27 @@ class ContextCore
     }
 
     /**
+     * Returns true when the current request is a front-office one.
+     *
+     * Based on the context controller type ('front'/'modulefront'). When the controller
+     * is not (yet) available, falls back to the _PS_FRONT_DIR_ constant, which is only
+     * defined by the FO entry point.
+     *
+     * Used to decide whether extra properties must be filtered on displayFront
+     * (see ExtraPropertiesBag::createForEntity()).
+     *
+     * @return bool
+     */
+    public static function isFrontOfficeContext(): bool
+    {
+        $controllerType = static::getContext()->controller->controller_type ?? null;
+
+        return null !== $controllerType
+            ? in_array($controllerType, ['front', 'modulefront'], true)
+            : defined('_PS_FRONT_DIR_');
+    }
+
+    /**
      * Updates customer in the context, updates the cookie and writes the updated cookie.
      *
      * @param Customer $customer Created customer

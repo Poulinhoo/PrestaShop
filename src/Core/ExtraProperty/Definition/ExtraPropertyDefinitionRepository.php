@@ -11,6 +11,7 @@ namespace PrestaShop\PrestaShop\Core\ExtraProperty\Definition;
 
 use Doctrine\DBAL\Connection;
 use Doctrine\DBAL\Query\QueryBuilder;
+use Throwable;
 
 /**
  * Reads and writes extra property definitions in the extra_property_definition registry table.
@@ -40,7 +41,7 @@ class ExtraPropertyDefinitionRepository implements ExtraPropertyDefinitionReposi
             ->from($table, 'eef')
             ->orderBy('eef.id_extra_property_definition', 'ASC');
 
-        $rows = $qb->executeQuery()->fetchAllAssociative() ?: [];
+        $rows = $this->enrichRowsWithColumnMetadata($qb->executeQuery()->fetchAllAssociative() ?: []);
 
         return new ExtraPropertyDefinitionCollection(array_values(array_map(
             static fn (array $row): ExtraPropertyDefinition => ExtraPropertyDefinition::fromRow($row),
@@ -68,8 +69,11 @@ class ExtraPropertyDefinitionRepository implements ExtraPropertyDefinitionReposi
         $this->applyModuleNameFilter($qb, $moduleName, 'eef');
 
         $row = $qb->executeQuery()->fetchAssociative();
+        if (!is_array($row)) {
+            return null;
+        }
 
-        return is_array($row) ? ExtraPropertyDefinition::fromRow($row) : null;
+        return ExtraPropertyDefinition::fromRow($this->enrichRowsWithColumnMetadata([$row])[0]);
     }
 
     /**
@@ -196,5 +200,102 @@ class ExtraPropertyDefinitionRepository implements ExtraPropertyDefinitionReposi
         } else {
             $qb->andWhere($column . ' IS NULL');
         }
+    }
+
+    /**
+     * Enriches registry rows with the synthetic 'nullable' and 'enum_values' keys, deduced
+     * from the live DB structure of each definition's storage column. These two attributes
+     * are not persisted in the registry table: the extra table schema is their source of
+     * truth (NULL/NOT NULL clause, ENUM literals for CHOICE columns).
+     *
+     * One SHOW COLUMNS query per distinct extra table; getAllDefinitions() results are cached
+     * by CachedExtraPropertyDefinitionRepository, so the introspection cost is amortized.
+     * Rows whose storage column does not exist (yet) are left untouched — fromRow() then
+     * applies its safe defaults (nullable, no enum).
+     *
+     * @param array<int, array<string, mixed>> $rows
+     *
+     * @return array<int, array<string, mixed>>
+     */
+    protected function enrichRowsWithColumnMetadata(array $rows): array
+    {
+        $columnsByTable = [];
+
+        foreach ($rows as &$row) {
+            $scope = ExtraPropertyScope::tryFrom((string) ($row['scope'] ?? '')) ?? ExtraPropertyScope::COMMON;
+            $tableName = $this->prefix . ExtraPropertyDefinition::buildExtraTableName((string) ($row['entity_name'] ?? ''), $scope);
+            $columnName = ExtraPropertyDefinition::buildStorageColumnName(
+                isset($row['module_name']) && '' !== $row['module_name'] ? (string) $row['module_name'] : null,
+                (string) ($row['property_name'] ?? '')
+            );
+
+            if (!array_key_exists($tableName, $columnsByTable)) {
+                $columnsByTable[$tableName] = $this->fetchColumnMetadata($tableName);
+            }
+
+            $columnMetadata = $columnsByTable[$tableName][$columnName] ?? null;
+            if (null === $columnMetadata) {
+                continue;
+            }
+
+            $row['nullable'] = $columnMetadata['nullable'];
+            $row['enum_values'] = $columnMetadata['enum_values'];
+        }
+
+        return $rows;
+    }
+
+    /**
+     * Introspects an extra table and returns nullability + ENUM literals per column.
+     *
+     * Returns an empty array when the table does not exist (no extra property value was
+     * ever registered for that entity/scope combination yet).
+     *
+     * @param string $tableName Full table name (with prefix)
+     *
+     * @return array<string, array{nullable: bool, enum_values: list<string>|null}> keyed by column name
+     */
+    protected function fetchColumnMetadata(string $tableName): array
+    {
+        try {
+            $columns = $this->connection->fetchAllAssociative(
+                'SHOW COLUMNS FROM ' . $this->connection->quoteIdentifier($tableName)
+            );
+        } catch (Throwable) {
+            return [];
+        }
+
+        $metadata = [];
+        foreach ($columns as $column) {
+            $metadata[(string) $column['Field']] = [
+                'nullable' => 'YES' === strtoupper((string) ($column['Null'] ?? 'YES')),
+                'enum_values' => self::parseEnumValues((string) ($column['Type'] ?? '')),
+            ];
+        }
+
+        return $metadata;
+    }
+
+    /**
+     * Extracts the literals of a SQL ENUM column type, e.g. "enum('a','b')" → ['a', 'b'].
+     *
+     * Returns null for any non-ENUM column type.
+     *
+     * @return list<string>|null
+     */
+    protected static function parseEnumValues(string $sqlColumnType): ?array
+    {
+        if (!str_starts_with(strtolower($sqlColumnType), 'enum(')) {
+            return null;
+        }
+
+        // Literals are single-quoted; embedded quotes are doubled ('').
+        preg_match_all("/'((?:[^']|'')*)'/", $sqlColumnType, $matches);
+        $values = array_map(
+            static fn (string $value): string => str_replace("''", "'", $value),
+            $matches[1]
+        );
+
+        return [] !== $values ? array_values($values) : null;
     }
 }

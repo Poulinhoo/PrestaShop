@@ -7,6 +7,7 @@
 namespace Tests\Unit\Adapter\Presenter;
 
 use PHPUnit\Framework\TestCase;
+use PrestaShop\PrestaShop\Core\ExtraProperty\Value\ExtraPropertiesBag;
 
 class LazyArrayTest extends TestCase
 {
@@ -19,7 +20,7 @@ class LazyArrayTest extends TestCase
         $test->getPropertyOne();
 
         $this->assertTrue($test->wasPropertyOneCalled());
-        $this->assertEquals(2, $test->count());
+        $this->assertEquals(1, $test->count());
     }
 
     public function testAppendArray()
@@ -27,8 +28,34 @@ class LazyArrayTest extends TestCase
         $test = new LazyArrayImplementation();
         $test->appendArray(['a' => 1]);
 
-        $this->assertEquals(3, $test->count());
+        $this->assertEquals(2, $test->count());
         $this->assertEquals(1, $test['a']);
+    }
+
+    public function testExtraPropertiesIndexAbsentWithoutBagInitialization()
+    {
+        $test = new LazyArrayImplementation();
+
+        $this->assertFalse(isset($test['extra_properties']));
+        foreach ($test as $key => $value) {
+            $this->assertNotSame('extra_properties', $key);
+        }
+    }
+
+    public function testExtraPropertiesIndexExposedWhenBagIsInitialized()
+    {
+        $test = new class() extends LazyArrayImplementation {
+            public function __construct()
+            {
+                // Mimics the presenter pattern: bag set before parent::__construct().
+                $this->extraPropertiesBag = new ExtraPropertiesBag(static fn (): array => []);
+                parent::__construct();
+            }
+        };
+
+        $this->assertTrue(isset($test['extra_properties']));
+        $this->assertInstanceOf(ExtraPropertiesBag::class, $test['extra_properties']);
+        $this->assertEquals(2, $test->count());
     }
 
     public function testBasicAppendClosureArray()
@@ -42,7 +69,7 @@ class LazyArrayTest extends TestCase
             return $counter;
         });
 
-        $this->assertEquals(3, $test->count());
+        $this->assertEquals(2, $test->count());
 
         $this->assertEquals(1, $test['a']);
         // as result is stored in cache, next call does not increment the counter
@@ -60,7 +87,7 @@ class LazyArrayTest extends TestCase
             return $dummyLog->getPingCounter();
         });
 
-        $this->assertEquals(3, $test->count());
+        $this->assertEquals(2, $test->count());
         $this->assertEquals(1, $test['b']);
         // as result is stored in cache, next call does not perform a ping
         $this->assertEquals(1, $test['b']);

@@ -13,6 +13,11 @@ use ArrayIterator;
 use Closure;
 use IteratorAggregate;
 use JsonSerializable;
+use ObjectModel;
+use PrestaShop\PrestaShop\Core\Domain\Shop\ValueObject\ShopConstraint;
+use PrestaShop\PrestaShop\Core\ExtraProperty\Definition\ExtraPropertyDefinitionRepositoryInterface;
+use Symfony\Component\DependencyInjection\ContainerInterface;
+use Throwable;
 use Traversable;
 
 /**
@@ -35,6 +40,71 @@ final class ExtraPropertiesBag implements ArrayAccess, IteratorAggregate, JsonSe
 
     public function __construct(private readonly Closure $loader)
     {
+    }
+
+    /**
+     * Builds a bag whose loader reads extra property values for one entity row.
+     *
+     * The container is resolved by the caller (e.g. ObjectModel::findContainer() in legacy
+     * code, ContainerFinder in Adapter presenters) so this namespace stays free of legacy
+     * Context lookups. All guards live inside the loader closure: construction is cheap,
+     * never throws, and any invalid state resolves to an empty bag on first access.
+     *
+     * @param ContainerInterface|null $container Null = no-op bag (container unavailable)
+     * @param class-string<ObjectModel> $objectModelClassName
+     * @param int $entityId Entity row id; <= 0 = no-op bag (not persisted yet)
+     * @param int|null $langId Null fetches all languages (lang-keyed arrays), as used by ObjectModel/BO
+     * @param ShopConstraint $shopConstraint Shop context — determines which row to read
+     * @param bool $forFrontOffice When true (default, consistent with ExtraPropertyDefinition::$displayFront),
+     *                             only display_front definitions are read; BO callers pass false
+     */
+    public static function createForEntity(
+        ?ContainerInterface $container,
+        string $objectModelClassName,
+        int $entityId,
+        ?int $langId,
+        ShopConstraint $shopConstraint,
+        bool $forFrontOffice = true,
+    ): self {
+        return new self(static function () use ($container, $objectModelClassName, $entityId, $langId, $shopConstraint, $forFrontOffice): array {
+            if (null === $container || $entityId <= 0 || !is_subclass_of($objectModelClassName, ObjectModel::class)) {
+                return [];
+            }
+
+            $def = ObjectModel::getDefinition($objectModelClassName);
+            if (!is_array($def) || empty($def['table']) || empty($def['primary'])) {
+                return [];
+            }
+
+            try {
+                /** @var ExtraPropertyReaderInterface $reader */
+                $reader = $container->get(ExtraPropertyReaderInterface::class);
+                /** @var ExtraPropertyDefinitionRepositoryInterface $repository */
+                $repository = $container->get(ExtraPropertyDefinitionRepositoryInterface::class);
+            } catch (Throwable) {
+                // Legacy FO container may not expose the extra property services.
+                return [];
+            }
+
+            $definitions = $repository->getAllDefinitions()->filterByEntity((string) $def['table']);
+            if ($forFrontOffice) {
+                $definitions = $definitions->filterForFrontOffice();
+            }
+            // X2: skip the DB read entirely when no matching fields are registered.
+            if ($definitions->isEmpty()) {
+                return [];
+            }
+
+            return $reader->getExtraProperties(
+                (string) $def['table'],
+                (string) $def['primary'],
+                $entityId,
+                $langId,
+                $shopConstraint,
+                ObjectModel::isClassLangMultishop($objectModelClassName),
+                $definitions
+            );
+        });
     }
 
     private function ensureLoaded(): void

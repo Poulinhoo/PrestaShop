@@ -21,7 +21,6 @@ use PrestaShop\PrestaShop\Adapter\Presenter\Product\ProductLazyArray;
 use PrestaShop\PrestaShop\Adapter\Presenter\Product\ProductListingLazyArray;
 use PrestaShop\PrestaShop\Adapter\Product\PriceFormatter;
 use PrestaShop\PrestaShop\Adapter\Product\ProductColorsRetriever;
-use PrestaShop\PrestaShop\Core\ExtraProperty\Value\ExtraPropertiesLazyArray;
 use Symfony\Contracts\Translation\TranslatorInterface;
 use Tools;
 
@@ -75,7 +74,7 @@ class CartLazyArray extends AbstractLazyArray
         $this->shouldSeparateGifts = $shouldSeparateGifts;
         $this->cart = $cart;
         $this->cartPresenter = $cartPresenter;
-        $this->extraPropertiesLazyArray = ExtraPropertiesLazyArray::fromObjectModel($cart);
+        $this->initExtraPropertiesBag(Cart::class, (int) $cart->id, (int) $cart->id_lang ?: null);
         $context = Context::getContext();
         $this->translator = $context->getTranslator();
         $this->link = $context->link;

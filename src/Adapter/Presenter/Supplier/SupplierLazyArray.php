@@ -11,7 +11,6 @@ use Link;
 use PrestaShop\PrestaShop\Adapter\Image\ImageRetriever;
 use PrestaShop\PrestaShop\Adapter\Presenter\AbstractLazyArray;
 use PrestaShop\PrestaShop\Adapter\Presenter\LazyArrayAttribute;
-use PrestaShop\PrestaShop\Core\ExtraProperty\Value\ExtraPropertiesLazyArray;
 use Supplier;
 
 class SupplierLazyArray extends AbstractLazyArray
@@ -46,9 +45,10 @@ class SupplierLazyArray extends AbstractLazyArray
         $this->language = $language;
         $this->imageRetriever = $imageRetriever;
         $this->link = $link;
-        $this->extraPropertiesLazyArray = ExtraPropertiesLazyArray::fromObjectModelClass(
+        $this->initExtraPropertiesBag(
             Supplier::class,
-            (int) ($this->supplier['id_supplier'] ?? $this->supplier['id'] ?? 0)
+            (int) ($this->supplier['id_supplier'] ?? $this->supplier['id'] ?? 0),
+            $language->getId()
         );
 
         parent::__construct();

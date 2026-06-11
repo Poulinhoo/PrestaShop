@@ -10,7 +10,6 @@ use Link;
 use OrderReturn;
 use PrestaShop\PrestaShop\Adapter\Presenter\AbstractLazyArray;
 use PrestaShop\PrestaShop\Adapter\Presenter\LazyArrayAttribute;
-use PrestaShop\PrestaShop\Core\ExtraProperty\Value\ExtraPropertiesLazyArray;
 use PrestaShopException;
 use ReflectionException;
 use Tools;
@@ -44,7 +43,7 @@ class OrderReturnLazyArray extends AbstractLazyArray
         $this->prefix = $prefix;
         $this->link = $link;
         $this->orderReturn = $orderReturn;
-        $this->extraPropertiesLazyArray = ExtraPropertiesLazyArray::fromObjectModelClass(
+        $this->initExtraPropertiesBag(
             OrderReturn::class,
             (int) ($this->orderReturn['id_order_return'] ?? 0)
         );
