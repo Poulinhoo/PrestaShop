@@ -6384,16 +6384,16 @@
         },
         {
             "name": "prestashop/ps_newproducts",
-            "version": "v2.0.0",
+            "version": "v2.0.1",
             "source": {
                 "type": "git",
                 "url": "https://github.com/PrestaShop/ps_newproducts.git",
-                "reference": "001719211d2cb6847c33458ad64bef056017f0ba"
+                "reference": "ebfc0dd2a838f2ea8ceeb7f6aa5638c1aff99611"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/PrestaShop/ps_newproducts/zipball/001719211d2cb6847c33458ad64bef056017f0ba",
-                "reference": "001719211d2cb6847c33458ad64bef056017f0ba",
+                "url": "https://api.github.com/repos/PrestaShop/ps_newproducts/zipball/ebfc0dd2a838f2ea8ceeb7f6aa5638c1aff99611",
+                "reference": "ebfc0dd2a838f2ea8ceeb7f6aa5638c1aff99611",
                 "shasum": ""
             },
             "require": {
@@ -6417,9 +6417,9 @@
             "homepage": "https://github.com/PrestaShop/ps_newproducts",
             "support": {
                 "issues": "https://github.com/PrestaShop/ps_newproducts/issues",
-                "source": "https://github.com/PrestaShop/ps_newproducts/tree/v2.0.0"
+                "source": "https://github.com/PrestaShop/ps_newproducts/tree/v2.0.1"
             },
-            "time": "2026-04-16T13:22:45+00:00"
+            "time": "2026-06-07T18:46:03+00:00"
         },
         {
             "name": "prestashop/ps_searchbar",
@@ -18422,7 +18422,7 @@
     ],
     "aliases": [],
     "minimum-stability": "dev",
-    "stability-flags": {},
+    "stability-flags": [],
     "prefer-stable": true,
     "prefer-lowest": false,
     "platform": {
@@ -18439,9 +18439,9 @@
         "ext-simplexml": "*",
         "ext-zip": "*"
     },
-    "platform-dev": {},
+    "platform-dev": [],
     "platform-overrides": {
         "php": "8.1.0"
     },
-    "plugin-api-version": "2.9.0"
+    "plugin-api-version": "2.2.0"
 }
