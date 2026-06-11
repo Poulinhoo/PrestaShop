@@ -179,7 +179,7 @@
               </h4>
             </div>
             <div class="modal-body">
-              <div class="alert alert-danger hidden" role="alert" id="quick-access-add-error"></div>
+              <div class="hidden" role="alert" id="quick-access-add-error"></div>
               <div class="form-group" id="quick-access-name-group">
                 <label for="quick-access-name">
                   {l s='Shortcut name' d='Admin.Navigation.Header'}

@@ -51,7 +51,7 @@ export default class Header {
         const resetErrors = (): void => {
           $nameGroup.removeClass('has-error');
           $nameError.removeClass('d-inline-block').addClass('d-none').find('.js-error-text').text('');
-          $modalError.addClass('d-none').find('.alert-text').text('');
+          $modalError.removeClass('alert alert-danger').addClass('d-none').find('.alert-text').text('');
         };
 
         $modal.one('hidden.bs.modal', resetErrors);
@@ -75,7 +75,7 @@ export default class Header {
           this.doQuickLinkAction($link, method, name, newWindow, {
             onSuccess: () => $modal.modal('hide'),
             onError: (messages: string[]) => {
-              $modalError.removeClass('d-none').find('.alert-text').text(messages.join(' '));
+              $modalError.addClass('alert alert-danger').removeClass('d-none').find('.alert-text').text(messages.join(' '));
             },
           });
         });

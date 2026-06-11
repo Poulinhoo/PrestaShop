@@ -310,7 +310,7 @@ $(() => {
       const resetErrors = () => {
         $nameGroup.removeClass('has-error');
         $nameError.addClass('hidden').text('');
-        $modalError.addClass('hidden').text('');
+        $modalError.removeClass('alert alert-danger').addClass('hidden').text('');
       };
 
       $modal.one('hidden.bs.modal', resetErrors);
@@ -332,7 +332,7 @@ $(() => {
         doQuickLinkAjax($link, method, name, newWindow, {
           onSuccess: () => $modal.modal('hide'),
           onError: (messages) => {
-            $modalError.text(messages.join(' ')).removeClass('hidden');
+            $modalError.addClass('alert alert-danger').text(messages.join(' ')).removeClass('hidden');
           },
         });
       });
