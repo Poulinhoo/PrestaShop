@@ -92,14 +92,14 @@ describe('BO - Community : Wall of Fame - Top Contributors', async () => {
       await boWallOfFamePage.clickContributorActionButton(page, 'Progi1984');
 
       const name = await boWallOfFamePage.getContributorModalName(page);
-      expect(name.length, 'Modal should display the contributor name').to.be.gt(0);
+      expect(name, 'Modal should display the contributor name').to.contains('Progi1984');
     });
 
     it('should check the GitHub username is displayed in the modal', async function () {
       await testContext.addContextItem(this, 'testIdentifier', 'checkContributorModalUsername', baseContext);
 
       const username = await boWallOfFamePage.getContributorModalGitHubUsername(page);
-      expect(username, 'Modal should display the GitHub username').to.contains('Progi1984');
+      expect(username, 'Modal should display the GitHub username').to.contains('lefevre.dev');
     });
 
     it('should check the avatar is visible in the modal', async function () {
