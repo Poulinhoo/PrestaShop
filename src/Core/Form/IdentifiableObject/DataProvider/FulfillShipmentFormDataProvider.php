@@ -13,7 +13,7 @@ use PrestaShop\PrestaShop\Core\Domain\Shipment\Query\GetShipmentForEditing;
 use PrestaShop\PrestaShop\Core\Domain\Shipment\QueryResult\ShipmentForEditing;
 use Symfony\Component\HttpFoundation\RequestStack;
 
-class EditShipmentFormDataProvider implements FormDataProviderInterface
+class FulfillShipmentFormDataProvider implements FormDataProviderInterface
 {
     public function __construct(
         private CommandBusInterface $queryBus,

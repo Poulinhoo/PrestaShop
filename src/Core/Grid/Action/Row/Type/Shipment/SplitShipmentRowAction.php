@@ -11,14 +11,14 @@ namespace PrestaShop\PrestaShop\Core\Grid\Action\Row\Type\Shipment;
 use PrestaShop\PrestaShop\Core\Grid\Action\Row\AbstractRowAction;
 use Symfony\Component\OptionsResolver\OptionsResolver;
 
-final class EditShipmentRowAction extends AbstractRowAction
+final class SplitShipmentRowAction extends AbstractRowAction
 {
     /**
      * {@inheritdoc}
      */
     public function getType()
     {
-        return 'edit_shipment_row_action';
+        return 'split_shipment_row_action';
     }
 
     /**
@@ -26,11 +26,15 @@ final class EditShipmentRowAction extends AbstractRowAction
      */
     public function isApplicable(array $record): bool
     {
+        $options = $this->getOptions();
+        $itemsField = $options['items'];
+
         if ($this->shipmentIsPacked($record)) {
             return false;
         }
 
-        return true;
+        // Show split action only if items > 1
+        return !empty($record[$itemsField]) && (int) $record[$itemsField] > 1;
     }
 
     private function shipmentIsPacked(array $record): bool
@@ -49,12 +53,14 @@ final class EditShipmentRowAction extends AbstractRowAction
             ->setRequired([
                 'shipment_id_field',
                 'order_id_field',
-                'tracking_number',
-                'carrier',
+                'items',
+            ])
+            ->setDefaults([
+                'total_shipments' => null,
             ])
             ->setAllowedTypes('shipment_id_field', 'string')
-            ->setAllowedTypes('order_id_field', 'string')
-            ->setAllowedTypes('tracking_number', 'string')
-            ->setAllowedTypes('carrier', 'string');
+            ->setAllowedTypes('items', 'string')
+            ->setAllowedTypes('total_shipments', ['string', 'null'])
+            ->setAllowedTypes('order_id_field', 'string');
     }
 }

@@ -8,29 +8,25 @@ declare(strict_types=1);
 
 namespace PrestaShop\PrestaShop\Adapter\Shipment\CommandHandler;
 
-use PrestaShop\PrestaShop\Adapter\Configuration as AdapterConfiguration;
-use PrestaShop\PrestaShop\Adapter\Shipment\ShipmentShippingCostUpdater;
+use DateTime;
 use PrestaShop\PrestaShop\Core\CommandBus\Attributes\AsCommandHandler;
-use PrestaShop\PrestaShop\Core\Domain\Shipment\Command\EditShipment;
-use PrestaShop\PrestaShop\Core\Domain\Shipment\CommandHandler\EditShipmentHandlerInterface;
+use PrestaShop\PrestaShop\Core\Domain\Shipment\Command\FulfillShipmentCommand;
+use PrestaShop\PrestaShop\Core\Domain\Shipment\CommandHandler\FulfillShipmentCommandHandlerInterface;
 use PrestaShop\PrestaShop\Core\Domain\Shipment\Exception\CannotSaveShipmentException;
 use PrestaShop\PrestaShop\Core\Domain\Shipment\Exception\ShipmentNotFoundException;
 use PrestaShopBundle\Entity\Repository\ShipmentRepository;
-use PrestaShopBundle\Entity\Shipment;
 use Symfony\Contracts\Translation\TranslatorInterface;
 use Throwable;
 
 /**
- * Edit shipment
+ * Fulfill shipment by assigning the tracking number and marking it as packed
  */
 #[AsCommandHandler]
-class EditShipmentHandler implements EditShipmentHandlerInterface
+class FulfillShipmentCommandHandler implements FulfillShipmentCommandHandlerInterface
 {
     public function __construct(
         private readonly ShipmentRepository $shipmentRepository,
         private TranslatorInterface $translator,
-        private ShipmentShippingCostUpdater $shipmentShippingCostUpdater,
-        private AdapterConfiguration $configuration,
     ) {
     }
 
@@ -40,27 +36,14 @@ class EditShipmentHandler implements EditShipmentHandlerInterface
      * @throws ShipmentNotFoundException
      * @throws CannotSaveShipmentException
      */
-    public function handle(EditShipment $command): void
+    public function handle(FulfillShipmentCommand $command): void
     {
         $shipmentId = $command->getShipmentId()->getValue();
-        $carrierId = $command->getCarrierId()->getValue();
+        $trackingNumber = $command->getTrackingNumber()->getValue();
 
-        try {
-            /** @var Shipment|null $shipment */
-            $shipment = $this->shipmentRepository->findOneBy(['id' => $shipmentId]);
-        } catch (Throwable $e) {
-            throw new ShipmentNotFoundException(
-                $this->translator->trans(
-                    'Could not find shipment with id "%id%".',
-                    ['%id%' => $shipmentId],
-                    'Admin.Shipment.Error'
-                ),
-                0,
-                $e
-            );
-        }
+        $shipment = $this->shipmentRepository->findById($shipmentId);
 
-        if ($shipment === null) {
+        if (!$shipment) {
             throw new ShipmentNotFoundException(
                 $this->translator->trans(
                     'Could not find shipment with id "%id%".',
@@ -70,18 +53,15 @@ class EditShipmentHandler implements EditShipmentHandlerInterface
             );
         }
 
-        $shipment->setCarrierId($carrierId);
-
         try {
-            $this->shipmentRepository->save($shipment);
+            $shipment->setTrackingNumber($trackingNumber);
+            $shipment->setPackedAt(new DateTime());
 
-            if ($this->configuration->get('PS_ORDER_RECALCULATE_SHIPPING')) {
-                $this->shipmentShippingCostUpdater->recalculateForOrder($shipment->getOrderId());
-            }
+            $this->shipmentRepository->save($shipment);
         } catch (Throwable $e) {
             throw new CannotSaveShipmentException(
                 $this->translator->trans(
-                    'Could not save shipment update with id "%id%".',
+                    'Could not fulfill shipment with id "%id%".',
                     ['%id%' => $shipmentId],
                     'Admin.Shipment.Error'
                 ),

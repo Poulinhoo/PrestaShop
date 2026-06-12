@@ -5,8 +5,8 @@
 import Router from '@js/components/router';
 import OrderViewPageMap from './OrderViewPageMap';
 
-export default class EditShipmentManager {
-  private formRoute = 'admin_orders_shipment_get_edit_form';
+export default class FulfillShipmentManager {
+  private formRoute = 'admin_orders_shipment_get_fulfill_form';
 
   private shipmentId: number|null = null;
 
@@ -15,24 +15,24 @@ export default class EditShipmentManager {
   private router = new Router();
 
   constructor() {
-    this.initEditShipmentEventHandler();
+    this.initFulfillShipmentEventHandler();
   }
 
-  initEditShipmentEventHandler(): void {
+  initFulfillShipmentEventHandler(): void {
     const mainDiv = document.querySelector(OrderViewPageMap.mainDiv);
 
     if (!mainDiv) {
       throw new Error(
         `Initialization failed: main container not found for selector "${
           OrderViewPageMap.mainDiv
-        }". The shipment edit feature cannot be initialized.`,
+        }". The shipment fulfill feature cannot be initialized.`,
       );
     }
-    mainDiv.addEventListener('click', this.onEditShipmentClick);
+    mainDiv.addEventListener('click', this.onFulfillShipmentClick);
   }
 
-  onEditShipmentClick = (event: Event): void => {
-    const link = (event.target as HTMLElement).closest<HTMLAnchorElement>(OrderViewPageMap.showEditShipmentModalBtn);
+  onFulfillShipmentClick = (event: Event): void => {
+    const link = (event.target as HTMLElement).closest<HTMLAnchorElement>(OrderViewPageMap.showFulfillShipmentModalBtn);
 
     if (!link) {
       return;
@@ -47,14 +47,14 @@ export default class EditShipmentManager {
     this.orderId = Number(orderId);
     this.shipmentId = Number(shipmentId);
 
-    this.refreshEditShipmentForm();
+    this.refreshFulfillShipmentForm();
   };
 
-  async refreshEditShipmentForm(): Promise<void> {
-    const modal = document.querySelector<HTMLElement>(OrderViewPageMap.editShipmentModal);
+  async refreshFulfillShipmentForm(): Promise<void> {
+    const modal = document.querySelector<HTMLElement>(OrderViewPageMap.fulfillShipmentModal);
 
     if (!modal) {
-      throw new Error('Edit shipment modal not found.');
+      throw new Error('Fulfill shipment modal not found.');
     }
 
     modal.dataset.state = 'loading';
@@ -65,22 +65,20 @@ export default class EditShipmentManager {
         shipmentId: this.shipmentId,
       }), {
         method: 'GET',
-        headers: {
-          'Content-Type': 'application/json',
-        },
       });
 
       if (!response.ok) {
         throw new Error(await response.text());
       }
-      const formContainer = document.querySelector<HTMLElement>(OrderViewPageMap.editShipmentModalContainer);
+      const formContainer = document.querySelector<HTMLElement>(OrderViewPageMap.fulfillShipmentModalContainer);
       formContainer!.innerHTML = await response.text();
 
       modal.dataset.state = 'loaded';
 
       window.prestaShopUiKit.init();
     } catch (error) {
-      console.error('Error while loading edit shipment form:', error);
+      modal.dataset.state = 'loaded';
+      console.error('Error while loading fulfill shipment form:', error);
     }
   }
 }
