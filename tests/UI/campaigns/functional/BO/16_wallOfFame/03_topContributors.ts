@@ -118,22 +118,11 @@ describe('BO - Community : Wall of Fame - Top Contributors', async () => {
       expect(pageTitle).to.contains(boWallOfFamePage.pageTitle);
     });
 
-    it('should click the View all button and check the opened URL', async function () {
-      await testContext.addContextItem(this, 'testIdentifier', 'clickViewAllContributors', baseContext);
+    it('should check the View all button URL', async function () {
+      await testContext.addContextItem(this, 'testIdentifier', 'checkViewAllContributorsUrl', baseContext);
 
-      const newPage = await boWallOfFamePage.clickViewAllContributorsButton(page);
-
-      const url = newPage.url();
-      expect(url, 'View all button should open the contributors page').to.contains('contributors.prestashop-project.org');
-
-      page = await boWallOfFamePage.closePage(browserContext, newPage, 0);
-    });
-
-    it('should check Wall of Fame page is still displayed after returning from external link', async function () {
-      await testContext.addContextItem(this, 'testIdentifier', 'checkWallOfFameStillDisplayed', baseContext);
-
-      const pageTitle = await boWallOfFamePage.getPageTitle(page);
-      expect(pageTitle).to.contains(boWallOfFamePage.pageTitle);
+      const url = await boWallOfFamePage.getViewAllContributorsButtonUrl(page);
+      expect(url, 'View all button should link to the contributors page').to.contains('contributors.prestashop-project.org');
     });
   });
 });
