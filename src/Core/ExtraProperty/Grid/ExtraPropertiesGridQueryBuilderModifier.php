@@ -85,7 +85,7 @@ class ExtraPropertiesGridQueryBuilderModifier
             foreach ($definitions as $definition) {
                 $selectAlias = $definition->getFormFieldName();
                 if (array_key_exists($selectAlias, $record)) {
-                    $record[$selectAlias] = ExtraPropertyValueCaster::castScalarFromDb(
+                    $record[$selectAlias] = ExtraPropertyValueCaster::castFromDb(
                         $definition->getType(),
                         $record[$selectAlias],
                         $definition->isNullable()

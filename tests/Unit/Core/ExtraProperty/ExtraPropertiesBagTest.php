@@ -51,7 +51,7 @@ class ExtraPropertiesBagTest extends TestCase
             ShopConstraint::allShops()
         );
 
-        $this->assertSame([], $bag->toArray());
+        $this->assertSame([], $bag->jsonSerialize());
     }
 
     public function testNonPositiveEntityIdYieldsEmptyBagWithoutTouchingServices(): void
@@ -69,7 +69,7 @@ class ExtraPropertiesBagTest extends TestCase
             ShopConstraint::allShops()
         );
 
-        $this->assertSame([], $bag->toArray());
+        $this->assertSame([], $bag->jsonSerialize());
     }
 
     public function testNonObjectModelClassYieldsEmptyBagWithoutTouchingServices(): void
@@ -87,7 +87,7 @@ class ExtraPropertiesBagTest extends TestCase
             ShopConstraint::allShops()
         );
 
-        $this->assertSame([], $bag->toArray());
+        $this->assertSame([], $bag->jsonSerialize());
     }
 
     public function testContainerFailureYieldsEmptyBag(): void
@@ -105,7 +105,7 @@ class ExtraPropertiesBagTest extends TestCase
             ShopConstraint::allShops()
         );
 
-        $this->assertSame([], $bag->toArray());
+        $this->assertSame([], $bag->jsonSerialize());
     }
 
     public function testLoaderIsMemoizedAndValuesWrappedInModuleFieldsBag(): void
@@ -127,7 +127,67 @@ class ExtraPropertiesBagTest extends TestCase
         // Two accesses, one load.
         $this->assertInstanceOf(ModuleFieldsBag::class, $bag['mymodule']);
         $this->assertSame('https://example.com', $bag['mymodule']['video_link']);
-        $this->assertSame('https://example.com', $bag->toArray()['mymodule']['video_link']);
+        $this->assertSame('https://example.com', $bag->jsonSerialize()['mymodule']['video_link']);
+    }
+
+    public function testJsonSerializeReturnsFullyFlattenedStructure(): void
+    {
+        $reader = $this->createMock(ExtraPropertyReaderInterface::class);
+        $reader->method('getExtraProperties')->willReturn([
+            'mymodule' => [
+                'video_link' => 'https://example.com',
+                'is_dangerous' => true,
+            ],
+            '_core' => [
+                // Lang-scoped value read without a langId: [id_lang => value] array.
+                'promo_banner' => [1 => 'Hello', 2 => 'Bonjour'],
+                'revision_code' => 42,
+            ],
+        ]);
+        $repository = $this->buildRepository($this->definition('video_link'));
+
+        $bag = ExtraPropertiesBag::createForEntity(
+            $this->buildContainer($reader, $repository),
+            ExtraPropertiesBagTestEntity::class,
+            5,
+            null,
+            ShopConstraint::allShops()
+        );
+
+        // assertSame on the whole structure also proves no ModuleFieldsBag leaks through:
+        // the nested module entries must be plain arrays, identical to the reader output.
+        $this->assertSame([
+            'mymodule' => [
+                'video_link' => 'https://example.com',
+                'is_dangerous' => true,
+            ],
+            '_core' => [
+                'promo_banner' => [1 => 'Hello', 2 => 'Bonjour'],
+                'revision_code' => 42,
+            ],
+        ], $bag->jsonSerialize());
+    }
+
+    public function testJsonSerializeReflectsWrites(): void
+    {
+        $reader = $this->createMock(ExtraPropertyReaderInterface::class);
+        $reader->method('getExtraProperties')->willReturn([
+            'mymodule' => ['video_link' => 'https://example.com', 'is_dangerous' => false],
+        ]);
+        $repository = $this->buildRepository($this->definition('video_link'));
+
+        $bag = ExtraPropertiesBag::createForEntity(
+            $this->buildContainer($reader, $repository),
+            ExtraPropertiesBagTestEntity::class,
+            5,
+            null,
+            ShopConstraint::allShops()
+        );
+        $bag['mymodule']['video_link'] = 'https://changed.example';
+
+        $this->assertSame([
+            'mymodule' => ['video_link' => 'https://changed.example', 'is_dangerous' => false],
+        ], $bag->jsonSerialize());
     }
 
     public function testFrontOfficeByDefaultPassesFilteredDefinitionsToReader(): void
@@ -148,7 +208,7 @@ class ExtraPropertiesBagTest extends TestCase
             null,
             ShopConstraint::allShops(),
         );
-        $bag->toArray();
+        $bag->jsonSerialize();
 
         $this->assertInstanceOf(ExtraPropertyDefinitionCollection::class, $capturedDefinitions);
         $this->assertCount(1, $capturedDefinitions);
@@ -170,7 +230,7 @@ class ExtraPropertiesBagTest extends TestCase
             forFrontOffice: true,
         );
 
-        $this->assertSame([], $bag->toArray());
+        $this->assertSame([], $bag->jsonSerialize());
     }
 
     public function testBackOfficeReceivesUnfilteredEntityDefinitions(): void
@@ -191,7 +251,7 @@ class ExtraPropertiesBagTest extends TestCase
             ShopConstraint::allShops(),
             forFrontOffice: false,
         );
-        $bag->toArray();
+        $bag->jsonSerialize();
 
         // Filtered by entity, but not by display_front.
         $this->assertCount(2, $capturedDefinitions);
@@ -218,7 +278,7 @@ class ExtraPropertiesBagTest extends TestCase
             2,
             $shopConstraint
         );
-        $bag->toArray();
+        $bag->jsonSerialize();
 
         $this->assertSame(self::ENTITY_TABLE, $captured[0]);
         $this->assertSame('id_bag_test_entity', $captured[1]);

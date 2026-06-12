@@ -164,11 +164,20 @@ final class ExtraPropertiesBag implements ArrayAccess, IteratorAggregate, JsonSe
         return new ArrayIterator($this->values);
     }
 
-    public function jsonSerialize(): mixed
+    /**
+     * Flattened representation: nested ModuleFieldsBag instances are unwrapped so the
+     * result is plain data, usable directly without relying on json_encode() recursion.
+     *
+     * @return array<string, array<string, mixed>> [moduleKey => [propertyName => value]]
+     */
+    public function jsonSerialize(): array
     {
         $this->ensureLoaded();
 
-        return $this->values;
+        return array_map(
+            static fn (ModuleFieldsBag $moduleBag): array => $moduleBag->jsonSerialize(),
+            $this->values
+        );
     }
 
     public function hasModifications(): bool
@@ -198,13 +207,5 @@ final class ExtraPropertiesBag implements ArrayAccess, IteratorAggregate, JsonSe
         }
 
         return $grouped;
-    }
-
-    /** @return array<string, ModuleFieldsBag> All loaded module bags. Triggers lazy load. */
-    public function toArray(): array
-    {
-        $this->ensureLoaded();
-
-        return $this->values;
     }
 }

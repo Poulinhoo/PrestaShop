@@ -134,19 +134,6 @@ final class ExtraPropertyDefinitionCollection implements Countable, IteratorAggr
     }
 
     /**
-     * Returns a new collection filtered to the given property name.
-     *
-     * @param string $propertyName Property name as declared by the module (e.g. 'video_link')
-     */
-    public function filterByPropertyName(string $propertyName): self
-    {
-        return new self(array_values(array_filter(
-            $this->definitions,
-            static fn (ExtraPropertyDefinition $d): bool => $d->getPropertyName() === $propertyName
-        )));
-    }
-
-    /**
      * Returns a new collection filtered to the given entity.
      *
      * Useful when a collection groups definitions from multiple entities.

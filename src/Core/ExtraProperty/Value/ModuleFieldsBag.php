@@ -70,7 +70,10 @@ final class ModuleFieldsBag implements ArrayAccess, IteratorAggregate, JsonSeria
         return new ArrayIterator($this->values);
     }
 
-    public function jsonSerialize(): mixed
+    /**
+     * @return array<string, mixed> [propertyName => value]
+     */
+    public function jsonSerialize(): array
     {
         return $this->values;
     }

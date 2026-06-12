@@ -235,7 +235,7 @@ final class ExtraPropertyDefinition
             scope: ExtraPropertyScope::from((string) ($row['scope'] ?? ExtraPropertyScope::COMMON->value)),
             moduleName: isset($row['module_name']) ? (string) $row['module_name'] : null,
             enumValues: isset($row['enum_values']) && is_array($row['enum_values']) && [] !== $row['enum_values'] ? array_values($row['enum_values']) : null,
-            defaultValue: null !== $rawDefaultValue ? ExtraPropertyValueCaster::castScalarFromDb($type, $rawDefaultValue) : null,
+            defaultValue: null !== $rawDefaultValue ? ExtraPropertyValueCaster::castFromDb($type, $rawDefaultValue) : null,
             nullable: !array_key_exists('nullable', $row) || (bool) $row['nullable'],
             formRequired: !empty($row['form_required']),
             size: isset($row['size']) && '' !== $row['size'] ? (int) $row['size'] : null,

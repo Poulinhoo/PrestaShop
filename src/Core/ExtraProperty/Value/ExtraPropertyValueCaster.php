@@ -23,12 +23,10 @@ use PrestaShop\PrestaShop\Core\Util\DateTime\DateTime;
  *
  * Two directions:
  *   - castFromDb: DB → PHP. The canonical cast point is ExtraPropertyReader (every value it
- *     returns is typed); castScalarFromDb also serves consumers holding raw DB rows outside
- *     the reader (e.g. grid records in ExtraPropertiesGridQueryBuilderModifier).
+ *     returns is typed, lang-scoped values are cast entry by entry); it also serves consumers
+ *     holding raw DB rows outside the reader (e.g. grid records in
+ *     ExtraPropertiesGridQueryBuilderModifier).
  *   - castForDb:  PHP → DB, for persisting values submitted by form widgets.
- *
- * For lang-scoped fields the raw value is an array [id_lang => scalar]; each entry is cast
- * individually when the definition scope is ExtraPropertyScope::LANG.
  *
  * Casting is based on ExtraPropertyType only (not on the registered form field type), so the
  * behavior is consistent regardless of which Symfony form widget is used.
@@ -39,35 +37,6 @@ use PrestaShop\PrestaShop\Core\Util\DateTime\DateTime;
  */
 class ExtraPropertyValueCaster
 {
-    /**
-     * Converts a raw DB value to the PHP type expected by a BO form widget.
-     *
-     * For lang-scoped fields, $rawValue should be an array [id_lang => scalar];
-     * each entry is cast individually and the array structure is preserved.
-     *
-     * @param ExtraPropertyDefinition $definition
-     * @param mixed $rawValue Raw value as returned by ExtraPropertyReader
-     *
-     * @return mixed Typed value suitable for Symfony form widget data option
-     */
-    public static function castFromDb(ExtraPropertyDefinition $definition, mixed $rawValue): mixed
-    {
-        if (ExtraPropertyScope::LANG === $definition->getScope()) {
-            if (!is_array($rawValue)) {
-                return [];
-            }
-
-            $cast = [];
-            foreach ($rawValue as $idLang => $langVal) {
-                $cast[$idLang] = static::castScalarFromDb($definition->getType(), $langVal, $definition->isNullable());
-            }
-
-            return $cast;
-        }
-
-        return static::castScalarFromDb($definition->getType(), $rawValue, $definition->isNullable());
-    }
-
     /**
      * Converts a PHP value (from a Symfony form widget) to a DB-compatible scalar.
      *
@@ -110,7 +79,7 @@ class ExtraPropertyValueCaster
      *
      * @return mixed
      */
-    public static function castScalarFromDb(ExtraPropertyType $type, mixed $rawValue, bool $nullable = false): mixed
+    public static function castFromDb(ExtraPropertyType $type, mixed $rawValue, bool $nullable = false): mixed
     {
         if (null === $rawValue) {
             return $nullable ? null : match ($type) {

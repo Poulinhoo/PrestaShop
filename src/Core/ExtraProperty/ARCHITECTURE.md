@@ -98,7 +98,7 @@ CREATE TABLE IF NOT EXISTS `PREFIX_extra_property_definition` (
 - `scope`: maps to `ExtraPropertyScope` string-backed enum values (`'common'`, `'lang'`, `'shop'`)
 - `sql_index`: index strategy — `'none'`, `'key'` (standard index), or `'unique'` (unique constraint)
 - `size`: for `string` type only: varchar column length (defaults to 255 when `NULL`). Ignored for all other types.
-- `default_value`: SQL DEFAULT clause value (stored as varchar, cast to the appropriate PHP type via `ExtraPropertyValueCaster::castScalarFromDb()` when read back)
+- `default_value`: SQL DEFAULT clause value (stored as varchar, cast to the appropriate PHP type via `ExtraPropertyValueCaster::castFromDb()` when read back)
 - `display_api`: when `1`, the field is included in Admin API responses
 - `display_form`: when `1`, the field is included in BO forms
 - `display_front`: when `1`, the field is readable through FO bags (`ExtraPropertiesBag::createForEntity(..., forFrontOffice: true)`) for FO templates
@@ -294,7 +294,7 @@ public function withModuleName(string $moduleName): self;
 - `associated_forms`/`associated_grids` entries must match the `formId[.path[:before|after]]` / `gridId[.columnId[:before|after]]` pattern; no duplicate IDs within the array.
 - `labelWording` is required when `associated_forms` or `associated_grids` is non-empty.
 
-**Default value casting**: `fromRow()` calls `ExtraPropertyValueCaster::castScalarFromDb($type, $rawDefaultValue)` so the in-memory default value is already typed (bool, int, float, string) rather than always a raw string. `getDefaultValue()` returns `int|float|string|bool|null`.
+**Default value casting**: `fromRow()` calls `ExtraPropertyValueCaster::castFromDb($type, $rawDefaultValue)` so the in-memory default value is already typed (bool, int, float, string) rather than always a raw string. `getDefaultValue()` returns `int|float|string|bool|null`.
 
 ### 3.5. ExtraPropertyDefinitionCollection
 
@@ -303,7 +303,6 @@ Immutable collection of `ExtraPropertyDefinition` in `Definition/`. Chainable `f
 - `filterByEntity(string $entityName): self`
 - `filterByModuleName(?string $moduleName): self`
 - `filterByScope(ExtraPropertyScope $scope): self`
-- `filterByPropertyName(string $propertyName): self`
 - `filterByForm(string $formId): self` — only definitions whose `associated_forms` contains `$formId`
 - `filterByGrid(string $gridId): self` — only definitions whose `associated_grids` contains `$gridId`
 - `filterForFrontOffice(): self` — only definitions with `display_front = true`
@@ -454,14 +453,13 @@ Located in `src/Core/ExtraProperty/Value/`. All methods are **static**. Converts
 
 ```php
 // DB → PHP (canonical cast point: ExtraPropertyReader; also default value hydration, grid records)
-public static function castFromDb(ExtraPropertyDefinition $definition, mixed $rawValue): mixed;
-public static function castScalarFromDb(ExtraPropertyType $type, mixed $rawValue, bool $nullable = false): mixed;
+public static function castFromDb(ExtraPropertyType $type, mixed $rawValue, bool $nullable = false): mixed;
 
 // PHP → DB (for form submission, ObjectModel persistence)
 public static function castForDb(ExtraPropertyDefinition $definition, mixed $value): mixed;
 ```
 
-`castScalarFromDb` is public so `ExtraPropertyDefinition::fromRow()` can cast the `defaultValue` field without depending on the full `ExtraPropertyDefinition` object (avoiding a circular dependency on itself). `castFromDb` handles LANG-scoped fields by iterating the `[id_lang => scalar]` array and delegating each entry to `castScalarFromDb`, propagating the definition's nullable flag.
+`castFromDb` takes the bare `ExtraPropertyType` (not the full definition) so `ExtraPropertyDefinition::fromRow()` can cast the `defaultValue` field without a circular dependency on itself. LANG-scoped values (`[id_lang => scalar]` arrays) are cast entry by entry at the call site — the reader does this when hydrating lang rows.
 
 NULL handling is **nullable-aware** (`nullable` is deduced from the live column schema): a NULL on a nullable column is preserved for every type; on NOT NULL columns (only possible when the row is missing) BOOL coerces to `false`, other types stay NULL.
 

@@ -21,7 +21,7 @@ use Throwable;
  *
  * Values are grouped by module technical name then by field name, and returned TYPED:
  * every value is cast from its raw DB string to the declared PHP type via
- * ExtraPropertyValueCaster::castScalarFromDb() (bool/int/float, nullable-aware NULLs).
+ * ExtraPropertyValueCaster::castFromDb() (bool/int/float, nullable-aware NULLs).
  * Used by ObjectModel (via ServiceLocator) and front-office LazyArray / presenter contexts.
  */
 class ExtraPropertyReader implements ExtraPropertyReaderInterface
@@ -117,7 +117,7 @@ class ExtraPropertyReader implements ExtraPropertyReaderInterface
             $result[$moduleName] ??= [];
             $result[$moduleName][$propertyName] ??= ($groupByLang
                 ? []
-                : ExtraPropertyValueCaster::castScalarFromDb($definition->getType(), null, $definition->isNullable()));
+                : ExtraPropertyValueCaster::castFromDb($definition->getType(), null, $definition->isNullable()));
 
             $columnName = $definition->getStorageColumnName();
             $columnToPropertyMap[$columnName] = [
@@ -183,13 +183,13 @@ class ExtraPropertyReader implements ExtraPropertyReaderInterface
                 $groupKey = (int) ($row['id_lang'] ?? 0);
                 foreach ($columnToPropertyMap as $columnName => $propertyPath) {
                     if (array_key_exists($columnName, $row)) {
-                        $result[$propertyPath['module_name']][$propertyPath['property_name']][$groupKey] = ExtraPropertyValueCaster::castScalarFromDb($propertyPath['type'], $row[$columnName], $propertyPath['nullable']);
+                        $result[$propertyPath['module_name']][$propertyPath['property_name']][$groupKey] = ExtraPropertyValueCaster::castFromDb($propertyPath['type'], $row[$columnName], $propertyPath['nullable']);
                     }
                 }
             } else {
                 foreach ($columnToPropertyMap as $columnName => $propertyPath) {
                     if (array_key_exists($columnName, $row)) {
-                        $result[$propertyPath['module_name']][$propertyPath['property_name']] = ExtraPropertyValueCaster::castScalarFromDb($propertyPath['type'], $row[$columnName], $propertyPath['nullable']);
+                        $result[$propertyPath['module_name']][$propertyPath['property_name']] = ExtraPropertyValueCaster::castFromDb($propertyPath['type'], $row[$columnName], $propertyPath['nullable']);
                     }
                 }
             }

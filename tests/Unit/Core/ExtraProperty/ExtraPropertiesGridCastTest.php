@@ -14,7 +14,6 @@ use PrestaShop\PrestaShop\Core\Context\LanguageContext;
 use PrestaShop\PrestaShop\Core\ExtraProperty\Definition\ExtraPropertyDefinition;
 use PrestaShop\PrestaShop\Core\ExtraProperty\Definition\ExtraPropertyDefinitionCollection;
 use PrestaShop\PrestaShop\Core\ExtraProperty\Definition\ExtraPropertyDefinitionRepositoryInterface;
-use PrestaShop\PrestaShop\Core\ExtraProperty\Definition\ExtraPropertyScope;
 use PrestaShop\PrestaShop\Core\ExtraProperty\Definition\ExtraPropertyType;
 use PrestaShop\PrestaShop\Core\ExtraProperty\Grid\ExtraPropertiesGridQueryBuilderModifier;
 use PrestaShop\PrestaShop\Core\ExtraProperty\Value\ExtraPropertyValueCaster;
@@ -89,31 +88,14 @@ class ExtraPropertiesGridCastTest extends TestCase
     {
         foreach (ExtraPropertyType::cases() as $type) {
             $this->assertNull(
-                ExtraPropertyValueCaster::castScalarFromDb($type, null, true),
+                ExtraPropertyValueCaster::castFromDb($type, null, true),
                 sprintf('NULL must be preserved for nullable %s fields', $type->value)
             );
         }
 
         // NOT NULL semantics keep the historical coercion.
-        $this->assertFalse(ExtraPropertyValueCaster::castScalarFromDb(ExtraPropertyType::BOOL, null, false));
-        $this->assertNull(ExtraPropertyValueCaster::castScalarFromDb(ExtraPropertyType::INT, null, false));
-    }
-
-    public function testCastFromDbPropagatesNullableToLangEntries(): void
-    {
-        $nullableLangBool = new ExtraPropertyDefinition(
-            entityName: 'product',
-            propertyName: 'lang_flag',
-            type: ExtraPropertyType::BOOL,
-            scope: ExtraPropertyScope::LANG,
-            moduleName: 'demoextrafield',
-            nullable: true,
-        );
-
-        $cast = ExtraPropertyValueCaster::castFromDb($nullableLangBool, [1 => '1', 2 => null]);
-
-        $this->assertTrue($cast[1]);
-        $this->assertNull($cast[2]);
+        $this->assertFalse(ExtraPropertyValueCaster::castFromDb(ExtraPropertyType::BOOL, null, false));
+        $this->assertNull(ExtraPropertyValueCaster::castFromDb(ExtraPropertyType::INT, null, false));
     }
 
     private function buildModifier(ExtraPropertyDefinition ...$definitions): ExtraPropertiesGridQueryBuilderModifier
