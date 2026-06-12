@@ -66,7 +66,7 @@ class ExtraPropertiesGridDefinitionModifier
                 $extraDefinition->getLabelDomain(),
             );
 
-            $column = $this->buildColumn($gridId, $columnId, $label, $extraDefinition);
+            $column = $this->buildColumn($gridId, $label, $extraDefinition);
 
             // getGridEntry() returns the already-parsed array — no need to call parseGridEntry().
             $gridEntry = $extraDefinition->getGridEntry($gridId) ?? ['gridId' => $gridId, 'columnId' => null, 'mode' => null];
@@ -93,9 +93,10 @@ class ExtraPropertiesGridDefinitionModifier
         }
     }
 
-    protected function buildColumn(string $gridId, string $columnId, string $label, ExtraPropertyDefinition $definition): ColumnInterface
+    protected function buildColumn(string $gridId, string $label, ExtraPropertyDefinition $definition): ColumnInterface
     {
         // H8: column type is derived from the logical field type, not the form type override.
+        $columnId = $definition->getFormFieldName();
         $moduleName = $definition->getNormalizedModuleKey();
         $fieldName = $definition->getPropertyName();
 

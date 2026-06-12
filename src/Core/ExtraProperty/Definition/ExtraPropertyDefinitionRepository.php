@@ -77,38 +77,38 @@ class ExtraPropertyDefinitionRepository implements ExtraPropertyDefinitionReposi
     /**
      * {@inheritdoc}
      */
-    public function save(
-        ExtraPropertyDefinition $options,
-        string $entityName,
-        string $propertyName,
-        ?string $normalizedModuleName,
-        string $normalizedScope,
-    ): int|false {
+    public function save(ExtraPropertyDefinition $definition): int|false
+    {
         $table = $this->prefix . 'extra_property_definition';
 
         $data = [
-            'module_name' => $normalizedModuleName,
-            'scope' => $normalizedScope,
-            'type' => $options->getType()->value,
-            'size' => $options->getSize(),
-            'form_required' => (int) $options->isFormRequired(),
-            'default_value' => null !== $options->getDefaultValue() ? (string) $options->getDefaultValue() : null,
-            'form_field_type' => $options->getFormFieldType(),
-            'form_options' => null !== $options->getFormOptions() ? json_encode($options->getFormOptions()) : null,
-            'sql_index' => $options->getSqlIndex()->value,
-            'validator' => $options->getValidator(),
-            'display_api' => (int) $options->isDisplayApi(),
-            'associated_forms' => !empty($options->getAssociatedForms()) ? json_encode(array_values($options->getAssociatedForms())) : null,
-            'associated_grids' => !empty($options->getAssociatedGrids()) ? json_encode(array_values($options->getAssociatedGrids())) : null,
-            'display_front' => (int) $options->isDisplayFront(),
-            'label_wording' => $options->getLabelWording(),
-            'label_domain' => $options->getLabelDomain(),
-            'description_wording' => $options->getDescriptionWording(),
-            'description_domain' => $options->getDescriptionDomain(),
+            // getModuleName() is already normalized: null for core fields ('' / '_core' inputs included).
+            'module_name' => $definition->getModuleName(),
+            'scope' => $definition->getScope()->value,
+            'type' => $definition->getType()->value,
+            'size' => $definition->getSize(),
+            'form_required' => (int) $definition->isFormRequired(),
+            'default_value' => null !== $definition->getDefaultValue() ? (string) $definition->getDefaultValue() : null,
+            'form_field_type' => $definition->getFormFieldType(),
+            'form_options' => null !== $definition->getFormOptions() ? json_encode($definition->getFormOptions()) : null,
+            'sql_index' => $definition->getSqlIndex()->value,
+            'validator' => $definition->getValidator(),
+            'display_api' => (int) $definition->isDisplayApi(),
+            'associated_forms' => !empty($definition->getAssociatedForms()) ? json_encode(array_values($definition->getAssociatedForms())) : null,
+            'associated_grids' => !empty($definition->getAssociatedGrids()) ? json_encode(array_values($definition->getAssociatedGrids())) : null,
+            'display_front' => (int) $definition->isDisplayFront(),
+            'label_wording' => $definition->getLabelWording(),
+            'label_domain' => $definition->getLabelDomain(),
+            'description_wording' => $definition->getDescriptionWording(),
+            'description_domain' => $definition->getDescriptionDomain(),
         ];
 
         // Resolve existing row ID from the unique key to decide INSERT vs UPDATE.
-        $existingId = $this->findIdByUniqueKey($entityName, $normalizedModuleName, $propertyName);
+        $existingId = $this->findIdByUniqueKey(
+            $definition->getEntityName(),
+            $definition->getModuleName(),
+            $definition->getPropertyName()
+        );
 
         if (null !== $existingId) {
             $saved = (bool) $this->connection->update($table, $data, ['id_extra_property_definition' => $existingId]);
@@ -116,8 +116,8 @@ class ExtraPropertyDefinitionRepository implements ExtraPropertyDefinitionReposi
             return $saved ? $existingId : false;
         }
 
-        $data['entity_name'] = $entityName;
-        $data['property_name'] = $propertyName;
+        $data['entity_name'] = $definition->getEntityName();
+        $data['property_name'] = $definition->getPropertyName();
 
         $saved = (bool) $this->connection->insert($table, $data);
         if (!$saved) {

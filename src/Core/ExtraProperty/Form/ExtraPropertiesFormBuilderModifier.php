@@ -84,8 +84,6 @@ class ExtraPropertiesFormBuilderModifier
         }
 
         foreach ($formDefinitions as $definition) {
-            $fieldName = $definition->getPropertyName();
-
             $parsed = $definition->getFormEntry($formId);
             $formEntryPath = null !== $parsed ? $parsed['path'] : null;
             $formEntryMode = null !== $parsed ? $parsed['mode'] : null;
@@ -96,7 +94,7 @@ class ExtraPropertiesFormBuilderModifier
 
             if (null !== $existingValues) {
                 // The reader returns typed values (ExtraPropertyValueCaster applied on read).
-                $typeOptions['data'] = $this->resolveExistingValue($existingValues, $definition->getNormalizedModuleKey(), $fieldName, $definition->getScope());
+                $typeOptions['data'] = $this->resolveExistingValue($existingValues, $definition);
             }
 
             if (null === $formEntryPath) {
@@ -180,11 +178,11 @@ class ExtraPropertiesFormBuilderModifier
      *
      * @return mixed
      */
-    protected function resolveExistingValue(array $existingValues, string $moduleName, string $fieldName, ExtraPropertyScope $scope): mixed
+    protected function resolveExistingValue(array $existingValues, ExtraPropertyDefinition $definition): mixed
     {
-        $value = $existingValues[$moduleName][$fieldName] ?? null;
+        $value = $existingValues[$definition->getNormalizedModuleKey()][$definition->getPropertyName()] ?? null;
 
-        if (ExtraPropertyScope::LANG === $scope) {
+        if (ExtraPropertyScope::LANG === $definition->getScope()) {
             return is_array($value) ? $value : [];
         }
 

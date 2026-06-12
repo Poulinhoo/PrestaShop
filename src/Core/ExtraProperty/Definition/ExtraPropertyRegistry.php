@@ -89,13 +89,7 @@ class ExtraPropertyRegistry implements ExtraPropertyRegistryInterface
         }
 
         // 3. Insert or update the registry row.
-        $savedId = $this->writeRepository->save(
-            $definition,
-            $entityName,
-            $propertyName,
-            $moduleName,
-            $normalizedScope
-        );
+        $savedId = $this->writeRepository->save($definition);
 
         if (false === $savedId) {
             return false;

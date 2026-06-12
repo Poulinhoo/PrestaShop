@@ -75,14 +75,9 @@ class CachedExtraPropertyDefinitionRepository implements ExtraPropertyDefinition
     /**
      * {@inheritdoc}
      */
-    public function save(
-        ExtraPropertyDefinition $options,
-        string $entityName,
-        string $propertyName,
-        ?string $normalizedModuleName,
-        string $normalizedScope,
-    ): int|false {
-        $result = $this->repository->save($options, $entityName, $propertyName, $normalizedModuleName, $normalizedScope);
+    public function save(ExtraPropertyDefinition $definition): int|false
+    {
+        $result = $this->repository->save($definition);
         if (false !== $result) {
             $this->invalidateCache();
         }

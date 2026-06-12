@@ -323,7 +323,7 @@ The registry is split into four layers, all in the `Definition/` namespace:
 All read methods return typed `ExtraPropertyDefinition` value objects. The interface is resolved to `CachedExtraPropertyDefinitionRepository` in the DI container.
 
 **`ExtraPropertyDefinitionWriterInterface`** (write, 3 methods):
-- `save(ExtraPropertyDefinition $definition): void`
+- `save(ExtraPropertyDefinition $definition): int|false` — insert or update resolved internally from the (entity, module, property) unique key; returns the definition id
 - `delete(int $id): bool`
 - `deleteByDefinition(ExtraPropertyDefinition $definition): bool` — delegates to `findIdByUniqueKey` + `delete`
 
