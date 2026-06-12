@@ -58,12 +58,11 @@ admin_common_secured_file_image_reader:
     _controller: 'PrestaShopBundle\Controller\Admin\SecuredFileReaderController::readUploadDocument'
 
 admin_common_extra_properties_toggle:
-  path: /extra-properties/toggle/{entityName}/{entityId}/{moduleName}/{propertyName}/{shopId}
+  # No {shopId} parameter: the shop context of shop-scoped toggles is resolved
+  # server-side from ShopContext, never from the client.
+  path: /extra-properties/toggle/{entityName}/{entityId}/{moduleName}/{propertyName}
   methods: [ POST ]
   defaults:
     _controller: 'PrestaShopBundle\Controller\Admin\CommonController::toggleExtraPropertyAction'
-    # Default value for entity-scoped toggles: the URL always includes {shopId}, but for non-shop scopes it is ignored.
-    # This prevents "missing route parameter" errors without hard-coding any real shop context.
-    shopId: 0
   options:
     expose: true

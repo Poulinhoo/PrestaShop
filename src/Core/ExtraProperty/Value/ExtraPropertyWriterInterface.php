@@ -62,21 +62,22 @@ interface ExtraPropertyWriterInterface
     /**
      * Toggles a boolean extra property value for one entity instance.
      *
-     * Performs an UPSERT that flips the stored value
-     * Only BOOL-typed definitions are accepted; a non-BOOL definition throws \InvalidArgumentException.
+     * Performs an UPSERT that flips the stored value.
+     * The storage primary key column is deduced from the definition's entity name
+     * ('id_' + entityName) — callers never carry storage details.
      *
      * @param ExtraPropertyDefinition $definition The boolean property to toggle
-     * @param string $primaryKeyName PK column name (e.g. "id_product")
      * @param int $entityId
-     * @param int $shopId Required when the definition scope is SHOP; ignored otherwise
+     * @param ShopConstraint $shopConstraint SHOP-scoped definitions require a single-shop
+     *                                       constraint (identifies the toggled row); ignored otherwise
      *
-     * @throws InvalidArgumentException when definition type is not BOOL
+     * @throws InvalidArgumentException when the definition type is not BOOL, or when a
+     *                                  SHOP-scoped definition is toggled without a single-shop constraint
      */
     public function toggleExtraProperty(
         ExtraPropertyDefinition $definition,
-        string $primaryKeyName,
         int $entityId,
-        int $shopId = 0,
+        ShopConstraint $shopConstraint,
     ): void;
 
     /**

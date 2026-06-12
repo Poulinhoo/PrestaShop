@@ -87,11 +87,13 @@ class CommonController extends PrestaShopAdminController
      * escalation where an authenticated admin could bypass per-entity permission checks by
      * forging a _legacy_controller value they hold rights on.
      *
+     * The shop context of shop-scoped properties is resolved from ShopContext (not from the
+     * route): the writer receives the current ShopConstraint and toggles the matching row.
+     *
      * @param string $entityName
      * @param int $entityId
      * @param string $moduleName normalized module name, can be "_core" for core properties
      * @param string $propertyName
-     * @param int $shopId Shop context for shop-scoped properties (ignored for entity scope)
      */
     #[AdminSecurity("is_granted('ROLE_EMPLOYEE')")]
     public function toggleExtraPropertyAction(
@@ -99,7 +101,6 @@ class CommonController extends PrestaShopAdminController
         int $entityId,
         string $moduleName,
         string $propertyName,
-        int $shopId = 0,
     ): JsonResponse {
         // Derive the legacy controller from the entityName URL path param (trusted, non-forgeable).
         // Never trust a _legacy_controller value coming from the request body/query string.
@@ -130,7 +131,7 @@ class CommonController extends PrestaShopAdminController
         $writer = $this->container->get(ExtraPropertyWriterInterface::class);
 
         try {
-            $writer->toggleExtraProperty($matched, 'id_' . $entityName, $entityId, $shopId);
+            $writer->toggleExtraProperty($matched, $entityId, $this->getShopContext()->getShopConstraint());
         } catch (Throwable) {
             return new JsonResponse([
                 'status' => false,

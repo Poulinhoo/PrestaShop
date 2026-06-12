@@ -431,15 +431,14 @@ public function writeAll(
 
 public function toggleExtraProperty(
     ExtraPropertyDefinition $definition,
-    string $primaryKeyName,
     int $entityId,
-    int $shopId = 0,
+    ShopConstraint $shopConstraint,
 ): void;
 
 public function deleteAll(string $entityName, string $primaryKeyName, int $entityId): void;
 ```
 
-`ShopConstraint::allShops()` skips lang and shop-scope writes (caller must iterate shops for broad writes). `deleteAll()` silently skips tables that do not exist yet. `toggleExtraProperty()` performs an UPSERT that flips the current boolean value; throws `\InvalidArgumentException` if the definition is not of type `BOOL`.
+`ShopConstraint::allShops()` skips lang and shop-scope writes (caller must iterate shops for broad writes). `deleteAll()` silently skips tables that do not exist yet. `toggleExtraProperty()` performs an UPSERT that flips the current boolean value; the storage primary key is deduced from the definition's entity name, and the toggle endpoint resolves the `ShopConstraint` server-side from ShopContext (no shop id in the route). Throws `\InvalidArgumentException` if the definition is not of type `BOOL`, or when a SHOP-scoped definition is toggled without a single-shop constraint.
 
 ### 3.11. ExtraPropertyValueCaster
 

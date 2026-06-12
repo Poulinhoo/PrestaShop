@@ -10,6 +10,7 @@ declare(strict_types=1);
 namespace Tests\Unit\Core\ExtraProperty;
 
 use Doctrine\DBAL\Connection;
+use InvalidArgumentException;
 use PHPUnit\Framework\TestCase;
 use PrestaShop\PrestaShop\Core\Domain\Shop\ValueObject\ShopConstraint;
 use PrestaShop\PrestaShop\Core\ExtraProperty\Definition\ExtraPropertyDefinition;
@@ -121,6 +122,65 @@ class ExtraPropertyWriterTest extends TestCase
         ], ShopConstraint::shop(1));
 
         $this->assertCount(0, $this->statements);
+    }
+
+    public function testToggleCommonScopeDeducesPrimaryKeyFromDefinition(): void
+    {
+        $writer = $this->buildWriter();
+
+        $writer->toggleExtraProperty(
+            $this->definition('is_dangerous', ExtraPropertyType::BOOL, ExtraPropertyScope::COMMON, nullable: false),
+            7,
+            ShopConstraint::allShops()
+        );
+
+        $this->assertCount(1, $this->statements);
+        $this->assertStringContainsString('`ps_product_extra`', $this->statements[0]['sql']);
+        $this->assertStringContainsString('`id_product`', $this->statements[0]['sql']);
+        $this->assertSame([7], $this->statements[0]['params']);
+    }
+
+    public function testToggleShopScopeUsesConstraintShopId(): void
+    {
+        $writer = $this->buildWriter();
+
+        $writer->toggleExtraProperty(
+            $this->definition('shop_flag', ExtraPropertyType::BOOL, ExtraPropertyScope::SHOP, nullable: false),
+            7,
+            ShopConstraint::shop(3)
+        );
+
+        $this->assertCount(1, $this->statements);
+        $this->assertStringContainsString('`ps_product_extra_shop`', $this->statements[0]['sql']);
+        $this->assertSame([7, 3], $this->statements[0]['params']);
+    }
+
+    public function testToggleShopScopeWithoutSingleShopConstraintThrows(): void
+    {
+        $writer = $this->buildWriter();
+
+        $this->expectException(InvalidArgumentException::class);
+        $this->expectExceptionMessage('requires a single-shop constraint');
+
+        $writer->toggleExtraProperty(
+            $this->definition('shop_flag', ExtraPropertyType::BOOL, ExtraPropertyScope::SHOP, nullable: false),
+            7,
+            ShopConstraint::allShops()
+        );
+    }
+
+    public function testToggleNonBoolDefinitionThrows(): void
+    {
+        $writer = $this->buildWriter();
+
+        $this->expectException(InvalidArgumentException::class);
+        $this->expectExceptionMessage('is not of type BOOL');
+
+        $writer->toggleExtraProperty(
+            $this->definition('reference_code', ExtraPropertyType::STRING, ExtraPropertyScope::COMMON, nullable: true),
+            7,
+            ShopConstraint::shop(1)
+        );
     }
 
     private function buildWriter(): ExtraPropertyWriter

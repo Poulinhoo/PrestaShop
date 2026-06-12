@@ -128,9 +128,8 @@ class ExtraPropertyWriter implements ExtraPropertyWriterInterface
      */
     public function toggleExtraProperty(
         ExtraPropertyDefinition $definition,
-        string $primaryKeyName,
         int $entityId,
-        int $shopId = 0,
+        ShopConstraint $shopConstraint,
     ): void {
         if (ExtraPropertyType::BOOL !== $definition->getType()) {
             throw new InvalidArgumentException(sprintf(
@@ -140,10 +139,18 @@ class ExtraPropertyWriter implements ExtraPropertyWriterInterface
         }
 
         $fullTableName = $this->connection->quoteIdentifier($this->prefix . $definition->getExtraTableName());
-        $quotedPk = $this->connection->quoteIdentifier($primaryKeyName);
+        $quotedPk = $this->connection->quoteIdentifier('id_' . $definition->getEntityName());
         $quotedCol = $this->connection->quoteIdentifier($definition->getStorageColumnName());
 
         if (ExtraPropertyScope::SHOP === $definition->getScope()) {
+            $shopId = $shopConstraint->isSingleShopContext() ? $shopConstraint->getShopId()->getValue() : null;
+            if (null === $shopId) {
+                throw new InvalidArgumentException(sprintf(
+                    'Toggling the SHOP-scoped extra property "%s" requires a single-shop constraint.',
+                    $definition->getPropertyName()
+                ));
+            }
+
             $sql = sprintf(
                 'INSERT INTO %s (%s, %s, %s) VALUES (?, ?, 1) ON DUPLICATE KEY UPDATE %s = 1 - IFNULL(%s, 0)',
                 $fullTableName,

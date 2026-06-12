@@ -8,7 +8,6 @@ declare(strict_types=1);
 
 namespace PrestaShop\PrestaShop\Core\ExtraProperty\Grid;
 
-use PrestaShop\PrestaShop\Core\Context\ShopContext;
 use PrestaShop\PrestaShop\Core\ExtraProperty\Definition\ExtraPropertyDefinition;
 use PrestaShop\PrestaShop\Core\ExtraProperty\Definition\ExtraPropertyDefinitionRepositoryInterface;
 use PrestaShop\PrestaShop\Core\ExtraProperty\Definition\ExtraPropertyType;
@@ -32,7 +31,6 @@ class ExtraPropertiesGridDefinitionModifier
     public function __construct(
         protected readonly ExtraPropertyDefinitionRepositoryInterface $repository,
         protected readonly TranslatorInterface $translator,
-        protected readonly ShopContext $shopContext,
     ) {
     }
 
@@ -117,11 +115,8 @@ class ExtraPropertiesGridDefinitionModifier
                         'entityName' => $entityName,
                         'moduleName' => $moduleName,
                         'propertyName' => $fieldName,
-                        // H10: single shop → use its ID; all-shops context → use the current default shop
-                        // (toggle must not implicitly cascade to all shops).
-                        'shopId' => $this->shopContext->getShopConstraint()->isSingleShopContext()
-                            ? $this->shopContext->getShopConstraint()->getShopId()->getValue()
-                            : $this->shopContext->getId(),
+                        // No shopId param: the endpoint resolves the shop constraint server-side
+                        // from ShopContext, never from a client-supplied value.
                         // _legacy_controller is intentionally absent: the toggle endpoint derives
                         // the permission subject server-side from entityName (non-forgeable URL
                         // path parameter). Sending it from the client would allow privilege
