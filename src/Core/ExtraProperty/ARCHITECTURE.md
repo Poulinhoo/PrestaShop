@@ -102,8 +102,8 @@ CREATE TABLE IF NOT EXISTS `PREFIX_extra_property_definition` (
 - `display_api`: when `1`, the field is included in Admin API responses
 - `display_form`: when `1`, the field is included in BO forms
 - `display_front`: when `1`, the field is readable through FO bags (`ExtraPropertiesBag::createForEntity(..., forFrontOffice: true)`) for FO templates
-- `associated_grids`: JSON-encoded array of grid placement entries in `"gridId[.columnId[:before|after]]"` format (e.g. `["product.reference:after","product_catalog"]`); `NULL` = not shown in any grid. Each gridId must be unique within the array. Parsed by `ExtraPropertyDefinition::getGridEntry()`.
-- `associated_forms`: JSON-encoded array of form placement entries in `"formId[.path[:before|after]]"` format. Parsed by `ExtraPropertyDefinition::getFormEntry()`.
+- `associated_grids`: JSON-encoded array of grid placement entries in `"gridId[:columnId[:before|after]]"` format (e.g. `["product:reference:after","product_catalog"]`); `NULL` = not shown in any grid. Each gridId must be unique within the array. Parsed by `ExtraPropertyDefinition::getGridEntry()`.
+- `associated_forms`: JSON-encoded array of form placement entries in `"formId[:path[:before|after]]"` format. The `":"` separates the form id from the field path and the field path from the optional mode; nesting *within* the path still uses `"."` (e.g. `"product:options.suppliers:before"`). No mode → the path is a container (field appended inside it); mode → the last path segment is an anchor (field placed before/after it). Parsed by `ExtraPropertyDefinition::getFormEntry()`.
 - `form_field_type`: optional Symfony form type FQCN override for BO forms
 - `form_options`: optional JSON-encoded array of extra options merged into the Symfony form type constructor call
 - `label_wording`, `label_domain`: i18n label for BO (wording + translation domain, resolved at runtime)
@@ -281,7 +281,7 @@ public function getPrimaryKeyName(): string;
 /** Returns ['gridId', 'columnId', 'mode'] or null when $gridId is not in associated_grids */
 public function getGridEntry(string $gridId): ?array;
 
-/** Returns ['formId', 'path', 'mode'] or null when $formId is not in associated_forms */
+/** Returns the resolved ['formId', 'mode', 'path', 'anchor'] or null when $formId is not in associated_forms */
 public function getFormEntry(string $formId): ?array;
 ```
 
@@ -296,7 +296,7 @@ public function withModuleName(string $moduleName): self;
 - `entityName` and `propertyName` must be non-empty and valid SQL identifiers.
 - `moduleName` (when non-null and non-`_core`) must be a valid PrestaShop module name.
 - The resulting storage column name must be ≤ 64 characters.
-- `associated_forms`/`associated_grids` entries must match the `formId[.path[:before|after]]` / `gridId[.columnId[:before|after]]` pattern; no duplicate IDs within the array.
+- `associated_forms`/`associated_grids` entries must match the `formId[:path[:before|after]]` / `gridId[:columnId[:before|after]]` pattern; no duplicate IDs within the array.
 - `labelWording` is required when `associated_forms` or `associated_grids` is non-empty.
 
 **Default value casting**: `fromRow()` calls `ExtraPropertyValueCaster::castFromDb($type, $rawDefaultValue)` so the in-memory default value is already typed (bool, int, float, string) rather than always a raw string. `getDefaultValue()` returns `int|float|string|bool|null`.
@@ -700,8 +700,10 @@ Responsibilities:
 ### 7.2. Placement Logic
 
 - `associated_forms` empty → fields added to a dedicated `extra_fields.extra_properties` section (created if missing). On forms where a `NavigationTabType` is found anywhere in the parent chain, fields are injected at the root level instead.
-- `associated_forms` set → `getFormEntry($formId)` returns `['formId', 'path', 'mode']`; the `path` is passed directly to `addAtPosition` without reconstructing a string.
-- Optional `:before`/`:after` suffix on path → relative placement via `FormBuilderModifier::addBefore()`/`addAfter()`. Example: `combination_details.reference:before` inserts the field just before the `reference` field inside the `combination_details` sub-builder.
+- `associated_forms` set → `getFormEntry($formId)` returns the fully-resolved entry `['formId', 'mode', 'path', 'anchor']`, where `path` is the form node the field belongs to. Placement is resolved once inside `getFormEntry()` (container vs anchor); `path` is null only for fallback placement. Both `ExtraPropertiesFormBuilderModifier` (uses `path` + `anchor` to place the field) and `ExtraPropertiesFormDataPersister` (uses `path` to read it back) consume the same values and cannot drift.
+- No mode → the path is a container: it is navigated in full (every segment must exist) and the field is appended inside. Example: `product:options` appends the field inside the `options` sub-builder.
+- `:before`/`:after` mode → the last path segment is an anchor: relative placement via `FormBuilderModifier::addBefore()`/`addAfter()` inside the parent builder. Example: `product:options.suppliers:before` inserts the field just before the `suppliers` field inside the `options` sub-builder.
+- A path whose container/anchor cannot be resolved throws `InvalidArgumentException` (no silent fallback).
 
 ### 7.3. Type Mapping (ExtraPropertyType → Symfony FormType)
 

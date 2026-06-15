@@ -30,8 +30,8 @@ use PrestaShop\PrestaShop\Core\Util\Inflector;
  *
  * Constructor validation:
  * - entityName and propertyName are required and must be non-empty.
- * - associatedForms: each entry must match "formId[.path[:before|after]]"; no duplicate formId.
- * - associatedGrids: each entry must match "gridId[.columnId[:before|after]]"; no duplicate gridId.
+ * - associatedForms: each entry must match "formId[:path[:before|after]]"; no duplicate formId.
+ * - associatedGrids: each entry must match "gridId[:columnId[:before|after]]"; no duplicate gridId.
  * - labelWording is required when associatedForms or associatedGrids is non-empty.
  *
  * @see \PrestaShop\PrestaShop\Core\ExtraProperty\Definition\ExtraPropertyRegistryInterface::register()
@@ -79,8 +79,8 @@ final class ExtraPropertyDefinition
      * @param ExtraPropertySqlIndex $sqlIndex SQL index strategy on the storage column
      * @param bool $displayApi include this field in Admin API JSON responses
      * @param bool $displayFront allow this field to be exposed in front-office presenters
-     * @param list<string>|null $associatedForms Form placement entries: "formId[.path[:before|after]]". Each formId must be unique.
-     * @param list<string>|null $associatedGrids Grid placement entries: "gridId[.columnId[:before|after]]". Each gridId must be unique.
+     * @param list<string>|null $associatedForms Form placement entries: "formId[:path[:before|after]]". Each formId must be unique.
+     * @param list<string>|null $associatedGrids Grid placement entries: "gridId[:columnId[:before|after]]". Each gridId must be unique.
      * @param string|null $formFieldType fully-qualified Symfony Form type FQCN override for BO forms
      * @param array<string, mixed>|null $formOptions extra options passed verbatim to the Symfony form type constructor
      * @param string|null $validator prestaShop Validate method name applied before persistence
@@ -444,9 +444,9 @@ final class ExtraPropertyDefinition
     }
 
     /**
-     * Returns the parsed placement entry for a specific form, or null if not associated.
+     * Returns the fully-resolved placement entry for a specific form, or null if not associated.
      *
-     * @return array{formId: string, path: string|null, mode: 'before'|'after'|null}|null
+     * @return array{formId: string, mode: 'before'|'after'|null, path: string|null, anchor: string|null}|null
      */
     public function getFormEntry(string $formId): ?array
     {
@@ -589,19 +589,21 @@ final class ExtraPropertyDefinition
     /**
      * Parses one entry from the associated_grids JSON array into its components.
      *
-     * Format: "gridId[.columnId[:before|after]]"
+     * Format: "gridId[:columnId[:before|after]]"
+     * The ":" separates the grid id from the column id, and the column id from the optional mode.
+     * Grid columns are flat (no nesting), so the column id never contains a separator.
      *
      * @return array{gridId: string, columnId: string|null, mode: 'before'|'after'|null}
      */
     protected static function parseGridEntry(string $entry): array
     {
-        $dotPos = strpos($entry, '.');
-        if (false === $dotPos) {
+        $colonPos = strpos($entry, ':');
+        if (false === $colonPos) {
             return ['gridId' => $entry, 'columnId' => null, 'mode' => null];
         }
 
-        $gridId = substr($entry, 0, $dotPos);
-        $rest = substr($entry, $dotPos + 1);
+        $gridId = substr($entry, 0, $colonPos);
+        $rest = substr($entry, $colonPos + 1);
 
         $mode = 'after';
         foreach ([':before', ':after'] as $suffix) {
@@ -616,21 +618,32 @@ final class ExtraPropertyDefinition
     }
 
     /**
-     * Parses one entry from the associated_forms JSON array into its components.
+     * Parses one entry from the associated_forms JSON array into its fully-resolved components.
      *
-     * Format: "formId[.path[:before|after]]"
+     * Format: "formId[:path[:before|after]]"
+     * The ":" separates the form id from the field path, and the field path from the optional mode.
+     * Nesting *within* the path still uses "." (e.g. "options.suppliers").
      *
-     * @return array{formId: string, path: string|null, mode: 'before'|'after'|null}
+     * Placement is resolved here, once, so consumers never re-interpret the entry. path is the form node
+     * the field belongs to; it is null (and only then) when there is no path — the signal for fallback:
+     * - no path  => fallback section (path/anchor are null).
+     * - no mode  => the path is a container; path is the full path, anchor is null
+     *               (the field is appended inside that node).
+     * - mode set => the last raw segment is an anchor; path is its parent (the raw path minus its last
+     *               segment, "" when the anchor is at the root) and anchor is that last segment
+     *               (the field is positioned before/after the anchor inside the parent).
+     *
+     * @return array{formId: string, mode: 'before'|'after'|null, path: string|null, anchor: string|null}
      */
     protected static function parseFormEntry(string $entry): array
     {
-        $dotPos = strpos($entry, '.');
-        if (false === $dotPos) {
-            return ['formId' => $entry, 'path' => null, 'mode' => null];
+        $colonPos = strpos($entry, ':');
+        if (false === $colonPos) {
+            return ['formId' => $entry, 'mode' => null, 'path' => null, 'anchor' => null];
         }
 
-        $formId = substr($entry, 0, $dotPos);
-        $rest = substr($entry, $dotPos + 1);
+        $formId = substr($entry, 0, $colonPos);
+        $rest = substr($entry, $colonPos + 1);
 
         $mode = null;
         foreach ([':before', ':after'] as $suffix) {
@@ -641,6 +654,22 @@ final class ExtraPropertyDefinition
             }
         }
 
-        return ['formId' => $formId, 'path' => '' !== $rest ? $rest : null, 'mode' => $mode];
+        $rawPath = '' !== $rest ? $rest : null;
+
+        if (null === $rawPath) {
+            $path = null;
+            $anchor = null;
+        } elseif (null === $mode) {
+            // Container placement: the field is appended inside the full path.
+            $path = $rawPath;
+            $anchor = null;
+        } else {
+            // Anchor placement: the field is a sibling of the last raw segment inside its parent.
+            $lastDot = strrpos($rawPath, '.');
+            $path = false !== $lastDot ? substr($rawPath, 0, $lastDot) : '';
+            $anchor = false !== $lastDot ? substr($rawPath, $lastDot + 1) : $rawPath;
+        }
+
+        return ['formId' => $formId, 'mode' => $mode, 'path' => $path, 'anchor' => $anchor];
     }
 }

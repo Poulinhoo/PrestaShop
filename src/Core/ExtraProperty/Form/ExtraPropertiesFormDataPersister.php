@@ -50,14 +50,17 @@ class ExtraPropertiesFormDataPersister
         $valuesByModule = [];
 
         foreach ($definitions as $definition) {
-            // getFormEntry() returns the already-parsed array — no need to re-parse.
+            // getFormEntry() returns the fully-resolved placement (path is the node the field lives in)
+            // — the builder used the same value, so the two cannot drift.
             $formEntry = $definition->getFormEntry($entityName);
-            $targetPath = $formEntry['path'] ?? '';
-            if ('' === $targetPath) {
-                // Keep fallback placement consistent with ExtraPropertiesFormBuilderModifier.
+
+            if (null === $formEntry || null === $formEntry['path']) {
+                // Fallback placement, kept consistent with ExtraPropertiesFormBuilderModifier.
                 $targetPath = ($form->has(ExtraPropertiesFormBuilderModifier::DEFAULT_FALLBACK_TAB) || $this->isNavigationTabForm($form))
                     ? ExtraPropertiesFormBuilderModifier::DEFAULT_FALLBACK_TAB . '.' . ExtraPropertiesFormBuilderModifier::FALLBACK_FORM_SECTION
                     : '';
+            } else {
+                $targetPath = (string) $formEntry['path'];
             }
             $formFieldName = $definition->getFormFieldName();
 
@@ -85,6 +88,9 @@ class ExtraPropertiesFormDataPersister
 
     /**
      * Resolves the sub-form that holds the unmapped extra field, consistent with ExtraPropertiesFormBuilderModifier.
+     *
+     * $targetPath is the node the field lives in (already resolved by getFormEntry): the full container
+     * path for no-mode entries, or the anchor's parent for before/after entries.
      */
     protected function resolveTargetFormForExtraField(FormInterface $rootForm, string $targetPath, string $formFieldName): ?FormInterface
     {
@@ -101,17 +107,6 @@ class ExtraPropertiesFormDataPersister
 
     protected function resolvePathForm(FormInterface $rootForm, string $path): ?FormInterface
     {
-        // Strip :before/:after suffix — the extra field lives in the *parent* builder.
-        // e.g. "header.name:before" → strip ":before" → "header.name" → drop "name" → "header"
-        foreach ([':before', ':after'] as $suffix) {
-            if (str_ends_with($path, $suffix)) {
-                $path = substr($path, 0, -strlen($suffix));
-                $lastDot = strrpos($path, '.');
-                $path = false !== $lastDot ? substr($path, 0, $lastDot) : '';
-                break;
-            }
-        }
-
         $segments = array_values(array_filter(array_map('trim', explode('.', $path)), static fn (string $s): bool => '' !== $s));
         if (empty($segments)) {
             return $rootForm;

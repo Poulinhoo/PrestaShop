@@ -31,14 +31,18 @@ use Symfony\Contracts\Translation\TranslatorInterface;
 /**
  * Adds extra properties fields into an identifiable object form builder.
  *
- * Placement (associatedForms entry from the definition registry):
+ * Placement (associatedForms entry from the definition registry, format "formId[:path[:before|after]]"):
  * - null/empty        => dedicated 'extra_fields.extra_properties' section (created if missing); on simple
  *                        forms without tabs, fields are placed at root level instead.
- * - dot-path          => all segments except the last must exist (throws InvalidArgumentException
- *                        on missing intermediate segment); the last segment is the anchor field.
- *                        No mode suffix → treated as :after (default).
- * - dot-path:before   => navigate to the parent builder and insert the field BEFORE the last segment.
- * - dot-path:after    => navigate to the parent builder and insert the field AFTER the last segment.
+ * - path, no mode     => the path is a CONTAINER: navigate it (every segment must exist, throws
+ *                        InvalidArgumentException otherwise) and append the field inside it.
+ * - path:before       => the last path segment is an ANCHOR: navigate to the parent builder and insert the
+ *                        field BEFORE the anchor (anchor must exist, throws otherwise).
+ * - path:after        => same, inserting the field AFTER the anchor.
+ *
+ * The container vs anchor split is resolved once in ExtraPropertyDefinition::getFormEntry() (which returns
+ * the resolved 'path' + 'anchor') and shared with ExtraPropertiesFormDataPersister so placement and value
+ * retrieval cannot drift.
  *
  * Data mapping:
  * - fields are added as unmapped; persistence reads submitted values from the FormInterface.
@@ -83,9 +87,7 @@ class ExtraPropertiesFormBuilderModifier
         }
 
         foreach ($formDefinitions as $definition) {
-            $parsed = $definition->getFormEntry($formId);
-            $formEntryPath = null !== $parsed ? $parsed['path'] : null;
-            $formEntryMode = null !== $parsed ? $parsed['mode'] : null;
+            $formEntry = $definition->getFormEntry($formId);
 
             $formFieldName = $definition->getFormFieldName();
 
@@ -96,13 +98,13 @@ class ExtraPropertiesFormBuilderModifier
                 $typeOptions['data'] = $this->resolveExistingValue($existingValues, $definition);
             }
 
-            if (null === $formEntryPath) {
+            if (null === $formEntry || null === $formEntry['path']) {
                 $targetBuilder = $this->resolveOrCreateFallbackPath($formBuilder);
                 if (!$targetBuilder->has($formFieldName)) {
                     $targetBuilder->add($formFieldName, $type, $typeOptions);
                 }
             } else {
-                $this->addAtPosition($formBuilder, $formEntryPath, $formEntryMode, $formFieldName, $type, $typeOptions);
+                $this->addAtPosition($formBuilder, $formEntry, $formFieldName, $type, $typeOptions);
             }
         }
     }
@@ -189,50 +191,45 @@ class ExtraPropertiesFormBuilderModifier
     }
 
     /**
-     * Adds a field at the position described by $path and $mode (from ExtraPropertyDefinition::getFormEntry()).
+     * Adds a field at the position resolved by ExtraPropertyDefinition::getFormEntry().
      *
-     * $path is the dot-separated path to the anchor field (e.g. "tab.fieldName").
-     * $mode is 'before', 'after', or null (defaults to 'after').
+     * $formEntry already carries the resolved placement: path is the node the field belongs to and anchor
+     * is the optional sibling field (null for container placement).
+     * - anchor null => path is a container; append the field inside it.
+     * - anchor set  => insert the field before/after the anchor (per $formEntry['mode']) in path.
      *
+     * @param array{mode: 'before'|'after'|null, path: string|null, anchor: string|null} $formEntry
      * @param class-string<FormTypeInterface> $type
      * @param array<string, mixed> $typeOptions
      *
-     * @throws InvalidArgumentException when an intermediate path segment does not exist
+     * @throws InvalidArgumentException when a path segment (container or anchor parent) does not exist
      */
     protected function addAtPosition(
         FormBuilderInterface $rootBuilder,
-        string $path,
-        ?string $mode,
+        array $formEntry,
         string $formFieldName,
         string $type,
         array $typeOptions,
     ): void {
-        // Split path into parent path + anchor field name.
-        $lastDot = strrpos($path, '.');
-        if (false === $lastDot) {
-            $parentBuilder = $rootBuilder;
-            $anchorField = $path;
-        } else {
-            $parentBuilder = $this->resolvePath($rootBuilder, substr($path, 0, $lastDot));
-            $anchorField = substr($path, $lastDot + 1);
-        }
+        $targetBuilder = $this->resolvePath($rootBuilder, (string) $formEntry['path']);
 
-        if ($parentBuilder->has($formFieldName)) {
+        if ($targetBuilder->has($formFieldName)) {
             return;
         }
 
-        // No explicit :before/:after mode and anchor doesn't exist: append to the parent directly.
-        if (null === $mode && !$parentBuilder->has($anchorField)) {
-            $parentBuilder->add($formFieldName, $type, $typeOptions);
+        // Container placement (no mode): append the field directly inside the resolved node.
+        if (null === $formEntry['anchor']) {
+            $targetBuilder->add($formFieldName, $type, $typeOptions);
 
             return;
         }
 
-        $effectiveMode = $mode ?? 'after';
-        if ('before' === $effectiveMode) {
-            $this->formBuilderModifier->addBefore($parentBuilder, $anchorField, $formFieldName, $type, $typeOptions);
+        // Anchor placement: insert relative to the anchor field inside the parent builder.
+        // addBefore/addAfter throw InvalidArgumentException when the anchor does not exist.
+        if ('before' === $formEntry['mode']) {
+            $this->formBuilderModifier->addBefore($targetBuilder, $formEntry['anchor'], $formFieldName, $type, $typeOptions);
         } else {
-            $this->formBuilderModifier->addAfter($parentBuilder, $anchorField, $formFieldName, $type, $typeOptions);
+            $this->formBuilderModifier->addAfter($targetBuilder, $formEntry['anchor'], $formFieldName, $type, $typeOptions);
         }
     }
 
@@ -278,6 +275,8 @@ class ExtraPropertiesFormBuilderModifier
     /**
      * Strictly resolves a dot-separated path inside an existing form builder.
      *
+     * An empty path resolves to the root builder itself.
+     *
      * @throws InvalidArgumentException when any segment of the path does not exist
      */
     protected function resolvePath(FormBuilderInterface $rootBuilder, string $path): FormBuilderInterface
@@ -291,7 +290,7 @@ class ExtraPropertiesFormBuilderModifier
         foreach ($segments as $segment) {
             if (!$builder->has($segment)) {
                 throw new InvalidArgumentException(sprintf(
-                    'Extra property associated_forms path "%s": intermediate segment "%s" does not exist in the form.',
+                    'Extra property associated_forms path "%s": segment "%s" does not exist in the form.',
                     $path,
                     $segment
                 ));

@@ -207,28 +207,90 @@ class ExtraPropertyDefinitionNamingTest extends TestCase
                 ['gridId' => 'product', 'columnId' => null, 'mode' => null],
             ],
             'grid with column — default mode is after' => [
-                'product.reference',
+                'product:reference',
                 ['gridId' => 'product', 'columnId' => 'reference', 'mode' => 'after'],
             ],
             'grid with column explicit after' => [
-                'product.reference:after',
+                'product:reference:after',
                 ['gridId' => 'product', 'columnId' => 'reference', 'mode' => 'after'],
             ],
             'grid with column explicit before' => [
-                'product.reference:before',
+                'product:reference:before',
                 ['gridId' => 'product', 'columnId' => 'reference', 'mode' => 'before'],
             ],
             'compound grid id with column' => [
-                'manufacturer_address.city',
+                'manufacturer_address:city',
                 ['gridId' => 'manufacturer_address', 'columnId' => 'city', 'mode' => 'after'],
             ],
             'compound grid id with column and before' => [
-                'manufacturer_address.city:before',
+                'manufacturer_address:city:before',
                 ['gridId' => 'manufacturer_address', 'columnId' => 'city', 'mode' => 'before'],
             ],
-            'dot with empty rest treated as no column' => [
-                'product.',
+            'colon with empty rest treated as no column' => [
+                'product:',
                 ['gridId' => 'product', 'columnId' => null, 'mode' => null],
+            ],
+        ];
+    }
+
+    /**
+     * Tests parseFormEntry indirectly via getFormEntry() on a definition instance.
+     *
+     * parseFormEntry() is protected; testing it via getFormEntry() covers the same behavior
+     * through the public API. getFormEntry() resolves placement completely: no mode → container
+     * (path is the full path, anchor null), mode set → anchor (path is the parent,
+     * anchor is the last segment).
+     *
+     * @dataProvider parseFormEntryProvider
+     *
+     * @param array{formId: string, mode: 'before'|'after'|null, path: string|null, anchor: string|null} $expected
+     */
+    public function testGetFormEntry(string $entry, array $expected): void
+    {
+        $definition = new ExtraPropertyDefinition(
+            entityName: $expected['formId'],
+            propertyName: 'test_field',
+            associatedForms: [$entry],
+            labelWording: 'Test',
+        );
+
+        $this->assertSame($expected, $definition->getFormEntry($expected['formId']));
+    }
+
+    public static function parseFormEntryProvider(): array
+    {
+        return [
+            'bare form id — no path, no mode' => [
+                'product',
+                ['formId' => 'product', 'mode' => null, 'path' => null, 'anchor' => null],
+            ],
+            'container path, no mode' => [
+                'product:options',
+                ['formId' => 'product', 'mode' => null, 'path' => 'options', 'anchor' => null],
+            ],
+            'nested container path, no mode' => [
+                'product:options.suppliers',
+                ['formId' => 'product', 'mode' => null, 'path' => 'options.suppliers', 'anchor' => null],
+            ],
+            'anchor path before — parent is everything before last segment' => [
+                'product:options.suppliers:before',
+                ['formId' => 'product', 'mode' => 'before', 'path' => 'options', 'anchor' => 'suppliers'],
+            ],
+            'anchor path after' => [
+                'product:options.suppliers:after',
+                ['formId' => 'product', 'mode' => 'after', 'path' => 'options', 'anchor' => 'suppliers'],
+            ],
+            'anchor at root — single segment means parent is root' => [
+                'product:options:before',
+                ['formId' => 'product', 'mode' => 'before', 'path' => '', 'anchor' => 'options'],
+            ],
+            'compound form id with container path' => [
+                'manufacturer_address:city',
+                ['formId' => 'manufacturer_address', 'mode' => null, 'path' => 'city', 'anchor' => null],
+            ],
+            'colon with empty rest treated as no path' => [
+                'product:',
+                ['formId' => 'product', 'mode' => null, 'path' => null, 'anchor' => null],
             ],
         ];
     }
