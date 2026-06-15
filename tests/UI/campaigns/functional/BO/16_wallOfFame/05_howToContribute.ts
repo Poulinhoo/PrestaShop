@@ -10,7 +10,7 @@ import {
   utilsPlaywright,
 } from '@prestashop-core/ui-testing';
 
-const baseContext: string = 'functional_BO_wallOfFame_HowToContribute';
+const baseContext: string = 'functional_BO_wallOfFame_howToContribute';
 /*
 Verify the Wall of Fame page displays contribution information.
 */
