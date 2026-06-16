@@ -14,9 +14,11 @@ use PrestaShop\PrestaShop\Core\Domain\Country\Exception\CannotDeleteCountryExcep
 use PrestaShop\PrestaShop\Core\Domain\Country\Exception\CannotEditCountryException;
 use PrestaShop\PrestaShop\Core\Domain\Country\Exception\CountryConstraintException;
 use PrestaShop\PrestaShop\Core\Domain\Country\Exception\CountryNotFoundException;
+use PrestaShop\PrestaShop\Core\Domain\Country\Exception\DuplicateCountryIsoCodeException;
 use PrestaShop\PrestaShop\Core\Domain\Country\ValueObject\CountryId;
 use PrestaShop\PrestaShop\Core\Exception\CoreException;
 use PrestaShop\PrestaShop\Core\Repository\AbstractObjectModelRepository;
+use Validate;
 
 /**
  * Provides methods to access data storage of Country
@@ -67,11 +69,13 @@ final class CountryRepository extends AbstractObjectModelRepository implements C
      * @return Country
      *
      * @throws CountryConstraintException
+     * @throws DuplicateCountryIsoCodeException
      * @throws CoreException
      */
     public function add(Country $country): Country
     {
         $this->countryValidator->validate($country);
+        $this->assertIsoCodeIsUnique($country);
 
         $this->addObjectModel($country, CannotAddCountryException::class);
 
@@ -84,11 +88,13 @@ final class CountryRepository extends AbstractObjectModelRepository implements C
      * @return Country
      *
      * @throws CannotEditCountryException
+     * @throws DuplicateCountryIsoCodeException
      * @throws CoreException
      */
     public function update(Country $country): Country
     {
         $this->countryValidator->validate($country);
+        $this->assertIsoCodeIsUnique($country);
 
         $this->updateObjectModel($country, CannotEditCountryException::class);
 
@@ -98,5 +104,27 @@ final class CountryRepository extends AbstractObjectModelRepository implements C
     public function delete(CountryId $countryId): void
     {
         $this->deleteObjectModel($this->get($countryId), CannotDeleteCountryException::class);
+    }
+
+    /**
+     * Ensures no other country already uses the same ISO code, replicating the legacy
+     * AdminCountriesController uniqueness check so the migrated page behaves identically.
+     *
+     * @throws DuplicateCountryIsoCodeException
+     */
+    private function assertIsoCodeIsUnique(Country $country): void
+    {
+        if (empty($country->iso_code) || !Validate::isLanguageIsoCode($country->iso_code)) {
+            return;
+        }
+
+        $existingCountryId = (int) Country::getByIso($country->iso_code);
+
+        if (0 !== $existingCountryId && $existingCountryId !== (int) $country->id) {
+            throw new DuplicateCountryIsoCodeException(sprintf(
+                'Country with ISO code "%s" already exists',
+                $country->iso_code
+            ));
+        }
     }
 }
