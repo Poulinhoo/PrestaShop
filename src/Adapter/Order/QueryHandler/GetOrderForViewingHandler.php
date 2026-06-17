@@ -517,9 +517,10 @@ final class GetOrderForViewingHandler extends AbstractOrderHandler implements Ge
                 }
 
                 $number = sprintf(
-                    '%s%06d',
+                    '%s%06d%s',
                     $conf[$this->contextLanguageId] ?? '',
-                    $shipment->getId()
+                    $order->id,
+                    '-' . $shipment->getId()
                 );
 
                 $documentsForViewing[] = new OrderDocumentForViewing(
