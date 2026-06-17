@@ -69,14 +69,6 @@ class ExtraPropertyCQRSApiValidator extends CQRSApiValidator
                 (string) $operation->getMethod(),
             );
             $violations->addAll($extraViolations);
-
-            if (0 === $extraViolations->count()) {
-                // Hand the validated payload to the POST_WRITE subscriber so it persists after the core write.
-                $this->requestStack->getCurrentRequest()?->attributes->set(
-                    ExtraPropertyApiPayloadHandlerInterface::PENDING_REQUEST_ATTRIBUTE,
-                    $payload
-                );
-            }
         }
 
         if ($violations->count() > 0) {

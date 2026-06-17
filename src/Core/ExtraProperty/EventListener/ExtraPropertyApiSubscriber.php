@@ -14,6 +14,7 @@ use ApiPlatform\Metadata\HttpOperation;
 use PrestaShop\PrestaShop\Core\ExtraProperty\Api\ExtraPropertyApiPayloadHandlerInterface;
 use PrestaShop\PrestaShop\Core\ExtraProperty\Api\ExtraPropertyApiResponseInjectorInterface;
 use Symfony\Component\EventDispatcher\EventSubscriberInterface;
+use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\HttpKernel\Event\ResponseEvent;
 use Symfony\Component\HttpKernel\KernelEvents;
@@ -78,18 +79,24 @@ class ExtraPropertyApiSubscriber implements EventSubscriberInterface
         $method = $operation->getMethod();
         $isCollection = $this->isCollection($operation, $decoded);
 
-        // Persist the validated payload of a write operation, now that the entity id is in the response body.
-        $pending = $request->attributes->get(ExtraPropertyApiPayloadHandlerInterface::PENDING_REQUEST_ATTRIBUTE);
-        if (is_array($pending) && [] !== $pending && !$isCollection) {
-            $this->payloadHandler->persist($pending, $decoded, $resourceClass, $uriTemplate, $method);
-            $request->attributes->remove(ExtraPropertyApiPayloadHandlerInterface::PENDING_REQUEST_ATTRIBUTE);
+        // Persist the submitted extraProperties payload of a write operation, now that the entity id is in the
+        // response body. The payload is read straight from the request body (the same content the API validator
+        // already inspected) — a 2xx response means the merging validator let it through, so only valid data
+        // reaches this point. The entity id is resolved from the response body, which is the only place a freshly
+        // created POST id is available.
+        if (!$isCollection && $this->isWriteMethod($method)) {
+            $payload = $this->extractRequestPayload($request);
+            if ([] !== $payload) {
+                $this->payloadHandler->persist($payload, $decoded, $resourceClass, $uriTemplate, $method);
+            }
         }
 
-        // Inject extra properties into the response: a single item, or each paginated-list item.
+        // Inject extra properties into the response. A list reuses the values already fetched by the grid query,
+        // inline at each item root; a single item gets the nested `extraProperties` object (read from the DB).
         if ($isCollection && isset($decoded['items']) && is_array($decoded['items'])) {
             foreach ($decoded['items'] as $index => $item) {
                 if (is_array($item)) {
-                    $decoded['items'][$index] = $this->responseInjector->injectIntoItem($item, $resourceClass, $uriTemplate, $method);
+                    $decoded['items'][$index] = $this->responseInjector->injectInlineListItem($item, $resourceClass, $uriTemplate, $method);
                 }
             }
         } else {
@@ -116,5 +123,31 @@ class ExtraPropertyApiSubscriber implements EventSubscriberInterface
     protected function isCollection(HttpOperation $operation, array $decoded): bool
     {
         return $operation instanceof CollectionOperationInterface || array_key_exists('items', $decoded);
+    }
+
+    protected function isWriteMethod(string $method): bool
+    {
+        return in_array(strtoupper($method), ['POST', 'PUT', 'PATCH'], true);
+    }
+
+    /**
+     * Reads the submitted extraProperties sub-object from the initial request body. Request::getContent() is
+     * cached, so this does not consume the input stream a second time.
+     *
+     * @return array<string, array<string, mixed>>
+     */
+    protected function extractRequestPayload(Request $request): array
+    {
+        $content = $request->getContent();
+        if ('' === $content) {
+            return [];
+        }
+
+        $decoded = json_decode($content, true);
+        if (!is_array($decoded) || !isset($decoded['extraProperties']) || !is_array($decoded['extraProperties'])) {
+            return [];
+        }
+
+        return $decoded['extraProperties'];
     }
 }

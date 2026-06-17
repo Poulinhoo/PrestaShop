@@ -93,6 +93,11 @@ services:
       $propertyNameCollectionFactory: '@?api_platform.metadata.property_name_collection_factory'
       $propertyMetadataFactory: '@?api_platform.metadata.property.metadata_factory'
 
+  # Request-scoped reuse of the extra-property values already fetched by a grid query, so list responses do not
+  # re-read them row by row. Populated by QueryListProvider, read back by the response injector. Implements
+  # ResetInterface, so autoconfiguration tags it kernel.reset (cleared between requests in a worker runtime).
+  PrestaShopBundle\ApiPlatform\ExtraProperties\ExtraPropertyApiListRecordCollector: ~
+
   PrestaShopBundle\ApiPlatform\ExtraProperties\ExtraPropertyApiResponseInjector: ~
   PrestaShop\PrestaShop\Core\ExtraProperty\Api\ExtraPropertyApiResponseInjectorInterface:
     alias: 'PrestaShopBundle\ApiPlatform\ExtraProperties\ExtraPropertyApiResponseInjector'

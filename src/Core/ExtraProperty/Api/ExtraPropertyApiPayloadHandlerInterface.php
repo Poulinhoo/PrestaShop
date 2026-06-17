@@ -23,13 +23,6 @@ use Symfony\Component\Validator\ConstraintViolationListInterface;
 interface ExtraPropertyApiPayloadHandlerInterface
 {
     /**
-     * Request attribute holding the validated extraProperties payload between the validation step
-     * (denormalize time) and the persist step (POST_WRITE), so the entity is only persisted once
-     * its new id is known and only validated data is written.
-     */
-    public const PENDING_REQUEST_ATTRIBUTE = '_ps_extra_properties_pending';
-
-    /**
      * Validates an extraProperties payload against the definitions targeting the given operation
      * (URI template + HTTP method). Returns an empty list when nothing matches or the payload is empty.
      *

@@ -35,6 +35,7 @@ class ExtraPropertyApiResponseInjector implements ExtraPropertyApiResponseInject
         protected readonly ShopContext $shopContext,
         protected readonly LocalizedValueUpdater $localizedValueUpdater,
         protected readonly ApiResourceIdResolver $idResolver,
+        protected readonly ExtraPropertyApiListRecordCollector $listRecordCollector,
     ) {
     }
 
@@ -58,6 +59,37 @@ class ExtraPropertyApiResponseInjector implements ExtraPropertyApiResponseInject
                     is_array($item['extraProperties'] ?? null) ? $item['extraProperties'] : [],
                     $extraProperties
                 );
+            }
+        }
+
+        return $item;
+    }
+
+    public function injectInlineListItem(array $item, string $resourceClass, string $uriTemplate, string $method): array
+    {
+        $definitions = $this->repository->getAllDefinitions()->filterByApi($uriTemplate, $method);
+        if ($definitions->isEmpty()) {
+            return $item;
+        }
+
+        foreach ($this->groupByEntity($definitions) as $entityName => $entityDefinitions) {
+            $entityId = $this->idResolver->resolveId($item, $entityName, $resourceClass);
+            if ($entityId <= 0) {
+                continue;
+            }
+
+            $capturedRecord = $this->listRecordCollector->find($entityName, $entityId);
+            if (null === $capturedRecord) {
+                continue;
+            }
+
+            // Reuse exactly what the grid fetched: each value inline at the item root, under its grid field name
+            // (single context locale), with no further transformation.
+            foreach ($entityDefinitions as $definition) {
+                $alias = $definition->getFormFieldName();
+                if (array_key_exists($alias, $capturedRecord)) {
+                    $item[$alias] = $capturedRecord[$alias];
+                }
             }
         }
 
@@ -107,31 +139,9 @@ class ExtraPropertyApiResponseInjector implements ExtraPropertyApiResponseInject
             $result = $this->flattenShopScopedValues($result, $shopScopedFields);
         }
 
-        return $this->removeEmptyValues($result);
-    }
-
-    /**
-     * Drops fields that carry no value (null, or an empty localized array) so the response only exposes extra
-     * properties that are actually set. Scalar values such as false, 0 or '' are kept.
-     *
-     * @param array<string, array<string, mixed>> $valuesByModule
-     *
-     * @return array<string, array<string, mixed>>
-     */
-    protected function removeEmptyValues(array $valuesByModule): array
-    {
-        foreach ($valuesByModule as $moduleKey => $fields) {
-            foreach ($fields as $fieldName => $value) {
-                if (null === $value || [] === $value) {
-                    unset($valuesByModule[$moduleKey][$fieldName]);
-                }
-            }
-            if (empty($valuesByModule[$moduleKey])) {
-                unset($valuesByModule[$moduleKey]);
-            }
-        }
-
-        return $valuesByModule;
+        // Extra properties are dynamic and unknown, so — unlike standard core fields — null values are kept:
+        // null is a valid value for a nullable field and the consumer should always see the declared property.
+        return $result;
     }
 
     /**

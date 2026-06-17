@@ -31,4 +31,20 @@ interface ExtraPropertyApiResponseInjectorInterface
      * @return array<string, mixed>
      */
     public function injectIntoItem(array $item, string $resourceClass, string $uriTemplate, string $method): array;
+
+    /**
+     * Returns the given list item enriched IN PLACE at its root with the extra-property values the grid query
+     * already fetched for this operation (reused without any database read). Returns the item unchanged when
+     * nothing was captured for it.
+     *
+     * Unlike injectIntoItem(), list items expose each value inline under its grid field name (e.g.
+     * "extra_common_<module>_<field>") as the single context-locale value — matching the back-office grid display
+     * rather than the nested, all-locales `extraProperties` object used on single-item endpoints.
+     *
+     * @param array<string, mixed> $item One element of a paginated list
+     * @param string $resourceClass Fully-qualified ApiResource class (used to resolve the identifier property)
+     *
+     * @return array<string, mixed>
+     */
+    public function injectInlineListItem(array $item, string $resourceClass, string $uriTemplate, string $method): array;
 }

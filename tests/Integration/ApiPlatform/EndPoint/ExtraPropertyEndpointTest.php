@@ -141,9 +141,11 @@ final class ExtraPropertyEndpointTest extends ApiTestCase
     }
 
     /**
-     * The list (GET collection) injects the extraProperties sub-object into the items it returns. Values that
-     * were never set are omitted entirely (per the runtime contract), so we locate the product we wrote to and
-     * assert its api_flag is injected as a boolean in the collection response.
+     * The list (GET collection) reuses the values the grid query already fetched and exposes them INLINE at the
+     * item root, under their grid field name (extra_<scope>_<module>_<field>) — NOT inside a nested
+     * extraProperties sub-object, and as the single current-locale value (mirroring the back-office grid). Only
+     * properties associated with both the grid and the API appear, so we assert the product we wrote to carries
+     * its api_flag (bool) and api_note (single-locale string) at the root and that there is no sub-object.
      *
      * @depends testWriteAndReadProductExtraProperties
      */
@@ -161,12 +163,21 @@ final class ExtraPropertyEndpointTest extends ApiTestCase
         }
 
         $this->assertNotNull($writtenItem, 'The product written to was not present in the list');
-        $this->assertArrayHasKey('extraProperties', $writtenItem);
-        $this->assertArrayHasKey(self::MODULE_NAME, $writtenItem['extraProperties']);
-        $moduleExtra = $writtenItem['extraProperties'][self::MODULE_NAME];
-        $this->assertArrayHasKey('api_flag', $moduleExtra);
-        $this->assertIsBool($moduleExtra['api_flag']);
-        $this->assertTrue($moduleExtra['api_flag']);
+
+        // List items must NOT carry the nested extraProperties object used by single-item endpoints.
+        $this->assertArrayNotHasKey('extraProperties', $writtenItem);
+
+        // COMMON value, inline at root, already cast to bool by the grid query.
+        $flagKey = 'extra_common_' . self::MODULE_NAME . '_api_flag';
+        $this->assertArrayHasKey($flagKey, $writtenItem);
+        $this->assertTrue($writtenItem[$flagKey]);
+
+        // LANG value, inline at root, as the single current-locale scalar (not a {locale: value} object). The
+        // value is whichever locale the API context resolves to among the two we wrote.
+        $noteKey = 'extra_lang_' . self::MODULE_NAME . '_api_note';
+        $this->assertArrayHasKey($noteKey, $writtenItem);
+        $this->assertIsString($writtenItem[$noteKey]);
+        $this->assertContains($writtenItem[$noteKey], ['hello', 'bonjour']);
     }
 
     /**

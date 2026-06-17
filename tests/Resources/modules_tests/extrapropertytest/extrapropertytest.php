@@ -51,26 +51,33 @@ class extrapropertytest extends Module
             return false;
         }
 
-        // product / api_flag — BOOL, COMMON scope, exposed on the product API endpoints
+        // product / api_flag — BOOL, COMMON scope, exposed on the product API endpoints AND the product grid.
+        // It is associated with the grid too so the API product list reuses the value fetched by the grid query
+        // and exposes it inline at the item root (only properties in associatedGrids ∩ associatedApis show in lists).
         if (!$this->registerExtraProperty(new ExtraPropertyDefinition(
             entityName: 'product',
             propertyName: 'api_flag',
             type: ExtraPropertyType::BOOL,
             scope: ExtraPropertyScope::COMMON,
             validator: 'isBool',
+            associatedGrids: ['product'],
             associatedApis: ['/products', '/products/{productId}'],
+            labelWording: 'API flag',
         ))) {
             return false;
         }
 
-        // product / api_note — STRING, LANG scope (per-language values), exposed on the product API endpoints
+        // product / api_note — STRING, LANG scope (per-language values), exposed on the product API endpoints and
+        // the product grid. In a list it surfaces as the single current-locale scalar fetched by the grid query.
         if (!$this->registerExtraProperty(new ExtraPropertyDefinition(
             entityName: 'product',
             propertyName: 'api_note',
             type: ExtraPropertyType::STRING,
             scope: ExtraPropertyScope::LANG,
             validator: 'isGenericName',
+            associatedGrids: ['product'],
             associatedApis: ['/products', '/products/{productId}'],
+            labelWording: 'API note',
         ))) {
             return false;
         }

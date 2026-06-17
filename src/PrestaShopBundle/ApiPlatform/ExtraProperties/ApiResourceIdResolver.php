@@ -11,6 +11,7 @@ namespace PrestaShopBundle\ApiPlatform\ExtraProperties;
 
 use ApiPlatform\Metadata\Property\Factory\PropertyMetadataFactoryInterface;
 use ApiPlatform\Metadata\Property\Factory\PropertyNameCollectionFactoryInterface;
+use Symfony\Component\DependencyInjection\Container;
 use Throwable;
 
 /**
@@ -50,8 +51,7 @@ class ApiResourceIdResolver
             return $normalizedData['id'];
         }
 
-        $camelCase = lcfirst(str_replace('_', '', ucwords($entityName, '_')));
-        $idPropertyName = $camelCase . 'Id';
+        $idPropertyName = lcfirst(Container::camelize($entityName)) . 'Id';
         if (isset($normalizedData[$idPropertyName]) && is_int($normalizedData[$idPropertyName])) {
             return $normalizedData[$idPropertyName];
         }
