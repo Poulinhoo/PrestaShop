@@ -75,13 +75,18 @@ final class ExtraPropertyEndpointTest extends ApiTestCase
         // Always clean up — even if the install or a test failed midway — so nothing leaks into the shared test
         // modules directory or the test database (a module left here is installed by every integration run).
         self::uninstallTestModuleIfInstalled();
-        if (is_dir(self::moduleDir())) {
-            Tools::deleteDirectory(self::moduleDir());
-        }
 
+        // Order matters: LanguageResetter::resetLanguages() below calls ResourceResetter::resetTestModules(), which
+        // mirrors tests/Resources/modules/ back from a temp backup. So we run that FIRST and only then drop the
+        // module dir — otherwise the mirror would restore the module right after we deleted it. See the class-level
+        // note on why this module is removed from the modules directory.
         ProductResetter::resetProducts();
         DatabaseDump::restoreTables(['customer', 'customer_group']);
         LanguageResetter::resetLanguages();
+
+        if (is_dir(self::moduleDir())) {
+            Tools::deleteDirectory(self::moduleDir());
+        }
 
         self::$moduleInstalled = false;
 

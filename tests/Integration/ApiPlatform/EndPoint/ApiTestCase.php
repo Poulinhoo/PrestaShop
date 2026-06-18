@@ -166,11 +166,11 @@ abstract class ApiTestCase extends ApiPlatformTestCase
      *    This preserves the historical behaviour relied on by existing endpoint tests.
      *  - Multi-scope path: otherwise (no shared client created), a dedicated API Client owning the requested
      *    scopes is found in the cache or created on the fly, and tokens are cached per-scope to limit
-     *    /access_token round-trips.
+     *    /access_token round-trips. Token caching is skipped when custom kernel/client options are passed.
      *
      * @param array $scopes List of scopes to request the token for
-     * @param array $kernelOptions Custom kernel options (legacy path only)
-     * @param array $clientOptions Custom client options (legacy path only)
+     * @param array $kernelOptions Custom kernel options (e.g. debug mode); forwarded to the /access_token request
+     * @param array $clientOptions Custom client options; forwarded to the /access_token request
      */
     protected function getBearerToken(array $scopes = [], array $kernelOptions = [], array $clientOptions = []): string
     {
@@ -198,11 +198,19 @@ abstract class ApiTestCase extends ApiPlatformTestCase
             static::$bearerTokens = [];
         }
 
+        // Custom kernel/client options (e.g. a specific debug mode, like DisabledEndpointsTest uses) change which
+        // operations/routes the kernel exposes, so a token cached under different options must not be reused: doing
+        // so would also skip the /access_token request that warms the route cache under those very options, leaving
+        // a stale cache. We therefore only cache (and reuse) tokens for the default options.
+        $useTokenCache = empty($kernelOptions) && empty($clientOptions);
+
         // If a token with these scopes already exists then we reuse it, it prevents requesting the /access_token API all the time
-        foreach (static::$bearerTokens as $bearerToken) {
-            $containsAllScopes = count(array_intersect($bearerToken['scopes'], $scopes)) === count($scopes);
-            if ($containsAllScopes) {
-                return $bearerToken['token'];
+        if ($useTokenCache) {
+            foreach (static::$bearerTokens as $bearerToken) {
+                $containsAllScopes = count(array_intersect($bearerToken['scopes'], $scopes)) === count($scopes);
+                if ($containsAllScopes) {
+                    return $bearerToken['token'];
+                }
             }
         }
 
@@ -220,16 +228,20 @@ abstract class ApiTestCase extends ApiPlatformTestCase
                 'content-type' => 'application/x-www-form-urlencoded',
             ],
         ];
-        $response = static::createClient()->request('POST', '/access_token', $options);
+        // Forward the kernel/client options so the token is requested against the same kernel configuration as the
+        // subsequent calls (this also warms the route cache under those options before the actual request).
+        $response = static::createClient($kernelOptions, $clientOptions)->request('POST', '/access_token', $options);
         self::assertResponseStatusCodeSame(200);
 
         $bearerToken = json_decode($response->getContent())->access_token;
 
         // Cache the bearer token with associated scopes
-        static::$bearerTokens[] = [
-            'token' => $bearerToken,
-            'scopes' => $scopes,
-        ];
+        if ($useTokenCache) {
+            static::$bearerTokens[] = [
+                'token' => $bearerToken,
+                'scopes' => $scopes,
+            ];
+        }
 
         return $bearerToken;
     }
