@@ -9,6 +9,7 @@ import {
   boCustomersPage,
   boCustomersCreatePage,
   type BrowserContext,
+  dataGroups,
   FakerCustomer,
   type Frame,
   type Page,
@@ -96,17 +97,17 @@ describe('BO - Orders - Create order : Create guest from new order page', async 
 
     await boCustomersCreatePage.enableGuestAccount(customerFrame, true);
 
-    let isDisabled = await boCustomersCreatePage.isPasswordDisabled(customerFrame);
-    expect(isDisabled).to.equal(true);
+    let isPasswordDisabled = await boCustomersCreatePage.isPasswordDisabled(customerFrame);
+    expect(isPasswordDisabled).to.equal(true);
 
-    isDisabled = await boCustomersCreatePage.isCustomerDisabled(customerFrame);
-    expect(isDisabled).to.equal(true);
+    const isCustomerDisabled = await boCustomersCreatePage.isCustomerDisabled(customerFrame);
+    expect(isCustomerDisabled).to.equal(true);
 
-    isDisabled = await boCustomersCreatePage.isGroupAccessDisabled(customerFrame);
-    expect(isDisabled).to.equal(true);
+    const isGroupAccessDisabled = await boCustomersCreatePage.isGroupAccessDisabled(customerFrame);
+    expect(isGroupAccessDisabled).to.equal(true);
 
-    isDisabled = await boCustomersCreatePage.isDefaultCustomerGroupDisabled(customerFrame);
-    expect(isDisabled).to.equal(true);
+    const isDefaultCustomerGroupDisabled = await boCustomersCreatePage.isDefaultCustomerGroupDisabled(customerFrame);
+    expect(isDefaultCustomerGroupDisabled).to.equal(true);
   });
 
   it('should fill the form and create the guest customer', async function () {
@@ -134,8 +135,14 @@ describe('BO - Orders - Create order : Create guest from new order page', async 
 
     await boCustomersPage.filterCustomers(page, 'input', 'email', guestData.email);
 
+    const numberOfCustomersAfterFilter = await boCustomersPage.getNumberOfElementInGrid(page);
+    expect(numberOfCustomersAfterFilter).to.equal(1);
+
     const email = await boCustomersPage.getTextColumnFromTableCustomers(page, 1, 'email');
     expect(email).to.equal(guestData.email);
+
+    const defaultGroup = await boCustomersPage.getTextColumnFromTableCustomers(page, 1, 'default_group');
+    expect(defaultGroup).to.equal(dataGroups.guest.name);
   });
 
   it('should delete the guest customer', async function () {
