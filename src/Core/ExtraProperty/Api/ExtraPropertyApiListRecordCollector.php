@@ -7,7 +7,7 @@
 
 declare(strict_types=1);
 
-namespace PrestaShopBundle\ApiPlatform\ExtraProperties;
+namespace PrestaShop\PrestaShop\Core\ExtraProperty\Api;
 
 use PrestaShop\PrestaShop\Core\ExtraProperty\Definition\ExtraPropertyDefinitionCollection;
 use PrestaShop\PrestaShop\Core\ExtraProperty\Definition\ExtraPropertyDefinitionRepositoryInterface;

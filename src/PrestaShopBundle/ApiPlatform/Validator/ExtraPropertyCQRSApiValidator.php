@@ -14,10 +14,17 @@ use ApiPlatform\Metadata\Operation;
 use ApiPlatform\Metadata\Resource\Factory\ResourceMetadataCollectionFactoryInterface;
 use ApiPlatform\Validator\Exception\ValidationException;
 use ApiPlatform\Validator\ValidatorInterface;
-use PrestaShop\PrestaShop\Core\ExtraProperty\Api\ExtraPropertyApiPayloadHandlerInterface;
+use PrestaShop\PrestaShop\Core\ExtraProperty\Definition\ExtraPropertyDefinition;
 use PrestaShop\PrestaShop\Core\ExtraProperty\Definition\ExtraPropertyDefinitionRepositoryInterface;
+use PrestaShop\PrestaShop\Core\ExtraProperty\Definition\ExtraPropertyScope;
+use PrestaShop\PrestaShop\Core\ExtraProperty\Validation\ExtraPropertyValidatorInterface;
+use PrestaShopBundle\ApiPlatform\Exception\LocaleNotFoundException;
+use PrestaShopBundle\ApiPlatform\LocalizedValueUpdater;
+use PrestaShopBundle\ApiPlatform\Metadata\LocalizedValue;
 use Symfony\Component\HttpFoundation\RequestStack;
+use Symfony\Component\Validator\ConstraintViolation;
 use Symfony\Component\Validator\ConstraintViolationList;
+use Symfony\Component\Validator\ConstraintViolationListInterface;
 use Symfony\Component\Validator\Mapping\Factory\MetadataFactoryInterface;
 use Throwable;
 
@@ -34,10 +41,11 @@ class ExtraPropertyCQRSApiValidator extends CQRSApiValidator
     public function __construct(
         MetadataFactoryInterface $validatorMetadataFactory,
         ValidatorInterface $validator,
-        protected readonly ExtraPropertyApiPayloadHandlerInterface $payloadHandler,
         protected readonly ExtraPropertyDefinitionRepositoryInterface $repository,
         protected readonly ResourceMetadataCollectionFactoryInterface $resourceMetadataFactory,
         protected readonly RequestStack $requestStack,
+        protected readonly ExtraPropertyValidatorInterface $validatorAdapter,
+        protected readonly LocalizedValueUpdater $localizedValueUpdater,
     ) {
         parent::__construct($validatorMetadataFactory, $validator);
     }
@@ -63,7 +71,7 @@ class ExtraPropertyCQRSApiValidator extends CQRSApiValidator
 
         $payload = $this->extractExtraPropertiesPayload();
         if (null !== $payload && $operation instanceof HttpOperation) {
-            $extraViolations = $this->payloadHandler->validate(
+            $extraViolations = $this->validateExtraProperties(
                 $payload,
                 (string) $operation->getUriTemplate(),
                 (string) $operation->getMethod(),
@@ -105,6 +113,83 @@ class ExtraPropertyCQRSApiValidator extends CQRSApiValidator
         }
 
         return false;
+    }
+
+    /**
+     * Validates an extraProperties payload against the definitions targeting the given operation (URI template +
+     * HTTP method). Returns an empty list when nothing matches or the payload is empty. Violations use the path
+     * "extraProperties.<module>.<field>[.<locale|shopId>]" so they merge with the resource constraint violations.
+     *
+     * @param array<string, array<string, mixed>> $extraPropertiesByModule
+     */
+    protected function validateExtraProperties(array $extraPropertiesByModule, string $uriTemplate, string $method): ConstraintViolationListInterface
+    {
+        $violations = new ConstraintViolationList();
+        if (empty($extraPropertiesByModule)) {
+            return $violations;
+        }
+
+        $definitions = $this->repository->getAllDefinitions()->filterByApi($uriTemplate, $method);
+        foreach ($definitions as $definition) {
+            $moduleKey = $definition->getNormalizedModuleKey();
+            $fieldName = $definition->getPropertyName();
+            if (!isset($extraPropertiesByModule[$moduleKey]) || !array_key_exists($fieldName, $extraPropertiesByModule[$moduleKey])) {
+                continue;
+            }
+
+            $value = $extraPropertiesByModule[$moduleKey][$fieldName];
+            $basePath = sprintf('extraProperties.%s.%s', $moduleKey, $fieldName);
+
+            if (ExtraPropertyScope::LANG === $definition->getScope() && is_array($value)) {
+                foreach ($value as $locale => $localeValue) {
+                    $this->validateOneValue($violations, $definition, $localeValue, $basePath . '.' . (string) $locale);
+                }
+                $this->assertKnownLocales($violations, $value, $fieldName, $basePath);
+                continue;
+            }
+
+            if (ExtraPropertyScope::SHOP === $definition->getScope() && is_array($value)) {
+                foreach ($value as $shopId => $shopValue) {
+                    $this->validateOneValue($violations, $definition, $shopValue, $basePath . '.' . (string) $shopId);
+                }
+                continue;
+            }
+
+            $this->validateOneValue($violations, $definition, $value, $basePath);
+        }
+
+        return $violations;
+    }
+
+    protected function validateOneValue(ConstraintViolationListInterface $violations, ExtraPropertyDefinition $definition, mixed $value, string $propertyPath): void
+    {
+        if (null === $definition->getValidator()) {
+            return;
+        }
+
+        $result = $this->validatorAdapter->validateValue($definition, $value);
+        if (true !== $result) {
+            $message = is_string($result) && '' !== $result ? $result : 'This value is not valid.';
+            $violations->add(new ConstraintViolation($message, $message, [], null, $propertyPath, $value));
+        }
+    }
+
+    /**
+     * Adds a violation when a LANG-scope payload uses a locale that does not exist in the shop.
+     *
+     * @param array<int|string, mixed> $localizedValue
+     */
+    protected function assertKnownLocales(ConstraintViolationListInterface $violations, array $localizedValue, string $fieldName, string $basePath): void
+    {
+        try {
+            $this->localizedValueUpdater->denormalizeLocalizedValue(
+                $localizedValue,
+                $fieldName,
+                [LocalizedValue::IS_LOCALIZED_VALUE => true, LocalizedValue::DENORMALIZED_KEY => LocalizedValue::ID_KEY],
+            );
+        } catch (LocaleNotFoundException $e) {
+            $violations->add(new ConstraintViolation($e->getMessage(), $e->getMessage(), [], null, $basePath, $localizedValue));
+        }
     }
 
     /**

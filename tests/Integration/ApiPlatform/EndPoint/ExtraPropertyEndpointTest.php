@@ -53,11 +53,16 @@ final class ExtraPropertyEndpointTest extends ApiTestCase
         ProductResetter::resetProducts();
         DatabaseDump::restoreTables(['customer', 'customer_group']);
 
-        // Copy the test module into the modules directory then install it (mirrors ModuleManagerBuilderTest).
+        // Copy the test module into the test modules directory (mirrors ModuleManagerBuilderTest). The copy must
+        // happen before the defensive uninstall below so the module class can always be loaded.
         $sourceModuleDir = dirname(__DIR__, 3) . '/Resources/modules_tests/' . self::MODULE_NAME;
         if (is_dir($sourceModuleDir)) {
-            Tools::recurseCopy($sourceModuleDir, _PS_MODULE_DIR_ . '/' . self::MODULE_NAME);
+            Tools::recurseCopy($sourceModuleDir, self::moduleDir());
         }
+
+        // Self-heal: a previous interrupted run may have left the module installed in the test DB. Uninstall it
+        // before a clean install so its data (roles, definitions, extra tables) is never duplicated.
+        self::uninstallTestModuleIfInstalled();
 
         $module = Module::getInstanceByName(self::MODULE_NAME);
         self::assertInstanceOf(Module::class, $module);
@@ -67,11 +72,11 @@ final class ExtraPropertyEndpointTest extends ApiTestCase
 
     public static function tearDownAfterClass(): void
     {
-        if (self::$moduleInstalled && Module::isInstalled(self::MODULE_NAME)) {
-            Module::getInstanceByName(self::MODULE_NAME)->uninstall();
-        }
-        if (is_dir(_PS_MODULE_DIR_ . '/' . self::MODULE_NAME)) {
-            Tools::deleteDirectory(_PS_MODULE_DIR_ . '/' . self::MODULE_NAME);
+        // Always clean up — even if the install or a test failed midway — so nothing leaks into the shared test
+        // modules directory or the test database (a module left here is installed by every integration run).
+        self::uninstallTestModuleIfInstalled();
+        if (is_dir(self::moduleDir())) {
+            Tools::deleteDirectory(self::moduleDir());
         }
 
         ProductResetter::resetProducts();
@@ -81,6 +86,30 @@ final class ExtraPropertyEndpointTest extends ApiTestCase
         self::$moduleInstalled = false;
 
         parent::tearDownAfterClass();
+    }
+
+    /**
+     * Absolute path of the test module once copied into the test modules directory.
+     */
+    private static function moduleDir(): string
+    {
+        return _PS_MODULE_DIR_ . self::MODULE_NAME;
+    }
+
+    /**
+     * Uninstalls the test module when installed (dropping its definitions, extra tables and roles). Safe to call
+     * defensively before install and unconditionally on teardown.
+     */
+    private static function uninstallTestModuleIfInstalled(): void
+    {
+        if (!Module::isInstalled(self::MODULE_NAME)) {
+            return;
+        }
+
+        $module = Module::getInstanceByName(self::MODULE_NAME);
+        if ($module instanceof Module) {
+            $module->uninstall();
+        }
     }
 
     public function getProtectedEndpoints(): iterable

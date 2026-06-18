@@ -88,28 +88,22 @@ services:
   # Exposes and persists module-declared extra properties on the Admin API. Defined here (API kernel only) so
   # the behaviour never loads in the Back-Office or Front-Office kernels.
 
-  PrestaShopBundle\ApiPlatform\ExtraProperties\ApiResourceIdResolver:
-    arguments:
-      $propertyNameCollectionFactory: '@?api_platform.metadata.property_name_collection_factory'
-      $propertyMetadataFactory: '@?api_platform.metadata.property.metadata_factory'
-
   # Request-scoped reuse of the extra-property values already fetched by a grid query, so list responses do not
   # re-read them row by row. Populated by QueryListProvider, read back by the response injector. Implements
   # ResetInterface, so autoconfiguration tags it kernel.reset (cleared between requests in a worker runtime).
-  PrestaShopBundle\ApiPlatform\ExtraProperties\ExtraPropertyApiListRecordCollector: ~
+  PrestaShop\PrestaShop\Core\ExtraProperty\Api\ExtraPropertyApiListRecordCollector: ~
 
-  PrestaShopBundle\ApiPlatform\ExtraProperties\ExtraPropertyApiResponseInjector: ~
-  PrestaShop\PrestaShop\Core\ExtraProperty\Api\ExtraPropertyApiResponseInjectorInterface:
-    alias: 'PrestaShopBundle\ApiPlatform\ExtraProperties\ExtraPropertyApiResponseInjector'
+  PrestaShop\PrestaShop\Core\ExtraProperty\Api\ExtraPropertyApiResponseInjector: ~
 
-  PrestaShopBundle\ApiPlatform\ExtraProperties\ExtraPropertyApiPayloadHandler: ~
-  PrestaShop\PrestaShop\Core\ExtraProperty\Api\ExtraPropertyApiPayloadHandlerInterface:
-    alias: 'PrestaShopBundle\ApiPlatform\ExtraProperties\ExtraPropertyApiPayloadHandler'
+  PrestaShop\PrestaShop\Core\ExtraProperty\Api\ExtraPropertyApiPayloadHandler: ~
 
-  # Single centralized subscriber: persists the validated payload after the write, then injects the
-  # extraProperties sub-object into the JSON response (item + paginated-list items). Auto-tagged
-  # kernel.event_subscriber via autoconfigure.
-  PrestaShop\PrestaShop\Core\ExtraProperty\EventListener\ExtraPropertyApiSubscriber: ~
+  # Single API-Platform bridge: resolves the entity id and converts LANG values (locale <-> id_lang), then persists
+  # the submitted payload after a write and enriches the JSON response (nested object for an item, inline grid
+  # values per list item). Auto-tagged kernel.event_subscriber via autoconfigure.
+  PrestaShopBundle\EventListener\API\ExtraPropertyApiSubscriber:
+    arguments:
+      $propertyNameCollectionFactory: '@?api_platform.metadata.property_name_collection_factory'
+      $propertyMetadataFactory: '@?api_platform.metadata.property.metadata_factory'
 
   # Merging validator: combines extra-property violations with the resource constraint violations into a single
   # 422. Aliased over CQRSApiValidator so CQRSApiNormalizer autowires it in the Admin API kernel only.
