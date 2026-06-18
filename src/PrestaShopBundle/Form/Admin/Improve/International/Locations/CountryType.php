@@ -20,7 +20,6 @@ use Symfony\Component\Form\Extension\Core\Type\ChoiceType;
 use Symfony\Component\Form\Extension\Core\Type\TextType;
 use Symfony\Component\Form\FormBuilderInterface;
 use Symfony\Component\Validator\Constraints\Length;
-use Symfony\Component\Validator\Constraints\Regex;
 use Symfony\Contracts\Translation\TranslatorInterface;
 
 class CountryType extends AbstractType
@@ -93,9 +92,8 @@ class CountryType extends AbstractType
                 'required' => true,
                 'label' => $this->translator->trans('Call prefix', [], 'Admin.International.Feature'),
                 'constraints' => [
-                    new Regex([
-                        'pattern' => '/^\d+$/',
-                        'message' => $this->translator->trans('The %s field is invalid.', ['%s' => 'call_prefix'], 'Admin.Notifications.Error'),
+                    new TypedRegex([
+                        'type' => TypedRegex::TYPE_CALL_PREFIX,
                     ]),
                 ],
             ])

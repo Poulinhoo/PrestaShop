@@ -46,6 +46,7 @@ class TypedRegex extends Constraint
     public const TYPE_WEBSERVICE_KEY = 'webservice_key';
     public const TYPE_LINK_REWRITE = 'link_rewrite';
     public const TYPE_ZIP_CODE_FORMAT = 'zip_code_format';
+    public const TYPE_CALL_PREFIX = 'call_prefix';
     public const TYPE_IMAGE_TYPE_NAME = 'image_type_name';
     public const TYPE_DISCOUNT_CODE = 'discount_code';
     public const CLEAN_HTML_NO_IFRAME = 'clean_html_no_iframe';

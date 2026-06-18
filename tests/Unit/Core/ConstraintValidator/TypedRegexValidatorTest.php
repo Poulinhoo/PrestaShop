@@ -343,6 +343,28 @@ class TypedRegexValidatorTest extends ConstraintValidatorTestCase
         $this->assertViolationIsRaised(new TypedRegex(['type' => TypedRegex::TYPE_ZIP_CODE_FORMAT]), $invalidChar);
     }
 
+    /**
+     * @dataProvider getValidCallPrefixes
+     *
+     * @param string $value
+     */
+    public function testItSucceedsForCallPrefixTypeWhenValidCharactersGiven(string $value): void
+    {
+        $this->validator->validate($value, new TypedRegex(['type' => TypedRegex::TYPE_CALL_PREFIX]));
+
+        $this->assertNoViolation();
+    }
+
+    /**
+     * @dataProvider getInvalidCallPrefixes
+     *
+     * @param string $invalidValue
+     */
+    public function testItFailsForCallPrefixTypeWhenInvalidCharactersGiven(string $invalidValue): void
+    {
+        $this->assertViolationIsRaised(new TypedRegex(['type' => TypedRegex::TYPE_CALL_PREFIX]), $invalidValue);
+    }
+
     public function testItSucceedsForStateIsoCodeTypeWhenValidCharactersGiven(): void
     {
         $this->validator->validate('FRA', new TypedRegex(['type' => TypedRegex::TYPE_STATE_ISO_CODE]));
@@ -877,6 +899,28 @@ class TypedRegexValidatorTest extends ConstraintValidatorTestCase
         yield [':'];
         yield ['.'];
         yield [','];
+    }
+
+    /**
+     * @return Generator
+     */
+    public function getValidCallPrefixes(): Generator
+    {
+        yield ['0'];
+        yield ['33'];
+        yield ['099'];
+    }
+
+    /**
+     * @return Generator
+     */
+    public function getInvalidCallPrefixes(): Generator
+    {
+        yield ['+99'];
+        yield ['-5'];
+        yield ['9a'];
+        yield ['9.5'];
+        yield [' 9 '];
     }
 
     /**
