@@ -125,10 +125,15 @@ describe('BO - Header : Quick access links', async () => {
     it('should check the new link from Quick access', async function () {
       await testContext.addContextItem(this, 'testIdentifier', 'checkNewLink', baseContext);
 
-      page = await boDashboardPage.quickAccessToPageNewWindow(page, quickAccessLinkData.name);
+      const newPage = await boDashboardPage.quickAccessToPageNewWindow(page, quickAccessLinkData.name);
 
-      const pageTitle = await boCustomersCreatePage.getPageTitle(page);
+      const pageTitle = await boCustomersCreatePage.getPageTitle(newPage);
       expect(pageTitle).to.contains(boCustomersCreatePage.pageTitleCreate);
+
+      // Close the tab opened in a new window and keep working on the original tab.
+      // Reading the grid on the freshly-opened tab while several heavy BO tabs stay open makes
+      // the later "filter by link name" step flaky (the filtered row renders after the read timeout).
+      await newPage.close();
     });
 
     it('should go to \'Manage quick access\' page', async function () {
