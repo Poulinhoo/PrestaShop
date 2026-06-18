@@ -105,11 +105,10 @@ services:
       $propertyNameCollectionFactory: '@?api_platform.metadata.property_name_collection_factory'
       $propertyMetadataFactory: '@?api_platform.metadata.property.metadata_factory'
 
-  # Merging validator: combines extra-property violations with the resource constraint violations into a single
-  # 422. Aliased over CQRSApiValidator so CQRSApiNormalizer autowires it in the Admin API kernel only.
+  # Merging validator: decorates CQRSApiValidator (Admin API kernel only) so CQRSApiNormalizer transparently uses
+  # it, combining extra-property violations with the resource constraint violations into a single 422.
   PrestaShopBundle\ApiPlatform\Validator\ExtraPropertyCQRSApiValidator:
+    decorates: PrestaShopBundle\ApiPlatform\Validator\CQRSApiValidator
     arguments:
-      $validatorMetadataFactory: '@validator.mapping.class_metadata_factory'
+      $inner: '@.inner'
       $resourceMetadataFactory: '@api_platform.metadata.resource.metadata_collection_factory'
-  PrestaShopBundle\ApiPlatform\Validator\CQRSApiValidator:
-    alias: 'PrestaShopBundle\ApiPlatform\Validator\ExtraPropertyCQRSApiValidator'

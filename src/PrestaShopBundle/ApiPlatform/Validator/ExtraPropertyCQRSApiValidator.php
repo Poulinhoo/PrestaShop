@@ -13,7 +13,6 @@ use ApiPlatform\Metadata\HttpOperation;
 use ApiPlatform\Metadata\Operation;
 use ApiPlatform\Metadata\Resource\Factory\ResourceMetadataCollectionFactoryInterface;
 use ApiPlatform\Validator\Exception\ValidationException;
-use ApiPlatform\Validator\ValidatorInterface;
 use PrestaShop\PrestaShop\Core\ExtraProperty\Definition\ExtraPropertyDefinition;
 use PrestaShop\PrestaShop\Core\ExtraProperty\Definition\ExtraPropertyDefinitionRepositoryInterface;
 use PrestaShop\PrestaShop\Core\ExtraProperty\Definition\ExtraPropertyScope;
@@ -25,38 +24,37 @@ use Symfony\Component\HttpFoundation\RequestStack;
 use Symfony\Component\Validator\ConstraintViolation;
 use Symfony\Component\Validator\ConstraintViolationList;
 use Symfony\Component\Validator\ConstraintViolationListInterface;
-use Symfony\Component\Validator\Mapping\Factory\MetadataFactoryInterface;
 use Throwable;
 
 /**
- * Admin-API-only CQRSApiValidator that also validates the incoming `extraProperties` payload and MERGES its
- * violations with the resource constraint violations into a single 422 — instead of one preempting the other.
+ * Admin-API-only decorator of CQRSApiValidator that also validates the incoming `extraProperties` payload and
+ * MERGES its violations with the resource constraint violations into a single 422 — instead of one preempting the
+ * other.
  *
- * Aliased over CQRSApiValidator in the Admin API kernel so CQRSApiNormalizer uses it transparently. Core
- * resource validation in PrestaShop runs during denormalization, so this is the only seam where the two
- * violation lists can be combined.
+ * Registered with `decorates: CQRSApiValidator` in the Admin API kernel, so CQRSApiNormalizer (which depends on
+ * CQRSApiValidatorInterface) transparently uses it there. Core resource validation in PrestaShop runs during
+ * denormalization, so this is the only seam where the two violation lists can be combined.
  */
-class ExtraPropertyCQRSApiValidator extends CQRSApiValidator
+class ExtraPropertyCQRSApiValidator implements CQRSApiValidatorInterface
 {
     public function __construct(
-        MetadataFactoryInterface $validatorMetadataFactory,
-        ValidatorInterface $validator,
+        protected readonly CQRSApiValidatorInterface $inner,
         protected readonly ExtraPropertyDefinitionRepositoryInterface $repository,
         protected readonly ResourceMetadataCollectionFactoryInterface $resourceMetadataFactory,
         protected readonly RequestStack $requestStack,
         protected readonly ExtraPropertyValidatorInterface $validatorAdapter,
         protected readonly LocalizedValueUpdater $localizedValueUpdater,
     ) {
-        parent::__construct($validatorMetadataFactory, $validator);
     }
 
     /**
-     * Returns true when the resource carries Symfony constraints OR when an extra property definition targets
-     * one of its operations — so extra-property validation runs even for resources with no core constraints.
+     * Returns true when the decorated validator reports constraints OR when an extra property definition targets
+     * one of the resource's operations — so extra-property validation runs even for resources with no core
+     * constraints.
      */
     public function hasConstraints(string $resourceClass): bool
     {
-        return parent::hasConstraints($resourceClass) || $this->resourceHasExtraProperties($resourceClass);
+        return $this->inner->hasConstraints($resourceClass) || $this->resourceHasExtraProperties($resourceClass);
     }
 
     public function validate(mixed $apiResource, Operation $operation): void
@@ -64,7 +62,7 @@ class ExtraPropertyCQRSApiValidator extends CQRSApiValidator
         $violations = new ConstraintViolationList();
 
         try {
-            parent::validate($apiResource, $operation);
+            $this->inner->validate($apiResource, $operation);
         } catch (ValidationException $e) {
             $violations->addAll($e->getConstraintViolationList());
         }
