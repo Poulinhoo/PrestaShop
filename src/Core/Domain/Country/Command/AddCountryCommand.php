@@ -25,13 +25,13 @@ class AddCountryCommand
 
     /**
      * @param string[] $localizedNames
-     * @param string $callPrefix raw call prefix value, validated by the CallPrefix value object
+     * @param int|string $callPrefix raw call prefix value, validated by the CallPrefix value object
      * @param int[] $shopAssociation
      */
     public function __construct(
         private array $localizedNames,
         string $isoCode,
-        string $callPrefix,
+        int|string $callPrefix,
         private int $defaultCurrency,
         int $zoneId,
         private bool $needZipCode,

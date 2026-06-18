@@ -17,19 +17,21 @@ class CallPrefixTest extends TestCase
     /**
      * @dataProvider validCallPrefixProvider
      */
-    public function testItAcceptsDigitsOnlyValues(string $callPrefix, int $expectedValue): void
+    public function testItAcceptsDigitsOnlyValues(int|string $callPrefix, int $expectedValue): void
     {
         $this->assertSame($expectedValue, (new CallPrefix($callPrefix))->getValue());
     }
 
     /**
-     * @return iterable<array{string, int}>
+     * @return iterable<array{int|string, int}>
      */
     public static function validCallPrefixProvider(): iterable
     {
-        yield 'single digit' => ['0', 0];
-        yield 'multiple digits' => ['33', 33];
-        yield 'leading zero' => ['099', 99];
+        yield 'single digit string' => ['0', 0];
+        yield 'multiple digits string' => ['33', 33];
+        yield 'leading zero string' => ['099', 99];
+        yield 'integer value (API contract)' => [33, 33];
+        yield 'zero integer' => [0, 0];
     }
 
     /**

@@ -33,12 +33,13 @@ class CallPrefix
     protected $callPrefix;
 
     /**
-     * @param string $callPrefix raw call prefix value, before any integer cast
+     * @param int|string $callPrefix raw call prefix value, before any integer cast
      *
      * @throws CountryConstraintException
      */
-    public function __construct(string $callPrefix)
+    public function __construct(int|string $callPrefix)
     {
+        $callPrefix = (string) $callPrefix;
         $this->assertIsValidCallPrefix($callPrefix);
         $this->callPrefix = (int) $callPrefix;
     }

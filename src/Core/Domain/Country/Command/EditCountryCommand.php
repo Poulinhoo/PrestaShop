@@ -97,7 +97,7 @@ class EditCountryCommand
         return $this->callPrefix;
     }
 
-    public function setCallPrefix(string $callPrefix): EditCountryCommand
+    public function setCallPrefix(int|string $callPrefix): EditCountryCommand
     {
         $this->callPrefix = new CallPrefix($callPrefix);
 
