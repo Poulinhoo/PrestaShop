@@ -103,3 +103,13 @@ services:
       - '@prestashop.core.command_bus'
     tags:
       - 'console.command'
+
+  PrestaShopBundle\Command\EmployeeChangePasswordCommand:
+    autowire: true
+    tags:
+      - 'console.command'
+
+  PrestaShopBundle\Command\EmployeeCreateCommand:
+    autowire: true
+    tags:
+      - 'console.command'
