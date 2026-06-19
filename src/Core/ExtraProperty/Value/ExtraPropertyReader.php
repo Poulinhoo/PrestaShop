@@ -49,6 +49,37 @@ class ExtraPropertyReader implements ExtraPropertyReaderInterface
             return [];
         }
 
+        return $this->getMultipleExtraProperties(
+            $entityName,
+            $primaryKeyName,
+            [$entityId],
+            $langId,
+            $shopConstraint,
+            $isLangMultishop,
+            $definitions,
+        )[$entityId] ?? [];
+    }
+
+    /**
+     * {@inheritdoc}
+     */
+    public function getMultipleExtraProperties(
+        string $entityName,
+        string $primaryKeyName,
+        array $entityIds,
+        ?int $langId,
+        ShopConstraint $shopConstraint,
+        bool $isLangMultishop = false,
+        ?ExtraPropertyDefinitionCollection $definitions = null,
+    ): array {
+        $entityIds = array_values(array_unique(array_filter(
+            array_map('intval', $entityIds),
+            static fn (int $id): bool => $id > 0
+        )));
+        if (empty($entityIds)) {
+            return [];
+        }
+
         $allDefinitions = $definitions ?? $this->repository->getAllDefinitions()->filterByEntity($entityName);
         if ($allDefinitions->isEmpty()) {
             return [];
@@ -56,49 +87,39 @@ class ExtraPropertyReader implements ExtraPropertyReaderInterface
 
         $shopId = $shopConstraint->isSingleShopContext() ? $shopConstraint->getShopId()->getValue() : null;
 
-        $propertiesByModule = [];
+        $propertiesByEntity = array_fill_keys($entityIds, []);
 
         foreach (ExtraPropertyScope::cases() as $scope) {
             $scoped = $allDefinitions->filterByScope($scope);
             if ($scoped->isEmpty()) {
                 continue;
             }
-            $propertiesByModule = array_replace_recursive(
-                $propertiesByModule,
-                $this->hydrateExtraPropertiesScope(
-                    $primaryKeyName,
-                    $entityId,
-                    $scope,
-                    $scoped,
-                    $langId,
-                    $shopId,
-                    $isLangMultishop
-                )
-            );
+            foreach ($this->hydrateExtraPropertiesScope($primaryKeyName, $entityIds, $scope, $scoped, $langId, $shopId, $isLangMultishop) as $entityId => $propertiesByModule) {
+                $propertiesByEntity[$entityId] = array_replace_recursive($propertiesByEntity[$entityId] ?? [], $propertiesByModule);
+            }
         }
 
-        return $propertiesByModule;
+        return $propertiesByEntity;
     }
 
     /**
-     * Fetches extra property values for one scope and returns them grouped by module name.
+     * Fetches extra property values for one scope across several entity ids, with a single query, and returns them
+     * grouped by entity id then module name.
      *
-     * For LANG scope with $langId = null: all languages are fetched and the value is an array
-     * keyed by id_lang — used by BO forms and Admin API.
-     * For LANG scope with $langId set: a single scalar value per field is returned.
+     * For LANG scope with $langId = null: all languages are fetched and the value is an array keyed by id_lang —
+     * used by BO forms and Admin API single-item reads. For LANG scope with $langId set: a single scalar per field.
+     * For SHOP scope: a single scalar for the given shop constraint. COMMON scope: a single scalar per field.
      *
-     * For SHOP scope: always returns a single scalar value for the given shop constraint.
-     * COMMON scope: returns a single scalar value per field.
+     * Every requested entity id is seeded with the default-valued structure, so an id with no row still appears.
      *
-     * Returned structure: ['module_key' => ['property_name' => scalar_or_lang_keyed_array]]
-     *
+     * @param int[] $entityIds Positive, de-duplicated entity ids
      * @param ExtraPropertyDefinitionCollection $definitions All definitions for this scope (non-empty)
      *
-     * @return array<string, array<string, mixed>>
+     * @return array<int, array<string, array<string, mixed>>> [entityId => [module_key => [property_name => value]]]
      */
     protected function hydrateExtraPropertiesScope(
         string $primaryKeyName,
-        int $entityId,
+        array $entityIds,
         ExtraPropertyScope $fieldScope,
         ExtraPropertyDefinitionCollection $definitions,
         ?int $langId,
@@ -108,16 +129,15 @@ class ExtraPropertyReader implements ExtraPropertyReaderInterface
         $groupByLang = ExtraPropertyScope::LANG === $fieldScope && null === $langId;
         $extraTableName = $this->prefix . $definitions->first()->getExtraTableName();
 
-        // Build a map from DB column name to [module_key, property_name, cast inputs] and seed $result.
+        // Build a map from DB column name to [module_key, property_name, cast inputs] and the default per property.
         $columnToPropertyMap = [];
-        $result = [];
+        $defaultsByModule = [];
         foreach ($definitions as $definition) {
             $propertyName = $definition->getPropertyName();
             $moduleName = $definition->getNormalizedModuleKey();
-            $result[$moduleName] ??= [];
-            $result[$moduleName][$propertyName] ??= ($groupByLang
+            $defaultsByModule[$moduleName][$propertyName] = $groupByLang
                 ? []
-                : ExtraPropertyValueCaster::castFromDb($definition->getType(), null, $definition->isNullable()));
+                : ExtraPropertyValueCaster::castFromDb($definition->getType(), null, $definition->isNullable());
 
             $columnName = $definition->getStorageColumnName();
             $columnToPropertyMap[$columnName] = [
@@ -128,7 +148,10 @@ class ExtraPropertyReader implements ExtraPropertyReaderInterface
             ];
         }
 
-        // Skip if IDs that must be positive were given but are invalid.
+        // Seed every requested entity with the default-valued structure (a missing row keeps the defaults).
+        $result = array_fill_keys($entityIds, $defaultsByModule);
+
+        // Skip the query when a required id is invalid; the seeded defaults are returned.
         if (ExtraPropertyScope::LANG === $fieldScope && null !== $langId && $langId <= 0) {
             return $result;
         }
@@ -139,21 +162,23 @@ class ExtraPropertyReader implements ExtraPropertyReaderInterface
             return $result;
         }
 
+        $quotedPrimaryKey = $this->connection->quoteIdentifier($primaryKeyName);
         $qb = $this->connection->createQueryBuilder();
         $qb
             ->from($extraTableName, 'extra')
-            ->where('extra.' . $this->connection->quoteIdentifier($primaryKeyName) . ' = :entityId')
-            ->setParameter('entityId', $entityId);
+            ->where('extra.' . $quotedPrimaryKey . ' IN (:entityIds)')
+            ->setParameter('entityIds', $entityIds, Connection::PARAM_INT_ARRAY);
 
-        $selectCols = array_map(
-            fn (string $col): string => 'extra.' . $this->connection->quoteIdentifier($col),
-            array_keys($columnToPropertyMap)
-        );
+        // Always select the primary key so rows can be grouped back per entity.
+        $selectCols = ['extra.' . $quotedPrimaryKey];
+        foreach (array_keys($columnToPropertyMap) as $col) {
+            $selectCols[] = 'extra.' . $this->connection->quoteIdentifier($col);
+        }
 
         if (ExtraPropertyScope::LANG === $fieldScope) {
             if ($groupByLang) {
                 // Fetch all languages; caller receives an array keyed by id_lang.
-                array_unshift($selectCols, 'extra.' . $this->connection->quoteIdentifier('id_lang'));
+                $selectCols[] = 'extra.' . $this->connection->quoteIdentifier('id_lang');
             } else {
                 $qb->andWhere('extra.id_lang = :langId')->setParameter('langId', $langId);
             }
@@ -168,29 +193,26 @@ class ExtraPropertyReader implements ExtraPropertyReaderInterface
         $qb->select(...$selectCols);
 
         try {
-            if ($groupByLang) {
-                $rows = $qb->executeQuery()->fetchAllAssociative();
-            } else {
-                $singleRow = $qb->executeQuery()->fetchAssociative();
-                $rows = is_array($singleRow) ? [$singleRow] : [];
-            }
+            $rows = $qb->executeQuery()->fetchAllAssociative();
         } catch (Throwable) {
             return $result;
         }
 
         foreach ($rows as $row) {
-            if ($groupByLang) {
-                $groupKey = (int) ($row['id_lang'] ?? 0);
-                foreach ($columnToPropertyMap as $columnName => $propertyPath) {
-                    if (array_key_exists($columnName, $row)) {
-                        $result[$propertyPath['module_name']][$propertyPath['property_name']][$groupKey] = ExtraPropertyValueCaster::castFromDb($propertyPath['type'], $row[$columnName], $propertyPath['nullable']);
-                    }
+            $entityId = (int) ($row[$primaryKeyName] ?? 0);
+            if (!isset($result[$entityId])) {
+                continue;
+            }
+            $groupKey = $groupByLang ? (int) ($row['id_lang'] ?? 0) : null;
+            foreach ($columnToPropertyMap as $columnName => $propertyPath) {
+                if (!array_key_exists($columnName, $row)) {
+                    continue;
                 }
-            } else {
-                foreach ($columnToPropertyMap as $columnName => $propertyPath) {
-                    if (array_key_exists($columnName, $row)) {
-                        $result[$propertyPath['module_name']][$propertyPath['property_name']] = ExtraPropertyValueCaster::castFromDb($propertyPath['type'], $row[$columnName], $propertyPath['nullable']);
-                    }
+                $value = ExtraPropertyValueCaster::castFromDb($propertyPath['type'], $row[$columnName], $propertyPath['nullable']);
+                if (null !== $groupKey) {
+                    $result[$entityId][$propertyPath['module_name']][$propertyPath['property_name']][$groupKey] = $value;
+                } else {
+                    $result[$entityId][$propertyPath['module_name']][$propertyPath['property_name']] = $value;
                 }
             }
         }

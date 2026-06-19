@@ -14,6 +14,7 @@ use ApiPlatform\Metadata\HttpOperation;
 use ApiPlatform\Metadata\Property\Factory\PropertyMetadataFactoryInterface;
 use ApiPlatform\Metadata\Property\Factory\PropertyNameCollectionFactoryInterface;
 use ObjectModelCore;
+use PrestaShop\PrestaShop\Core\Context\LanguageContext;
 use PrestaShop\PrestaShop\Core\Context\ShopContext;
 use PrestaShop\PrestaShop\Core\ExtraProperty\Api\ExtraPropertyApiListRecordCollector;
 use PrestaShop\PrestaShop\Core\ExtraProperty\Definition\ExtraPropertyDefinitionCollection;
@@ -25,6 +26,7 @@ use PrestaShop\PrestaShop\Core\Util\Inflector;
 use PrestaShopBundle\ApiPlatform\Exception\LocaleNotFoundException;
 use PrestaShopBundle\ApiPlatform\LocalizedValueUpdater;
 use PrestaShopBundle\ApiPlatform\Metadata\LocalizedValue;
+use PrestaShopBundle\ApiPlatform\Provider\QueryListProvider;
 use Symfony\Component\DependencyInjection\Container;
 use Symfony\Component\EventDispatcher\EventSubscriberInterface;
 use Symfony\Component\HttpFoundation\Request;
@@ -54,6 +56,7 @@ class ExtraPropertyApiSubscriber implements EventSubscriberInterface
         protected readonly ExtraPropertyApiListRecordCollector $listRecordCollector,
         protected readonly ExtraPropertyWriterInterface $writer,
         protected readonly ShopContext $shopContext,
+        protected readonly LanguageContext $languageContext,
         protected readonly LocalizedValueUpdater $localizedValueUpdater,
         protected readonly ?PropertyNameCollectionFactoryInterface $propertyNameCollectionFactory = null,
         protected readonly ?PropertyMetadataFactoryInterface $propertyMetadataFactory = null,
@@ -63,7 +66,9 @@ class ExtraPropertyApiSubscriber implements EventSubscriberInterface
     public static function getSubscribedEvents(): array
     {
         return [
-            // Negative priority so it runs after API Platform has produced the final JSON response body.
+            // We run on kernel.response, after API Platform has serialized the result and built the Response on
+            // kernel.view (SerializeListener/RespondListener). EventPriorities::* constants are kernel.view
+            // priorities, so they don't apply here; -10 simply keeps us after any other kernel.response listener.
             KernelEvents::RESPONSE => [['onKernelResponse', -10]],
         ];
     }
@@ -110,20 +115,7 @@ class ExtraPropertyApiSubscriber implements EventSubscriberInterface
 
         if ($this->isCollection($operation, $decoded)) {
             if (isset($decoded['items']) && is_array($decoded['items'])) {
-                foreach ($decoded['items'] as $index => $item) {
-                    if (!is_array($item)) {
-                        continue;
-                    }
-                    $entityId = $this->resolveId($item, $entityName, $resourceClass);
-                    if ($entityId > 0) {
-                        // The collector already kept only the extra-property columns (by field name) the grid
-                        // fetched, so merge them at the item root as-is (single context-locale values).
-                        $captured = $this->listRecordCollector->find($entityName, $entityId);
-                        if (null !== $captured) {
-                            $decoded['items'][$index] = array_merge($item, $captured);
-                        }
-                    }
-                }
+                $decoded['items'] = $this->enrichListItems($decoded['items'], $operation, $definitions, $entityName, $resourceClass);
             }
         } else {
             $entityId = $this->resolveId($decoded, $entityName, $resourceClass);
@@ -170,6 +162,93 @@ class ExtraPropertyApiSubscriber implements EventSubscriberInterface
         $response->setContent((string) json_encode($decoded));
         // Content length is recomputed when the response is sent; drop any stale value.
         $response->headers->remove('Content-Length');
+    }
+
+    /**
+     * Enriches each item of a collection response with its extra properties, inline at the item root under the
+     * field name (single context-locale value), choosing the data source by how the list is served:
+     *  - grid-backed (QueryListProvider + grid data factory): reuse the values the grid query already captured in
+     *    the collector — no extra read;
+     *  - otherwise (CQRS-paginated, e.g. /products/{id}/combinations): the collector is empty, so fetch every
+     *    item's values for the current display language in a single batched query.
+     *
+     * @param array<int, mixed> $items
+     *
+     * @return array<int, mixed>
+     */
+    protected function enrichListItems(array $items, HttpOperation $operation, ExtraPropertyDefinitionCollection $definitions, string $entityName, string $resourceClass): array
+    {
+        if ($this->isGridBackedCollection($operation)) {
+            foreach ($items as $index => $item) {
+                if (!is_array($item)) {
+                    continue;
+                }
+                $entityId = $this->resolveId($item, $entityName, $resourceClass);
+                if ($entityId <= 0) {
+                    continue;
+                }
+                // The collector kept only the extra-property columns (by field name) the grid fetched, so merge
+                // them at the item root as-is.
+                $captured = $this->listRecordCollector->find($entityName, $entityId);
+                if (null !== $captured) {
+                    $items[$index] = array_merge($item, $captured);
+                }
+            }
+
+            return $items;
+        }
+
+        // CQRS-paginated list: collect the ids, read them all at once for the current display language.
+        $entityIdByIndex = [];
+        foreach ($items as $index => $item) {
+            if (!is_array($item)) {
+                continue;
+            }
+            $entityId = $this->resolveId($item, $entityName, $resourceClass);
+            if ($entityId > 0) {
+                $entityIdByIndex[$index] = $entityId;
+            }
+        }
+        if ([] === $entityIdByIndex) {
+            return $items;
+        }
+
+        $valuesByEntity = $this->reader->getMultipleExtraProperties(
+            $entityName,
+            $definitions->first()->getPrimaryKeyName(),
+            array_values($entityIdByIndex),
+            $this->languageContext->getId(),
+            $this->shopContext->getShopConstraint(),
+            $this->isLangMultishop($entityName),
+            $definitions,
+        );
+
+        foreach ($entityIdByIndex as $index => $entityId) {
+            $entityValues = $valuesByEntity[$entityId] ?? null;
+            if (null === $entityValues) {
+                continue;
+            }
+            // Flatten the grouped values to the same inline shape the grid path produces: field name => value.
+            foreach ($definitions as $definition) {
+                $moduleValues = $entityValues[$definition->getNormalizedModuleKey()] ?? null;
+                if (null !== $moduleValues && array_key_exists($definition->getPropertyName(), $moduleValues)) {
+                    $items[$index][$definition->getFieldName()] = $moduleValues[$definition->getPropertyName()];
+                }
+            }
+        }
+
+        return $items;
+    }
+
+    /**
+     * A list is grid-backed when it is served by QueryListProvider through a grid data factory — the only case
+     * where ExtraPropertyApiListRecordCollector has captured the values. Everything else (CQRS-paginated lists)
+     * must be read from the database.
+     */
+    protected function isGridBackedCollection(HttpOperation $operation): bool
+    {
+        return QueryListProvider::class === $operation->getProvider()
+            && null !== ($operation->getExtraProperties()['gridDataFactory'] ?? null);
     }
 
     /**

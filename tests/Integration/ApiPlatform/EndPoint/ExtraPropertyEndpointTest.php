@@ -8,6 +8,8 @@ declare(strict_types=1);
 
 namespace Tests\Integration\ApiPlatform\EndPoint;
 
+use Db;
+use Language;
 use Module;
 use Symfony\Component\HttpFoundation\Response;
 use Tests\Resources\DatabaseDump;
@@ -18,16 +20,20 @@ use Tools;
 /**
  * Integration tests for the "Extra Properties on the Admin API" feature.
  *
- * A test module (extrapropertytest) registers a few extra properties scoped to specific API endpoints.
- * These tests assert the runtime contract of the dedicated extraProperties sub-object:
- *  - it is keyed by module technical name then snake_case property name,
- *  - COMMON fields are scalars, LANG fields are objects keyed by locale,
- *  - writes validate (422 on failure) and persist, unknown keys are tolerated,
- *  - properties never leak across entities they were not registered on.
+ * Two test modules (extrapropertytest, extrapropertytest2) register extra properties scoped to specific API
+ * endpoints. The tests assert the runtime contract of the dedicated extraProperties sub-object (single items) and
+ * the inline grid/list values (collections), validating the EXACT content so an unexpected field would fail, that
+ * two modules cohabit without clashing, and that a CQRS-paginated list (combinations) is enriched too.
  */
 final class ExtraPropertyEndpointTest extends ApiTestCase
 {
     private const MODULE_NAME = 'extrapropertytest';
+    private const MODULE_2_NAME = 'extrapropertytest2';
+
+    /**
+     * @var string[]
+     */
+    private const TEST_MODULES = [self::MODULE_NAME, self::MODULE_2_NAME];
 
     private const PRODUCT_READ = 'product_read';
     private const PRODUCT_WRITE = 'product_write';
@@ -35,83 +41,103 @@ final class ExtraPropertyEndpointTest extends ApiTestCase
     private const CUSTOMER_WRITE = 'customer_write';
 
     /**
-     * Existing product fixture id from the standard test fixtures.
+     * Existing product fixture id from the standard test fixtures (has combinations).
      */
     private const PRODUCT_ID = 1;
 
-    private static bool $moduleInstalled = false;
+    /**
+     * Extra-property value tables created by the test modules, cleared before each test for deterministic content.
+     */
+    private const EXTRA_VALUE_TABLES = ['product_extra', 'product_extra_lang', 'customer_extra'];
 
     public static function setUpBeforeClass(): void
     {
         parent::setUpBeforeClass();
 
-        // The localized extra property (api_note) is written/read in several locales, so install a second
-        // language (the default install only has en-US).
+        // The localized extra property (api_note) is written/read in several locales, so install a second language
+        // (the default install only has en-US).
         LanguageResetter::resetLanguages();
-        self::addLanguageByLocale('fr-FR');
+        $frenchLanguageId = self::addLanguageByLocale('fr-FR');
 
         ProductResetter::resetProducts();
         DatabaseDump::restoreTables(['customer', 'customer_group']);
 
-        // Copy the test module into the test modules directory (mirrors ModuleManagerBuilderTest). The copy must
-        // happen before the defensive uninstall below so the module class can always be loaded.
-        $sourceModuleDir = dirname(__DIR__, 3) . '/Resources/modules_tests/' . self::MODULE_NAME;
-        if (is_dir($sourceModuleDir)) {
-            Tools::recurseCopy($sourceModuleDir, self::moduleDir());
+        // ProductResetter restores products from an English-only dump, dropping the French translations the new
+        // language created. Copy them back (en → fr for every *_lang table) so the product list can be requested in
+        // either language: the grid joins the *_extra_lang table on the base *_lang row, which must therefore exist.
+        Language::copyLanguageData((int) Language::getIdByLocale('en-US'), $frenchLanguageId);
+
+        foreach (self::TEST_MODULES as $moduleName) {
+            // Copy the test module into the test modules directory (mirrors ModuleManagerBuilderTest). The copy must
+            // happen before the defensive uninstall below so the module class can always be loaded.
+            $sourceModuleDir = dirname(__DIR__, 3) . '/Resources/modules_tests/' . $moduleName;
+            if (is_dir($sourceModuleDir)) {
+                Tools::recurseCopy($sourceModuleDir, self::moduleDir($moduleName));
+            }
+
+            // Self-heal: a previous interrupted run may have left the module installed in the test DB.
+            self::uninstallTestModuleIfInstalled($moduleName);
+
+            $module = Module::getInstanceByName($moduleName);
+            self::assertInstanceOf(Module::class, $module);
+            self::assertTrue((bool) $module->install(), sprintf('The %s module could not be installed', $moduleName));
         }
-
-        // Self-heal: a previous interrupted run may have left the module installed in the test DB. Uninstall it
-        // before a clean install so its data (roles, definitions, extra tables) is never duplicated.
-        self::uninstallTestModuleIfInstalled();
-
-        $module = Module::getInstanceByName(self::MODULE_NAME);
-        self::assertInstanceOf(Module::class, $module);
-        self::$moduleInstalled = (bool) $module->install();
-        self::assertTrue(self::$moduleInstalled, 'The extrapropertytest module could not be installed');
     }
 
     public static function tearDownAfterClass(): void
     {
         // Always clean up — even if the install or a test failed midway — so nothing leaks into the shared test
         // modules directory or the test database (a module left here is installed by every integration run).
-        self::uninstallTestModuleIfInstalled();
+        foreach (self::TEST_MODULES as $moduleName) {
+            self::uninstallTestModuleIfInstalled($moduleName);
+        }
 
         // Order matters: LanguageResetter::resetLanguages() below calls ResourceResetter::resetTestModules(), which
         // mirrors tests/Resources/modules/ back from a temp backup. So we run that FIRST and only then drop the
-        // module dir — otherwise the mirror would restore the module right after we deleted it. See the class-level
-        // note on why this module is removed from the modules directory.
+        // module dirs — otherwise the mirror would restore them right after we deleted them.
         ProductResetter::resetProducts();
         DatabaseDump::restoreTables(['customer', 'customer_group']);
         LanguageResetter::resetLanguages();
 
-        if (is_dir(self::moduleDir())) {
-            Tools::deleteDirectory(self::moduleDir());
+        foreach (self::TEST_MODULES as $moduleName) {
+            if (is_dir(self::moduleDir($moduleName))) {
+                Tools::deleteDirectory(self::moduleDir($moduleName));
+            }
         }
-
-        self::$moduleInstalled = false;
 
         parent::tearDownAfterClass();
     }
 
-    /**
-     * Absolute path of the test module once copied into the test modules directory.
-     */
-    private static function moduleDir(): string
+    protected function setUp(): void
     {
-        return _PS_MODULE_DIR_ . self::MODULE_NAME;
+        parent::setUp();
+
+        // Clear all extra-property values so each test starts from a known, empty state (exact-content assertions
+        // would otherwise depend on values persisted by earlier tests).
+        foreach (self::EXTRA_VALUE_TABLES as $table) {
+            Db::getInstance()->execute('DELETE FROM `' . _DB_PREFIX_ . $table . '`');
+        }
     }
 
     /**
-     * Uninstalls the test module when installed (dropping its definitions, extra tables and roles). Safe to call
+     * Absolute path of a test module once copied into the test modules directory.
+     */
+    private static function moduleDir(string $moduleName): string
+    {
+        return _PS_MODULE_DIR_ . $moduleName;
+    }
+
+    /**
+     * Uninstalls a test module when installed (dropping its definitions, extra tables and roles). Safe to call
      * defensively before install and unconditionally on teardown.
      */
-    private static function uninstallTestModuleIfInstalled(): void
+    private static function uninstallTestModuleIfInstalled(string $moduleName): void
     {
-        if (!Module::isInstalled(self::MODULE_NAME)) {
+        if (!Module::isInstalled($moduleName)) {
             return;
         }
 
-        $module = Module::getInstanceByName(self::MODULE_NAME);
+        $module = Module::getInstanceByName($moduleName);
         if ($module instanceof Module) {
             $module->uninstall();
         }
@@ -119,29 +145,15 @@ final class ExtraPropertyEndpointTest extends ApiTestCase
 
     public function getProtectedEndpoints(): iterable
     {
-        yield 'get product endpoint' => [
-            'GET',
-            '/products/' . self::PRODUCT_ID,
-        ];
-
-        yield 'update product endpoint' => [
-            'PATCH',
-            '/products/' . self::PRODUCT_ID,
-        ];
-
-        yield 'get customer endpoint' => [
-            'GET',
-            '/customers/1',
-        ];
-
-        yield 'update customer endpoint' => [
-            'PATCH',
-            '/customers/1',
-        ];
+        yield 'get product endpoint' => ['GET', '/products/' . self::PRODUCT_ID];
+        yield 'update product endpoint' => ['PATCH', '/products/' . self::PRODUCT_ID];
+        yield 'get customer endpoint' => ['GET', '/customers/1'];
+        yield 'update customer endpoint' => ['PATCH', '/customers/1'];
     }
 
     /**
-     * Round-trip: PATCH writes extra properties, the PATCH response and a subsequent GET both expose them.
+     * Round-trip + cohabitation: a PATCH writing properties of BOTH modules must round-trip, and the response must
+     * carry EXACTLY those properties keyed per module (an unexpected/leaked field would fail the assertion).
      */
     public function testWriteAndReadProductExtraProperties(): void
     {
@@ -151,72 +163,79 @@ final class ExtraPropertyEndpointTest extends ApiTestCase
                 'extraProperties' => [
                     self::MODULE_NAME => [
                         'api_flag' => true,
-                        'api_note' => [
-                            'en-US' => 'hello',
-                            'fr-FR' => 'bonjour',
-                        ],
+                        'api_note' => ['en-US' => 'hello', 'fr-FR' => 'bonjour'],
+                    ],
+                    self::MODULE_2_NAME => [
+                        'extra_tag' => 'tagged',
                     ],
                 ],
             ],
             [self::PRODUCT_WRITE]
         );
 
-        $this->assertModuleExtraProperties($patchedProduct);
-        $patchedExtra = $patchedProduct['extraProperties'][self::MODULE_NAME];
-        $this->assertSame(true, $patchedExtra['api_flag']);
-        $this->assertSame(['en-US' => 'hello', 'fr-FR' => 'bonjour'], $patchedExtra['api_note']);
+        $expected = [
+            self::MODULE_NAME => [
+                'api_flag' => true,
+                'api_note' => ['en-US' => 'hello', 'fr-FR' => 'bonjour'],
+            ],
+            self::MODULE_2_NAME => [
+                'extra_tag' => 'tagged',
+            ],
+        ];
+        $this->assertArrayHasKey('extraProperties', $patchedProduct);
+        $this->assertEquals($expected, $patchedProduct['extraProperties']);
 
-        // The same values must be persisted and returned on a plain GET.
+        // The same values must be persisted and returned, exactly, on a plain GET.
         $fetchedProduct = $this->getItem('/products/' . self::PRODUCT_ID, [self::PRODUCT_READ]);
-        $this->assertModuleExtraProperties($fetchedProduct);
-        $fetchedExtra = $fetchedProduct['extraProperties'][self::MODULE_NAME];
-        $this->assertSame(true, $fetchedExtra['api_flag']);
-        $this->assertSame(['en-US' => 'hello', 'fr-FR' => 'bonjour'], $fetchedExtra['api_note']);
+        $this->assertArrayHasKey('extraProperties', $fetchedProduct);
+        $this->assertEquals($expected, $fetchedProduct['extraProperties']);
     }
 
     /**
-     * The list (GET collection) reuses the values the grid query already fetched and exposes them INLINE at the
-     * item root, under their grid field name (extra_<scope>_<module>_<field>) — NOT inside a nested
-     * extraProperties sub-object, and as the single current-locale value (mirroring the back-office grid). Only
-     * properties associated with both the grid and the API appear, so we assert the product we wrote to carries
-     * its api_flag (bool) and api_note (single-locale string) at the root and that there is no sub-object.
-     *
-     * @depends testWriteAndReadProductExtraProperties
+     * The product list (grid-backed collection) exposes grid-and-API-associated properties of BOTH modules INLINE at
+     * the item root under their field name (extra_<module>_<field>), not in a nested extraProperties sub-object. The
+     * localized value is rendered in the language requested via the langId query parameter, so we assert the exact
+     * value in each language.
      */
     public function testListInjectsExtraProperties(): void
     {
-        $list = $this->listItems('/products', [self::PRODUCT_READ]);
-        $this->assertNotEmpty($list['items']);
+        $this->partialUpdateItem(
+            '/products/' . self::PRODUCT_ID,
+            [
+                'extraProperties' => [
+                    self::MODULE_NAME => [
+                        'api_flag' => true,
+                        'api_note' => ['en-US' => 'hello', 'fr-FR' => 'bonjour'],
+                    ],
+                    self::MODULE_2_NAME => [
+                        'extra_tag' => 'tagged',
+                    ],
+                ],
+            ],
+            [self::PRODUCT_WRITE]
+        );
 
-        $writtenItem = null;
-        foreach ($list['items'] as $item) {
-            if ((int) $item['productId'] === self::PRODUCT_ID) {
-                $writtenItem = $item;
-                break;
-            }
-        }
-
-        $this->assertNotNull($writtenItem, 'The product written to was not present in the list');
-
-        // List items must NOT carry the nested extraProperties object used by single-item endpoints.
-        $this->assertArrayNotHasKey('extraProperties', $writtenItem);
-
-        // COMMON value, inline at root, already cast to bool by the grid query.
         $flagKey = 'extra_' . self::MODULE_NAME . '_api_flag';
-        $this->assertArrayHasKey($flagKey, $writtenItem);
-        $this->assertTrue($writtenItem[$flagKey]);
-
-        // LANG value, inline at root, as the single current-locale scalar (not a {locale: value} object). The
-        // value is whichever locale the API context resolves to among the two we wrote.
         $noteKey = 'extra_' . self::MODULE_NAME . '_api_note';
-        $this->assertArrayHasKey($noteKey, $writtenItem);
-        $this->assertIsString($writtenItem[$noteKey]);
-        $this->assertContains($writtenItem[$noteKey], ['hello', 'bonjour']);
+        $tagKey = 'extra_' . self::MODULE_2_NAME . '_extra_tag';
+
+        foreach (['en-US' => 'hello', 'fr-FR' => 'bonjour'] as $locale => $expectedNote) {
+            $list = $this->listItems('/products?langId=' . (int) Language::getIdByLocale($locale), [self::PRODUCT_READ]);
+            $writtenItem = $this->findListItem($list['items'], 'productId', self::PRODUCT_ID);
+            $this->assertNotNull($writtenItem, 'The product written to was not present in the list');
+
+            // List items carry the inline grid values, not the nested extraProperties object.
+            $this->assertArrayNotHasKey('extraProperties', $writtenItem);
+            $this->assertTrue($writtenItem[$flagKey]);
+            // COMMON values are language-independent; the LANG value follows the requested langId.
+            $this->assertSame('tagged', $writtenItem[$tagKey]);
+            $this->assertSame($expectedNote, $writtenItem[$noteKey]);
+        }
     }
 
     /**
-     * A value that fails the registered validator (isBool) must produce a 422 with a violation
-     * whose propertyPath points at the merged extraProperties.<module>.<field> path.
+     * A value that fails the registered validator (isBool) must produce a 422 whose violation points at the merged
+     * extraProperties.<module>.<field> path AND carries a non-empty message.
      */
     public function testValidationErrorReturns422(): void
     {
@@ -233,112 +252,97 @@ final class ExtraPropertyEndpointTest extends ApiTestCase
             Response::HTTP_UNPROCESSABLE_ENTITY
         );
 
+        // The 422 body decodes to a flat list of violations ({propertyPath, message, code}). Assert exactly one,
+        // at the merged path, with a non-empty message.
         $this->assertIsArray($response);
-        $this->assertValidationErrors(
-            [
-                ['propertyPath' => 'extraProperties.' . self::MODULE_NAME . '.api_flag'],
-            ],
-            $response
-        );
+        $this->assertCount(1, $response);
+        $this->assertSame('extraProperties.' . self::MODULE_NAME . '.api_flag', $response[0]['propertyPath']);
+        $this->assertNotEmpty($response[0]['message']);
     }
 
     /**
-     * Properties registered on one entity must never appear on another entity, and vice versa.
+     * A property registered on one entity must never appear on another. The product and customer responses must
+     * each contain EXACTLY their own module properties.
      */
     public function testCrossEntityIsolation(): void
     {
         $customerId = $this->getExistingCustomerId();
 
-        // Make the test self-contained: ensure the product exposes its own (product-scoped) property so we can
-        // meaningfully assert the customer-only property never leaks into the product's module sub-object.
         $this->partialUpdateItem(
             '/products/' . self::PRODUCT_ID,
-            [
-                'extraProperties' => [
-                    self::MODULE_NAME => [
-                        'api_flag' => true,
-                    ],
-                ],
-            ],
+            ['extraProperties' => [self::MODULE_NAME => ['api_flag' => true]]],
             [self::PRODUCT_WRITE]
         );
 
-        // Set the customer-only extra property.
         $patchedCustomer = $this->partialUpdateItem(
             '/customers/' . $customerId,
-            [
-                'extraProperties' => [
-                    self::MODULE_NAME => [
-                        'api_score' => 42,
-                    ],
-                ],
-            ],
+            ['extraProperties' => [self::MODULE_NAME => ['api_score' => 42]]],
             [self::CUSTOMER_WRITE]
         );
-        $this->assertArrayHasKey('extraProperties', $patchedCustomer);
-        $this->assertArrayHasKey(self::MODULE_NAME, $patchedCustomer['extraProperties']);
-        $this->assertSame(42, $patchedCustomer['extraProperties'][self::MODULE_NAME]['api_score']);
+        // The customer carries exactly its own (customer-scoped) property — no product property leaks in.
+        $this->assertEquals(
+            [self::MODULE_NAME => ['api_score' => 42]],
+            $patchedCustomer['extraProperties']
+        );
 
-        // The product must not expose the customer-only property.
+        // The product carries exactly its product-scoped properties (api_flag set, the rest at their default), and
+        // none of the customer-only property.
         $product = $this->getItem('/products/' . self::PRODUCT_ID, [self::PRODUCT_READ]);
-        $this->assertArrayHasKey('extraProperties', $product);
-        $this->assertArrayHasKey(self::MODULE_NAME, $product['extraProperties']);
-        $this->assertArrayNotHasKey('api_score', $product['extraProperties'][self::MODULE_NAME]);
+        $this->assertEquals(
+            [
+                self::MODULE_NAME => ['api_flag' => true, 'api_note' => []],
+                self::MODULE_2_NAME => ['extra_tag' => null],
+            ],
+            $product['extraProperties']
+        );
 
-        // The customer must expose its own property but none of the product-only ones.
         $customer = $this->getItem('/customers/' . $customerId, [self::CUSTOMER_READ]);
-        $this->assertArrayHasKey('extraProperties', $customer);
-        $this->assertArrayHasKey(self::MODULE_NAME, $customer['extraProperties']);
-        $customerExtra = $customer['extraProperties'][self::MODULE_NAME];
-        $this->assertArrayHasKey('api_score', $customerExtra);
-        $this->assertSame(42, $customerExtra['api_score']);
-        $this->assertArrayNotHasKey('api_flag', $customerExtra);
-        $this->assertArrayNotHasKey('api_note', $customerExtra);
+        $this->assertEquals(
+            [self::MODULE_NAME => ['api_score' => 42]],
+            $customer['extraProperties']
+        );
     }
 
     /**
-     * An unknown extra property key (no matching definition) must be silently ignored:
-     * the write succeeds (no 4xx) and the unknown field is absent from the response.
+     * An unknown extra property key (no matching definition) must be silently ignored: the write succeeds and the
+     * unknown field is absent from the response.
      */
     public function testUnknownExtraPropertyKeyIsTolerated(): void
     {
         $patchedProduct = $this->partialUpdateItem(
             '/products/' . self::PRODUCT_ID,
-            [
-                'extraProperties' => [
-                    self::MODULE_NAME => [
-                        'does_not_exist' => 'x',
-                    ],
-                ],
-            ],
+            ['extraProperties' => [self::MODULE_NAME => ['does_not_exist' => 'x']]],
             [self::PRODUCT_WRITE]
         );
 
-        $this->assertArrayHasKey('extraProperties', $patchedProduct);
-        if (array_key_exists(self::MODULE_NAME, $patchedProduct['extraProperties'])) {
-            $this->assertArrayNotHasKey('does_not_exist', $patchedProduct['extraProperties'][self::MODULE_NAME]);
-        }
+        // The unknown key is filtered out; only the real (default-valued) properties remain.
+        $this->assertEquals(
+            [
+                self::MODULE_NAME => ['api_flag' => null, 'api_note' => []],
+                self::MODULE_2_NAME => ['extra_tag' => null],
+            ],
+            $patchedProduct['extraProperties']
+        );
     }
 
     /**
-     * Asserts the response carries the dedicated extraProperties sub-object keyed by the module name.
+     * @param array<int, array<string, mixed>> $items
      *
-     * @param array<string, mixed> $response
+     * @return array<string, mixed>|null
      */
-    private function assertModuleExtraProperties(array $response): void
+    private function findListItem(array $items, string $idField, int $id): ?array
     {
-        $this->assertArrayHasKey('extraProperties', $response);
-        $this->assertIsArray($response['extraProperties']);
-        $this->assertArrayHasKey(self::MODULE_NAME, $response['extraProperties']);
-        $this->assertIsArray($response['extraProperties'][self::MODULE_NAME]);
+        foreach ($items as $item) {
+            if (isset($item[$idField]) && (int) $item[$idField] === $id) {
+                return $item;
+            }
+        }
+
+        return null;
     }
 
     /**
-     * Returns a real, existing customer id.
-     *
-     * The customer API does not expose a GET collection, so rather than assume a fixture id we create a
-     * customer through the API and reuse its id. defaultGroupId/groupIds 3 (registered customers) and
-     * genderId 1 match the standard fixtures and are the same values used by the customer endpoint tests.
+     * Returns a real, existing customer id, created through the API (the customer API exposes no GET collection).
      */
     private function getExistingCustomerId(): int
     {
