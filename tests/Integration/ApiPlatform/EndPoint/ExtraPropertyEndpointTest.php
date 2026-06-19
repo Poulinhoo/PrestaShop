@@ -167,6 +167,7 @@ final class ExtraPropertyEndpointTest extends ApiTestCase
                     ],
                     self::MODULE_2_NAME => [
                         'extra_tag' => 'tagged',
+                        'api_only_note' => ['en-US' => 'note-en', 'fr-FR' => 'note-fr'],
                     ],
                 ],
             ],
@@ -180,6 +181,7 @@ final class ExtraPropertyEndpointTest extends ApiTestCase
             ],
             self::MODULE_2_NAME => [
                 'extra_tag' => 'tagged',
+                'api_only_note' => ['en-US' => 'note-en', 'fr-FR' => 'note-fr'],
             ],
         ];
         $this->assertArrayHasKey('extraProperties', $patchedProduct);
@@ -192,10 +194,11 @@ final class ExtraPropertyEndpointTest extends ApiTestCase
     }
 
     /**
-     * The product list (grid-backed collection) exposes grid-and-API-associated properties of BOTH modules INLINE at
-     * the item root under their field name (extra_<module>_<field>), not in a nested extraProperties sub-object. The
-     * localized value is rendered in the language requested via the langId query parameter, so we assert the exact
-     * value in each language.
+     * The product list (grid-backed collection) exposes the API-associated properties of BOTH modules INLINE at the
+     * item root under their field name (extra_<module>_<field>), not in a nested extraProperties sub-object. This
+     * includes an API-only property (no grid association), which the grid never fetches and is therefore surfaced
+     * through the batch-reader fallback. The localized values follow the langId query parameter, so we assert the
+     * exact value per language.
      */
     public function testListInjectsExtraProperties(): void
     {
@@ -209,6 +212,7 @@ final class ExtraPropertyEndpointTest extends ApiTestCase
                     ],
                     self::MODULE_2_NAME => [
                         'extra_tag' => 'tagged',
+                        'api_only_note' => ['en-US' => 'note-en', 'fr-FR' => 'note-fr'],
                     ],
                 ],
             ],
@@ -218,18 +222,26 @@ final class ExtraPropertyEndpointTest extends ApiTestCase
         $flagKey = 'extra_' . self::MODULE_NAME . '_api_flag';
         $noteKey = 'extra_' . self::MODULE_NAME . '_api_note';
         $tagKey = 'extra_' . self::MODULE_2_NAME . '_extra_tag';
+        $apiOnlyNoteKey = 'extra_' . self::MODULE_2_NAME . '_api_only_note';
 
-        foreach (['en-US' => 'hello', 'fr-FR' => 'bonjour'] as $locale => $expectedNote) {
+        $expectations = [
+            'en-US' => ['note' => 'hello', 'apiOnlyNote' => 'note-en'],
+            'fr-FR' => ['note' => 'bonjour', 'apiOnlyNote' => 'note-fr'],
+        ];
+        foreach ($expectations as $locale => $expected) {
             $list = $this->listItems('/products?langId=' . (int) Language::getIdByLocale($locale), [self::PRODUCT_READ]);
             $writtenItem = $this->findListItem($list['items'], 'productId', self::PRODUCT_ID);
             $this->assertNotNull($writtenItem, 'The product written to was not present in the list');
 
             // List items carry the inline grid values, not the nested extraProperties object.
             $this->assertArrayNotHasKey('extraProperties', $writtenItem);
+            // Grid-associated properties, reused from the grid-record collector.
             $this->assertTrue($writtenItem[$flagKey]);
-            // COMMON values are language-independent; the LANG value follows the requested langId.
             $this->assertSame('tagged', $writtenItem[$tagKey]);
-            $this->assertSame($expectedNote, $writtenItem[$noteKey]);
+            $this->assertSame($expected['note'], $writtenItem[$noteKey]);
+            // API-only property (no grid association): never fetched by the grid query, so it is surfaced through
+            // the batch-reader fallback. Its localized value still follows the requested langId.
+            $this->assertSame($expected['apiOnlyNote'], $writtenItem[$apiOnlyNoteKey]);
         }
     }
 
@@ -291,7 +303,7 @@ final class ExtraPropertyEndpointTest extends ApiTestCase
         $this->assertEquals(
             [
                 self::MODULE_NAME => ['api_flag' => true, 'api_note' => []],
-                self::MODULE_2_NAME => ['extra_tag' => null],
+                self::MODULE_2_NAME => ['extra_tag' => null, 'api_only_note' => []],
             ],
             $product['extraProperties']
         );
@@ -319,7 +331,7 @@ final class ExtraPropertyEndpointTest extends ApiTestCase
         $this->assertEquals(
             [
                 self::MODULE_NAME => ['api_flag' => null, 'api_note' => []],
-                self::MODULE_2_NAME => ['extra_tag' => null],
+                self::MODULE_2_NAME => ['extra_tag' => null, 'api_only_note' => []],
             ],
             $patchedProduct['extraProperties']
         );

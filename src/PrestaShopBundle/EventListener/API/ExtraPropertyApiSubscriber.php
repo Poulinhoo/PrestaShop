@@ -165,12 +165,13 @@ class ExtraPropertyApiSubscriber implements EventSubscriberInterface
     }
 
     /**
-     * Enriches each item of a collection response with its extra properties, inline at the item root under the
-     * field name (single context-locale value), choosing the data source by how the list is served:
-     *  - grid-backed (QueryListProvider + grid data factory): reuse the values the grid query already captured in
-     *    the collector — no extra read;
-     *  - otherwise (CQRS-paginated, e.g. /products/{id}/combinations): the collector is empty, so fetch every
-     *    item's values for the current display language in a single batched query.
+     * Enriches each item of a collection response with its extra properties, inline at the item root under the field
+     * name (single context-locale value), combining two sources:
+     *  - grid-associated properties on a grid-backed list (QueryListProvider + grid data factory) are reused from the
+     *    collector — the grid query already fetched them, so no extra read;
+     *  - the rest are read from the database in a single batched query: on a grid-backed list that is the
+     *    API-associated-but-not-grid properties (exposed on the API yet absent from the grid); on a CQRS-paginated
+     *    list (e.g. /products/{id}/combinations) the grid never runs, so it is every property.
      *
      * @param array<int, mixed> $items
      *
@@ -178,27 +179,14 @@ class ExtraPropertyApiSubscriber implements EventSubscriberInterface
      */
     protected function enrichListItems(array $items, HttpOperation $operation, ExtraPropertyDefinitionCollection $definitions, string $entityName, string $resourceClass): array
     {
-        if ($this->isGridBackedCollection($operation)) {
-            foreach ($items as $index => $item) {
-                if (!is_array($item)) {
-                    continue;
-                }
-                $entityId = $this->resolveId($item, $entityName, $resourceClass);
-                if ($entityId <= 0) {
-                    continue;
-                }
-                // The collector kept only the extra-property columns (by field name) the grid fetched, so merge
-                // them at the item root as-is.
-                $captured = $this->listRecordCollector->find($entityName, $entityId);
-                if (null !== $captured) {
-                    $items[$index] = array_merge($item, $captured);
-                }
-            }
+        $gridBacked = $this->isGridBackedCollection($operation);
 
-            return $items;
-        }
+        // On a grid-backed list the grid already provided the grid-associated properties (read back from the
+        // collector); only the API-associated properties it did not fetch still need a database read. On any other
+        // list the grid never runs, so every property is read.
+        $readerDefinitions = $gridBacked ? $this->apiOnlyDefinitions($definitions) : $definitions;
 
-        // CQRS-paginated list: collect the ids, read them all at once for the current display language.
+        // Resolve every item's entity id once.
         $entityIdByIndex = [];
         foreach ($items as $index => $item) {
             if (!is_array($item)) {
@@ -213,31 +201,62 @@ class ExtraPropertyApiSubscriber implements EventSubscriberInterface
             return $items;
         }
 
-        $valuesByEntity = $this->reader->getMultipleExtraProperties(
-            $entityName,
-            $definitions->first()->getPrimaryKeyName(),
-            array_values($entityIdByIndex),
-            $this->languageContext->getId(),
-            $this->shopContext->getShopConstraint(),
-            $this->isLangMultishop($entityName),
-            $definitions,
-        );
+        // Batch-read the properties the grid did not provide, in one query, for the current display language.
+        $valuesByEntity = [];
+        if (!$readerDefinitions->isEmpty()) {
+            $valuesByEntity = $this->reader->getMultipleExtraProperties(
+                $entityName,
+                $readerDefinitions->first()->getPrimaryKeyName(),
+                array_values($entityIdByIndex),
+                $this->languageContext->getId(),
+                $this->shopContext->getShopConstraint(),
+                $this->isLangMultishop($entityName),
+                $readerDefinitions,
+            );
+        }
 
         foreach ($entityIdByIndex as $index => $entityId) {
-            $entityValues = $valuesByEntity[$entityId] ?? null;
-            if (null === $entityValues) {
-                continue;
-            }
-            // Flatten the grouped values to the same inline shape the grid path produces: field name => value.
-            foreach ($definitions as $definition) {
-                $moduleValues = $entityValues[$definition->getNormalizedModuleKey()] ?? null;
-                if (null !== $moduleValues && array_key_exists($definition->getPropertyName(), $moduleValues)) {
-                    $items[$index][$definition->getFieldName()] = $moduleValues[$definition->getPropertyName()];
+            $item = $items[$index];
+
+            if ($gridBacked) {
+                // Grid-associated properties: reuse exactly the (single context-locale) values the grid fetched.
+                $captured = $this->listRecordCollector->find($entityName, $entityId);
+                if (null !== $captured) {
+                    $item = array_merge($item, $captured);
                 }
             }
+
+            // Reader-fetched properties, flattened to the same inline shape: field name => value.
+            $entityValues = $valuesByEntity[$entityId] ?? null;
+            if (null !== $entityValues) {
+                foreach ($readerDefinitions as $definition) {
+                    $moduleValues = $entityValues[$definition->getNormalizedModuleKey()] ?? null;
+                    if (null !== $moduleValues && array_key_exists($definition->getPropertyName(), $moduleValues)) {
+                        $item[$definition->getFieldName()] = $moduleValues[$definition->getPropertyName()];
+                    }
+                }
+            }
+
+            $items[$index] = $item;
         }
 
         return $items;
+    }
+
+    /**
+     * The subset of $definitions NOT associated with any grid — exposed on the API (and possibly a form) but never
+     * fetched by a grid query, so they are absent from the grid-record collector and must be read from the database.
+     */
+    protected function apiOnlyDefinitions(ExtraPropertyDefinitionCollection $definitions): ExtraPropertyDefinitionCollection
+    {
+        $apiOnly = [];
+        foreach ($definitions as $definition) {
+            if (empty($definition->getAssociatedGrids())) {
+                $apiOnly[] = $definition;
+            }
+        }
+
+        return new ExtraPropertyDefinitionCollection($apiOnly);
     }
 
     /**

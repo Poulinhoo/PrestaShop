@@ -70,12 +70,28 @@ class extrapropertytest2 extends Module
             return false;
         }
 
+        // product / api_only_note — STRING, LANG scope, exposed on the product API endpoints but on NO grid. The
+        // product grid never fetches it, so in the API product list it must be read through the batch reader rather
+        // than reused from the grid-record collector (this is the case the video_link bug was about).
+        if (!$this->registerExtraProperty(new ExtraPropertyDefinition(
+            entityName: 'product',
+            propertyName: 'api_only_note',
+            type: ExtraPropertyType::STRING,
+            scope: ExtraPropertyScope::LANG,
+            validator: 'isGenericName',
+            associatedApis: ['/products', '/products/{productId}'],
+            labelWording: 'API only note',
+        ))) {
+            return false;
+        }
+
         return true;
     }
 
     public function uninstall()
     {
         $this->unregisterExtraProperty(new ExtraPropertyDefinition('product', 'extra_tag'), true);
+        $this->unregisterExtraProperty(new ExtraPropertyDefinition('product', 'api_only_note'), true);
 
         return parent::uninstall();
     }
