@@ -48,6 +48,7 @@ When grid data needs post-processing (e.g. resolving image URLs from IDs, format
 
 - `{Domain}Filters` (in `src/Core/Search/Filters/`) extends `Filters` which implements `SearchCriteriaInterface` — it is NOT a form type
 - It defines defaults (grid ID, default sort column/direction, default limit)
+- **Default sort is the identity column (`id_{domain}`)** unless the entity is positionable — positionable entities default to `position ASC`. Don't invent another default sort
 - Injected into the controller's index action via argument resolver: `indexAction({Domain}Filters $filters)`
 - Filter values come from the grid filter bar (saved in session by `CommonController::searchGridAction`)
 
@@ -60,6 +61,7 @@ When grid data needs post-processing (e.g. resolving image URLs from IDs, format
 - **`PositionColumn` requires a `ReorderPositionsButtonType` filter** (associated with the position column) — it provides the drag-and-drop "Rearrange" UX. Canonical example: `FeatureValueGridDefinitionFactory`; see the [`create-position-column`](skills/create-position-column/SKILL.md) skill
 - `ToggleColumn` requires a dedicated AJAX toggle route — it cannot work without one
 - Grid definition must declare a `GRID_ID` const shared between the definition factory, the `{Domain}Filters` class, and the JS Grid constructor
+- **No magic string/number values** for filter options, statuses, or states — extract them into class constants, an enum, or a domain Value Object so they can be reused by the query builder, the form, and tests (e.g. a `DiscountState` enum rather than literal `'expired'` strings)
 
 ### Query builders
 

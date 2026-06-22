@@ -62,6 +62,18 @@ Breaking changes are only allowed in major versions. See [ADR 0017](https://gith
 | Behavior | Behat | `tests/Integration/Behaviour/` |
 | UI | Playwright | `tests/UI/` |
 
+- **New behavior / bug fix must come with a test.** Add or adjust a unit test on the class actually touched; prefer Behat for command/handler behavior; if an existing E2E covers the area, unskip it and re-run rather than leaving a `@todo`/skip in place.
+
+## PR hygiene
+
+Common slips unrelated to the feature itself — check before pushing:
+
+- **No unrelated lock-file changes.** A PR must not carry `composer.lock` / `package-lock.json` updates for dependencies it doesn't intentionally bump (a stray `composer install` often rewrites them). Restore them, or squash them out before review.
+- **No IDE / local config files** (`.idea/`, editor settings) and no stray blank-line or missing-end-of-line changes.
+- **Keep lists alphabetically sorted** (interface members, imports where applicable, enum-like lists) — not all of this is caught by php-cs-fixer.
+- **Squash noise commits** (review fixups, reverts) so history stays readable.
+- **Target the lowest applicable branch** (`9.1.x` for bug fixes, `develop` for features) — see Branching & Versioning above.
+
 ## Skills
 
 | Skill | Path | Trigger |
