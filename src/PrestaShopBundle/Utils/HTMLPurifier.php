@@ -9,6 +9,8 @@ declare(strict_types=1);
 namespace PrestaShopBundle\Utils;
 
 use HTMLPurifier_Config;
+use Symfony\Component\DependencyInjection\Attribute\Autowire;
+use Symfony\Component\Filesystem\Filesystem;
 
 class HTMLPurifier
 {
@@ -17,12 +19,21 @@ class HTMLPurifier
      */
     private $instance;
 
-    public function __construct()
-    {
+    public function __construct(
+        private readonly Filesystem $filesystem,
+        #[Autowire(param: 'prestashop.legacy_cache_dir')]
+        private readonly string $cacheDir,
+    ) {
         $config = HTMLPurifier_Config::createDefault();
         // We must keep IDs that are by JS used to target element
         $config->set('Attr.EnableID', true);
         $config->set('Attr.AllowedFrameTargets', ['_blank']);
+
+        $serializerPath = $this->cacheDir . 'purifier';
+        $this->filesystem->mkdir($serializerPath);
+
+        $config->set('Cache.SerializerPath', $serializerPath);
+
         $purifier = new \HTMLPurifier($config);
         $this->instance = $purifier;
     }
