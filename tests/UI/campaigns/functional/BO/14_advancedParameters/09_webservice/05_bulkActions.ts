@@ -20,8 +20,8 @@ describe('BO - Advanced Parameters - Webservice : Bulk actions', async () => {
 
   let numberOfWebserviceKeys: number = 0;
 
-  const firstWebServiceData: FakerWebservice = new FakerWebservice({keyDescription: 'todelete'});
-  const secondWebServiceData: FakerWebservice = new FakerWebservice();
+  const firstWebServiceData: FakerWebservice = new FakerWebservice({keyDescription: 'todelete10'});
+  const secondWebServiceData: FakerWebservice = new FakerWebservice({keyDescription: 'todelete20'});
 
   before(async function () {
     browserContext = await utilsPlaywright.createBrowserContext(this.browser);
@@ -127,6 +127,15 @@ describe('BO - Advanced Parameters - Webservice : Bulk actions', async () => {
 
       const numberOfElement = await boWebservicesPage.resetAndGetNumberOfLines(page);
       expect(numberOfElement).to.be.equal(numberOfWebserviceKeys + 2);
+    });
+
+    it('should filter list by key description', async function () {
+      await testContext.addContextItem(this, 'testIdentifier', 'filterBeforeBulkDelete', baseContext);
+
+      await boWebservicesPage.filterWebserviceTable(page, 'input', 'description', 'todelete');
+
+      const key = await boWebservicesPage.getTextColumnFromTable(page, 1, 'description');
+      expect(key).to.contains('todelete');
     });
 
     it('should delete webservice keys created', async function () {
