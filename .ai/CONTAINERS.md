@@ -28,15 +28,18 @@ normally provides (Doctrine, `validator`, `translator`, full Context) is **absen
 
 | Files | Loaded by | Scope |
 |-------|-----------|-------|
-| `src/PrestaShopBundle/Resources/config/services/**` (bundle) | **All** containers — the SF kernels via `services.yml` globs; the FO container via `config/services/common.yml` imports | **Common** (FO + every SF kernel) |
+| `src/PrestaShopBundle/Resources/config/services/**` (bundle) | The **SF kernels** load the full tree. The **FO legacy container loads only a hand-picked subset** — the files explicitly listed in the `imports:` of `config/services/common.yml` (by convention the `common.yml` of each subfolder, e.g. `core/common.yml`, `bundle/common.yml`, `extra_property/common.yml`). It is **not** an automatic glob; most files here are SF-kernel-only. | **SF kernels**; FO only for the explicitly-imported files |
 | `config/services/common.yml` | FO legacy container only (imported by the per-context entry below) | **FO-only**, shared across FO entries |
 | `config/services/{front,webservice}/services_<env>.yml` | FO legacy container, per entry point (`front`, `webservice`) | FO/legacy entry-specific |
 | `app/config/{admin,front,admin-api}/{config,services}_<env>.yml` | One Symfony kernel each | **Per-kernel (SF only)** |
 
 **Rules of thumb:**
-- A service in a **bundle** config is loaded into the FO legacy container **and** every SF kernel — so **its
-  dependencies must resolve in all of them**. Do **not** hard-depend on a FrameworkBundle-only service (e.g.
-  `@validator`, `@translator`) from a bundle service unless that dependency is also provided in the FO container.
+- A service in a **bundle** config is loaded into **every SF kernel**. It is available in the **FO legacy container
+  only if its file is explicitly imported by `config/services/common.yml`** (the convention: put FO-needed
+  definitions in a `common.yml` and add it to that import list). Once a bundle service IS imported into the FO
+  container, **its dependencies must resolve there too** — do **not** hard-depend on a FrameworkBundle-only service
+  (e.g. `@validator`, `@translator`) from such a service unless that dependency is also provided in the FO container
+  (e.g. wired by a `ContainerBuilderExtensionInterface`).
 - **FO-only** service definitions belong in `config/services/*` — never in bundle configs the SF kernels load (that
   would leak them into / conflict with the SF kernels).
 - **SF-kernel-only** definitions belong under `app/config/<kernel>/`.
