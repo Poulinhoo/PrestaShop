@@ -54,35 +54,37 @@ class ExtraPropertyDefinitionNamingTest extends TestCase
     }
 
     /**
-     * @dataProvider formFieldNameProvider
+     * @dataProvider fieldNameProvider
      */
-    public function testGetFormFieldName(ExtraPropertyDefinition $definition, string $expected): void
+    public function testGetFieldName(ExtraPropertyDefinition $definition, string $expected): void
     {
-        $this->assertSame($expected, $definition->getFormFieldName());
+        $this->assertSame($expected, $definition->getFieldName());
     }
 
-    public static function formFieldNameProvider(): array
+    public static function fieldNameProvider(): array
     {
+        // The scope is intentionally NOT part of the field name: the same module + property name yields the same
+        // identifier whatever the scope (a property is unique per module + name).
         return [
-            'module field common scope' => [
+            'module field, common scope' => [
                 new ExtraPropertyDefinition(entityName: 'entity', propertyName: 'video_link', scope: ExtraPropertyScope::COMMON, moduleName: 'ps_mymodule'),
-                'extra_common_ps_mymodule_video_link',
+                'extra_ps_mymodule_video_link',
             ],
-            'module field lang scope' => [
+            'module field, lang scope (same name as common)' => [
                 new ExtraPropertyDefinition(entityName: 'entity', propertyName: 'video_link', scope: ExtraPropertyScope::LANG, moduleName: 'ps_mymodule'),
-                'extra_lang_ps_mymodule_video_link',
+                'extra_ps_mymodule_video_link',
             ],
-            'module field shop scope' => [
+            'module field, shop scope (same name as common)' => [
                 new ExtraPropertyDefinition(entityName: 'entity', propertyName: 'video_link', scope: ExtraPropertyScope::SHOP, moduleName: 'ps_mymodule'),
-                'extra_shop_ps_mymodule_video_link',
+                'extra_ps_mymodule_video_link',
             ],
-            'core sentinel common scope' => [
+            'core sentinel module' => [
                 new ExtraPropertyDefinition(entityName: 'entity', propertyName: 'my_field', scope: ExtraPropertyScope::COMMON, moduleName: ExtraPropertyDefinition::CORE_MODULE_KEY),
-                'extra_common__core_my_field',
+                'extra__core_my_field',
             ],
             'null module treated as _core' => [
                 new ExtraPropertyDefinition(entityName: 'entity', propertyName: 'my_field', scope: ExtraPropertyScope::COMMON, moduleName: null),
-                'extra_common__core_my_field',
+                'extra__core_my_field',
             ],
         ];
     }

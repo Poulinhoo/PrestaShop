@@ -89,7 +89,7 @@ class ExtraPropertiesFormBuilderModifier
         foreach ($formDefinitions as $definition) {
             $formEntry = $definition->getFormEntry($formId);
 
-            $formFieldName = $definition->getFormFieldName();
+            $formFieldName = $definition->getFieldName();
 
             [$type, $typeOptions] = $this->resolveFieldTypeAndOptions($definition);
 

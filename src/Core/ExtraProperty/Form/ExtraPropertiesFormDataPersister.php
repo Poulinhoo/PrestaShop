@@ -62,7 +62,7 @@ class ExtraPropertiesFormDataPersister
             } else {
                 $targetPath = (string) $formEntry['path'];
             }
-            $formFieldName = $definition->getFormFieldName();
+            $formFieldName = $definition->getFieldName();
 
             $targetForm = $this->resolveTargetFormForExtraField($form, $targetPath, $formFieldName);
             if (null === $targetForm) {

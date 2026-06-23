@@ -54,7 +54,7 @@ class ExtraPropertiesGridDefinitionModifier
                 continue;
             }
 
-            $columnId = $extraDefinition->getFormFieldName();
+            $columnId = $extraDefinition->getFieldName();
             if ($this->hasColumnId($columns, $columnId)) {
                 continue;
             }
@@ -94,7 +94,7 @@ class ExtraPropertiesGridDefinitionModifier
     protected function buildColumn(string $label, ExtraPropertyDefinition $definition): ColumnInterface
     {
         // H8: column type is derived from the logical field type, not the form type override.
-        $columnId = $definition->getFormFieldName();
+        $columnId = $definition->getFieldName();
         $moduleName = $definition->getNormalizedModuleKey();
         $fieldName = $definition->getPropertyName();
 

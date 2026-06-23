@@ -16,14 +16,15 @@ Lets any module register **typed extra fields** on existing PrestaShop entities 
 | Validation | `src/Core/ExtraProperty/Validation/` |
 | BO form integration | `src/Core/ExtraProperty/Form/` |
 | BO grid integration | `src/Core/ExtraProperty/Grid/` |
-| Admin API service | `src/PrestaShopBundle/ApiPlatform/ExtraProperties/ExtraPropertiesApiService.php` |
+| Admin API integration: response subscriber + grid-record collector | `src/PrestaShopBundle/EventListener/API/ExtraPropertyApiSubscriber.php`, `src/Core/ExtraProperty/Api/` |
+| Admin API validation + OpenAPI | `src/PrestaShopBundle/ApiPlatform/Validator/ExtraPropertyCQRSApiValidator.php`, `src/PrestaShopBundle/ApiPlatform/OpenApi/Adapter/ExtraPropertiesSchemaAdapter.php` |
 | Legacy + FO hooks | `classes/module/Module.php`, `classes/ObjectModel.php`, `src/Adapter/Presenter/AbstractLazyArray.php` |
 | Registry table DDL | `install-dev/data/db_structure.sql` (`ps_extra_property_definition`) |
 | Service wiring | `…/config/services/extra_property/{common,backend}.yml`, `…/config/services/core/grid/grid_extra_properties.yml` |
 
 ## Database structure
 
-**Central registry — `ps_extra_property_definition`** (created at install). One row per registered property. Real columns: `entity_name`, `module_name` (NULL = core field, no module owner), `property_name`, `type` ENUM(`int,bool,string,float,date,html,json,choice`), `scope` ENUM(`common,lang,shop`), `sql_index` ENUM(`none,key,unique`), `size`, `default_value`, `validator`, `display_front`, `display_api`, `associated_grids`/`associated_forms` (JSON placement DSL), `form_field_type`, `form_required`, `form_options`, and `label_*`/`description_*` wording+domain pairs. Unique key: `(entity_name, module_name, property_name)`.
+**Central registry — `ps_extra_property_definition`** (created at install). One row per registered property. Real columns: `entity_name`, `module_name` (NULL = core field, no module owner), `property_name`, `type` ENUM(`int,bool,string,float,date,html,json,choice`), `scope` ENUM(`common,lang,shop`), `sql_index` ENUM(`none,key,unique`), `size`, `default_value`, `validator`, `display_front`, `associated_grids`/`associated_forms`/`associated_apis` (JSON placement & API-targeting DSL), `form_field_type`, `form_required`, `form_options`, and `label_*`/`description_*` wording+domain pairs. Unique key: `(entity_name, module_name, property_name)`.
 
 **Dynamic per-entity value tables**, created lazily by `ExtraPropertySchemaManager` on first registration for an entity, one per scope:
 
@@ -46,7 +47,7 @@ $this->registerExtraProperty(new ExtraPropertyDefinition(
     entityName: 'product', propertyName: 'video_link',
     type: ExtraPropertyType::STRING, scope: ExtraPropertyScope::LANG,
     labelWording: 'Video link', labelDomain: 'Modules.Demoextrafield.Admin',
-    displayFront: true, displayApi: true, associatedForms: ['product'],
+    displayFront: true, associatedForms: ['product'], associatedApis: ['/products', '/products/{productId}'],
 ));
 // uninstall():  $this->unregisterExtraProperty($definition, dropData: true);
 ```
@@ -71,12 +72,23 @@ The Smarty/array index key is `extra_properties` (snake_case), and only present 
 **Rendering** (derived from the logical type, not the override):
 - BO form field = `form_field_type` FQCN if set, else **`TextType`**; LANG scope wrapped in `TranslatableType`; `form_required` adds a `NotBlank`, `validator` adds a `Callback` constraint. (There is no per-type form-type map — `TextType` is the default for every untyped field.)
 - Grid column: BOOL → `ToggleColumn` (route `admin_common_extra_properties_toggle`, shop resolved server-side), DATE → `DateTimeColumn`, JSON → skipped, everything else → `DataColumn`.
-- Form field name, grid column id and grid SELECT alias all share `getFormFieldName()` = `extra_{scope}_{module}_{property}`.
+- Form field name, grid column id, grid SELECT alias and the inline key in API list responses all share `getFieldName()` = `extra_{module}_{property}`. The scope is intentionally not part of it — a property is unique per module + name.
+
+## Admin API integration
+
+Module-declared extra properties are exposed and managed on the Admin API, wired **only in the Admin API kernel** (`app/config/admin-api/services.yml`). `PrestaShopBundle\EventListener\API\ExtraPropertyApiSubscriber` (on `kernel.response`) is the single API-Platform-coupled bridge; the Core reader/writer it drives stay framework-agnostic.
+
+- **Targeting** — each definition declares `associatedApis`: URI templates with an optional `:METHOD` modifier (`/products`, `/products/{productId}:GET,PATCH`), matched against the operation's literal `uriTemplate` + method (`ExtraPropertyDefinitionCollection::filterByApi`). No class→entity inference, so a field never leaks onto a resource it does not target. Replaces the old `display_api` boolean.
+- **Read (item)** — a nested `extraProperties` sub-object keyed by module then property: COMMON scalars, LANG objects keyed by **locale** (converted from id_lang via `LocalizedValueUpdater`), SHOP flattened for the shop context. Read through `ExtraPropertyReaderInterface::getExtraProperties`.
+- **Read (list)** — each item is enriched **inline** at its root under `getFieldName()`, as the single context-locale value. Grid-associated properties are reused from `ExtraPropertyApiListRecordCollector` (the grid query already fetched them, no extra read); API-only (non-grid) properties — and every property of a non-grid, CQRS-paginated list — are read in one batched query via `getMultipleExtraProperties`.
+- **Write** — `POST`/`PUT`/`PATCH` accept the same sub-object; the subscriber filters it to the operation's definitions (so unrelated keys can't be written), converts LANG locale→id_lang, and persists via `ExtraPropertyWriterInterface::writeAll` with the request's `ShopConstraint`.
+- **Validation** — `ExtraPropertyCQRSApiValidator` decorates `CQRSApiValidator`, merging extra-property violations with the resource's into a single `422` (paths `extraProperties.<module>.<field>`).
+- **OpenAPI** — `ExtraPropertiesSchemaAdapter` documents the sub-object on the read and write schemas.
 
 ## Non-obvious patterns
 
 - **`nullable` and `enumValues` are NOT stored in the registry** — the live storage column schema is their source of truth. `ExtraPropertyDefinitionRepository::enrichRowsWithColumnMetadata()` runs `SHOW COLUMNS` and injects synthetic `nullable`/`enum_values` keys consumed by `ExtraPropertyDefinition::fromRow()`.
-- **Two-tier service wiring.** `common.yml` (FO+BO): repository, cached read decorator, reader, writer, validator. `backend.yml` (BO-only): schema manager (DDL, needs logger), registry, form services, API service — registration/DDL only happen back-office. In FO the `WriterInterface` aliases the plain repository (no writes, no cache invalidation).
+- **Two-tier service wiring.** `common.yml` (FO+BO): repository, cached read decorator, reader, writer, validator. `backend.yml` (BO-only): schema manager (DDL, needs logger), registry, form services — registration/DDL only happen back-office. The Admin API bridge is wired separately in `app/config/admin-api/services.yml` (Admin API kernel only). In FO the `WriterInterface` aliases the plain repository (no writes, no cache invalidation).
 - **`CachedExtraPropertyDefinitionRepository` implements BOTH read and write interfaces** over one filesystem cache pool; every write invalidates. The registry itself is uncached and gets the cached repo injected as its writer.
 - **The registry refuses destructive schema changes** on an already-registered property (type/scope change, STRING size decrease, NULL→NOT NULL, ENUM value removal) — those require unregister + re-register. Non-destructive drift (default change, size increase, nullable relax, enum addition) is reconciled onto the live column via `ALTER TABLE … MODIFY COLUMN`.
 - **Grouped value shape everywhere.** Reader returns / writer accepts `[moduleKey => [propertyName => value]]` (`'_core'` for core fields). For lang scope, `langId = null` yields `[id_lang => value]` arrays (BO/API edit-all-langs), an int yields a scalar (FO).
@@ -85,7 +97,7 @@ The Smarty/array index key is `extra_properties` (snake_case), and only present 
 
 ## Status & roadmap
 
-- **Admin API integration is incomplete.** `ExtraPropertiesApiService` exists and is DI-wired but is **not yet invoked** by the serialization pipeline — being reworked under [#41543](https://github.com/PrestaShop/PrestaShop/issues/41543) (+ definitions via API [#41542](https://github.com/PrestaShop/PrestaShop/issues/41542)). There is **no CQRS domain** (`src/Core/Domain/ExtraProperty`) nor Adapter layer, despite earlier drafts.
+- **Admin API integration is delivered** ([#41543](https://github.com/PrestaShop/PrestaShop/issues/41543), this PR) — see *Admin API integration* above. Defining extra properties *through* the API (CRUD on the registry itself) is still open [#41542](https://github.com/PrestaShop/PrestaShop/issues/41542). There is **no CQRS domain** (`src/Core/Domain/ExtraProperty`) nor Adapter layer — the feature lives entirely under `Core\ExtraProperty` plus the Admin API bridge.
 - **Module uninstall cleanup is not automatic** — modules must call `unregisterExtraProperty($definition, dropData: true)` themselves.
 - Open sub-issues: advanced form placement via `property_path` [#41425], native no-code BO management panel [#41426], multishop handling [#41568], automated tests [#41541], validation hardening [#41544], example module [#41428], docs [#41429], security review [#41640], translation scanner support [#41725], cart entity [#41424].
 

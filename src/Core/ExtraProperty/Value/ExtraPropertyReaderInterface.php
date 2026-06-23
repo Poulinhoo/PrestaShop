@@ -59,4 +59,24 @@ interface ExtraPropertyReaderInterface
         bool $isLangMultishop = false,
         ?ExtraPropertyDefinitionCollection $definitions = null,
     ): array;
+
+    /**
+     * Same as {@see getExtraProperties()} but for several entity instances at once, fetched with a single query
+     * per scope (not a per-id loop). Useful to enrich a whole list/collection response without N+1 reads.
+     *
+     * @param int[] $entityIds Entity ids to read (non-positive ids and duplicates are ignored)
+     *
+     * @return array<int, array<string, array<string, mixed>>> Per entity id: the same grouped structure
+     *                                                         getExtraProperties() returns. Ids with no row still
+     *                                                         appear, seeded with each property's default value.
+     */
+    public function getMultipleExtraProperties(
+        string $entityName,
+        string $primaryKeyName,
+        array $entityIds,
+        ?int $langId,
+        ShopConstraint $shopConstraint,
+        bool $isLangMultishop = false,
+        ?ExtraPropertyDefinitionCollection $definitions = null,
+    ): array;
 }

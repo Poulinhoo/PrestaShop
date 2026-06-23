@@ -4,9 +4,10 @@ services:
     autowire: true
     public: false
 
-  # ─── Repository write alias (BO override) ────────────────────────────────────
-  # Overrides the common alias so that write operations in the back-office also
-  # invalidate the definition cache.
+  # ─── Repository write alias (back-office only) ───────────────────────────────
+  # Registering/unregistering extra property definitions only happens on the back-office side (module install),
+  # so the writer interface is bound here (not in common.yml). It points at the cache decorator so every write
+  # invalidates the definition cache.
   PrestaShop\PrestaShop\Core\ExtraProperty\Definition\ExtraPropertyDefinitionWriterInterface:
     alias: 'PrestaShop\PrestaShop\Core\ExtraProperty\Definition\CachedExtraPropertyDefinitionRepository'
 
@@ -52,17 +53,3 @@ services:
       $repository: '@PrestaShop\PrestaShop\Core\ExtraProperty\Definition\ExtraPropertyDefinitionRepositoryInterface'
       $writer: '@PrestaShop\PrestaShop\Core\ExtraProperty\Value\ExtraPropertyWriterInterface'
       $shopContext: '@PrestaShop\PrestaShop\Core\Context\ShopContext'
-
-  # ─── Admin API extra properties service ──────────────────────────────────────
-
-  PrestaShopBundle\ApiPlatform\ExtraProperties\ExtraPropertiesApiService:
-    arguments:
-      $repository: '@PrestaShop\PrestaShop\Core\ExtraProperty\Definition\ExtraPropertyDefinitionRepositoryInterface'
-      $requestStack: '@request_stack'
-      $reader: '@PrestaShop\PrestaShop\Core\ExtraProperty\Value\ExtraPropertyReaderInterface'
-      $writer: '@PrestaShop\PrestaShop\Core\ExtraProperty\Value\ExtraPropertyWriterInterface'
-      $validatorAdapter: '@PrestaShop\PrestaShop\Core\ExtraProperty\Validation\ExtraPropertyValidatorInterface'
-      $shopContext: '@PrestaShop\PrestaShop\Core\Context\ShopContext'
-      $langRepository: '@PrestaShopBundle\Entity\Repository\LangRepository'
-      $propertyNameCollectionFactory: '@?api_platform.metadata.property_name_collection_factory'
-      $propertyMetadataFactory: '@?api_platform.metadata.property.metadata_factory'

@@ -890,7 +890,7 @@ CREATE TABLE `PREFIX_extra_property_definition` (
   `default_value` varchar(255) DEFAULT NULL,
   `validator` varchar(255) DEFAULT NULL,
   `display_front` tinyint(1) unsigned NOT NULL DEFAULT 1,
-  `display_api` tinyint(1) unsigned NOT NULL DEFAULT '0',
+  `associated_apis` text DEFAULT NULL,
   `associated_grids` text DEFAULT NULL,
   `associated_forms` text DEFAULT NULL,
   `form_field_type` varchar(255) DEFAULT NULL,

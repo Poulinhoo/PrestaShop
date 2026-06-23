@@ -192,15 +192,16 @@ final class ExtraPropertyDefinitionCollection implements Countable, IteratorAggr
     }
 
     /**
-     * Returns a new collection containing only definitions eligible for the Admin API (display_api = true).
+     * Returns a new collection containing only definitions that target the given Admin API operation,
+     * identified by its URI template and HTTP method (via ExtraPropertyDefinition::matchesApi()).
      *
-     * Chainable: $collection->filterByEntity('product')->filterByApi()
+     * Chainable: $collection->filterByEntity('product')->filterByApi('/products/{productId}', 'GET')
      */
-    public function filterByApi(): self
+    public function filterByApi(string $uriTemplate, string $method): self
     {
         return new self(array_values(array_filter(
             $this->definitions,
-            static fn (ExtraPropertyDefinition $d): bool => $d->isDisplayApi()
+            static fn (ExtraPropertyDefinition $d): bool => $d->matchesApi($uriTemplate, $method)
         )));
     }
 }

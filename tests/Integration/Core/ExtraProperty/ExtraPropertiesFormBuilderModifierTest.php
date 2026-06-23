@@ -36,7 +36,7 @@ use Tests\Integration\PrestaShopBundle\Form\AbstractFormTester;
  */
 class ExtraPropertiesFormBuilderModifierTest extends AbstractFormTester
 {
-    private const FIELD_NAME = 'extra_common_demoextrafield_is_dangerous';
+    private const FIELD_NAME = 'extra_demoextrafield_is_dangerous';
 
     public function testBareFormIdOnSimpleFormAppendsAtRoot(): void
     {

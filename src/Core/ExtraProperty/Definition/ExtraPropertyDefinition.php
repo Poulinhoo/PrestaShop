@@ -32,6 +32,7 @@ use PrestaShop\PrestaShop\Core\Util\Inflector;
  * - entityName and propertyName are required and must be non-empty.
  * - associatedForms: each entry must match "formId[:path[:before|after]]"; no duplicate formId.
  * - associatedGrids: each entry must match "gridId[:columnId[:before|after]]"; no duplicate gridId.
+ * - associatedApis: each entry must match "uriPath[:METHOD[,METHOD...]]"; uriPath is the operation URI template.
  * - labelWording is required when associatedForms or associatedGrids is non-empty.
  *
  * @see \PrestaShop\PrestaShop\Core\ExtraProperty\Definition\ExtraPropertyRegistryInterface::register()
@@ -77,10 +78,10 @@ final class ExtraPropertyDefinition
      * @param bool $formRequired when true, marks the BO form field as required
      * @param int|null $size for STRING type: varchar column length (defaults to 255)
      * @param ExtraPropertySqlIndex $sqlIndex SQL index strategy on the storage column
-     * @param bool $displayApi include this field in Admin API JSON responses
      * @param bool $displayFront allow this field to be exposed in front-office presenters
      * @param list<string>|null $associatedForms Form placement entries: "formId[:path[:before|after]]". Each formId must be unique.
      * @param list<string>|null $associatedGrids Grid placement entries: "gridId[:columnId[:before|after]]". Each gridId must be unique.
+     * @param list<string>|null $associatedApis Admin API placement entries: "uriPath[:METHOD[,METHOD...]]", matched against the operation URI template (+ optional HTTP methods). No method modifier matches every method.
      * @param string|null $formFieldType fully-qualified Symfony Form type FQCN override for BO forms
      * @param array<string, mixed>|null $formOptions extra options passed verbatim to the Symfony form type constructor
      * @param string|null $validator prestaShop Validate method name applied before persistence
@@ -103,10 +104,10 @@ final class ExtraPropertyDefinition
         protected readonly bool $formRequired = false,
         protected readonly ?int $size = null,
         protected readonly ExtraPropertySqlIndex $sqlIndex = ExtraPropertySqlIndex::NONE,
-        protected readonly bool $displayApi = false,
         protected readonly bool $displayFront = true,
         protected readonly ?array $associatedForms = null,
         protected readonly ?array $associatedGrids = null,
+        protected readonly ?array $associatedApis = null,
         protected readonly ?string $formFieldType = null,
         protected readonly ?array $formOptions = null,
         protected readonly ?string $validator = null,
@@ -200,6 +201,32 @@ final class ExtraPropertyDefinition
             }
         }
 
+        if (!empty($associatedApis)) {
+            $allowedMethods = ['GET', 'POST', 'PUT', 'PATCH', 'DELETE'];
+            foreach ($associatedApis as $entry) {
+                $entryString = (string) $entry;
+                $colonPos = strpos($entryString, ':');
+                $rawPath = trim(false !== $colonPos ? substr($entryString, 0, $colonPos) : $entryString);
+                if ('' === $rawPath) {
+                    throw new InvalidExtraPropertyDefinitionException(sprintf(
+                        'ExtraPropertyDefinition: invalid associatedApis entry "%s" — URI path must not be empty.',
+                        $entry
+                    ));
+                }
+                $parsedApi = self::parseApiEntry($entryString);
+                foreach ($parsedApi['methods'] ?? [] as $method) {
+                    if (!in_array($method, $allowedMethods, true)) {
+                        throw new InvalidExtraPropertyDefinitionException(sprintf(
+                            'ExtraPropertyDefinition: invalid HTTP method "%s" in associatedApis entry "%s" (allowed: %s).',
+                            $method,
+                            $entry,
+                            implode(', ', $allowedMethods)
+                        ));
+                    }
+                }
+            }
+        }
+
         if ((!empty($associatedForms) || !empty($associatedGrids)) && (null === $labelWording || '' === trim($labelWording))) {
             throw new InvalidExtraPropertyDefinitionException(sprintf(
                 'ExtraPropertyDefinition: labelWording is required when associatedForms or associatedGrids is set (entity "%s", property "%s").',
@@ -242,6 +269,11 @@ final class ExtraPropertyDefinition
             static fn (mixed $v): bool => is_string($v) && '' !== $v
         )) ?: null;
 
+        $associatedApis = array_values(array_filter(
+            (array) json_decode((string) ($row['associated_apis'] ?? ''), true),
+            static fn (mixed $v): bool => is_string($v) && '' !== $v
+        )) ?: null;
+
         $type = ExtraPropertyType::from((string) ($row['type'] ?? ExtraPropertyType::STRING->value));
         $rawDefaultValue = isset($row['default_value']) && '' !== $row['default_value'] ? $row['default_value'] : null;
 
@@ -257,10 +289,10 @@ final class ExtraPropertyDefinition
             formRequired: !empty($row['form_required']),
             size: isset($row['size']) && '' !== $row['size'] ? (int) $row['size'] : null,
             sqlIndex: ExtraPropertySqlIndex::from((string) ($row['sql_index'] ?? ExtraPropertySqlIndex::NONE->value)),
-            displayApi: !empty($row['display_api']),
             displayFront: !empty($row['display_front']),
             associatedForms: is_array($associatedForms) ? $associatedForms : null,
             associatedGrids: is_array($associatedGrids) ? $associatedGrids : null,
+            associatedApis: is_array($associatedApis) ? $associatedApis : null,
             formFieldType: isset($row['form_field_type']) && '' !== $row['form_field_type'] ? (string) $row['form_field_type'] : null,
             formOptions: is_array($formOptions) ? $formOptions : null,
             validator: isset($row['validator']) && '' !== $row['validator'] ? (string) $row['validator'] : null,
@@ -295,10 +327,10 @@ final class ExtraPropertyDefinition
             formRequired: $this->formRequired,
             size: $this->size,
             sqlIndex: $this->sqlIndex,
-            displayApi: $this->displayApi,
             displayFront: $this->displayFront,
             associatedForms: $this->associatedForms,
             associatedGrids: $this->associatedGrids,
+            associatedApis: $this->associatedApis,
             formFieldType: $this->formFieldType,
             formOptions: $this->formOptions,
             validator: $this->validator,
@@ -354,9 +386,53 @@ final class ExtraPropertyDefinition
         return $this->scope;
     }
 
-    public function isDisplayApi(): bool
+    /**
+     * @return list<string>|null
+     */
+    public function getAssociatedApis(): ?array
     {
-        return $this->displayApi;
+        return $this->associatedApis;
+    }
+
+    /**
+     * Returns the parsed Admin API placement entries.
+     *
+     * @return list<array{path: string, methods: list<string>|null}>
+     */
+    public function getApiEntries(): array
+    {
+        if (null === $this->associatedApis) {
+            return [];
+        }
+
+        return array_map(static fn (string $entry): array => self::parseApiEntry($entry), $this->associatedApis);
+    }
+
+    /**
+     * Returns true when this definition targets the given Admin API operation, identified by its
+     * URI template and HTTP method. Matching is purely URI-template based, so a definition never
+     * leaks onto a resource it does not explicitly list. An entry with no method modifier matches
+     * every HTTP method on that template.
+     */
+    public function matchesApi(string $uriTemplate, string $method): bool
+    {
+        if (null === $this->associatedApis) {
+            return false;
+        }
+
+        $normalizedTemplate = self::normalizeApiPath($uriTemplate);
+        $upperMethod = strtoupper($method);
+        foreach ($this->associatedApis as $entry) {
+            $parsed = self::parseApiEntry((string) $entry);
+            if ($parsed['path'] !== $normalizedTemplate) {
+                continue;
+            }
+            if (null === $parsed['methods'] || in_array($upperMethod, $parsed['methods'], true)) {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     public function isDisplayFront(): bool
@@ -504,13 +580,15 @@ final class ExtraPropertyDefinition
     }
 
     /**
-     * Returns the form field name and grid column identifier for this definition.
+     * The property's flat field identifier, used identically by the back-office form (field name), the grid
+     * (column id / SELECT alias) and the Admin API (inline list key).
      *
-     * The same format is used for unmapped Symfony form fields and SELECT aliases in grids.
+     * A property is unique per module + property name, so the scope is intentionally not part of it — keeping
+     * identifiers short and predictable.
      */
-    public function getFormFieldName(): string
+    public function getFieldName(): string
     {
-        return 'extra_' . $this->scope->value . '_' . $this->normalizedModuleKey . '_' . $this->propertyName;
+        return 'extra_' . $this->normalizedModuleKey . '_' . $this->propertyName;
     }
 
     /**
@@ -671,5 +749,47 @@ final class ExtraPropertyDefinition
         }
 
         return ['formId' => $formId, 'mode' => $mode, 'path' => $path, 'anchor' => $anchor];
+    }
+
+    /**
+     * Parses one entry from the associated_apis JSON array.
+     *
+     * Format: "uriPath[:METHOD[,METHOD...]]"
+     * The ":" separates the URI path from an optional comma-separated HTTP method list; URI
+     * templates never contain ":", so splitting on the first ":" is unambiguous. With no method
+     * list the entry matches every HTTP method on that URI template.
+     *
+     * @return array{path: string, methods: list<string>|null}
+     */
+    protected static function parseApiEntry(string $entry): array
+    {
+        $colonPos = strpos($entry, ':');
+        if (false === $colonPos) {
+            return ['path' => self::normalizeApiPath($entry), 'methods' => null];
+        }
+
+        $path = self::normalizeApiPath(substr($entry, 0, $colonPos));
+        $methodsSpec = trim(substr($entry, $colonPos + 1));
+        if ('' === $methodsSpec) {
+            return ['path' => $path, 'methods' => null];
+        }
+
+        $methods = array_values(array_filter(
+            array_map(static fn (string $m): string => strtoupper(trim($m)), explode(',', $methodsSpec)),
+            static fn (string $m): bool => '' !== $m
+        ));
+
+        return ['path' => $path, 'methods' => [] !== $methods ? $methods : null];
+    }
+
+    /**
+     * Normalizes a URI path for comparison: trims, forces a single leading slash, and drops a
+     * trailing slash (except for the root "/").
+     */
+    protected static function normalizeApiPath(string $path): string
+    {
+        $normalized = '/' . ltrim(trim($path), '/');
+
+        return '/' !== $normalized ? rtrim($normalized, '/') : $normalized;
     }
 }

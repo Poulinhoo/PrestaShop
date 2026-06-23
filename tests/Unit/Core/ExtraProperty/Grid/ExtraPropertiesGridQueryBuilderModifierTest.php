@@ -112,7 +112,7 @@ class ExtraPropertiesGridQueryBuilderModifierTest extends TestCase
         // Only the search builder carries the base lang join — the typical grid shape.
         $searchQb->leftJoin('p', 'ps_product_lang', 'pl', 'pl.`id_product` = p.`id_product` AND pl.`id_lang` = :langId AND pl.`id_shop` = :shopId');
 
-        $modifier->apply($searchQb, $countQb, $this->criteria(['extra_lang_mymodule_promo' => 'sale']), 'product');
+        $modifier->apply($searchQb, $countQb, $this->criteria(['extra_mymodule_promo' => 'sale']), 'product');
 
         // Search reuses its base lang join aliases.
         $this->assertStringContainsString('extra_lang.`id_lang` = pl.`id_lang`', $searchQb->getSQL());
@@ -172,7 +172,7 @@ class ExtraPropertiesGridQueryBuilderModifierTest extends TestCase
         $modifier = $this->buildModifier($definition);
         [$searchQb, $countQb] = $this->buildGridBuilders();
 
-        $modifier->apply($searchQb, $countQb, $this->criteria(['extra_common_mymodule_flag' => '1']), 'product');
+        $modifier->apply($searchQb, $countQb, $this->criteria(['extra_mymodule_flag' => '1']), 'product');
 
         foreach ([$searchQb, $countQb] as $qb) {
             $this->assertStringContainsString('extra_entity.`mymodule_flag` = :extra_filter_', $qb->getSQL());

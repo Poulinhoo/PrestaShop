@@ -110,7 +110,7 @@ class ExtraPropertiesGridQueryBuilderModifier
 
         foreach ($records as &$record) {
             foreach ($definitions as $definition) {
-                $selectAlias = $definition->getFormFieldName();
+                $selectAlias = $definition->getFieldName();
                 if (array_key_exists($selectAlias, $record)) {
                     $record[$selectAlias] = ExtraPropertyValueCaster::castFromDb(
                         $definition->getType(),
@@ -297,7 +297,7 @@ class ExtraPropertiesGridQueryBuilderModifier
         foreach ($definitions as $definition) {
             $storageColumn = $definition->getStorageColumnName();
 
-            $selectAlias = $definition->getFormFieldName();
+            $selectAlias = $definition->getFieldName();
             $searchQb->addSelect(sprintf('%s.`%s` AS `%s`', $joinAlias, $storageColumn, $selectAlias));
 
             if (!array_key_exists($selectAlias, $filters)) {
