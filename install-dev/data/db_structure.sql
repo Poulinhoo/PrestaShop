@@ -888,7 +888,7 @@ CREATE TABLE `PREFIX_extra_property_definition` (
   `sql_index` ENUM ('none','key','unique') NOT NULL DEFAULT 'none',
   `size` smallint(5) unsigned DEFAULT NULL,
   `default_value` varchar(255) DEFAULT NULL,
-  `validator` varchar(255) DEFAULT NULL,
+  `constraints` longtext DEFAULT NULL,
   `display_front` tinyint(1) unsigned NOT NULL DEFAULT 1,
   `associated_apis` text DEFAULT NULL,
   `associated_grids` text DEFAULT NULL,

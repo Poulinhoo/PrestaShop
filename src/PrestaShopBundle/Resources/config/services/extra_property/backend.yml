@@ -44,7 +44,6 @@ services:
       $repository: '@PrestaShop\PrestaShop\Core\ExtraProperty\Definition\ExtraPropertyDefinitionRepositoryInterface'
       $reader: '@PrestaShop\PrestaShop\Core\ExtraProperty\Value\ExtraPropertyReaderInterface'
       $translator: '@translator'
-      $validatorAdapter: '@PrestaShop\PrestaShop\Core\ExtraProperty\Validation\ExtraPropertyValidatorInterface'
       $shopContext: '@PrestaShop\PrestaShop\Core\Context\ShopContext'
       $formBuilderModifier: '@PrestaShopBundle\Form\FormBuilderModifier'
 

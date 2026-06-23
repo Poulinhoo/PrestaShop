@@ -3,6 +3,7 @@
 > For folder structure and navigation, see [STRUCTURE.md](STRUCTURE.md).
 > For cross-domain naming traps and identity gotchas, see [GOTCHAS.md](GOTCHAS.md).
 > For multi-store scoping (ShopConstraint, AbstractMultistoreConfiguration), see [MULTISTORE.md](MULTISTORE.md).
+> For the service-container / kernel topology (3 Symfony kernels vs the hand-built FO legacy container, and where service definitions live), see [CONTAINERS.md](CONTAINERS.md).
 
 ## Project overview
 

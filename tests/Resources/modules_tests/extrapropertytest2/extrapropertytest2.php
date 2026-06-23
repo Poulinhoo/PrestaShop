@@ -23,9 +23,11 @@
  * @copyright Since 2007 PrestaShop SA and Contributors
  * @license   https://opensource.org/licenses/OSL-3.0 Open Software License (OSL 3.0)
  */
+use PrestaShop\PrestaShop\Core\ConstraintValidator\Constraints\TypedRegex;
 use PrestaShop\PrestaShop\Core\ExtraProperty\Definition\ExtraPropertyDefinition;
 use PrestaShop\PrestaShop\Core\ExtraProperty\Definition\ExtraPropertyScope;
 use PrestaShop\PrestaShop\Core\ExtraProperty\Definition\ExtraPropertyType;
+use Symfony\Component\Validator\Constraints as Assert;
 
 if (!defined('_PS_VERSION_')) {
     exit;
@@ -62,7 +64,7 @@ class extrapropertytest2 extends Module
             propertyName: 'extra_tag',
             type: ExtraPropertyType::STRING,
             scope: ExtraPropertyScope::COMMON,
-            validator: 'isGenericName',
+            constraints: [new TypedRegex(['type' => TypedRegex::TYPE_GENERIC_NAME])],
             associatedGrids: ['product'],
             associatedApis: ['/products', '/products/{productId}'],
             labelWording: 'API extra tag',
@@ -78,7 +80,7 @@ class extrapropertytest2 extends Module
             propertyName: 'api_only_note',
             type: ExtraPropertyType::STRING,
             scope: ExtraPropertyScope::LANG,
-            validator: 'isGenericName',
+            constraints: [new Assert\All([new TypedRegex(['type' => TypedRegex::TYPE_GENERIC_NAME])])],
             associatedApis: ['/products', '/products/{productId}'],
             labelWording: 'API only note',
         ))) {

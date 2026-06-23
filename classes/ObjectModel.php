@@ -1104,16 +1104,23 @@ abstract class ObjectModelCore implements PrestaShop\PrestaShop\Core\Foundation\
             return true;
         }
 
-        $result = $validator->validate($bag->getModifiedValues(), $collection);
-        if (true !== $result) {
-            if ($die) {
-                throw new PrestaShopException($result);
-            }
-
-            return $errorReturn ? $result : false;
+        $violations = $validator->validate($bag->getModifiedValues(), $collection);
+        if (0 === count($violations)) {
+            return true;
         }
 
-        return true;
+        // Flatten every violation into one human-readable message ("<path>: <message>" per line).
+        $messages = [];
+        foreach ($violations as $violation) {
+            $messages[] = sprintf('%s: %s', $violation->getPropertyPath(), (string) $violation->getMessage());
+        }
+        $message = implode("\n", $messages);
+
+        if ($die) {
+            throw new PrestaShopException($message);
+        }
+
+        return $errorReturn ? $message : false;
     }
 
     /**

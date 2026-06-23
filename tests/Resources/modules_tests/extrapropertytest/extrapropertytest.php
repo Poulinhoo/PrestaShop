@@ -23,9 +23,11 @@
  * @copyright Since 2007 PrestaShop SA and Contributors
  * @license   https://opensource.org/licenses/OSL-3.0 Open Software License (OSL 3.0)
  */
+use PrestaShop\PrestaShop\Core\ConstraintValidator\Constraints\TypedRegex;
 use PrestaShop\PrestaShop\Core\ExtraProperty\Definition\ExtraPropertyDefinition;
 use PrestaShop\PrestaShop\Core\ExtraProperty\Definition\ExtraPropertyScope;
 use PrestaShop\PrestaShop\Core\ExtraProperty\Definition\ExtraPropertyType;
+use Symfony\Component\Validator\Constraints as Assert;
 
 if (!defined('_PS_VERSION_')) {
     exit;
@@ -59,7 +61,7 @@ class extrapropertytest extends Module
             propertyName: 'api_flag',
             type: ExtraPropertyType::BOOL,
             scope: ExtraPropertyScope::COMMON,
-            validator: 'isBool',
+            constraints: [new Assert\Type('bool')],
             associatedGrids: ['product'],
             associatedApis: ['/products', '/products/{productId}'],
             labelWording: 'API flag',
@@ -74,7 +76,7 @@ class extrapropertytest extends Module
             propertyName: 'api_note',
             type: ExtraPropertyType::STRING,
             scope: ExtraPropertyScope::LANG,
-            validator: 'isGenericName',
+            constraints: [new Assert\All([new TypedRegex(['type' => TypedRegex::TYPE_GENERIC_NAME])])],
             associatedGrids: ['product'],
             associatedApis: ['/products', '/products/{productId}'],
             labelWording: 'API note',
@@ -88,7 +90,7 @@ class extrapropertytest extends Module
             propertyName: 'api_score',
             type: ExtraPropertyType::INT,
             scope: ExtraPropertyScope::COMMON,
-            validator: 'isUnsignedInt',
+            constraints: [new Assert\PositiveOrZero()],
             associatedApis: ['/customers', '/customers/{customerId}'],
         ))) {
             return false;

@@ -11,24 +11,35 @@ namespace PrestaShop\PrestaShop\Core\ExtraProperty\Validation;
 
 use PrestaShop\PrestaShop\Core\ExtraProperty\Definition\ExtraPropertyDefinition;
 use PrestaShop\PrestaShop\Core\ExtraProperty\Definition\ExtraPropertyDefinitionCollection;
-use Symfony\Contracts\Translation\TranslatorInterface;
-use Validate;
+use PrestaShop\PrestaShop\Core\ExtraProperty\Definition\ExtraPropertyScope;
+use Symfony\Component\Validator\Constraints\All;
+use Symfony\Component\Validator\ConstraintViolation;
+use Symfony\Component\Validator\ConstraintViolationList;
+use Symfony\Component\Validator\ConstraintViolationListInterface;
+use Symfony\Component\Validator\Validator\ValidatorInterface;
 
 /**
- * Validates extra property values against their registered definitions.
+ * Validates extra property values against the Symfony constraints declared on their definitions.
  *
- * Centralizes validation so that ObjectModel, BO form handlers and API integrations
- * all use the same rules. Structural checks (isTableOrIdentifier, isModuleName) use
- * pure regex. Value validation dispatches dynamically to Validate::xxx methods.
+ * Centralizes validation so that ObjectModel, BO form handlers and API integrations all use the same rules.
+ * Value validation delegates to the Symfony Validator ($validator->validate($value, $constraints)). For the array
+ * shape forms/API always use (LANG = [id_lang|locale => value], SHOP = [id_shop => value]) the value is validated
+ * AS-IS: whole-array constraints (e.g. DefaultLanguage) see the array, per-language rules use Symfony's Assert\All.
+ * The exception is an ObjectModel loaded WITH a langId, which exposes a LANG value as a single scalar — handled in
+ * validateValue(). The batch validate() re-bases each definition's violation paths under "<module>.<property>" so
+ * the result is unambiguous. Structural checks (isTableOrIdentifier, isModuleName) use pure regex.
  *
- * Note: isRequiredWhenActive and defaultLanguageRequiredWhenActive require access to
- * the ObjectModel instance and are therefore intentionally skipped by validateValue().
- * ObjectModel-level validation handles those two cases directly.
+ * Validation is opt-in: a definition with no constraints yields no violations (the storage column type is then the
+ * only guard, like any optional field). Requiredness is a constraint too — a module passes Assert\NotBlank when it
+ * wants a value to be mandatory.
+ *
+ * The Symfony validator is a required dependency, available in every container that runs this service: the three
+ * Symfony kernels, and the front-office legacy container where it is hand-wired by ValidatorBuilderExtension.
  */
 class ExtraPropertyValidator implements ExtraPropertyValidatorInterface
 {
     public function __construct(
-        protected readonly ?TranslatorInterface $translator = null,
+        protected readonly ValidatorInterface $validator,
     ) {
     }
 
@@ -58,56 +69,41 @@ class ExtraPropertyValidator implements ExtraPropertyValidatorInterface
     /**
      * {@inheritdoc}
      */
-    public function validateValue(ExtraPropertyDefinition $definition, mixed $value): bool|string
+    public function validateValue(ExtraPropertyDefinition $definition, mixed $value): ConstraintViolationListInterface
     {
-        $validator = $definition->getValidator() ?? '';
-        if ('' === $validator || !$this->hasValidatorMethod($validator)) {
-            return true;
+        $constraints = $definition->getConstraints() ?? [];
+        if ([] === $constraints) {
+            return new ConstraintViolationList();
         }
 
-        // isRequiredWhenActive / defaultLanguageRequiredWhenActive require the ObjectModel instance; skip here.
-        $isEmptyValidationMethod = 'isrequiredwhenactive' === strtolower($validator)
-            || 'defaultlanguagerequiredwhenactive' === strtolower($validator);
-
-        $label = $definition->getPropertyName();
-        $errorMessage = null !== $this->translator
-            ? $this->translator->trans('The %s field is invalid.', [$label], 'Admin.Notifications.Error')
-            : sprintf('The %s field is invalid.', $label);
-
-        if (is_array($value)) {
-            foreach ($value as $langValue) {
-                if (('' === (string) $langValue || null === $langValue) && !$isEmptyValidationMethod) {
-                    continue;
-                }
-                if (!(bool) call_user_func([Validate::class, $validator], $langValue)) {
-                    return $errorMessage;
+        // Edge case: an ObjectModel loaded WITH a langId exposes a LANG value as a single scalar (one language),
+        // not the [id_lang => value] array forms/API always pass. Validate that scalar against the PER-LANGUAGE
+        // rules only — unwrap Assert\All (its nested constraints are the per-language rules) and skip whole-array
+        // constraints (e.g. DefaultLanguage, which is meaningless for a single language and whose validator expects
+        // an array). For the array shape (no langId / form / API), fall through and validate as-is.
+        if (ExtraPropertyScope::LANG === $definition->getScope() && !is_array($value)) {
+            $perLanguage = [];
+            foreach ($constraints as $constraint) {
+                if ($constraint instanceof All) {
+                    $perLanguage = array_merge($perLanguage, array_values($constraint->constraints));
                 }
             }
 
-            return true;
+            return $this->validator->validate($value, $perLanguage);
         }
 
-        if (('' === (string) $value || null === $value) && !$isEmptyValidationMethod) {
-            return true;
-        }
-
-        return (bool) call_user_func([Validate::class, $validator], $value) ? true : $errorMessage;
+        // Value validated as-is: for the LANG/SHOP array shape, whole-array constraints (e.g. DefaultLanguage) see
+        // the array while Assert\All applies per-element rules (tagging each violation with a "[<key>]" path); for
+        // scalars (COMMON, and SHOP) the bare constraints apply directly.
+        return $this->validator->validate($value, $constraints);
     }
 
     /**
-     * Validates a set of extra property values against a list of definitions.
-     *
-     * Values are grouped by module then property name, like the reader output and the
-     * writer input: [moduleKey => [propertyName => value_or_lang_array]].
-     * Returns true on success, or the first error message string on failure.
-     *
-     * @param array<string, array<string, mixed>> $valuesByModule [moduleKey => [propertyName => value]]
-     * @param ExtraPropertyDefinitionCollection $definitions
-     *
-     * @return true|string
+     * {@inheritdoc}
      */
-    public function validate(array $valuesByModule, ExtraPropertyDefinitionCollection $definitions): bool|string
+    public function validate(array $valuesByModule, ExtraPropertyDefinitionCollection $definitions): ConstraintViolationListInterface
     {
+        $violations = new ConstraintViolationList();
         foreach ($definitions as $definition) {
             $moduleKey = $definition->getNormalizedModuleKey();
             $propertyName = $definition->getPropertyName();
@@ -118,17 +114,45 @@ class ExtraPropertyValidator implements ExtraPropertyValidatorInterface
                 continue;
             }
 
-            $result = $this->validateValue($definition, $valuesByModule[$moduleKey][$propertyName]);
-            if (true !== $result) {
-                return $result;
-            }
+            $violations->addAll($this->rebase(
+                $this->validateValue($definition, $valuesByModule[$moduleKey][$propertyName]),
+                $moduleKey . '.' . $propertyName
+            ));
         }
 
-        return true;
+        return $violations;
     }
 
-    protected function hasValidatorMethod(string $validator): bool
+    /**
+     * Re-bases every violation's property path under $prefix, preserving message, template, parameters, root,
+     * invalid value, plural and code. Symfony violation paths are immutable, so each violation is reconstructed.
+     */
+    protected function rebase(ConstraintViolationListInterface $violations, string $prefix): ConstraintViolationListInterface
     {
-        return '' !== $validator && method_exists(Validate::class, $validator);
+        $rebased = new ConstraintViolationList();
+        foreach ($violations as $violation) {
+            $path = $violation->getPropertyPath();
+            if ('' === $path) {
+                $fullPath = $prefix;
+            } elseif (str_starts_with($path, '[')) {
+                // Array-key sub-path ("[fr-FR]") attaches directly, no separator.
+                $fullPath = $prefix . $path;
+            } else {
+                $fullPath = $prefix . '.' . $path;
+            }
+
+            $rebased->add(new ConstraintViolation(
+                $violation->getMessage(),
+                $violation->getMessageTemplate(),
+                $violation->getParameters(),
+                $violation->getRoot(),
+                $fullPath,
+                $violation->getInvalidValue(),
+                $violation->getPlural(),
+                $violation->getCode(),
+            ));
+        }
+
+        return $rebased;
     }
 }

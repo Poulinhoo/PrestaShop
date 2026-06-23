@@ -12,6 +12,7 @@ namespace Tests\Unit\Core\ExtraProperty;
 use PHPUnit\Framework\TestCase;
 use PrestaShop\PrestaShop\Core\ExtraProperty\Definition\ExtraPropertyDefinition;
 use PrestaShop\PrestaShop\Core\ExtraProperty\Exception\InvalidExtraPropertyDefinitionException;
+use stdClass;
 
 /**
  * Verifies that ExtraPropertyDefinition constructor rejects invalid inputs.
@@ -49,6 +50,34 @@ class ExtraPropertyDefinitionConstructorTest extends TestCase
         $this->expectExceptionMessageMatches('/propertyName/');
 
         new ExtraPropertyDefinition(entityName: 'product', propertyName: $invalidValue);
+    }
+
+    // -------------------------------------------------------------------------
+    // constraints validation
+    // -------------------------------------------------------------------------
+
+    public function testNonConstraintEntryInConstraintsThrows(): void
+    {
+        $this->expectException(InvalidExtraPropertyDefinitionException::class);
+        $this->expectExceptionMessageMatches('/constraint/');
+
+        new ExtraPropertyDefinition(
+            entityName: 'product',
+            propertyName: 'video_link',
+            constraints: [new stdClass()], // @phpstan-ignore-line intentionally invalid: must be a Symfony Constraint
+        );
+    }
+
+    public function testValidConstraintsAreAccepted(): void
+    {
+        $url = new \Symfony\Component\Validator\Constraints\Url();
+        $definition = new ExtraPropertyDefinition(
+            entityName: 'product',
+            propertyName: 'video_link',
+            constraints: [$url],
+        );
+
+        $this->assertSame([$url], $definition->getConstraints());
     }
 
     // -------------------------------------------------------------------------
