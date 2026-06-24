@@ -26,7 +26,7 @@ final class DeliverySlipShipmentRowAction extends AbstractRowAction
      */
     public function isApplicable(array $record): bool
     {
-        if (!$this->shipmentIsPacked($record)) {
+        if (empty($record['is_paid']) || !$this->shipmentIsPacked($record)) {
             return false;
         }
 
