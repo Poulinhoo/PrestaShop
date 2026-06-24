@@ -246,17 +246,23 @@ final class ExtraPropertyEndpointTest extends ApiTestCase
     }
 
     /**
-     * A value that fails the registered validator (isBool) must produce a 422 whose violation points at the merged
-     * extraProperties.<module>.<field> path AND carries a non-empty message.
+     * Per-field constraint validation: a single PATCH with several bad values must produce ONE 422 listing every
+     * violation, each at its precise merged path (`extraProperties.<module>.<field>[.<locale>]`) with the real
+     * constraint message — including one violation PER language for a localized (Assert\All) field. Asserted with
+     * assertValidationErrors so both the messages and the exact set of paths are checked (no missing/extra error).
      */
-    public function testValidationErrorReturns422(): void
+    public function testValidationErrorsReturn422WithPerFieldMessages(): void
     {
         $response = $this->partialUpdateItem(
             '/products/' . self::PRODUCT_ID,
             [
                 'extraProperties' => [
                     self::MODULE_NAME => [
-                        'api_flag' => 'not-a-bool',
+                        'api_flag' => 'not-a-bool',                                       // Assert\Type('bool')
+                        'api_note' => ['en-US' => 'bad<tag>', 'fr-FR' => 'also<bad>'],     // Assert\All([TypedRegex]) per locale
+                    ],
+                    self::MODULE_2_NAME => [
+                        'extra_tag' => 'has<angle>brackets',                              // TypedRegex (generic_name)
                     ],
                 ],
             ],
@@ -264,12 +270,30 @@ final class ExtraPropertyEndpointTest extends ApiTestCase
             Response::HTTP_UNPROCESSABLE_ENTITY
         );
 
-        // The 422 body decodes to a flat list of violations ({propertyPath, message, code}). Assert exactly one,
-        // at the merged path, with a non-empty message.
-        $this->assertIsArray($response);
-        $this->assertCount(1, $response);
-        $this->assertSame('extraProperties.' . self::MODULE_NAME . '.api_flag', $response[0]['propertyPath']);
-        $this->assertNotEmpty($response[0]['message']);
+        $this->assertValidationErrors(
+            [
+                [
+                    'propertyPath' => 'extraProperties.' . self::MODULE_NAME . '.api_flag',
+                    'message' => 'This value should be of type bool.',
+                ],
+                // One violation per language for the localized field (per-locale path), each carrying the
+                // per-locale value in the TypedRegex message.
+                [
+                    'propertyPath' => 'extraProperties.' . self::MODULE_NAME . '.api_note.en-US',
+                    'message' => '"bad<tag>" is invalid',
+                ],
+                [
+                    'propertyPath' => 'extraProperties.' . self::MODULE_NAME . '.api_note.fr-FR',
+                    'message' => '"also<bad>" is invalid',
+                ],
+                // A field declared by the other module on the same entity, kept under its own module key.
+                [
+                    'propertyPath' => 'extraProperties.' . self::MODULE_2_NAME . '.extra_tag',
+                    'message' => '"has<angle>brackets" is invalid',
+                ],
+            ],
+            $response
+        );
     }
 
     /**

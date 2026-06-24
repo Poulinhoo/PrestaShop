@@ -13,6 +13,7 @@ use PrestaShop\PrestaShop\Core\ExtraProperty\Exception\InvalidExtraPropertyDefin
 use PrestaShop\PrestaShop\Core\ExtraProperty\Validation\ExtraPropertyValidator;
 use PrestaShop\PrestaShop\Core\ExtraProperty\Value\ExtraPropertyValueCaster;
 use PrestaShop\PrestaShop\Core\Util\Inflector;
+use Symfony\Component\Validator\Constraint;
 
 /**
  * Immutable value object representing an extra property definition.
@@ -75,7 +76,7 @@ final class ExtraPropertyDefinition
      * @param list<string>|null $enumValues For CHOICE type: SQL ENUM allowed values. Not persisted — schema creation only.
      * @param scalar|null $defaultValue Adds a DEFAULT clause in DDL. Also persisted in registry.
      * @param bool $nullable Controls NULL vs NOT NULL in DDL. Not persisted — schema creation only.
-     * @param bool $formRequired when true, marks the BO form field as required
+     * @param bool $required when true, marks the field as required in BO forms and in the Admin API (OpenAPI) schema
      * @param int|null $size for STRING type: varchar column length (defaults to 255)
      * @param ExtraPropertySqlIndex $sqlIndex SQL index strategy on the storage column
      * @param bool $displayFront allow this field to be exposed in front-office presenters
@@ -84,7 +85,7 @@ final class ExtraPropertyDefinition
      * @param list<string>|null $associatedApis Admin API placement entries: "uriPath[:METHOD[,METHOD...]]", matched against the operation URI template (+ optional HTTP methods). No method modifier matches every method.
      * @param string|null $formFieldType fully-qualified Symfony Form type FQCN override for BO forms
      * @param array<string, mixed>|null $formOptions extra options passed verbatim to the Symfony form type constructor
-     * @param string|null $validator prestaShop Validate method name applied before persistence
+     * @param list<Constraint>|null $constraints Symfony validation constraints applied to each value before persistence. Null/empty means no validation. Must be serializable (no Callback with a closure).
      * @param string|null $labelWording Translation wording key shown in BO. Required when associatedForms or associatedGrids is set.
      * @param string|null $labelDomain translation domain for label wording
      * @param string|null $descriptionWording translation wording key shown as BO help text
@@ -101,7 +102,7 @@ final class ExtraPropertyDefinition
         protected readonly ?array $enumValues = null,
         protected readonly int|float|string|bool|null $defaultValue = null,
         protected readonly bool $nullable = true,
-        protected readonly bool $formRequired = false,
+        protected readonly bool $required = false,
         protected readonly ?int $size = null,
         protected readonly ExtraPropertySqlIndex $sqlIndex = ExtraPropertySqlIndex::NONE,
         protected readonly bool $displayFront = true,
@@ -110,7 +111,7 @@ final class ExtraPropertyDefinition
         protected readonly ?array $associatedApis = null,
         protected readonly ?string $formFieldType = null,
         protected readonly ?array $formOptions = null,
-        protected readonly ?string $validator = null,
+        protected readonly ?array $constraints = null,
         protected readonly ?string $labelWording = null,
         protected readonly ?string $labelDomain = null,
         protected readonly ?string $descriptionWording = null,
@@ -227,6 +228,20 @@ final class ExtraPropertyDefinition
             }
         }
 
+        if (null !== $constraints) {
+            foreach ($constraints as $constraint) {
+                if (!$constraint instanceof Constraint) {
+                    throw new InvalidExtraPropertyDefinitionException(sprintf(
+                        'ExtraPropertyDefinition: every constraint must be a %s instance, got "%s" (entity "%s", property "%s").',
+                        Constraint::class,
+                        get_debug_type($constraint),
+                        $entityName,
+                        $propertyName
+                    ));
+                }
+            }
+        }
+
         if ((!empty($associatedForms) || !empty($associatedGrids)) && (null === $labelWording || '' === trim($labelWording))) {
             throw new InvalidExtraPropertyDefinitionException(sprintf(
                 'ExtraPropertyDefinition: labelWording is required when associatedForms or associatedGrids is set (entity "%s", property "%s").',
@@ -286,7 +301,7 @@ final class ExtraPropertyDefinition
             enumValues: isset($row['enum_values']) && is_array($row['enum_values']) && [] !== $row['enum_values'] ? array_values($row['enum_values']) : null,
             defaultValue: null !== $rawDefaultValue ? ExtraPropertyValueCaster::castFromDb($type, $rawDefaultValue) : null,
             nullable: !array_key_exists('nullable', $row) || (bool) $row['nullable'],
-            formRequired: !empty($row['form_required']),
+            required: !empty($row['required']),
             size: isset($row['size']) && '' !== $row['size'] ? (int) $row['size'] : null,
             sqlIndex: ExtraPropertySqlIndex::from((string) ($row['sql_index'] ?? ExtraPropertySqlIndex::NONE->value)),
             displayFront: !empty($row['display_front']),
@@ -295,12 +310,55 @@ final class ExtraPropertyDefinition
             associatedApis: is_array($associatedApis) ? $associatedApis : null,
             formFieldType: isset($row['form_field_type']) && '' !== $row['form_field_type'] ? (string) $row['form_field_type'] : null,
             formOptions: is_array($formOptions) ? $formOptions : null,
-            validator: isset($row['validator']) && '' !== $row['validator'] ? (string) $row['validator'] : null,
+            constraints: self::decodeConstraints($row['constraints'] ?? null),
             labelWording: isset($row['label_wording']) && '' !== $row['label_wording'] ? (string) $row['label_wording'] : null,
             labelDomain: isset($row['label_domain']) && '' !== $row['label_domain'] ? (string) $row['label_domain'] : null,
             descriptionWording: isset($row['description_wording']) && '' !== $row['description_wording'] ? (string) $row['description_wording'] : null,
             descriptionDomain: isset($row['description_domain']) && '' !== $row['description_domain'] ? (string) $row['description_domain'] : null,
         );
+    }
+
+    /**
+     * Normalizes the registry "constraints" cell into a list of Constraint objects.
+     *
+     * Accepts both shapes so fromRow() works for an in-memory row (constraints already given as
+     * Constraint objects) and a DB row (constraints serialized to a string):
+     *  - array  → already-decoded constraints; filtered and returned as-is (no unserialize).
+     *  - string → a serialized blob written by trusted module install code (registerExtraProperty);
+     *             unserialized then filtered.
+     * Anything that is not a Symfony Constraint is discarded. Returns null when nothing usable
+     * remains, mirroring the "no validation" default.
+     *
+     * @return list<Constraint>|null
+     */
+    private static function decodeConstraints(mixed $raw): ?array
+    {
+        if (is_array($raw)) {
+            return self::filterConstraints($raw);
+        }
+
+        if (!is_string($raw) || '' === $raw) {
+            return null;
+        }
+
+        $decoded = @unserialize($raw, ['allowed_classes' => true]);
+
+        return is_array($decoded) ? self::filterConstraints($decoded) : null;
+    }
+
+    /**
+     * @param array<mixed> $candidates
+     *
+     * @return list<Constraint>|null
+     */
+    private static function filterConstraints(array $candidates): ?array
+    {
+        $constraints = array_values(array_filter(
+            $candidates,
+            static fn (mixed $constraint): bool => $constraint instanceof Constraint
+        ));
+
+        return [] !== $constraints ? $constraints : null;
     }
 
     // -------------------------------------------------------------------------
@@ -324,7 +382,7 @@ final class ExtraPropertyDefinition
             enumValues: $this->enumValues,
             defaultValue: $this->defaultValue,
             nullable: $this->nullable,
-            formRequired: $this->formRequired,
+            required: $this->required,
             size: $this->size,
             sqlIndex: $this->sqlIndex,
             displayFront: $this->displayFront,
@@ -333,7 +391,7 @@ final class ExtraPropertyDefinition
             associatedApis: $this->associatedApis,
             formFieldType: $this->formFieldType,
             formOptions: $this->formOptions,
-            validator: $this->validator,
+            constraints: $this->constraints,
             labelWording: $this->labelWording,
             labelDomain: $this->labelDomain,
             descriptionWording: $this->descriptionWording,
@@ -440,9 +498,9 @@ final class ExtraPropertyDefinition
         return $this->displayFront;
     }
 
-    public function isFormRequired(): bool
+    public function isRequired(): bool
     {
-        return $this->formRequired;
+        return $this->required;
     }
 
     public function isNullable(): bool
@@ -450,9 +508,12 @@ final class ExtraPropertyDefinition
         return $this->nullable;
     }
 
-    public function getValidator(): ?string
+    /**
+     * @return list<Constraint>|null
+     */
+    public function getConstraints(): ?array
     {
-        return $this->validator;
+        return $this->constraints;
     }
 
     public function getFormFieldType(): ?string

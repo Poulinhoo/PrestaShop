@@ -38,7 +38,11 @@ services:
 
   # ─── Validation ──────────────────────────────────────────────────────────────
 
-  PrestaShop\PrestaShop\Core\ExtraProperty\Validation\ExtraPropertyValidator: ~
+  PrestaShop\PrestaShop\Core\ExtraProperty\Validation\ExtraPropertyValidator:
+    arguments:
+      # Required. Present in every container that runs this service: the three Symfony kernels, and the FO legacy
+      # container where it is hand-wired by PrestaShop\PrestaShop\Adapter\Container\ValidatorBuilderExtension.
+      $validator: '@validator'
 
   PrestaShop\PrestaShop\Core\ExtraProperty\Validation\ExtraPropertyValidatorInterface:
     alias: 'PrestaShop\PrestaShop\Core\ExtraProperty\Validation\ExtraPropertyValidator'

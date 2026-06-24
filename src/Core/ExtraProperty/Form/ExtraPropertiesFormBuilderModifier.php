@@ -14,7 +14,6 @@ use PrestaShop\PrestaShop\Core\Context\ShopContext;
 use PrestaShop\PrestaShop\Core\ExtraProperty\Definition\ExtraPropertyDefinition;
 use PrestaShop\PrestaShop\Core\ExtraProperty\Definition\ExtraPropertyDefinitionRepositoryInterface;
 use PrestaShop\PrestaShop\Core\ExtraProperty\Definition\ExtraPropertyScope;
-use PrestaShop\PrestaShop\Core\ExtraProperty\Validation\ExtraPropertyValidatorInterface;
 use PrestaShop\PrestaShop\Core\ExtraProperty\Value\ExtraPropertyReaderInterface;
 use PrestaShopBundle\Form\Admin\Type\NavigationTabType;
 use PrestaShopBundle\Form\Admin\Type\TranslatableType;
@@ -24,8 +23,6 @@ use Symfony\Component\Form\Extension\Core\Type\TextType;
 use Symfony\Component\Form\FormBuilderInterface;
 use Symfony\Component\Form\FormTypeInterface;
 use Symfony\Component\Form\ResolvedFormTypeInterface;
-use Symfony\Component\Validator\Constraints as Assert;
-use Symfony\Component\Validator\Context\ExecutionContextInterface;
 use Symfony\Contracts\Translation\TranslatorInterface;
 
 /**
@@ -56,7 +53,6 @@ class ExtraPropertiesFormBuilderModifier
         protected readonly ExtraPropertyDefinitionRepositoryInterface $repository,
         protected readonly ExtraPropertyReaderInterface $reader,
         protected readonly TranslatorInterface $translator,
-        protected readonly ExtraPropertyValidatorInterface $validatorAdapter,
         protected readonly ShopContext $shopContext,
         protected readonly FormBuilderModifier $formBuilderModifier,
     ) {
@@ -115,34 +111,23 @@ class ExtraPropertiesFormBuilderModifier
     protected function resolveFieldTypeAndOptions(ExtraPropertyDefinition $definition): array
     {
         $declaredType = $definition->getFormFieldType();
-        $validator = $definition->getValidator();
         $extraOptions = $definition->getFormOptions() ?? [];
-        $constraints = [];
 
         $baseType = (null !== $declaredType && class_exists($declaredType)) ? $declaredType : TextType::class;
 
-        // formRequired: true → automatically add NotBlank for real server-side enforcement.
-        // The HTML required attribute alone is bypassed by AJAX form submissions in the BO.
-        if ($definition->isFormRequired()) {
-            $constraints[] = new Assert\NotBlank();
-        }
-
-        if (null !== $validator) {
-            $message = $this->translator->trans('The field is invalid.', domain: 'Admin.Notifications.Error');
-            $constraints[] = new Assert\Callback(
-                function ($value, ExecutionContextInterface $context) use ($definition, $message): void {
-                    if (true !== $this->validatorAdapter->validateValue($definition, $value)) {
-                        $context->addViolation($message);
-                    }
-                }
-            );
-        }
+        // Validation is fully constraint-based: attach the definition's Symfony constraints to the field so the
+        // form's own validation runs them and surfaces one error per failing constraint. Requiredness is the
+        // module's responsibility — it passes Assert\NotBlank when a value must be provided (no auto NotBlank).
+        $constraints = $definition->getConstraints() ?? [];
 
         $label = $this->translateLabel($definition->getLabelWording(), $definition->getLabelDomain());
         $help = $this->translateLabel($definition->getDescriptionWording(), $definition->getDescriptionDomain());
 
         if (ExtraPropertyScope::LANG === $definition->getScope()) {
-            // In BO, use TranslatableType (keys are id_lang) for lang-scoped fields.
+            // In BO, use TranslatableType (data keyed by id_lang). Constraints are attached to the OUTER field so
+            // they validate the whole [id_lang => value] array — consistent with ExtraPropertyValidator: whole-array
+            // constraints (e.g. DefaultLanguage) see the array, per-language rules use Assert\All. The per-language
+            // children carry only $extraOptions (no constraints of their own).
             return [
                 TranslatableType::class,
                 [
@@ -150,11 +135,9 @@ class ExtraPropertiesFormBuilderModifier
                     'label' => $label,
                     'help' => $help,
                     'mapped' => false,
-                    'required' => $definition->isFormRequired(),
-                    'options' => array_merge($extraOptions, [
-                        'required' => $definition->isFormRequired(),
-                        'constraints' => $constraints,
-                    ]),
+                    'required' => $definition->isRequired(),
+                    'constraints' => $constraints,
+                    'options' => $extraOptions,
                 ],
             ];
         }
@@ -164,7 +147,7 @@ class ExtraPropertiesFormBuilderModifier
             array_merge(
                 [
                     'mapped' => false,
-                    'required' => $definition->isFormRequired(),
+                    'required' => $definition->isRequired(),
                     'label' => $label,
                     'help' => $help,
                     'constraints' => $constraints,

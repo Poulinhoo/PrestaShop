@@ -17,7 +17,6 @@ use PrestaShop\PrestaShop\Core\ExtraProperty\Definition\ExtraPropertyDefinitionR
 use PrestaShop\PrestaShop\Core\ExtraProperty\Definition\ExtraPropertyScope;
 use PrestaShop\PrestaShop\Core\ExtraProperty\Form\ExtraPropertiesFormBuilderModifier;
 use PrestaShop\PrestaShop\Core\ExtraProperty\Form\ExtraPropertiesFormDataPersister;
-use PrestaShop\PrestaShop\Core\ExtraProperty\Validation\ExtraPropertyValidatorInterface;
 use PrestaShop\PrestaShop\Core\ExtraProperty\Value\ExtraPropertyReaderInterface;
 use PrestaShop\PrestaShop\Core\ExtraProperty\Value\ExtraPropertyWriterInterface;
 use PrestaShopBundle\Form\Admin\Type\NavigationTabType;
@@ -44,6 +43,58 @@ class ExtraPropertiesFormBuilderModifierTest extends AbstractFormTester
         $this->makeModifier($this->definition('product'))->apply($builder, 'product', null);
 
         $this->assertTrue($builder->has(self::FIELD_NAME), 'Field should be appended at root on a simple form.');
+    }
+
+    public function testDefinitionConstraintsAreAttachedToTheFieldWithoutAutoNotBlank(): void
+    {
+        $url = new \Symfony\Component\Validator\Constraints\Url();
+        $definition = new ExtraPropertyDefinition(
+            entityName: 'product',
+            propertyName: 'is_dangerous',
+            scope: ExtraPropertyScope::COMMON,
+            moduleName: 'demoextrafield',
+            required: true,
+            associatedForms: ['product'],
+            formFieldType: TextType::class,
+            constraints: [$url],
+            labelWording: 'Dangerous product',
+        );
+
+        $builder = $this->createSimpleFormBuilder();
+        $this->makeModifier($definition)->apply($builder, 'product', null);
+
+        $constraints = $builder->get(self::FIELD_NAME)->getOption('constraints');
+
+        // The definition's constraints are attached verbatim to the field …
+        $this->assertSame([$url], $constraints);
+        // … and required no longer injects a server-side NotBlank — requiredness is the module's job.
+        foreach ($constraints as $constraint) {
+            $this->assertNotInstanceOf(\Symfony\Component\Validator\Constraints\NotBlank::class, $constraint);
+        }
+    }
+
+    public function testLangConstraintsAttachToOuterTranslatableType(): void
+    {
+        $all = new \Symfony\Component\Validator\Constraints\All([new \Symfony\Component\Validator\Constraints\Url()]);
+        $definition = new ExtraPropertyDefinition(
+            entityName: 'product',
+            propertyName: 'is_dangerous',
+            scope: ExtraPropertyScope::LANG,
+            moduleName: 'demoextrafield',
+            associatedForms: ['product'],
+            formFieldType: TextType::class,
+            constraints: [$all],
+            labelWording: 'Video link',
+        );
+
+        $builder = $this->createSimpleFormBuilder();
+        $this->makeModifier($definition)->apply($builder, 'product', null);
+
+        $field = $builder->get(self::FIELD_NAME);
+        // LANG constraints validate the whole [id_lang => value] array, so they attach to the OUTER TranslatableType
+        // — NOT nested per-language under the children's options (which is where per-element rules used to live).
+        $this->assertSame([$all], $field->getOption('constraints'));
+        $this->assertArrayNotHasKey('constraints', (array) $field->getOption('options'));
     }
 
     public function testBareFormIdOnNavigationTabFormCreatesExtraFieldsSection(): void
@@ -185,7 +236,6 @@ class ExtraPropertiesFormBuilderModifierTest extends AbstractFormTester
             $this->repositoryReturning($definition),
             $this->createMock(ExtraPropertyReaderInterface::class),
             $translator,
-            $this->createMock(ExtraPropertyValidatorInterface::class),
             $this->shopContext(),
             new FormBuilderModifier(),
         );

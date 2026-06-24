@@ -13,6 +13,7 @@ use PHPUnit\Framework\TestCase;
 use PrestaShop\PrestaShop\Core\ExtraProperty\Definition\ExtraPropertyDefinition;
 use PrestaShop\PrestaShop\Core\ExtraProperty\Definition\ExtraPropertyType;
 use PrestaShop\PrestaShop\Core\ExtraProperty\Schema\ColumnDefinitionMapper;
+use Symfony\Component\Validator\Constraints as Assert;
 
 /**
  * Covers the schema-deduced attributes flowing through ExtraPropertyDefinition::fromRow():
@@ -61,6 +62,26 @@ class ExtraPropertyDefinitionFromRowTest extends TestCase
 
         $this->assertNull($empty->getEnumValues());
         $this->assertNull($invalid->getEnumValues());
+    }
+
+    public function testConstraintsRoundTripFromSerializedRow(): void
+    {
+        $row = self::BASE_ROW + ['constraints' => serialize([new Assert\Url(), new Assert\Length(['max' => 50])])];
+
+        $constraints = ExtraPropertyDefinition::fromRow($row)->getConstraints();
+
+        $this->assertIsArray($constraints);
+        $this->assertCount(2, $constraints);
+        $this->assertInstanceOf(Assert\Url::class, $constraints[0]);
+        $this->assertInstanceOf(Assert\Length::class, $constraints[1]);
+    }
+
+    public function testConstraintsAbsentOrUnusableFallBackToNull(): void
+    {
+        $this->assertNull(ExtraPropertyDefinition::fromRow(self::BASE_ROW)->getConstraints(), 'No constraints key → null.');
+        $this->assertNull(ExtraPropertyDefinition::fromRow(self::BASE_ROW + ['constraints' => ''])->getConstraints(), 'Empty string → null.');
+        $this->assertNull(ExtraPropertyDefinition::fromRow(self::BASE_ROW + ['constraints' => 'not-serialized'])->getConstraints(), 'Unserializable garbage → null.');
+        $this->assertNull(ExtraPropertyDefinition::fromRow(self::BASE_ROW + ['constraints' => serialize(['x', 123])])->getConstraints(), 'Non-Constraint entries are filtered out → null.');
     }
 
     /**

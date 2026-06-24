@@ -13,7 +13,6 @@ use ApiPlatform\Metadata\HttpOperation;
 use ApiPlatform\Metadata\Operation;
 use ApiPlatform\Metadata\Resource\Factory\ResourceMetadataCollectionFactoryInterface;
 use ApiPlatform\Validator\Exception\ValidationException;
-use PrestaShop\PrestaShop\Core\ExtraProperty\Definition\ExtraPropertyDefinition;
 use PrestaShop\PrestaShop\Core\ExtraProperty\Definition\ExtraPropertyDefinitionRepositoryInterface;
 use PrestaShop\PrestaShop\Core\ExtraProperty\Definition\ExtraPropertyScope;
 use PrestaShop\PrestaShop\Core\ExtraProperty\Validation\ExtraPropertyValidatorInterface;
@@ -48,9 +47,9 @@ class ExtraPropertyCQRSApiValidator implements CQRSApiValidatorInterface
     }
 
     /**
-     * Returns true when the decorated validator reports constraints OR when an extra property definition targets
-     * one of the resource's operations — so extra-property validation runs even for resources with no core
-     * constraints.
+     * Returns true when the decorated validator reports constraints OR when an extra property definition that
+     * declares constraints targets one of the resource's operations — so extra-property validation runs even for
+     * resources with no core constraints, and is skipped entirely when no targeted definition has anything to enforce.
      */
     public function hasConstraints(string $resourceClass): bool
     {
@@ -104,8 +103,12 @@ class ExtraPropertyCQRSApiValidator implements CQRSApiValidatorInterface
                 if ('' === $uriTemplate) {
                     continue;
                 }
-                if (!$definitions->filterByApi($uriTemplate, (string) $operation->getMethod())->isEmpty()) {
-                    return true;
+                // Only definitions that actually declare constraints make validation worthwhile: a matching
+                // definition with no constraints has nothing to enforce, so it does not warrant running validation.
+                foreach ($definitions->filterByApi($uriTemplate, (string) $operation->getMethod()) as $definition) {
+                    if (!empty($definition->getConstraints())) {
+                        return true;
+                    }
                 }
             }
         }
@@ -128,48 +131,44 @@ class ExtraPropertyCQRSApiValidator implements CQRSApiValidatorInterface
         }
 
         $definitions = $this->repository->getAllDefinitions()->filterByApi($uriTemplate, $method);
+
+        // The payload is already grouped [module => [property => value]] — exactly the shape
+        // ExtraPropertyValidator::validate() expects. Run it once, then re-base each "<module>.<property>[.<locale>]"
+        // path under "extraProperties." (turning Symfony's "[key]" array sub-paths into dotted ".key") so the
+        // extra-property violations merge cleanly with the resource constraint violations.
+        foreach ($this->validatorAdapter->validate($extraPropertiesByModule, $definitions) as $violation) {
+            $path = 'extraProperties.' . str_replace(['[', ']'], ['.', ''], $violation->getPropertyPath());
+            $violations->add(new ConstraintViolation(
+                $violation->getMessage(),
+                $violation->getMessageTemplate(),
+                $violation->getParameters(),
+                $violation->getRoot(),
+                $path,
+                $violation->getInvalidValue(),
+                $violation->getPlural(),
+                $violation->getCode(),
+            ));
+        }
+
+        // Defensive, key-aware check: a LANG payload may reference a locale that does not exist. Value validation
+        // above is key-agnostic, so assert known locales here to return a clean 422 at the extraProperties path
+        // rather than failing later during denormalization.
         foreach ($definitions as $definition) {
-            $moduleKey = $definition->getNormalizedModuleKey();
-            $fieldName = $definition->getPropertyName();
-            if (!isset($extraPropertiesByModule[$moduleKey]) || !array_key_exists($fieldName, $extraPropertiesByModule[$moduleKey])) {
+            if (ExtraPropertyScope::LANG !== $definition->getScope()) {
                 continue;
             }
-
-            $value = $extraPropertiesByModule[$moduleKey][$fieldName];
-            $basePath = sprintf('extraProperties.%s.%s', $moduleKey, $fieldName);
-
-            if (ExtraPropertyScope::LANG === $definition->getScope() && is_array($value)) {
-                foreach ($value as $locale => $localeValue) {
-                    $this->validateOneValue($violations, $definition, $localeValue, $basePath . '.' . (string) $locale);
-                }
-                $this->assertKnownLocales($violations, $value, $fieldName, $basePath);
-                continue;
+            $value = $extraPropertiesByModule[$definition->getNormalizedModuleKey()][$definition->getPropertyName()] ?? null;
+            if (is_array($value)) {
+                $this->assertKnownLocales(
+                    $violations,
+                    $value,
+                    $definition->getPropertyName(),
+                    sprintf('extraProperties.%s.%s', $definition->getNormalizedModuleKey(), $definition->getPropertyName()),
+                );
             }
-
-            if (ExtraPropertyScope::SHOP === $definition->getScope() && is_array($value)) {
-                foreach ($value as $shopId => $shopValue) {
-                    $this->validateOneValue($violations, $definition, $shopValue, $basePath . '.' . (string) $shopId);
-                }
-                continue;
-            }
-
-            $this->validateOneValue($violations, $definition, $value, $basePath);
         }
 
         return $violations;
-    }
-
-    protected function validateOneValue(ConstraintViolationListInterface $violations, ExtraPropertyDefinition $definition, mixed $value, string $propertyPath): void
-    {
-        if (null === $definition->getValidator()) {
-            return;
-        }
-
-        $result = $this->validatorAdapter->validateValue($definition, $value);
-        if (true !== $result) {
-            $message = is_string($result) && '' !== $result ? $result : 'This value is not valid.';
-            $violations->add(new ConstraintViolation($message, $message, [], null, $propertyPath, $value));
-        }
     }
 
     /**

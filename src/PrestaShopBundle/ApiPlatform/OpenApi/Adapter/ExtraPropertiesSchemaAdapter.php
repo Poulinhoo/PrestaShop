@@ -129,6 +129,11 @@ class ExtraPropertiesSchemaAdapter implements OpenApiSchemaAdapterInterface
                 $moduleProperties[$moduleKey] = ['type' => 'object', 'properties' => []];
             }
             $moduleProperties[$moduleKey]['properties'][$definition->getPropertyName()] = $this->buildFieldSchema($definition);
+            // A definition flagged required is reported in its module object's OpenAPI "required" list — the same
+            // flag that marks the BO form field required (ExtraPropertyDefinition::isRequired()).
+            if ($definition->isRequired()) {
+                $moduleProperties[$moduleKey]['required'][] = $definition->getPropertyName();
+            }
         }
 
         return new ArrayObject([

@@ -12,6 +12,11 @@ use ApiPlatform\OpenApi\Model\SecurityScheme;
 use ApiPlatform\OpenApi\Model\Server;
 use ApiPlatform\OpenApi\OpenApi;
 use ArrayObject;
+use PrestaShop\PrestaShop\Core\ExtraProperty\Definition\ExtraPropertyDefinition;
+use PrestaShop\PrestaShop\Core\ExtraProperty\Definition\ExtraPropertyDefinitionRepositoryInterface;
+use PrestaShop\PrestaShop\Core\ExtraProperty\Definition\ExtraPropertyDefinitionWriterInterface;
+use PrestaShop\PrestaShop\Core\ExtraProperty\Definition\ExtraPropertyScope;
+use PrestaShop\PrestaShop\Core\ExtraProperty\Definition\ExtraPropertyType;
 use Symfony\Bundle\FrameworkBundle\Test\KernelTestCase;
 
 class CQRSOpenApiFactoryTest extends KernelTestCase
@@ -851,5 +856,77 @@ class CQRSOpenApiFactoryTest extends KernelTestCase
         $this->assertEquals('array', $shopIdsProperty['type']);
         $this->assertEquals(['type' => 'integer'], $shopIdsProperty['items']);
         $this->assertEquals([1, 3], $shopIdsProperty['example']);
+    }
+
+    /**
+     * Module-declared extra properties are documented in the generated OpenAPI schema: grouped under their module
+     * technical name inside a synthetic "extraProperties" object on every resource whose operations they target,
+     * and a definition flagged required (ExtraPropertyDefinition::isRequired()) is listed in that module object's
+     * OpenAPI "required" array. The definitions are persisted directly (no module install needed) and removed
+     * afterwards so the shared test database stays clean.
+     */
+    public function testExtraPropertiesAreDocumentedInGeneratedSchema(): void
+    {
+        $repository = $this->getContainer()->get(ExtraPropertyDefinitionRepositoryInterface::class);
+        // The shared cache decorator also implements the writer interface (and invalidates the cache on write),
+        // so we can persist definitions directly and have them surface in the very next schema generation.
+        self::assertInstanceOf(ExtraPropertyDefinitionWriterInterface::class, $repository);
+
+        $productApis = ['/products', '/products/{productId}'];
+        $requiredDefinition = new ExtraPropertyDefinition(
+            entityName: 'product',
+            propertyName: 'oa_required_url',
+            type: ExtraPropertyType::STRING,
+            scope: ExtraPropertyScope::COMMON,
+            moduleName: 'openapitest',
+            required: true,
+            associatedApis: $productApis,
+        );
+        $optionalDefinition = new ExtraPropertyDefinition(
+            entityName: 'product',
+            propertyName: 'oa_optional_flag',
+            type: ExtraPropertyType::BOOL,
+            scope: ExtraPropertyScope::COMMON,
+            moduleName: 'openapitest',
+            required: false,
+            associatedApis: $productApis,
+        );
+
+        $requiredId = $repository->save($requiredDefinition);
+        $optionalId = $repository->save($optionalDefinition);
+        $moduleKey = $requiredDefinition->getNormalizedModuleKey();
+
+        try {
+            /** @var OpenApiFactoryInterface $openApiFactory */
+            $openApiFactory = $this->getContainer()->get(OpenApiFactoryInterface::class);
+            /** @var OpenApi $openApi */
+            $openApi = $openApiFactory->__invoke();
+
+            $schemas = $openApi->getComponents()->getSchemas();
+            $this->assertArrayHasKey('Product', $schemas);
+
+            /** @var ArrayObject $productSchema */
+            $productSchema = $schemas['Product'];
+            $this->assertArrayHasKey('extraProperties', $productSchema['properties']);
+
+            // The synthetic object is an object grouped by module technical name.
+            $extraProperties = $productSchema['properties']['extraProperties'];
+            $this->assertSame('object', $extraProperties['type']);
+            $this->assertArrayHasKey($moduleKey, $extraProperties['properties']);
+
+            $module = $extraProperties['properties'][$moduleKey];
+            // Both fields are documented under the module object …
+            $this->assertArrayHasKey('oa_required_url', $module['properties']);
+            $this->assertArrayHasKey('oa_optional_flag', $module['properties']);
+            // … but only the required one is reported in the module object's OpenAPI "required" list.
+            $this->assertSame(['oa_required_url'], $module['required']);
+        } finally {
+            if (!empty($requiredId)) {
+                $repository->delete((int) $requiredId);
+            }
+            if (!empty($optionalId)) {
+                $repository->delete((int) $optionalId);
+            }
+        }
     }
 }
