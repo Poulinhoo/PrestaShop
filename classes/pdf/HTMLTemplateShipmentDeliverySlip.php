@@ -166,7 +166,6 @@ class HTMLTemplateShipmentDeliverySlipCore extends HTMLTemplate
             'addresses_tab' => $this->smarty->fetch($this->getTemplate('delivery-slip.addresses-tab')),
             'summary_tab' => $this->smarty->fetch($this->getTemplate('shipment-delivery-slip.summary-tab')),
             'product_tab' => $this->smarty->fetch($this->getTemplate('shipment-delivery-slip.product-tab')),
-            'payment_tab' => $this->smarty->fetch($this->getTemplate('delivery-slip.payment-tab')),
         ];
         $this->smarty->assign($tpls);
 
