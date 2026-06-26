@@ -105,7 +105,7 @@ final class ExtraPropertyDefinition
         protected readonly bool $required = false,
         protected readonly ?int $size = null,
         protected readonly ExtraPropertySqlIndex $sqlIndex = ExtraPropertySqlIndex::NONE,
-        protected readonly bool $displayFront = true,
+        protected readonly bool $displayFront = false,
         protected readonly ?array $associatedForms = null,
         protected readonly ?array $associatedGrids = null,
         protected readonly ?array $associatedApis = null,

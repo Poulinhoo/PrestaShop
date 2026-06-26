@@ -30,14 +30,9 @@ final class ExtraPropertySqlIndexChoiceProvider implements FormChoiceProviderInt
     public function getChoices(): array
     {
         return [
-            $this->trans('No index') => ExtraPropertySqlIndex::NONE->value,
-            $this->trans('Standard index') => ExtraPropertySqlIndex::KEY->value,
-            $this->trans('Unique index') => ExtraPropertySqlIndex::UNIQUE->value,
+            $this->translator->trans('No index', [], 'Admin.Advparameters.Feature') => ExtraPropertySqlIndex::NONE->value,
+            $this->translator->trans('Standard index', [], 'Admin.Advparameters.Feature') => ExtraPropertySqlIndex::KEY->value,
+            $this->translator->trans('Unique index', [], 'Admin.Advparameters.Feature') => ExtraPropertySqlIndex::UNIQUE->value,
         ];
-    }
-
-    private function trans(string $key): string
-    {
-        return $this->translator->trans($key, [], 'Admin.Advparameters.Feature');
     }
 }

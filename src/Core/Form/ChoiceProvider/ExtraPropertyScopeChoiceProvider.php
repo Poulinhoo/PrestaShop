@@ -30,14 +30,9 @@ final class ExtraPropertyScopeChoiceProvider implements FormChoiceProviderInterf
     public function getChoices(): array
     {
         return [
-            $this->trans('Common (one value per entity)') => ExtraPropertyScope::COMMON->value,
-            $this->trans('Per language') => ExtraPropertyScope::LANG->value,
-            $this->trans('Per shop') => ExtraPropertyScope::SHOP->value,
+            $this->translator->trans('Common (one value per entity)', [], 'Admin.Advparameters.Feature') => ExtraPropertyScope::COMMON->value,
+            $this->translator->trans('Per language', [], 'Admin.Advparameters.Feature') => ExtraPropertyScope::LANG->value,
+            $this->translator->trans('Per shop', [], 'Admin.Advparameters.Feature') => ExtraPropertyScope::SHOP->value,
         ];
-    }
-
-    private function trans(string $key): string
-    {
-        return $this->translator->trans($key, [], 'Admin.Advparameters.Feature');
     }
 }

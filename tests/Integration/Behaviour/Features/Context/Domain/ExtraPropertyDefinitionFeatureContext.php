@@ -31,7 +31,6 @@ use PrestaShop\PrestaShop\Core\ExtraProperty\Validation\ExtraPropertyConstraintM
 use RuntimeException;
 use Tests\Integration\Behaviour\Features\Context\SharedStorage;
 use Tests\Integration\Behaviour\Features\Context\Util\NoExceptionAlthoughExpectedException;
-use Tests\Integration\Behaviour\Features\Context\Util\PrimitiveUtils;
 use Tests\Resources\DatabaseDump;
 
 /**
@@ -47,6 +46,17 @@ class ExtraPropertyDefinitionFeatureContext extends AbstractDomainFeatureContext
     public static function restoreExtraPropertyDefinitionTable(): void
     {
         DatabaseDump::restoreTables(['extra_property_definition']);
+    }
+
+    /**
+     * All extra tables must be removed because they mess with the restore tables functions,
+     * since they are scanned but have no associated table dump.
+     *
+     * @AfterFeature @remove-extra-tables-after-feature
+     */
+    public static function removeExtraTablesAfterFeature(): void
+    {
+        DatabaseDump::removeExtraTables();
     }
 
     /**
@@ -72,7 +82,7 @@ class ExtraPropertyDefinitionFeatureContext extends AbstractDomainFeatureContext
             labelDomain: $data['label_domain'] ?? null,
             descriptionWording: null,
             descriptionDomain: null,
-            constraints: isset($data['constraints']) ? ExtraPropertyConstraintMapper::fromNames(str_replace(',', "\n", $data['constraints'])) : null,
+            constraints: isset($data['constraints']) ? ExtraPropertyConstraintMapper::fromNames($data['constraints']) : null,
             formFieldType: null,
             formOptions: null,
             associatedForms: isset($data['associated_forms']) ? explode(',', $data['associated_forms']) : null,
@@ -152,7 +162,7 @@ class ExtraPropertyDefinitionFeatureContext extends AbstractDomainFeatureContext
             $command->setLabelWording($data['label_wording']);
         }
         if (isset($data['constraints'])) {
-            $command->setConstraints(ExtraPropertyConstraintMapper::fromNames(str_replace(',', "\n", $data['constraints'])));
+            $command->setConstraints(ExtraPropertyConstraintMapper::fromNames($data['constraints']));
         }
         if (isset($data['associated_forms'])) {
             $command->setAssociatedForms(explode(',', $data['associated_forms']));
@@ -214,13 +224,8 @@ class ExtraPropertyDefinitionFeatureContext extends AbstractDomainFeatureContext
 
     private function doBulkDeleteExtraPropertyDefinitions(string $references, bool $dropColumn): void
     {
-        $ids = [];
-        foreach (PrimitiveUtils::castStringArrayIntoArray($references) as $reference) {
-            $ids[] = $this->referenceToId($reference);
-        }
-
         try {
-            $this->getCommandBus()->handle(new BulkDeleteExtraPropertyDefinitionCommand($ids, $dropColumn));
+            $this->getCommandBus()->handle(new BulkDeleteExtraPropertyDefinitionCommand($this->referencesToIds($references), $dropColumn));
         } catch (Exception $e) {
             $this->setLastException($e);
         }

@@ -91,7 +91,9 @@ class ExtraPropertyDefinitionController extends PrestaShopAdminController
             if (null !== $result->getIdentifiableObjectId()) {
                 $this->addFlash('success', $this->trans('Successful creation.', [], 'Admin.Notifications.Success'));
 
-                return $this->redirectToRoute('admin_extra_property_definitions_index');
+                return $this->redirectToRoute('admin_extra_property_definitions_edit', [
+                    'extraPropertyDefinitionId' => $result->getIdentifiableObjectId(),
+                ]);
             }
         } catch (Exception $e) {
             $this->addFlash('error', $this->getErrorMessageForException($e, $this->getErrorMessages()));
@@ -153,7 +155,9 @@ class ExtraPropertyDefinitionController extends PrestaShopAdminController
             if ($result->isSubmitted() && $result->isValid()) {
                 $this->addFlash('success', $this->trans('Successful update.', [], 'Admin.Notifications.Success'));
 
-                return $this->redirectToRoute('admin_extra_property_definitions_index');
+                return $this->redirectToRoute('admin_extra_property_definitions_edit', [
+                    'extraPropertyDefinitionId' => $extraPropertyDefinitionId,
+                ]);
             }
         } catch (Exception $e) {
             $this->addFlash('error', $this->getErrorMessageForException($e, $this->getErrorMessages()));
@@ -193,8 +197,10 @@ class ExtraPropertyDefinitionController extends PrestaShopAdminController
         FormBuilderInterface $formBuilder,
     ): Response|RedirectResponse {
         try {
-            // is_edit: true — same read-only structural field set as the edit form.
-            $form = $formBuilder->getFormFor($extraPropertyDefinitionId, [], ['is_edit' => true]);
+            // is_edit keeps the structural field set read-only, like the edit form. disabled => true
+            // is a native Symfony option that cascades to every child, so the whole view form renders
+            // as disabled inputs — making it clear that module-owned definitions cannot be changed here.
+            $form = $formBuilder->getFormFor($extraPropertyDefinitionId, [], ['is_edit' => true, 'disabled' => true]);
         } catch (ExtraPropertyDefinitionNotFoundException $e) {
             $this->addFlash('error', $this->getErrorMessageForException($e, $this->getErrorMessages()));
 

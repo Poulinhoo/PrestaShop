@@ -150,8 +150,9 @@ final class ExtraPropertyDefinitionFormDataHandler implements FormDataHandlerInt
      */
     protected function parseJsonList(?string $rawValue): ?array
     {
+        // Return array so we can reset the value if needed
         if (null === $rawValue || '' === trim($rawValue)) {
-            return null;
+            return [];
         }
 
         $decoded = json_decode($rawValue, true);

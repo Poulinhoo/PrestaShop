@@ -30,19 +30,14 @@ final class ExtraPropertyTypeChoiceProvider implements FormChoiceProviderInterfa
     public function getChoices(): array
     {
         return [
-            $this->trans('Integer') => ExtraPropertyType::INT->value,
-            $this->trans('Boolean') => ExtraPropertyType::BOOL->value,
-            $this->trans('Text') => ExtraPropertyType::STRING->value,
-            $this->trans('Decimal number') => ExtraPropertyType::FLOAT->value,
-            $this->trans('Date') => ExtraPropertyType::DATE->value,
-            $this->trans('Rich text (HTML)') => ExtraPropertyType::HTML->value,
-            $this->trans('JSON') => ExtraPropertyType::JSON->value,
-            $this->trans('Choice list') => ExtraPropertyType::CHOICE->value,
+            $this->translator->trans('Integer', [], 'Admin.Advparameters.Feature') => ExtraPropertyType::INT->value,
+            $this->translator->trans('Boolean', [], 'Admin.Advparameters.Feature') => ExtraPropertyType::BOOL->value,
+            $this->translator->trans('Text', [], 'Admin.Advparameters.Feature') => ExtraPropertyType::STRING->value,
+            $this->translator->trans('Decimal number', [], 'Admin.Advparameters.Feature') => ExtraPropertyType::FLOAT->value,
+            $this->translator->trans('Date', [], 'Admin.Advparameters.Feature') => ExtraPropertyType::DATE->value,
+            $this->translator->trans('Rich text (HTML)', [], 'Admin.Advparameters.Feature') => ExtraPropertyType::HTML->value,
+            $this->translator->trans('JSON', [], 'Admin.Advparameters.Feature') => ExtraPropertyType::JSON->value,
+            $this->translator->trans('Choice list', [], 'Admin.Advparameters.Feature') => ExtraPropertyType::CHOICE->value,
         ];
-    }
-
-    private function trans(string $key): string
-    {
-        return $this->translator->trans($key, [], 'Admin.Advparameters.Feature');
     }
 }
