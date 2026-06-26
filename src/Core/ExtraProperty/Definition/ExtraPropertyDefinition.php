@@ -36,7 +36,7 @@ use Symfony\Component\Validator\Constraint;
  * - associatedApis: each entry must match "uriPath[:METHOD[,METHOD...]]"; uriPath is the operation URI template.
  * - labelWording is required when associatedForms or associatedGrids is non-empty.
  *
- * @see \PrestaShop\PrestaShop\Core\ExtraProperty\Definition\ExtraPropertyRegistryInterface::register()
+ * @see ExtraPropertyRegistryInterface::register()
  * @see \PrestaShop\PrestaShop\Core\ExtraProperty\Schema\ColumnDefinitionMapper
  */
 final class ExtraPropertyDefinition
@@ -105,7 +105,7 @@ final class ExtraPropertyDefinition
         protected readonly bool $required = false,
         protected readonly ?int $size = null,
         protected readonly ExtraPropertySqlIndex $sqlIndex = ExtraPropertySqlIndex::NONE,
-        protected readonly bool $displayFront = true,
+        protected readonly bool $displayFront = false,
         protected readonly ?array $associatedForms = null,
         protected readonly ?array $associatedGrids = null,
         protected readonly ?array $associatedApis = null,
@@ -399,6 +399,44 @@ final class ExtraPropertyDefinition
         );
     }
 
+    /**
+     * Returns a copy of this definition with the given fields overridden.
+     *
+     * Used by BO registry handlers to apply command overrides onto a freshly loaded
+     * definition without re-listing every untouched field. Keys match constructor
+     * parameter names; absent keys keep their current value (checked via array_key_exists
+     * so an override can legitimately be set back to null).
+     *
+     * @param array<string, mixed> $overrides
+     */
+    public function withOverrides(array $overrides): self
+    {
+        return new self(
+            entityName: array_key_exists('entityName', $overrides) ? $overrides['entityName'] : $this->entityName,
+            propertyName: array_key_exists('propertyName', $overrides) ? $overrides['propertyName'] : $this->propertyName,
+            type: array_key_exists('type', $overrides) ? $overrides['type'] : $this->type,
+            scope: array_key_exists('scope', $overrides) ? $overrides['scope'] : $this->scope,
+            moduleName: array_key_exists('moduleName', $overrides) ? $overrides['moduleName'] : $this->moduleName,
+            enumValues: array_key_exists('enumValues', $overrides) ? $overrides['enumValues'] : $this->enumValues,
+            defaultValue: array_key_exists('defaultValue', $overrides) ? $overrides['defaultValue'] : $this->defaultValue,
+            nullable: array_key_exists('nullable', $overrides) ? (bool) $overrides['nullable'] : $this->nullable,
+            required: array_key_exists('required', $overrides) ? (bool) $overrides['required'] : $this->required,
+            size: array_key_exists('size', $overrides) ? $overrides['size'] : $this->size,
+            sqlIndex: array_key_exists('sqlIndex', $overrides) ? $overrides['sqlIndex'] : $this->sqlIndex,
+            displayFront: array_key_exists('displayFront', $overrides) ? (bool) $overrides['displayFront'] : $this->displayFront,
+            associatedForms: array_key_exists('associatedForms', $overrides) ? $overrides['associatedForms'] : $this->associatedForms,
+            associatedGrids: array_key_exists('associatedGrids', $overrides) ? $overrides['associatedGrids'] : $this->associatedGrids,
+            associatedApis: array_key_exists('associatedApis', $overrides) ? $overrides['associatedApis'] : $this->associatedApis,
+            formFieldType: array_key_exists('formFieldType', $overrides) ? $overrides['formFieldType'] : $this->formFieldType,
+            formOptions: array_key_exists('formOptions', $overrides) ? $overrides['formOptions'] : $this->formOptions,
+            constraints: array_key_exists('constraints', $overrides) ? $overrides['constraints'] : $this->constraints,
+            labelWording: array_key_exists('labelWording', $overrides) ? $overrides['labelWording'] : $this->labelWording,
+            labelDomain: array_key_exists('labelDomain', $overrides) ? $overrides['labelDomain'] : $this->labelDomain,
+            descriptionWording: array_key_exists('descriptionWording', $overrides) ? $overrides['descriptionWording'] : $this->descriptionWording,
+            descriptionDomain: array_key_exists('descriptionDomain', $overrides) ? $overrides['descriptionDomain'] : $this->descriptionDomain,
+        );
+    }
+
     // -------------------------------------------------------------------------
     // Getters
     // -------------------------------------------------------------------------
@@ -427,6 +465,15 @@ final class ExtraPropertyDefinition
     public function getModuleName(): ?string
     {
         return $this->moduleName;
+    }
+
+    /**
+     * Returns true when this definition is owned by a module (as opposed to a core field).
+     * Module-owned definitions are read-only from the BO registry management UI.
+     */
+    public function isModuleOwned(): bool
+    {
+        return null !== $this->moduleName;
     }
 
     public function getPropertyName(): string

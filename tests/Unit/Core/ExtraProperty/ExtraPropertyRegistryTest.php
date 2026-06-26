@@ -31,7 +31,7 @@ class ExtraPropertyRegistryTest extends TestCase
         $incoming = $this->definition();
         $registry = $this->buildRegistry(existing: null, expectSave: true);
 
-        $this->assertTrue($registry->register($incoming));
+        $this->assertSame(1, $registry->register($incoming));
     }
 
     public function testIdenticalReRegistrationIsAccepted(): void
@@ -39,7 +39,7 @@ class ExtraPropertyRegistryTest extends TestCase
         $incoming = $this->definition();
         $registry = $this->buildRegistry(existing: $this->definition(), expectSave: true);
 
-        $this->assertTrue($registry->register($incoming));
+        $this->assertSame(1, $registry->register($incoming));
     }
 
     /**
@@ -97,7 +97,7 @@ class ExtraPropertyRegistryTest extends TestCase
     {
         $registry = $this->buildRegistry(existing: $existing, expectSave: true);
 
-        $this->assertTrue($registry->register($incoming));
+        $this->assertSame(1, $registry->register($incoming));
     }
 
     public static function appliableChangeProvider(): array
@@ -143,7 +143,7 @@ class ExtraPropertyRegistryTest extends TestCase
         // null and 255 are the same effective varchar length: not blocked.
         $registry = $this->buildRegistry(existing: $this->definition(size: null), expectSave: true);
 
-        $this->assertTrue($registry->register($this->definition(size: 255)));
+        $this->assertSame(1, $registry->register($this->definition(size: 255)));
     }
 
     public function testScopeConflictWithAnotherScopeIsRefused(): void

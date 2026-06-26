@@ -55,7 +55,7 @@ class ExtraPropertyRegistry implements ExtraPropertyRegistryInterface
      * Destructive changes (type/scope change, size decrease, nullable tightening, enum value
      * removal) require unregister() + register() — automatic data migration is not supported.
      */
-    public function register(ExtraPropertyDefinition $definition): bool
+    public function register(ExtraPropertyDefinition $definition): int|false
     {
         $entityName = $definition->getEntityName();
         $propertyName = $definition->getPropertyName();
@@ -113,7 +113,7 @@ class ExtraPropertyRegistry implements ExtraPropertyRegistryInterface
             return false;
         }
 
-        return true;
+        return $savedId;
     }
 
     /**

@@ -2,6 +2,7 @@
 services:
   _defaults:
     autowire: true
+    autoconfigure: true
     public: false
 
   # ─── Repository write alias (back-office only) ───────────────────────────────
@@ -52,3 +53,18 @@ services:
       $repository: '@PrestaShop\PrestaShop\Core\ExtraProperty\Definition\ExtraPropertyDefinitionRepositoryInterface'
       $writer: '@PrestaShop\PrestaShop\Core\ExtraProperty\Value\ExtraPropertyWriterInterface'
       $shopContext: '@PrestaShop\PrestaShop\Core\Context\ShopContext'
+
+  # ─── BO CQRS handlers for ExtraPropertyDefinition management ────────────────
+  # All dependencies (repository/registry interfaces) are autowireable, so the bare
+  # FQCN is enough — autoconfigure (set as _defaults below) registers the #[AsCommandHandler]/
+  # #[AsQueryHandler] attributes.
+
+  PrestaShop\PrestaShop\Adapter\ExtraProperty\QueryHandler\GetExtraPropertyDefinitionForEditingHandler: ~
+
+  PrestaShop\PrestaShop\Adapter\ExtraProperty\CommandHandler\AddExtraPropertyDefinitionHandler: ~
+
+  PrestaShop\PrestaShop\Adapter\ExtraProperty\CommandHandler\UpdateExtraPropertyDefinitionHandler: ~
+
+  PrestaShop\PrestaShop\Adapter\ExtraProperty\CommandHandler\DeleteExtraPropertyDefinitionHandler: ~
+
+  PrestaShop\PrestaShop\Adapter\ExtraProperty\CommandHandler\BulkDeleteExtraPropertyDefinitionHandler: ~

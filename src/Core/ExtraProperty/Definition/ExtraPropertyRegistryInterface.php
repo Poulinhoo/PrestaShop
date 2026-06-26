@@ -33,9 +33,9 @@ interface ExtraPropertyRegistryInterface
      *
      * @param ExtraPropertyDefinition $definition Fully configured definition (entityName and propertyName required)
      *
-     * @return bool
+     * @return int|false The registry row id on success (insert or update), false on failure
      */
-    public function register(ExtraPropertyDefinition $definition): bool;
+    public function register(ExtraPropertyDefinition $definition): int|false;
 
     /**
      * Unregister an extra property definition.

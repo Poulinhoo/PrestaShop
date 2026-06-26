@@ -11,6 +11,8 @@ namespace PrestaShop\PrestaShop\Core\ExtraProperty\Definition;
 
 use Doctrine\DBAL\Connection;
 use Doctrine\DBAL\Query\QueryBuilder;
+use PrestaShop\PrestaShop\Core\Domain\ExtraProperty\Exception\ExtraPropertyDefinitionNotFoundException;
+use PrestaShop\PrestaShop\Core\Domain\ExtraProperty\Exception\ProtectedModuleExtraPropertyDefinitionException;
 use PrestaShop\PrestaShop\Core\ExtraProperty\Schema\ColumnDefinitionMapper;
 use Throwable;
 
@@ -78,6 +80,54 @@ class ExtraPropertyDefinitionRepository implements ExtraPropertyDefinitionReposi
     /**
      * {@inheritdoc}
      */
+    public function getDefinitionById(int $id): ?ExtraPropertyDefinition
+    {
+        $table = $this->prefix . 'extra_property_definition';
+        $qb = $this->connection->createQueryBuilder();
+        $qb
+            ->select('eef.*')
+            ->from($table, 'eef')
+            ->where('eef.id_extra_property_definition = :id')
+            ->setParameter('id', $id);
+
+        $row = $qb->executeQuery()->fetchAssociative();
+        if (!is_array($row)) {
+            return null;
+        }
+
+        return ExtraPropertyDefinition::fromRow($this->enrichRowsWithColumnMetadata([$row])[0]);
+    }
+
+    /**
+     * {@inheritdoc}
+     */
+    public function getUnprotectedDefinitionById(int $id): ExtraPropertyDefinition
+    {
+        $definition = $this->getDefinitionById($id);
+
+        if (null === $definition) {
+            throw new ExtraPropertyDefinitionNotFoundException(
+                sprintf('Extra property definition with id %d was not found.', $id)
+            );
+        }
+
+        if ($definition->isModuleOwned()) {
+            throw new ProtectedModuleExtraPropertyDefinitionException(
+                sprintf(
+                    'Extra property definition "%s.%s" is owned by module "%s" and cannot be modified from the BO.',
+                    $definition->getEntityName(),
+                    $definition->getPropertyName(),
+                    $definition->getModuleName()
+                )
+            );
+        }
+
+        return $definition;
+    }
+
+    /**
+     * {@inheritdoc}
+     */
     public function save(ExtraPropertyDefinition $definition): int|false
     {
         $table = $this->prefix . 'extra_property_definition';
@@ -112,9 +162,14 @@ class ExtraPropertyDefinitionRepository implements ExtraPropertyDefinitionReposi
         );
 
         if (null !== $existingId) {
-            $saved = (bool) $this->connection->update($table, $data, ['id_extra_property_definition' => $existingId]);
+            // Doctrine's update() returns the affected row count, not a "found" count: it is
+            // legitimately 0 when none of the *registry* columns actually changed (e.g. editing
+            // only nullable/enumValues, which are never persisted here — see fromRow()/the class
+            // docblock). $existingId is already known to exist (just resolved above), so the
+            // update is considered successful as long as it does not throw.
+            $this->connection->update($table, $data, ['id_extra_property_definition' => $existingId]);
 
-            return $saved ? $existingId : false;
+            return $existingId;
         }
 
         $data['entity_name'] = $definition->getEntityName();

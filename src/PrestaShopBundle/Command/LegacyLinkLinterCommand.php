@@ -167,6 +167,7 @@ class LegacyLinkLinterCommand extends Command
      */
     private const CONTROLLER_WHITE_LIST = [
         'AdminAdminAPI',
+        'AdminExtraPropertyDefinitions',
     ];
 
     public function __construct(LegacyLinkLinter $legacyLinkLinter, AdminRouteProvider $adminRouteProvider)

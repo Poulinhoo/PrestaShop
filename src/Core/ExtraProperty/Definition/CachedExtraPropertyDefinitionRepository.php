@@ -68,6 +68,26 @@ class CachedExtraPropertyDefinitionRepository implements ExtraPropertyDefinition
         return $this->repository->findDefinitionByModuleAndField($entityName, $moduleName, $fieldName);
     }
 
+    /**
+     * {@inheritdoc}
+     *
+     * Not cached: same rationale as findDefinitionByModuleAndField().
+     */
+    public function getDefinitionById(int $id): ?ExtraPropertyDefinition
+    {
+        return $this->repository->getDefinitionById($id);
+    }
+
+    /**
+     * {@inheritdoc}
+     *
+     * Not cached: same rationale as findDefinitionByModuleAndField().
+     */
+    public function getUnprotectedDefinitionById(int $id): ExtraPropertyDefinition
+    {
+        return $this->repository->getUnprotectedDefinitionById($id);
+    }
+
     // -------------------------------------------------------------------------
     // Write — ExtraPropertyDefinitionWriterInterface
     // -------------------------------------------------------------------------

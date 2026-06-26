@@ -9,6 +9,9 @@ declare(strict_types=1);
 
 namespace PrestaShop\PrestaShop\Core\ExtraProperty\Definition;
 
+use PrestaShop\PrestaShop\Core\Domain\ExtraProperty\Exception\ExtraPropertyDefinitionNotFoundException;
+use PrestaShop\PrestaShop\Core\Domain\ExtraProperty\Exception\ProtectedModuleExtraPropertyDefinitionException;
+
 /**
  * Read-only repository for extra property definitions.
  *
@@ -54,4 +57,33 @@ interface ExtraPropertyDefinitionRepositoryInterface
         ?string $moduleName,
         string $fieldName,
     ): ?ExtraPropertyDefinition;
+
+    /**
+     * Finds one registry definition by its primary key.
+     *
+     * Used by the BO registry management feature (read-only access by id, e.g. the "view"
+     * page for module-owned definitions, which must remain readable even though it is
+     * protected). Never cached — always reflects current DB state, same rationale as
+     * findDefinitionByModuleAndField(). Write-path callers should use
+     * getUnprotectedDefinitionById() instead, which also enforces the module-owned guard.
+     *
+     * @param int $id
+     *
+     * @return ExtraPropertyDefinition|null null when no row matches this id
+     */
+    public function getDefinitionById(int $id): ?ExtraPropertyDefinition;
+
+    /**
+     * Finds one registry definition by its primary key, rejecting module-owned definitions.
+     *
+     * Centralizes the "not found" / "module owned" guard that every BO write handler
+     * (Delete, Edit) needs before mutating a definition, so callers get a single call
+     * instead of repeating both checks.
+     *
+     * @param int $id
+     *
+     * @throws ExtraPropertyDefinitionNotFoundException When no row matches this id
+     * @throws ProtectedModuleExtraPropertyDefinitionException When the definition is owned by a module
+     */
+    public function getUnprotectedDefinitionById(int $id): ExtraPropertyDefinition;
 }
