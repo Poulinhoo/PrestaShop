@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "d048ee091877a074e08f976cc66529e0",
+    "content-hash": "31dfee5c03b15a93470d51b5244c1fb7",
     "packages": [
         {
             "name": "api-platform/core",
@@ -5082,16 +5082,16 @@
         },
         {
             "name": "prestashop/hummingbird",
-            "version": "2.x-dev",
+            "version": "v2.1.0-beta.2",
             "source": {
                 "type": "git",
                 "url": "https://github.com/PrestaShop/hummingbird.git",
-                "reference": "fcb50cb886d6e40647728c0860ad13a506f04dd5"
+                "reference": "238dd265b4c73cbaa35c84e7340d9f62d97eaf76"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/PrestaShop/hummingbird/zipball/fcb50cb886d6e40647728c0860ad13a506f04dd5",
-                "reference": "fcb50cb886d6e40647728c0860ad13a506f04dd5",
+                "url": "https://api.github.com/repos/PrestaShop/hummingbird/zipball/238dd265b4c73cbaa35c84e7340d9f62d97eaf76",
+                "reference": "238dd265b4c73cbaa35c84e7340d9f62d97eaf76",
                 "shasum": ""
             },
             "require-dev": {
@@ -5116,9 +5116,9 @@
             "description": "Hummingbird development theme for PrestaShop",
             "support": {
                 "issues": "https://github.com/PrestaShop/hummingbird/issues",
-                "source": "https://github.com/PrestaShop/hummingbird/tree/2.x"
+                "source": "https://github.com/PrestaShop/hummingbird/tree/v2.1.0-beta.2"
             },
-            "time": "2026-06-24T14:43:25+00:00"
+            "time": "2026-06-26T13:01:05+00:00"
         },
         {
             "name": "prestashop/pagesnotfound",
@@ -18422,7 +18422,6 @@
     "aliases": [],
     "minimum-stability": "dev",
     "stability-flags": {
-        "prestashop/hummingbird": 20,
         "prestashop/ps_apiresources": 20
     },
     "prefer-stable": true,
